@@ -1,0 +1,174 @@
+fonts{
+	font:"DejaVuSans.ttf" "DejaVuSans";
+	font:"ttf-japanese-gothic.ttf" "fonts-japanese-gothic";
+}
+images{
+	image:"back_b_02.png" COMP;
+	image:"cancel_bt_off.png" COMP;
+	image:"cancel_bt_on.png" COMP;
+	image:"ok_bt_off.png" COMP;
+	image:"ok_bt_on.png" COMP;
+}
+
+collections {
+	group {
+		name: "appli_kill";
+		parts {
+
+			part {
+				name: "back_b";
+				type: IMAGE;
+				description {
+					state: "default" 0.0;
+					color: 255 255 255 255; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 44 410;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  724 680;
+					}
+					image{
+						normal: "back_b_02.png"; 
+					}
+				}
+			}
+
+			part {	// OK
+				name: "ok_bt";
+				type: IMAGE;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 255 255 255 255; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 69 603;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  374 653;
+					}
+					image{
+						normal: "ok_bt_off.png"; 
+					}
+				}
+				description {
+					state: "ok_bt_on" 0.0;
+					color: 255 255 255 255; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 69 603;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  374 653;
+					}
+					image{
+						normal: "ok_bt_on.png"; 
+					}
+				}
+			}
+
+			part {	// Cancel
+				name: "cancel_bt";
+				type: IMAGE;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 255 255 255 255; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 394 603;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  699 653;
+					}
+					image{
+						normal: "cancel_bt_off.png"; 
+					}
+				}
+				description {
+					state: "cancel_bt_on" 0.0;
+					color: 255 255 255 255; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 394 603;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  699 653;
+					}
+					image{
+						normal: "cancel_bt_on.png";
+					}
+				}
+			}
+			part {
+				name: "appli_kill_text";
+				type: TEXT; // plain boring rectangle
+				access: 1;
+				description {
+					state: "default" 0.0; // must always exist
+					color: 255 255 255 255; // white
+					rel1 { // top-left point at (0, 0) [WIDTH * 0 + 0, HEIGHT * 0 + 0]
+				        relative: 0.0 0.0;
+				        offset: 132 492;
+					}
+					rel2 { // bottom-right point at (WIDTH * 1.0 - 1, HEIGHT * 1.0 - 1)
+				        relative: 0.0 0.0;
+				        offset: 700 492;
+					}
+					text {
+						font: "fonts-japanese-gothic"; // using fontconfig name!
+						size: 25;
+						align: 0 0;
+						text: "Are you sure you want to terminate the App?";
+					}
+				}
+			}
+
+		}
+
+		programs {
+			program {
+				name:"trigger_ok_01";
+				signal: "mouse,down,*";
+				source: "ok_bt";
+				action: STATE_SET "ok_bt_on" 0.0;
+				target: "ok_bt";
+				transition: LINEAR 0.1;
+			}
+			program {
+				name:"trigger_ok_02";
+				signal: "mouse,up,*";
+				source: "ok_bt";
+				action: STATE_SET "ok_bt_off" 0.0;
+				target: "ok_bt";
+				transition: LINEAR 0.1;
+			}
+			program {
+				name:"trigger_cancel_01";
+				signal: "mouse,down,*";
+				source: "cancel_bt";
+				action: STATE_SET "cancel_bt_on" 0.0;
+				target: "cancel_bt";
+				transition: LINEAR 0.1;
+			}
+			program {
+				name:"trigger_cancel_02";
+				signal: "mouse,up,*";
+				source: "cancel_bt";
+				action: STATE_SET "cancel_bt_off" 0.0;
+				target: "cancel_bt";
+				transition: LINEAR 0.1;
+			}
+		}
+	}
+}
+
+

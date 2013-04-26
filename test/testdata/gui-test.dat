@@ -1,0 +1,104 @@
+#wait for starting weston
+sleep 5
+
+#Change button pushed at tile screen
+XY=960,30
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#Change button pushed at application screen
+XY=960,30
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#Application is selected
+XY=1466,242
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#Hide shown application
+XY=960,30
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#Holiding down a application tile
+XY=1466,242
+sleep 0.1
+Button=Down
+sleep 3
+Button=Up
+sleep 2
+
+#Cancel selected on confirmation screen
+XY=994,784
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#OK selected on confirmation screen
+XY=1466,242
+sleep 0.1
+Button=Down
+sleep 3
+Button=Up
+sleep 2
+XY=669,784
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#Application list button is pushed
+XY=1615,898
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#Next selected on applicaton list 
+XY=669,900
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#Cancel selected on applicaton list 
+XY=994,900
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+#application icon selected on applicaton list 
+XY=1615,898
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2
+
+
+XY=1410,822
+sleep 0.1
+Button=Down
+sleep 0.1
+Button=Up
+sleep 2

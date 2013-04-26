@@ -1,0 +1,430 @@
+images{
+	image:"back_b_01.png" COMP;
+	image:"cancel_bt_off.png" COMP;
+	image:"cancel_bt_on.png" COMP;
+	image:"next_bt_off.png" COMP;
+	image:"next_bt_on.png" COMP;
+}
+
+collections {
+	group {
+		name: "appli_list_01";
+		parts {
+
+			part {
+				name: "back_b";
+				type: IMAGE;
+				description {
+					state: "default" 0.0;
+					color: 255 255 255 255; 
+
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 44 294;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  724 794;
+					}
+					image{
+						normal: "back_b_01.png"; 
+					}
+				}
+			}
+
+			part {	
+				name: "rect_01";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 69 319;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  179 429;
+					}
+				}
+			}
+
+			part {
+				name: "rect_02";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 199 319;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  309 429;
+					}
+				}
+			}
+
+			part {	
+				name: "rect_03";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 329 319;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  439 429;
+					}
+				}
+			}
+
+			part {
+				name: "rect_04";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 459 319;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  569 429;
+					}
+				}
+			}
+
+			part {
+				name: "rect_05";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 589 319;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  699 429;
+					}
+				}
+			}
+
+			part {
+				name: "rect_06";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 69 449;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  179 559;
+					}
+				}
+			}
+
+			part {
+				name: "rect_07";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 199 449;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  309 559;
+					}
+				}
+			}
+
+			part {
+				name: "rect_08";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 329 449;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  439 559;
+					}
+				}
+			}
+
+			part {
+				name: "rect_09";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 459 449;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  569 559;
+					}
+				}
+			}
+
+			part {
+				name: "rect_10";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 589 449;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  699 559;
+					}
+				}
+			}
+
+			part {	
+				name: "rect_11";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 69 579;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  179 689;
+					}
+				}
+			}
+
+			part {
+				name: "rect_12";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 199 579;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  309 689;
+					}
+				}
+			}
+
+			part {	
+				name: "rect_13";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 329 579;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  439 689;
+					}
+				}
+			}
+
+			part {
+				name: "rect_14";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 459 579;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  569 689;
+					}
+				}
+			}
+
+			part {
+				name: "rect_15";
+				type: RECT;
+				mouse_events: 1;
+				access: 1;
+				description {
+					state: "default" 0.0;
+					color: 0 0 0 0; 
+					rel1 {
+						relative: 0.0 0.0;
+						offset: 589 579;
+					}
+					rel2 {
+						relative: 0.0 0.0;
+						offset:  699 689;
+					}
+				}
+			}
+
+            part {  // Next
+                name: "next_bt";
+                type: IMAGE;
+                mouse_events: 1;
+                access: 1;
+                description {
+                    state: "default" 0.0;
+                    color: 255 255 255 255;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 69 719;
+                    }
+                    rel2 {
+                        relative: 0.0 0.0;
+                        offset:  374 769;
+                    }
+                    image{
+                        normal: "next_bt_off.png";
+                    }
+                }
+                description {
+                    state: "next_bt_on" 0.0;
+                    color: 255 255 255 255;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 69 719;
+                    }
+                    rel2 {
+                        relative: 0.0 0.0;
+                        offset:  374 769;
+                    }
+                    image{
+                        normal: "next_bt_on.png";
+                    }
+                }
+            }
+
+            part {  // Cancel
+                name: "cancel_bt";
+                type: IMAGE;
+                mouse_events: 1;
+                access: 1;
+                description {
+                    state: "default" 0.0;
+                    color: 255 255 255 255;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 394 719;
+                    }
+                    rel2 {
+                        relative: 0.0 0.0;
+                        offset:  699 769;
+                    }
+                    image{
+                        normal: "cancel_bt_off.png";
+                    }
+                }
+                description {
+                    state: "cancel_bt_on" 0.0;
+                    color: 255 255 255 255;
+                    rel1 {
+                        relative: 0.0 0.0;
+                        offset: 394 719;
+                    }
+                    rel2 {
+                        relative: 0.0 0.0;
+                        offset:  699 769;
+                    }
+                    image{
+                        normal: "cancel_bt_on.png";
+                    }
+                }
+            }
+        }
+
+        programs {
+            program {
+                name:"trigger_next_01";
+                signal: "mouse,down,*";
+                source: "next_bt";
+                action: STATE_SET "next_bt_on" 0.0;
+                target: "next_bt";
+                transition: LINEAR 0.1;
+            }
+            program {
+                name:"trigger_next_02";
+                signal: "mouse,up,*";
+                source: "next_bt";
+                action: STATE_SET "next_bt_off" 0.0;
+                target: "next_bt";
+                transition: LINEAR 0.1;
+            }
+            program {
+                name:"trigger_cancel_01";
+                signal: "mouse,down,*";
+                source: "cancel_bt";
+                action: STATE_SET "cancel_bt_on" 0.0;
+                target: "cancel_bt";
+                transition: LINEAR 0.1;
+            }
+            program {
+                name:"trigger_cancel_02";
+                signal: "mouse,up,*";
+                source: "cancel_bt";
+                action: STATE_SET "cancel_bt_off" 0.0;
+                target: "cancel_bt";
+                transition: LINEAR 0.1;
+            }
+		}
+	}
+}
