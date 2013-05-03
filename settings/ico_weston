@@ -15,7 +15,6 @@ DAEMON=/usr/bin/launch_app
 DAEMON_ARGS="org.tizen.ico.homescreen"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
-export HOME="/opt/home/root"
 
 ICO_LOG_DIR=/var/log/ico
 
