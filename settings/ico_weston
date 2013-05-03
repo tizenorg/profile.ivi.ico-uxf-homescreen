@@ -1,32 +1,23 @@
 #! /bin/sh
-# Provides:          weston
+# Provides:          ico_uxf_HomeScreen
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Weston compositor boot script for ico-ivi
+# Short-Description: Homescreen boot script for ico-ivi
 # Description:       This script starts the Weston compositor and ico-uxf-HomeScreen at boot.
 
 # Do NOT "set -e"
 
-backend=
-
-# Use the Weston DRM backend if $DISPLAY is set and X isn't running
-#since Weston won't be able use the X11 backend.
-#
-# This allows this script to start Weston with either the X11 or DRM
-#backends.
-if [ -z `pidof Xorg` ] && [ -n "$DISPLAY" ]; then
-    backend="--backend=drm-backend.so"
-fi
-
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="Weston compositor"
-NAME=weston
-DAEMON=/usr/bin/weston
-DAEMON_ARGS="$backend --idle-time=0 --log=/var/log/ico/weston.log"
+DESC="ICO UXF Home Screen"
+NAME=ico_uxf_HomeScreen
+DAEMON=/usr/bin/launch_app
+DAEMON_ARGS="org.tizen.ico.homescreen"
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 export HOME="/opt/home/root"
+
+ICO_LOG_DIR=/var/log/ico
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
@@ -47,12 +38,6 @@ export HOME="/opt/home/root"
 #
 do_start()
 {
-	# Make sure we have a sane XDG_RUNTIME_DIR environment
-	# variable set.
-	if [ -z "${XDG_RUNTIME_DIR}" ]; then
-	    . /etc/profile.d/weston.sh
-	fi
-
 	# Return
 	#   0 if daemon has been started
 	#   1 if daemon was already running
@@ -60,18 +45,21 @@ do_start()
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
 	
-	# make and clean log
-	/bin/mkdir /var/log/ico
+	# make and clean log directory
+	if [ ! -d "${ICO_LOG_DIR}" ]; then
+	    mkdir -p $ICO_LOG_DIR
+	fi
+
 	/bin/chmod -R 0777 /var/log/ico
 	/bin/rm -f /var/log/ico/*
 	
 	# kill pulseaudio and weston, and start pulseaudio
 	/usr/bin/killall pulseaudio > /dev/null 2>&1
-	/usr/bin/killall weston > /dev/null 2>&1
+	/etc/init.d/weston stop > /dev/null 2>&1
 	/bin/sleep 0.2
 	/usr/bin/killall -9 pulseaudio > /dev/null 2>&1
 	/usr/bin/killall -9 weston > /dev/null 2>&1
-	
+
 	# Start Device Input Controller for eGalax TouchPanel
 	#/usr/bin/ico_ictl-touch_egalax -t
 	/usr/bin/ico_ictl-touch_egalax
@@ -84,45 +72,13 @@ do_start()
 	fi
 	/usr/bin/launchpad_preloading_preinitializing_daemon &
 
-	# start-stop-daemon --start --background --quiet --pidfile $PIDFILE --exec $DAEMON -- \
-	#	$DAEMON_ARGS \
-	#	|| return 2
-	$DAEMON $DAEMON_ARGS &
-	weston_pid=$!
-	/bin/sleep 0.2
-
-	if [ $weston_pid = 0 ]; then
-	    return 2
-	else
-	    echo $weston_pid > $PIDFILE
-	fi
-
-	# Add code here, if necessary, that waits for the process to be ready
-	# to handle requests from services started subsequently which depend
-	# on this one.  As a last resort, sleep for some time.
-
-	# ************************************************************
-	# HACK TO WORK AROUND INSUFFICIENT ACCESS PERMISSIONS FOR
-	# UNPRIVILEGED USERS.
-	#
-	# Ideally we should launch weston with weston-launch with the
-	# appropriate --user flag.  Unfortunately, weston-launch isn't
-	# available due to missing package dependencies.
-	# ************************************************************
-	wayland_socket="$XDG_RUNTIME_DIR/wayland-0"
-	MAX_ATTEMPTS=8
-	attempt=0
-	while [ ! -f $wayland_socket ] && [ $attempt -lt $MAX_ATTEMPTS ]
-	do
-		/bin/sleep 0.5
-		attempt=$[$attempt + 1]
-	done
-	/bin/chmod 777 $wayland_socket
+	# Start weston
+	/etc/init.d/weston start
 
 	# Start wayland-client for display mouse cursor
 	#/usr/bin/nice -19 /usr/bin/wayland-smoke &
 
-	## if pulseaudio dose not start ... kick pulseaudio
+	## if pulseaudio does not start ... kick pulseaudio
 	/bin/ps ax | /bin/grep pulseaudio | /bin/grep -v grep > /dev/null
 	if [ "$?" = "1" ] ; then
 		/usr/bin/pulseaudio --log-level=3 --log-target=file:/var/log/ico/pulse.log --system -D
@@ -133,16 +89,24 @@ do_start()
 	/bin/sleep 0.5
 	/usr/bin/killall menu-screen
 	/usr/bin/killall menu-daemon
-	/usr/bin/killall power_manager
-	/usr/bin/launch_app org.tizen.ico.homescreen &
+	/usr/bin/pmctrl stop
 
-	# ***********************************************************
-	# HACK TO WORK AROUND BROKEN INFINITE LOOPS IN BOOT ANIMATION
-	# VIRTUAL KEYBOARD BOOT SCRIPTS.
-	# ***********************************************************
-	touch /tmp/.X0-lock
-	touch /tmp/.wm_ready
-	# ***********************************************************
+	# start-stop-daemon --start --background --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+	#	$DAEMON_ARGS \
+	#	|| return 2
+	$DAEMON $DAEMON_ARGS &
+	homescreen_pid=$!
+	/bin/sleep 0.2
+
+	if [ $homescreen_pid = 0 ]; then
+	    return 2
+	else
+	    echo $homescreen_pid > $PIDFILE
+	fi
+
+	# Add code here, if necessary, that waits for the process to be ready
+	# to handle requests from services started subsequently which depend
+	# on this one.  As a last resort, sleep for some time.
 }
 
 #
@@ -170,6 +134,10 @@ do_stop()
 	[ "$?" = 2 ] && return 2
 	# Many daemons don't delete their pidfiles when they exit.
 	rm -f $PIDFILE
+
+	# Stop Weston.
+	/etc/init.d/weston stop
+
 	return "$RETVAL"
 }
 
