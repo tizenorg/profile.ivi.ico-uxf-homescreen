@@ -29,7 +29,7 @@ Requires: weston >= 1.0
 Requires: ico-uxf-weston-plugin >= 0.5.0
 
 %description
-sample homescreen application
+Sample homescreen application.
 
 %package devel
 Summary:  Development files for %{name}
@@ -59,6 +59,8 @@ autoreconf --install
 
 %configure
 make %{?_smp_mflags}
+
+%global ico_sysvlinkdir %{_sysconfdir}/rc.d/rc3.d
 
 %install
 rm -rf %{buildroot}
@@ -121,10 +123,27 @@ install -m 0644 src/appli_kill.edj %{buildroot}%{APPSDIR}/res/edj/
 install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/opt/share/applications/
 
 #settings
-mkdir -p %{buildroot}/opt/etc/ico/
+mkdir -p %{buildroot}/opt/etc/ico
 install -m 0644 settings/mediation_table.txt  %{buildroot}/opt/etc/ico/
-mkdir -p %{buildroot}/etc/rc.d/init.d/
-install -m 0755 settings/ico_weston  %{buildroot}/etc/rc.d/init.d/
+mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
+mkdir -p %{buildroot}%{ico_sysvlinkdir}
+install -m 0755 settings/ico_weston  %{buildroot}%{_sysconfdir}/rc.d/init.d/
+ln -sf %{_sysconfdir}/rc.d/init.d/ico_weston %{buildroot}%{ico_sysvlinkdir}/S91ico_weston
+
+%global ico_packagestatedir %{_localstatedir}/lib/rpm-state/%{name}
+%post
+# The homescreen boot script will start Weston in a specific order.
+# Disable stand-alone boot of Weston by removing the link to its boot
+# script in /etc/rc.d/rc3.d.  Store it for later restoration after
+# uninstallation of this package.
+mkdir -p %{ico_packagestatedir}
+mv %{ico_sysvlinkdir}/S??weston %{ico_packagestatedir}
+
+%postun
+# Restore the link to the Weston boot script.
+mv %{ico_packagestatedir}/S??weston %{ico_sysvlinkdir}
+rmdir %{ico_packagestatedir}
+# TODO: Should we remove the rpm-state dir, too?
 
 %files
 %defattr(-,root,root,-)
@@ -133,11 +152,12 @@ install -m 0755 settings/ico_weston  %{buildroot}/etc/rc.d/init.d/
 %{PREFIX}/org.tizen.ico.onscreen
 /opt/share/applications/*.desktop
 
-%{_libdir}/*.so*
+%{_libdir}/*.so.*
 %{_bindir}/ico_*
 
 /opt/etc/ico/mediation_table.txt
-/etc/rc.d/init.d/ico_weston
+%{_sysconfdir}/rc.d/init.d/ico_weston
+%{ico_sysvlinkdir}/S91ico_weston
 
 %files devel
 %defattr(-,root,root,-)
@@ -147,4 +167,4 @@ install -m 0755 settings/ico_weston  %{buildroot}/etc/rc.d/init.d/
 %{_includedir}/ico-appfw/ico_apf_ecore.h
 %{_includedir}/ico-appfw/ico_apf_log.h
 %{_includedir}/ico-appfw/ico_uxf_sysdef.h
-%{_libdir}/*.so*
+%{_libdir}/*.so
