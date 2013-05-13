@@ -1,3 +1,8 @@
+* Mon May 13 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/2.0alpha-wayland/20130426.191622@343cc31
+- I64954507:Added missing init script sym link.  Disable stand-alone weston boot.  Cleanup.
+- Ifbb23f90:Do not override $HOME.  Weston init script already sets as needed.
+- I6e99ba7e:Leverage weston init script to gracefully start/stop weston.  Misc cleanup.
+
 * Fri Apr 26 19:15:52 UTC 2013 - tracy.graydon@intel.com
 - Setting up 2.0alpha-wayland branch (master not used for IVI) 
 
