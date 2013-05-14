@@ -94,8 +94,8 @@ do_start()
 	#	$DAEMON_ARGS \
 	#	|| return 2
 	$DAEMON $DAEMON_ARGS &
-	homescreen_pid=$!
 	/bin/sleep 0.2
+	homescreen_pid=`pidof HomeScreen`
 
 	if [ $homescreen_pid = 0 ]; then
 	    return 2
