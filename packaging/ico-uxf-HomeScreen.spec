@@ -137,13 +137,22 @@ ln -sf %{_sysconfdir}/rc.d/init.d/ico_weston %{buildroot}%{ico_sysvlinkdir}/S91i
 # script in /etc/rc.d/rc3.d.  Store it for later restoration after
 # uninstallation of this package.
 mkdir -p %{ico_packagestatedir}
-mv %{ico_sysvlinkdir}/S??weston %{ico_packagestatedir}
+mv -f %{ico_sysvlinkdir}/S??weston %{ico_packagestatedir}
+
+# Update the app database.
+rm -f /opt/dbspace/.app_info.db*
+ail_initdb
 
 %postun
 # Restore the link to the Weston boot script.
 mv %{ico_packagestatedir}/S??weston %{ico_sysvlinkdir}
 rmdir %{ico_packagestatedir}
 # TODO: Should we remove the rpm-state dir, too?
+
+# Update the app database.
+rm -f /opt/dbspace/.app_info.db*
+ail_initdb
+
 
 %files
 %defattr(-,root,root,-)
