@@ -52,17 +52,22 @@ static const struct {
     char        *eventtype;
     unsigned char   datatype[4];
 }               vehicleinfo_key[] = {
-    { "VehicleSpeed", "VELOCITY", {TYPE_UINT16, TYPE_NULL, 0,0} },
-    { "Speed", "VELOCITY", {TYPE_UINT16, TYPE_NULL, 0,0} },
-    { "Velocity", "VELOCITY", {TYPE_UINT16, TYPE_NULL, 0,0} },
+    { "VehicleSpeed", "VELOCITY", {TYPE_INT32, TYPE_NULL, 0,0} },
+    { "Speed", "VELOCITY", {TYPE_INT32, TYPE_NULL, 0,0} },
+    { "Velocity", "VELOCITY", {TYPE_INT32, TYPE_NULL, 0,0} },
     { "Location", "LOCATION", {TYPE_DOUBLE, TYPE_DOUBLE, TYPE_DOUBLE, TYPE_NULL} },
     { "Direction", "DIRECTION", {TYPE_DOUBLE, TYPE_NULL, 0,0} },
+    { "EngineSpeed", "ENGINE_SPEED", {TYPE_INT32, TYPE_NULL, 0, 0} },
+    { "Engine", "ENGINE_SPEED", {TYPE_INT32, TYPE_NULL, 0, 0} },
     { "Shift", "SHIFT", {TYPE_BYTE, TYPE_BYTE, TYPE_NULL, 0} },
     { "ShiftPosition", "SHIFT", {TYPE_BYTE, TYPE_BYTE, TYPE_NULL, 0} },
     { "Break_Signal", "BRAKE_SIGNAL", {TYPE_BOOL, TYPE_NULL, 0,0} },
     { "BreakSignal", "BRAKE_SIGNAL", {TYPE_BOOL, TYPE_NULL, 0,0} },
     { "Break", "BRAKE_SIGNAL", {TYPE_BOOL, TYPE_NULL, 0,0} },
-    { "WATER_TEMP", "WATER_TEMP", {TYPE_UINT16, TYPE_INT32, TYPE_UINT16, TYPE_NULL} },
+    { "Blinker", "TURN_SIGNAL", {TYPE_INT32, TYPE_NULL, 0, 0} },
+    { "Winker", "TURN_SIGNAL", {TYPE_INT32, TYPE_NULL, 0, 0} },
+    { "TurnSignal", "TURN_SIGNAL", {TYPE_INT32, TYPE_NULL, 0, 0} },
+    { "WATER_TEMP", "WATER_TEMP", {TYPE_INT32, TYPE_NULL, 0, 0} },
     { "\0", "\0", {TYPE_NULL, 0,0,0} } };
 
 struct KeyDataMsg_t

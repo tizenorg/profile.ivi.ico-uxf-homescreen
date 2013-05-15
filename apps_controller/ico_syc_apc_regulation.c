@@ -54,8 +54,8 @@ static const struct _vehicle_info_property {
       "/org/automotive/runningstatus/vehicleSpeed", "org.automotive.vehicleSpeed" },
     { ICO_SYC_VEHICLEINFO_SHIFT_POSITION, "ShiftPosition",
       "/org/automotive/runningstatus/transmission", "org.automotive.transmission" },
-    { ICO_SYC_VEHICLEINFO_BLINKER, "Blinker",
-      "\0", "\0" },
+    { ICO_SYC_VEHICLEINFO_TURN_SIGNAL, "TurnSignal",
+      "/org/automotive/runningstatus/turnSignal", "org.automotive.turnSignal" },
     { 0, "\0", "\0", "\0" }
 };
 
@@ -206,11 +206,11 @@ get_vehicle_info(void)
 
         if (dbus_message_get_type(dbus_message) == DBUS_MESSAGE_TYPE_ERROR) {
             dbus_message_unref(dbus_message);
-            dbus_pending_call_cancel(vehicle_data[idx].pending);
+            dbus_pending_call_unref(vehicle_data[idx].pending);
             vehicle_data[idx].pending = NULL;
             vehicle_data[idx].errcount ++;
             if (vehicle_data[idx].errcount <= 5)    {
-                apfw_warn("get_vehicle_info: (%s) reply error", vehicle_info[idx].property);
+                apfw_trace("get_vehicle_info: (%s) reply error", vehicle_info[idx].property);
             }
             continue;
         }
@@ -256,7 +256,7 @@ get_vehicle_info(void)
         }
         /* free message and pending     */
         dbus_message_unref(dbus_message);
-        dbus_pending_call_cancel(vehicle_data[idx].pending);
+        dbus_pending_call_unref(vehicle_data[idx].pending);
         vehicle_data[idx].pending = NULL;
     };
     return ICO_SYC_EOK;
@@ -293,7 +293,7 @@ rule_engine_wake(void *user_data)
         else if (vehicle_data[idx].key == ICO_SYC_VEHICLEINFO_SHIFT_POSITION) {
             ShiftPosition = (int)vehicle_data[idx].val;
         }
-        else if (vehicle_data[idx].key == ICO_SYC_VEHICLEINFO_BLINKER) {
+        else if (vehicle_data[idx].key == ICO_SYC_VEHICLEINFO_TURN_SIGNAL) {
             Blinker = (int)vehicle_data[idx].val;
         }
     }

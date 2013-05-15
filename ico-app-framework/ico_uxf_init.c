@@ -73,7 +73,7 @@ static void ico_uxf_input_inputcb(void *data, struct ico_exinput *ico_exinput,
                                   int32_t code, int32_t state);
 
 /* AppCore(AUL) callback function   */
-static int ico_uxf_aul_deadcb(int pid, void *data);
+static int ico_uxf_aul_aulcb(int pid, void *data);
 
 /* Variables & Tables               */
 Ico_Uxf_Api_Mng         gIco_Uxf_Api_Mng = { 0 };
@@ -308,8 +308,9 @@ ico_uxf_init(const char *name)
     ico_window_mgr_set_eventcb(gIco_Uxf_Api_Mng.Wayland_WindowMgr, 1);
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
 
-    /* application die callback from AppCore(aul)   */
-    aul_listen_app_dead_signal(ico_uxf_aul_deadcb, NULL);
+    /* application launch/dead callback from AppCore(aul)   */
+    aul_listen_app_launch_signal(ico_uxf_aul_aulcb, (void *)0);
+    aul_listen_app_dead_signal(ico_uxf_aul_aulcb, (void *)1);
 
     gIco_Uxf_Api_Mng.Initialized = 1;
 
@@ -1365,26 +1366,33 @@ ico_uxf_input_inputcb(void *data, struct ico_exinput *ico_exinput, uint32_t time
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_uxf_aul_deadcb: AppCore(AUL) application dead callback(static function)
+ * @brief   ico_uxf_aul_aulcb: AppCore(AUL) application launch/dead callback(static function)
  *
- * @param[in]   pid             dead application process Id
- * @param[in]   data            user data(unused)
+ * @param[in]   pid             target application process Id
+ * @param[in]   data            user data(0=launch, 1=dead)
  * @return      result(always 0, means success)
  */
 /*--------------------------------------------------------------------------*/
 static int
-ico_uxf_aul_deadcb(int pid, void *data)
+ico_uxf_aul_aulcb(int pid, void *data)
 {
     Ico_Uxf_Mng_Process     *proc;
     int                     hash;
     Ico_Uxf_Mng_EventQue    *que;
+    int                     dead;
+    char                    appid[ICO_UXF_MAX_PROCESS_NAME+1];
 
-    uifw_trace("ico_uxf_aul_deadcb: Enter(pid=%d)", pid);
+    dead = (int)data;
+    memset(appid, 0, sizeof(appid));
+    (void) aul_app_get_appid_bypid(pid, appid, sizeof(appid));
+
+    uifw_trace("ico_uxf_aul_aulcb: Enter(pid=%d, dead=%d, appid=%s)", pid, dead, appid);
 
     for (hash = 0; hash < ICO_UXF_MISC_HASHSIZE; hash++) {
         proc = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
         while (proc)   {
             if (proc->attr.internalid == pid) break;
+            if (strcmp(proc->attr.process, appid) == 0) break;
             proc = proc->nextidhash;
         }
         if (proc) break;
@@ -1392,30 +1400,50 @@ ico_uxf_aul_deadcb(int pid, void *data)
     if (! proc) {
         /* not handle process,  */
         /* or the process is correctly terminated by ico_uxf_process_terminate */
-        uifw_trace("ico_uxf_aul_deadcb: Leave(not find)");
+        uifw_trace("ico_uxf_aul_aulcb: Leave(not find)");
         return 0;
     }
-    uifw_trace("ico_uxf_aul_deadcb: find(appid=%s)", proc->attr.process);
+    uifw_trace("ico_uxf_aul_aulcb: find(appid=%s)", proc->attr.process);
 
     ico_uxf_enter_critical();
     /* set event */
     que = ico_uxf_alloc_eventque();
-    que->detail.event = ICO_UXF_EVENT_TERMPROCESS;
     strncpy(que->detail.process.process, proc->attr.process, ICO_UXF_MAX_PROCESS_NAME);
-    que->detail.process.status = ICO_UXF_PROCSTATUS_STOP;
+    if (dead)   {
+        que->detail.event = ICO_UXF_EVENT_TERMPROCESS;
+        que->detail.process.status = ICO_UXF_PROCSTATUS_STOP;
 
-    /* delete process info */
-    proc->attr.status = ICO_UXF_PROCSTATUS_STOP;
-    proc->attr.internalid = -1;
-    proc->attr.mainwin.window = 0;
-    ico_uxf_free_procwin(proc);
+        /* delete process info */
+        proc->attr.status = ICO_UXF_PROCSTATUS_STOP;
+        proc->attr.internalid = -1;
+        proc->attr.mainwin.window = 0;
+        ico_uxf_free_procwin(proc);
+    }
+    else    {
+        que->detail.event = ICO_UXF_EVENT_EXECPROCESS;
+        que->detail.process.status = ICO_UXF_PROCSTATUS_RUN;
+
+        /* setup process info */
+        if (proc->attr.status != ICO_UXF_PROCSTATUS_RUN)    {
+            proc->attr.internalid = pid;
+            if (proc->attr.status != ICO_UXF_PROCSTATUS_INIT)   {
+                /* child process, search parent process */
+                uifw_trace("ico_uxf_aul_aulcb: fork&exec %s", proc->attr.process);
+                proc->attr.child = 1;
+            }
+            else    {
+                proc->attr.child = 0;
+            }
+            proc->attr.status = ICO_UXF_PROCSTATUS_RUN;
+        }
+    }
 
     /* notify event */
     ico_uxf_regist_eventque(que);
 
     ico_uxf_leave_critical();
 
-    uifw_trace("ico_uxf_aul_deadcb: Leave");
+    uifw_trace("ico_uxf_aul_aulcb: Leave");
     return 0;
 }
 

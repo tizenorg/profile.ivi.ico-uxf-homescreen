@@ -33,7 +33,7 @@ sleep 0.3
 # 5. Start Weston
 ORG_UMASK=`umask`
 umask 000
-/usr/bin/weston --backend=drm-backend.so --idle-time=0 --log=/var/log/ico/weston.log &
+/usr/bin/weston --backend=drm-backend.so --idle-time=0 --log=/var/log/weston.log &
 sync;sync
 sleep 0.8
 if [ -f $XDG_RUNTIME_DIR/wayland-0 ] ; then

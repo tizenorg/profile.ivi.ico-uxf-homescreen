@@ -101,6 +101,8 @@ typedef struct _ico_uxf_conf_application {
     char *exec;
     char *type;
     int hostId;
+    char noicon;
+    char res[3];                    /* (unused)     */
     char *location;
     char *icon_key_name;
     short kindId;

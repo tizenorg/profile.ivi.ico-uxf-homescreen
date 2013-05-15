@@ -132,7 +132,7 @@ typedef struct  _Ico_Uxf_ProcessAttr    {
     Ico_Uxf_ProcessWin  *subwin;        /* Sub window of application            */
     short               status;         /* Running status                       */
     char                active;         /* Active/Inactive                      */
-    char                res;            /* (unused)                             */
+    char                child;          /* Child process                        */
 }   Ico_Uxf_ProcessAttr;
 
 /* Detail of event                          */
@@ -158,7 +158,7 @@ typedef union  _Ico_Uxf_EventDetail    {
     struct  {                           /* Application event                    */
         int             event;          /* Event number                         */
         /* Event about the operating conditions change of the application       */
-        /* TERMPROCESS                                                          */
+        /* EXECPROCESS, TERMPROCESS                                             */
         char            process[ICO_UXF_MAX_PROCESS_NAME+1];
                                         /* Application ID                       */
         int             status;         /* Running status                       */

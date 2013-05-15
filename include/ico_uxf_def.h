@@ -41,9 +41,10 @@ extern "C" {
 #define ICO_UXF_DISPLAYTYPE_REARRIGHT   6           /* Rear-seat display(right)     */
 
 /* Window active status                     */
-#define ICO_UXF_WINDOW_INACTIVE     0               /* not active                   */
-#define ICO_UXF_WINDOW_ACTIVE       1               /* active                       */
-#define ICO_UXF_WINDOW_SELECT       2               /* window selected by operation */
+#define ICO_UXF_WINDOW_INACTIVE         0           /* not active                   */
+#define ICO_UXF_WINDOW_POINTER_ACTIVE   1           /* pointer active               */
+#define ICO_UXF_WINDOW_KEYBOARD_ACTIVE  2           /* keyboard active              */
+#define ICO_UXF_WINDOW_SELECT           4           /* window selected by operation */
 
 /* Policy                                   */
 #define ICO_UXF_POLICY_ALWAYS           0           /* No control                   */
@@ -57,9 +58,11 @@ extern "C" {
 /* Privilege                                */
 #define ICO_UXF_PRIVILEGE_ALMIGHTY      0           /* almighty privilege           */
 #define ICO_UXF_PRIVILEGE_SYSTEM        1           /* system level                 */
-#define ICO_UXF_PRIVILEGE_MAKER         2           /* maker level                  */
-#define ICO_UXF_PRIVILEGE_CERTIFICATE   3           /* certificated                 */
-#define ICO_UXF_PRIVILEGE_NONE          4           /* no privilege                 */
+#define ICO_UXF_PRIVILEGE_SYSTEM_AUDIO  2           /* system level(audio only)     */
+#define ICO_UXF_PRIVILEGE_SYSTEM_VISIBLE 3          /* system level(visible only)   */
+#define ICO_UXF_PRIVILEGE_MAKER         4           /* maker level                  */
+#define ICO_UXF_PRIVILEGE_CERTIFICATE   5           /* certificated                 */
+#define ICO_UXF_PRIVILEGE_NONE          6           /* no privilege                 */
 
 /* Event values                             */
 #define ICO_UXF_EVENT_ALL               0xffffffff  /* Mask value of all events     */
@@ -70,10 +73,11 @@ extern "C" {
 #define ICO_UXF_EVENT_NEWWINDOW         0x00000010  /* Created new window           */
 #define ICO_UXF_EVENT_DESTORYWINDOW     0x00000020  /* Destroyed a window           */
 #define ICO_UXF_EVENT_ACTIVEWINDOW      0x00000040  /* Change window active status  */
+#define ICO_UXF_EVENT_EXECPROCESS       0x00000100  /* Application started          */
 #define ICO_UXF_EVENT_TERMPROCESS       0x00000200  /* Application stopped          */
 #define ICO_UXF_EVENT_EXINPUT           0x00200000  /* extra input event            */
 
-#define ICO_UXF_EVENT_VALIDALL          0x8020027f  /* Set of the event with a meaning*/
+#define ICO_UXF_EVENT_VALIDALL          0x8020037f  /* Set of the event with a meaning*/
 
 /* Application status                       */
 #define ICO_UXF_PROCSTATUS_STOP     0x00000000      /* Stopped                      */

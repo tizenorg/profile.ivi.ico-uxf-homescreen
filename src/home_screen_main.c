@@ -57,11 +57,14 @@ struct _hs_tile_info {
 };
 
 #define HS_DISPLAY_HOMESCREEN   0           /* HomeScreen target display Id     */
+
 #define HS_LAYER_BACKGROUND     0           /* layer of BackGround              */
 #define HS_LAYER_HOMESCREEN     1           /* layer of HomeScreen menu         */
 #define HS_LAYER_APPLICATION    2           /* layer of Application             */
-#define HS_LAYER_TOUCH          3           /* layer of TouchPanel              */
-#define HS_LAYER_ONSCREEN       4           /* layer of OnScreen                */
+#define HS_LAYER_SOFTKEYBOARD   3           /* layer of Software Keyboard       */
+#define HS_LAYER_INTERRUPTAPP   4           /* layer of Interrupted Application */
+#define HS_LAYER_TOUCH          5           /* layer of TouchPanel              */
+#define HS_LAYER_ONSCREEN       6           /* layer of OnScreen                */
 
 /*============================================================================*/
 /* static(internal) functions prototype                                       */
@@ -122,6 +125,8 @@ static int hs_tile_cnt = 0;
 static void
 hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
 {
+    const Ico_Uxf_conf_application *appConf;
+
     uifw_trace("... Event=%08x Arg=%d", ev, arg);
 
     Ico_Uxf_WindowAttr winAttr;
@@ -130,8 +135,7 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
     int dispW, dispH;
 
     if (ev == ICO_UXF_EVENT_NEWWINDOW) {
-        uifw_trace(
-                   "  D(Window) ev=%08x disp=%d win=%x x/y=%d/%d w/h=%d/%d v/r/a=%d/%d/%d",
+        uifw_trace("  D(Window) ev=%08x disp=%d win=%x x/y=%d/%d w/h=%d/%d v/r/a=%d/%d/%d",
                    dd.event, dd.window.display, dd.window.window,
                    dd.window.x, dd.window.y, dd.window.w, dd.window.h,
                    dd.window.visible, dd.window.raise, dd.window.active);
@@ -182,8 +186,6 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
                         hs_tile_show_screen();
                     }
                     if (hs_stat_touch == ICO_HS_TOUCH_IN_HIDE) {
-                        /* set layer of Application                     */
-                        ico_uxf_window_layer(dd.window.window, HS_LAYER_APPLICATION);
                         hs_set_appscreen(winAttr.process);
                     }
                 }
@@ -210,9 +212,22 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
                         != 0) &&
                     (strncmp(winAttr.process, gOnscreenName, ICO_UXF_MAX_PROCESS_NAME)
                         != 0))  {
-                    ico_uxf_window_active(dd.window.window);
-                    ico_uxf_window_raise(dd.window.window);
-                    ico_syc_apc_active(winAttr.process);
+                    /* if selected application is soft-keyboard, activate only pointer, */
+                    /* other case activate pointer and keyboard                         */
+                    appConf = ico_uxf_getAppByAppid(winAttr.process);
+                    if ((appConf != NULL) &&
+                        (appConf->display[0].layerId == HS_LAYER_SOFTKEYBOARD)) {
+                        ico_uxf_window_active(dd.window.window,
+                                              ICO_UXF_WINDOW_POINTER_ACTIVE);
+                        ico_uxf_window_raise(dd.window.window);
+                    }
+                    else    {
+                        ico_uxf_window_active(dd.window.window,
+                                              ICO_UXF_WINDOW_POINTER_ACTIVE |
+                                                  ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
+                        ico_uxf_window_raise(dd.window.window);
+                        ico_syc_apc_active(winAttr.process);
+                    }
                 }
             }
         }
@@ -233,21 +248,6 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
 static Eina_Bool
 hs_ecore_uxf_eventfd(void *data, Ecore_Fd_Handler *handler)
 {
-#if 0               /* too many tracelog, change to comment out */
-    uifw_trace("hs_ecore_uxf_eventfd: Enter(fd=%d)",
-               ecore_main_fd_handler_fd_get(handler));
-
-    if (ecore_main_fd_handler_active_get(handler, ECORE_FD_READ)) {
-        uifw_trace("hs_ecore_uxf_eventfd: ECORE_FD_READ");
-    }
-    else if (ecore_main_fd_handler_active_get(handler, ECORE_FD_WRITE)) {
-        uifw_trace("hs_ecore_uxf_eventfd: ECORE_FD_WRITE");
-    }
-    else if (ecore_main_fd_handler_active_get(handler, ECORE_FD_ERROR)) {
-        uifw_trace("hs_ecore_uxf_eventfd: ECORE_FD_ERROR");
-    }
-#endif              /* too many tracelog, change to comment out */
-
     ico_uxf_main_loop_iterate();
 
     return EINA_TRUE;
@@ -341,6 +341,7 @@ hs_set_appscreen(const char *appid)
     int idx;
     int ret;
     Ico_Uxf_ProcessWin window;
+    const Ico_Uxf_conf_application *appConf;
 
     idx = hs_get_index_appscreendata(appid);
 
@@ -359,8 +360,31 @@ hs_set_appscreen(const char *appid)
                    hs_app_screen_window[idx].resize_h,
                    hs_app_screen_window[idx].move_x,
                    hs_app_screen_window[idx].move_y);
+#if 0
+#if 1   /* 05/15 TEST TEST TEST */
+        if ((hs_app_screen_window[idx].move_x < 0) &&
+            (hs_app_screen_window[idx].move_y < 0)) {
+            hs_app_screen_window[idx].visible = 1;
+            hs_app_screen_window[idx].raise = 1;
+            hs_app_screen_window[idx].resize_w = 1920;
+            hs_app_screen_window[idx].resize_h = 1016;
+            hs_app_screen_window[idx].move_x = 0;
+            hs_app_screen_window[idx].move_y = 64;
+        }
+#endif
+#endif
         /* move application window to application layer */
-        ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
+        appConf = ico_uxf_getAppByAppid(hs_app_screen_window[idx].appid);
+        if (! appConf)  {
+            ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
+            /* show application layer                       */
+            ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 1);
+        }
+        else    {
+            ico_uxf_window_layer(window.window, appConf->display[0].layerId);
+            /* show application layer                       */
+            ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, appConf->display[0].layerId, 1);
+        }
         ico_uxf_window_move(window.window, hs_app_screen_window[idx].move_x,
                             hs_app_screen_window[idx].move_y);
         ico_uxf_window_resize(window.window,
@@ -369,8 +393,6 @@ hs_set_appscreen(const char *appid)
         ico_uxf_window_visible_raise(window.window,
                                      hs_app_screen_window[idx].visible,
                                      hs_app_screen_window[idx].raise);
-        /* show application layer                       */
-        ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 1);
         /* hide HomeScreen layer                        */
         ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
     }
@@ -468,12 +490,20 @@ hs_show_appscreen(const char *appid)
                                     hs_app_screen_window[ii].move_x,
                                     hs_app_screen_window[ii].move_y);
                 ico_uxf_window_show(window.window);
-                ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
+                if (! appConf)  {
+                    ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
+                    /* show application layer                       */
+                    ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 1);
+                }
+                else    {
+                    ico_uxf_window_layer(window.window, appConf->display[0].layerId);
+                    /* show application layer                       */
+                    ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN,
+                                          appConf->display[0].layerId, 1);
+                }
             }
         }
     }
-    /* show application layer                       */
-    ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 1);
     /* hide HomeScreen layer menu                   */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
 
@@ -519,7 +549,14 @@ hs_show_appscreen(const char *appid)
                        hs_app_screen_window[idx].move_x,
                        hs_app_screen_window[idx].move_y);
             /* activate application window                  */
-            ico_uxf_window_active(window.window);
+            if ((appConf != NULL) && (appConf->display[0].layerId == HS_LAYER_SOFTKEYBOARD)) {
+                ico_uxf_window_active(window.window, ICO_UXF_WINDOW_POINTER_ACTIVE);
+            }
+            else    {
+                ico_uxf_window_active(window.window,
+                                      ICO_UXF_WINDOW_POINTER_ACTIVE |
+                                          ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
+            }
             ico_uxf_window_raise(window.window);
             ico_syc_apc_active(appid);
 
@@ -531,10 +568,18 @@ hs_show_appscreen(const char *appid)
                                 hs_app_screen_window[idx].move_x,
                                 hs_app_screen_window[idx].move_y);
             ico_uxf_window_visible_raise(window.window, 1, 1);
-            ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
+            if (! appConf)  {
+                ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
+                /* show application layer                       */
+                ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 1);
+            }
+            else    {
+                ico_uxf_window_layer(window.window, appConf->display[0].layerId);
+                /* show application layer                       */
+                ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN,
+                                      appConf->display[0].layerId, 1);
+            }
             hs_app_screen_window[idx].visible = 1;
-            /* show application layer                       */
-            ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 1);
             /* hide HomeScreen layer                        */
             ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
         }
@@ -1679,7 +1724,6 @@ main(int argc, char *argv[])
     ret = ico_syc_apc_init(hs_display_control, hs_sound_control, hs_input_control);
     if (ret != ICO_SYC_EOK) {
         uifw_error("ico_syc_apc_init err=%d", ret);
-        exit(9);
     }
 
     /* start default tile apps */

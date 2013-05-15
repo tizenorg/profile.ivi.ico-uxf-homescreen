@@ -15,6 +15,15 @@ ln -s /usr/lib/libico-app-fw.so.0.0.5 /usr/lib/libico-app-fw.so.0
 ln -s /usr/lib/libico-app-fw.so.0.0.5 /usr/lib/libico-app-fw.so
 chmod 0755 /usr/lib/libico-app-fw.so.0.0.5
 
+#test tools
+rm -fr /usr/bin/ico_send_hscommand
+rm -fr /usr/bin/ico_send_inputevent
+rm -fr /usr/bin/ico_set_vehicleinfo
+cp test/ico_send_hscommand /usr/bin
+cp test/ico_send_inputevent /usr/bin
+cp test/ico_set_vehicleinfo /usr/bin
+chmod 0755 /usr/bin/ico_send_hscommand /usr/bin/ico_send_inputevent /usr/bin/ico_set_vehicleinfo
+
 #HomeScreen
 HOMESCREEN=org.tizen.ico.homescreen
 rm -rf /opt/apps/$HOMESCREEN/var

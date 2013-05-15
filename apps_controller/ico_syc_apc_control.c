@@ -280,7 +280,8 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
     }
     if ((info->state >= ICO_APF_SOUND_COMMAND_MIN) &&
         ((confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_ALMIGHTY) ||
-         (confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_SYSTEM)))    {
+         (confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_SYSTEM) ||
+         (confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_SYSTEM_AUDIO)))  {
         /* System Program(ex. HomeScreen) no need resource control  */
         apfw_trace("resource_reqcb: Leave(appid[%s] is system program)",
                    info->appid);
@@ -2502,7 +2503,8 @@ app_display_hook(const char *appid, const int surface, const int object)
         return;
     }
     if ((confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_ALMIGHTY) ||
-        (confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_SYSTEM))  {
+        (confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_SYSTEM) ||
+        (confsys->kind[appconf->kindId].priv == ICO_UXF_PRIVILEGE_SYSTEM_VISIBLE))  {
         /* System Program(ex. HomeScreen) no need resource control  */
         apfw_trace("app_display_hook: Leave(appid[%s] is system program)", appid);
         return;

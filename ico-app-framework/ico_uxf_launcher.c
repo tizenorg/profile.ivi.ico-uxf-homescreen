@@ -102,6 +102,9 @@ ico_uxf_process_execute(const char *name)
 
     /* execute program                      */
     proc->attr.internalid = aul_launch_app(name ,appBundle);
+    if (appBundle != NULL) {
+        bundle_free(appBundle);
+    }
     if (proc->attr.internalid < 0)  {
         uifw_error("ico_uxf_process_execute: Leave(ENOSYS), Launch App Error(%d)",
                    proc->attr.internalid);
@@ -206,6 +209,7 @@ ico_uxf_process_attribute_get(const char *process, Ico_Uxf_ProcessAttr *attr)
  *
  * @param[in]   process     process's identity
  * @return  result
+ * @retval  2               process is child process
  * @retval  1               process is active
  * @retval  0               process is not active
  */
@@ -226,6 +230,10 @@ ico_uxf_process_is_active(const char *process)
         return 0;
     }
 
+    if (proc->attr.child)   {
+        uifw_trace("ico_uxf_process_is_active: %s is Child", process);
+        return 2;
+    }
     uifw_trace("ico_uxf_process_is_active: %s is %s",
                process, proc->attr.active ? "Active" : "Inactive");
     return proc->attr.active;

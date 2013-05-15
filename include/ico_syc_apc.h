@@ -19,7 +19,7 @@
 #include "ico_uxf_sysdef.h"
 #include "ico_uxf_conf.h"
 #include "ico_uxf_def.h"
-#include "ico_syc_error.h"
+#include "ico_syc_def.h"
 
 #ifdef __cplusplus
 extern "C" {

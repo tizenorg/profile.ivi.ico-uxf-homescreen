@@ -73,7 +73,7 @@ int ico_uxf_window_raise(const int window);
                                         /* Raise window                         */
 int ico_uxf_window_lower(const int window);
                                         /* Lower window                         */
-int ico_uxf_window_active(const int window);
+int ico_uxf_window_active(const int window, const int target);
                                         /* Activate window                      */
 int ico_uxf_window_control(const char *appid, const int winidx,
                            const int control, const int onoff);

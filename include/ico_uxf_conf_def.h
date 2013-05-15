@@ -33,6 +33,7 @@ extern "C" {
 
 /* Configuration file names                                 */
 #define ICO_UXF_CONFIG_SYSTEM   "system.conf"
+#define ICO_UXF_CONFIG_APPATTR  "app_attr.conf"
 
 /* Directory of application manifest                        */
 #define ICO_UXF_CONFIG_APPSDIR  "apps"

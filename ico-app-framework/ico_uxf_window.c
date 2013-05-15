@@ -285,6 +285,7 @@ ico_uxf_window_lower(const int window)
  * @brief   ico_uxf_window_active: active window(surface)
  *
  * @param[in]   window          window Id(same as ico_window_mgr surface Id)
+ * @param[in]   target          target(pointer and/or keyboard)
  * @return      result
  * @retval      ICO_UXF_EOK     success
  * @retval      ICO_UXF_ESRCH   error(not initialized)
@@ -292,14 +293,14 @@ ico_uxf_window_lower(const int window)
  */
 /*--------------------------------------------------------------------------*/
 ICO_APF_API int
-ico_uxf_window_active(const int window)
+ico_uxf_window_active(const int window, const int target)
 {
     Ico_Uxf_Mng_Window  *winmng;
     Ico_Uxf_Mng_Process *proc;
     Ico_Uxf_Mng_Process *aproc;
     int                 hash;
 
-    uifw_trace("ico_uxf_window_active: Enter(%08x)", window);
+    uifw_trace("ico_uxf_window_active: Enter(%08x,%x)", window, target);
 
     if (gIco_Uxf_Api_Mng.Initialized <= 0) {
         uifw_warn("ico_uxf_window_active: Leave(ESRCH)");
@@ -313,7 +314,7 @@ ico_uxf_window_active(const int window)
     }
 
     uifw_trace("ico_uxf_window_active: ico_window_mgr_set_active(%08x)", window);
-    ico_window_mgr_set_active(gIco_Uxf_Api_Mng.Wayland_WindowMgr, window);
+    ico_window_mgr_set_active(gIco_Uxf_Api_Mng.Wayland_WindowMgr, window, target);
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
 
     /* reset all active window widthout target window   */
@@ -321,10 +322,15 @@ ico_uxf_window_active(const int window)
         winmng = gIco_Uxf_Api_Mng.Hash_WindowId[hash];
         while (winmng) {
             if (winmng->attr.window == window)  {
-                winmng->attr.active = 1;
+                winmng->attr.active = target;
             }
             else    {
-                winmng->attr.active = 0;
+                if (target == 0)    {
+                    winmng->attr.active = 0;
+                }
+                else    {
+                    winmng->attr.active &= ~target;
+                }
             }
             winmng = winmng->nextidhash;
         }
@@ -339,12 +345,17 @@ ico_uxf_window_active(const int window)
                 aproc = proc;
             }
             else    {
-                proc->attr.active = 0;
+                if (target == 0)    {
+                    proc->attr.active = 0;
+                }
+                else    {
+                    proc->attr.active &= ~target;
+                }
             }
             proc = proc->nextidhash;
         }
     }
-    aproc->attr.active = 1;
+    aproc->attr.active = target;
 
     uifw_trace("ico_uxf_window_active: Leave(EOK)");
     return ICO_UXF_EOK;

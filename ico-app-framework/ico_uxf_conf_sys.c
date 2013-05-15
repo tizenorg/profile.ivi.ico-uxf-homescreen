@@ -376,6 +376,12 @@ reloadSysConfig(void)
         else if (strcasecmp(strp, "system") == 0)   {
             _ico_sys_config->kind[i].priv = ICO_UXF_PRIVILEGE_SYSTEM;
         }
+        else if (strcasecmp(strp, "system.audio") == 0)   {
+            _ico_sys_config->kind[i].priv = ICO_UXF_PRIVILEGE_SYSTEM_AUDIO;
+        }
+        else if (strcasecmp(strp, "system.visible") == 0)   {
+            _ico_sys_config->kind[i].priv = ICO_UXF_PRIVILEGE_SYSTEM_VISIBLE;
+        }
         else if (strcasecmp(strp, "maker") == 0)    {
             _ico_sys_config->kind[i].priv = ICO_UXF_PRIVILEGE_MAKER;
         }

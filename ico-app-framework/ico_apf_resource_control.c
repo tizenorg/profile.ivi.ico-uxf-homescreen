@@ -239,7 +239,7 @@ ico_apf_resource_init_client(const char *uri)
 {
     apfw_trace("ico_apf_resource_init_client: Enter(%s)", uri ? uri : "NULL");
 
-    if (resmgr_initialized != 0) {
+    if (resmgr_initialized & 1) {
         apfw_warn("ico_apf_resource_init_client: Leave(already intialiezed)");
         return ICO_APF_RESOURCE_E_NONE;
     }
@@ -275,7 +275,7 @@ ico_apf_resource_init_client(const char *uri)
     }
 
     /* chanage resmgr_client_intialized flag */
-    resmgr_initialized = 1;
+    resmgr_initialized |= 1;
 
     apfw_trace("ico_apf_resource_init_client: Leave(OK)");
     return ICO_APF_RESOURCE_E_NONE;
@@ -307,7 +307,7 @@ ico_apf_resource_term_client(void)
     }
 
     /* chanage resmgr_client_intialized flag */
-    resmgr_initialized = 0;
+    resmgr_initialized &= ~1;
 
     apfw_trace("ico_apf_resource_term_client: Leave");
 }
@@ -328,7 +328,7 @@ ico_apf_resource_init_server(const char *uri)
 {
     apfw_trace("ico_apf_resource_init_server: Enter(%s)", uri ? uri : "NULL");
 
-    if (resmgr_initialized != 0) {
+    if (resmgr_initialized & 2) {
         apfw_warn("ico_apf_resource_init_server: Leave(already intialiezed)");
         return ICO_APF_RESOURCE_E_NONE;
     }
@@ -337,13 +337,6 @@ ico_apf_resource_init_server(const char *uri)
     appsctl_handle = ico_apf_com_init_server(uri, ICO_APF_COM_TYPE_APPSCTL);
     if (! appsctl_handle)   {
         apfw_error("ico_apf_resource_init_server: Leave(can not create connection)");
-        return ICO_APF_RESOURCE_E_INIT_COM_FAILD;
-    }
-
-    /* initialize connection for Multi Input Manager    */
-    soundmgr_handle = ico_apf_com_init_client(NULL, ICO_APF_COM_TYPE_SOUNDMGR);
-    if (! soundmgr_handle)  {
-        apfw_error("ico_apf_resource_init_server: Leave(can not connect MSM)");
         return ICO_APF_RESOURCE_E_INIT_COM_FAILD;
     }
 
@@ -369,8 +362,18 @@ ico_apf_resource_init_server(const char *uri)
         return ICO_APF_RESOURCE_E_INIT_COM_FAILD;
     }
 
+    /* chanage resmgr_server_intialized flag    */
+    resmgr_initialized = 2;
+
+    /* initialize connection for Multi Sound Manager    */
+    soundmgr_handle = ico_apf_com_init_client(NULL, ICO_APF_COM_TYPE_SOUNDMGR);
+    if (! soundmgr_handle)  {
+        apfw_error("ico_apf_resource_init_server: Leave(can not connect MSM)");
+        return ICO_APF_RESOURCE_E_INIT_COM_FAILD;
+    }
+
     /* chanage resmgr_client_intialized flag */
-    resmgr_initialized = 1;
+    resmgr_initialized |= 1;
 
     apfw_trace("ico_apf_resource_init_server: Leave(OK)");
     return ICO_APF_RESOURCE_E_NONE;

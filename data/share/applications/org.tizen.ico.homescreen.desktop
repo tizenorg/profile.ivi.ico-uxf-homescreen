@@ -2,7 +2,7 @@ Name=HomeScreen
 Type=menu
 Exec=/opt/apps/org.tizen.ico.homescreen/bin/HomeScreen
 Icon=org.tizen.ico.homescreen.png
-Nodisplay=True
+NoDisplay=false
 Version=0.1.0
 Comment=home screen app
 Categories=Menu;HomeScreen;run=Center;noauto

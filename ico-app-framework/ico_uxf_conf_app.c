@@ -34,7 +34,7 @@ static void Ico_Uxf_conf_remakeAppHash(void);
 
 static Ico_Uxf_App_Config   *_ico_app_config = NULL;
 static Ico_Uxf_Sys_Config   *sys_config = NULL;
-static GKeyFile             *skeyfile = NULL;
+static GKeyFile             *sappfile = NULL;
 
 
 /*--------------------------------------------------------------------------*/
@@ -82,6 +82,7 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
     char    *app_category;
     char    add_category[256];
     int     i;
+    bool    bval;
     struct stat buff;
     Ico_Uxf_conf_application *apptbl;
 
@@ -114,18 +115,19 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
     if (strcmp(name, APP_CONF_AIL_NULL_STR) == 0) {
         name = NULL;
     }
+
     /* get default category of this application */
     add_category[0] = 0;
     error = NULL;
-    app_category = g_key_file_get_string(skeyfile, "app-category", package, &error);
+    app_category = g_key_file_get_string(sappfile, "app-attributes", package, &error);
     if (error != NULL)  {
         g_clear_error(&error);
         error = NULL;
-        app_category = g_key_file_get_string(skeyfile, "app-category", name, &error);
+        app_category = g_key_file_get_string(sappfile, "app-attributes", name, &error);
     }
     if (error != NULL)  {
         g_clear_error(&error);
-        apfw_trace("infoAilpkg: %s(%s) dose not has app-category", package, name);
+        apfw_trace("infoAilpkg: %s(%s) dose not has app-attributes", package, name);
     }
     else    {
         apfw_trace("infoAilpkg: %s(%s) has app-category=%s", package, name, app_category);
@@ -166,10 +168,15 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
         exec = NULL;
     }
 
-    if ((package != NULL) && (icon != NULL) && (*package != 0) && (*icon != 0)) {
+    if ((package != NULL) && (*package != 0))   {
         apptbl = &_ico_app_config->application[_ico_app_config->applicationNum];
         apptbl->appid = strdup(package);
-        apptbl->icon_key_name = strdup(icon);
+        if (icon)   {
+            apptbl->icon_key_name = strdup(icon);
+        }
+        else    {
+            apptbl->icon_key_name = strdup("\0");
+        }
         if ((name != NULL) && (*name != 0)) {
             apptbl->name = strdup(name);
         }
@@ -181,6 +188,17 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
         apptbl->hostId = sys_config->misc.default_hostId;
         apptbl->kindId = sys_config->misc.default_kindId;
         apptbl->categoryId = sys_config->misc.default_categoryId;
+
+        /* get NoDisplay    */
+        if ((icon != NULL) && (*icon != 0)) {
+            bval = false;
+            ail_appinfo_get_bool(appinfo, AIL_PROP_NODISPLAY_BOOL, &bval);
+            apptbl->noicon = (int)bval;
+        }
+        else    {
+            apfw_trace("infoAilpkg: %s(%s) has no icon", package, name);
+            apptbl->noicon = 1;
+        }
 
         /* analize categorys for extended attributes    */
         if (category)   {
@@ -569,16 +587,18 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
             apptbl->sound[0].soundId = sys_config->misc.default_soundId;
             apptbl->sound[0].zoneId = sys_config->misc.default_soundzoneId;
         }
-        apfw_trace("Ail.%d: appid=%s name=%s icon=%s exec=%s type=%s",
+        apfw_trace("Ail.%d: appid=%s name=%s exec=%s type=%s",
                    _ico_app_config->applicationNum, apptbl->appid, apptbl->name,
-                   icon, apptbl->exec, apptbl->type);
+                   apptbl->exec, apptbl->type);
         apfw_trace("Ail.%d: categ=%d kind=%d disp=%d layer=%d zone=%d "
-                   "sound=%d zone=%d auto=%d",
+                   "sound=%d zone=%d auto=%d noicon=%d",
                    _ico_app_config->applicationNum, apptbl->categoryId, apptbl->kindId,
                    apptbl->display[0].displayId, apptbl->display[0].layerId,
                    apptbl->display[0].zoneId, apptbl->sound[0].soundId,
-                   apptbl->sound[0].zoneId, apptbl->autostart);
+                   apptbl->sound[0].zoneId, apptbl->autostart, apptbl->noicon);
         _ico_app_config->applicationNum++;
+    }
+    else    {
     }
 
     if (_ico_app_config->applicationNum > num)
@@ -612,26 +632,26 @@ readAilApplist(void)
     }
 
     /* read system configuration file for application default category  */
-    skeyfile = g_key_file_new();
+    sappfile = g_key_file_new();
 
     GString* filepath = g_string_new("xx");
-    g_string_printf(filepath, "%s/%s", sys_config->misc.confdir, ICO_UXF_CONFIG_SYSTEM);
+    g_string_printf(filepath, "%s/%s", sys_config->misc.confdir, ICO_UXF_CONFIG_APPATTR);
 
-    if (! g_key_file_load_from_file(skeyfile, filepath->str,
+    if (! g_key_file_load_from_file(sappfile, filepath->str,
                                     G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS,
                                     &error)) {
         apfw_error("readAilApplist: %s %s", (char *)filepath->str, error->message);
-        g_key_file_free(skeyfile);
-        skeyfile = NULL;
+        g_key_file_free(sappfile);
+        sappfile = NULL;
     }
     g_string_free(filepath, TRUE);
 
     /* count packages */
     ret = ail_filter_count_appinfo(NULL, &num);
     if (ret != AIL_ERROR_OK) {
-        if( skeyfile)   {
-            g_key_file_free(skeyfile);
-            skeyfile = NULL;
+        if( sappfile)   {
+            g_key_file_free(sappfile);
+            sappfile = NULL;
         }
         return NULL;
     }
@@ -665,8 +685,8 @@ readAilApplist(void)
     /* create Hash Table                    */
     Ico_Uxf_conf_remakeAppHash();
 
-    if( skeyfile)   {
-        g_key_file_free(skeyfile);
+    if( sappfile)   {
+        g_key_file_free(sappfile);
     }
 
     return _ico_app_config;

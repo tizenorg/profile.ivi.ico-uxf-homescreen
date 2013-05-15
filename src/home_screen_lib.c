@@ -685,6 +685,8 @@ hs_lib_realsend(hs_lib_msg_t *msg)
         uifw_warn("hs_lib_realsend: ERROR(fail to write ws)");
     }
 
+    hs_lib_free_msg(msg);
+
     uifw_warn("hs_lib_realsend: Leave(send len = %d)", n);
 
     usleep(200);
@@ -759,6 +761,7 @@ hs_lib_put_sendmsg(hs_lib_msg_t *send)
     }
     if (!handle) {
         uifw_trace("hs_lib_put_sendmsg: Leave(target(type:%d) does not exist", send->type);
+        hs_lib_free_msg(send);
         return ICO_HS_ERR;
     }
 

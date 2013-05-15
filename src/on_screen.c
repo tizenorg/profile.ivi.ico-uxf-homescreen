@@ -605,11 +605,11 @@ ons_get_appindex(int idx)
     int cnt = 0;
     Ico_Uxf_App_Config *appconf = (Ico_Uxf_App_Config *)ico_uxf_getAppConfig();
 
-    uifw_trace("ons_get_appindex: idx=%d appidx=%d appcnt=%d", idx, appidx,
-               ons_app_cnt);
+    uifw_trace("ons_get_appindex: idx=%d appidx=%d appcnt=%d", idx, appidx, ons_app_cnt);
 
     for (ii = 0; ii < appconf->applicationNum; ii++) {
-        if (strcmp(appconf->application[ii].type, ICO_HS_GROUP_SPECIAL) != 0) {
+        if ((! appconf->application[ii].noicon) &&
+            (strcmp(appconf->application[ii].type, ICO_HS_GROUP_SPECIAL) != 0)) {
             cnt++;
         }
         if (cnt == appidx) {
@@ -867,9 +867,13 @@ main(int argc, char *argv[])
     appconf = (Ico_Uxf_App_Config *)ico_uxf_getAppConfig();
     ons_app_cnt = appconf->applicationNum;
     for (appidx = 0; appidx < appconf->applicationNum; appidx++) {
-        if (strcmp(appconf->application[appidx].type, ICO_HS_GROUP_SPECIAL)
-                == 0) {
+        if ((appconf->application[appidx].noicon) ||
+            (strcmp(appconf->application[appidx].type, ICO_HS_GROUP_SPECIAL) == 0)) {
             ons_app_cnt--;
+            uifw_trace("Application list: No Need appid=%s noicon=%d type=%s",
+                       appconf->application[appidx].appid,
+                       appconf->application[appidx].noicon,
+                       appconf->application[appidx].type);
         }
     }
     cnt = 0;
