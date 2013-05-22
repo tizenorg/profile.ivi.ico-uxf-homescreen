@@ -1,20 +1,12 @@
-* Wed May 15 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp>
-- 0.3.02 release
-- Fix for TIVI-803 - Enable new UI in wayland build
-- Fix for TIVI-826 - weston-plugin should NOT create /root/ 
+* Wed May 22 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130520.093309@23824f8
+- Fix for TIVI-803 - Enable new UI in wayland build.
+- Fix for TIVI-826 - weston-plugin should NOT create /root/
 - Fix for TIVI-827 - Create symbolic link for /etc/rc.d/init.d/ico_weston to /etc/rc.d/rc3.d/.
 - Fix for TIVI-829 - [WLD] Text input box fails to switch to Edit mode(via touch screen)
 - Fix for TIVI-838 - [WLD] HomeScreen doesn't check NoDisplay parameter
 - fixed when change volume by setting application during sound reproduction,
   the sound right stolen by settign application, and a sound stops.
 - fixed reduced some memory leaks.
-* Tue May 14 2013 Ossama Othman <ossama.othman@intel.com>
-- Store HomeScreen process in PID file, not launch_app PID.
-- Update the app database after installation and removal.
-* Mon May 06 2013 Ossama Othman <ossama.othman@intel.com>
-- Leverage weston init script to gracefully start/stop weston. Misc cleanup.
-- Do not override $HOME. Weston init script already sets as needed.
-- Added missing init script sym link. Disable stand-alone weston boot. Cleanup.
 
 * Fri Apr 26 19:15:52 UTC 2013 - tracy.graydon@intel.com
 - Setting up 2.0alpha-wayland branch (master not used for IVI) 
