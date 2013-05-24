@@ -78,7 +78,7 @@ static struct libwebsocket_protocols ws_protocols[] = {
 /*============================================================================*/
 /* functions                                                                  */
 /*============================================================================*/
-static int 
+static int
 hscmd_callback_http(struct libwebsocket_context *context,
                          struct libwebsocket *wsi,
                          enum libwebsocket_callback_reasons reason, void *user,
@@ -103,7 +103,7 @@ hscmd_callback_http(struct libwebsocket_context *context,
  * @retval      =1                  error
  */
 /*--------------------------------------------------------------------------*/
-static int 
+static int
 hscmd_callback_command(struct libwebsocket_context *context,
                               struct libwebsocket *wsi,
                               enum libwebsocket_callback_reasons reason,
@@ -149,10 +149,10 @@ hscmd_callback_command(struct libwebsocket_context *context,
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-static void 
+static void
 hscmd_create_ws_context(void)
 {
-    hscmd_ws_context 
+    hscmd_ws_context
         = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN, NULL, ws_protocols,
                                       libwebsocket_internal_extensions,
                                       NULL, NULL, -1, -1, 0);
@@ -161,10 +161,10 @@ hscmd_create_ws_context(void)
     if (hscmd_ws_context == NULL) {
         fprintf(stderr, "libwebsocket_create_context failed.\n");
     } else {
-        hscmd_wsi_mirror 
+        hscmd_wsi_mirror
             = libwebsocket_client_connect(
                     hscmd_ws_context, ICO_HSCMD_WS_ADDRESS, hscmd_ws_port,
-                    0, "/", ICO_HSCMD_WS_ADDRESS, NULL, 
+                    0, "/", ICO_HSCMD_WS_ADDRESS, NULL,
                     ICO_HSCMD_WS_PROTOCOL_NAME, -1);
         if(hscmd_wsi_mirror != NULL) {
             hscmd_ws_connected = 1;
@@ -181,7 +181,7 @@ hscmd_create_ws_context(void)
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-static void 
+static void
 hscmd_destroy_ws_context(void)
 {
     if (hscmd_ws_context) {
@@ -191,7 +191,7 @@ hscmd_destroy_ws_context(void)
     }
 }
 
-static void 
+static void
 hscmd_ws_service_loop(void)
 {
     while (hscmd_ws_connected) {
@@ -209,7 +209,7 @@ hscmd_usage(const char *prog)
 /*--------------------------------------------------------------------------*/
 /*
  * @brief   test command tools
- *          send json format command to 
+ *          send json format command to
  *          main routine
  *
  * @param   main() finction's standard parameter (argc,argv)
@@ -218,7 +218,7 @@ hscmd_usage(const char *prog)
  * @retval  1       failed
  */
 /*--------------------------------------------------------------------------*/
-int 
+int
 main(int argc, char *argv[])
 {
 

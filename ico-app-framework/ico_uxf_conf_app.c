@@ -23,19 +23,51 @@
 #include <errno.h>
 #include <ail.h>
 
+#include <package-manager.h>
+
 #include "ico_apf_log.h"
 #include "ico_apf_apimacro.h"
 #include "ico_uxf_conf_common.h"
 
+/*==============================================================================*/
+/* define                                                                       */
+/*==============================================================================*/
 #define APP_CONF_AIL_NULL_STR   "(null)"
 
-static Ico_Uxf_App_Config *readAilApplist(void);
-static void Ico_Uxf_conf_remakeAppHash(void);
+#define APP_CONF_EVENT_OK           (0)
+#define APP_CONF_EVENT_FAIL         (1)
 
+typedef struct _conf_pkgmgr_event conf_pkgmgr_event_t;
+
+struct _conf_pkgmgr_event {
+    conf_pkgmgr_event_t *next;
+    char pkg_name[ICO_UXF_MAX_PROCESS_NAME];
+    int type;
+};
+
+/*==============================================================================*/
+/* define static function prototype                                             */
+/*==============================================================================*/
+static Ico_Uxf_App_Config *readAilApplist(void);
+static void ico_uxf_conf_remakeAppHash(void);
+static int ico_uxf_conf_pkgmgrEvent(int req_id, const char *pkg_type,
+                    const char *pkg_name, const char *key, const char *val,
+                    const void *pmsg, void *data);
+static int ico_uxf_conf_addPkgmgrEventListener(void);
+static int ico_uxf_conf_startEvent(const char *pkg_name, int type);
+static int ico_uxf_conf_endEvent(const char *pkg_name, int status);
+
+/*==============================================================================*/
+/* static tables                                                                */
+/*==============================================================================*/
 static Ico_Uxf_App_Config   *_ico_app_config = NULL;
+static Ico_Uxf_App_Config   *_ico_app_config_update = NULL;
 static Ico_Uxf_Sys_Config   *sys_config = NULL;
 static GKeyFile             *sappfile = NULL;
 
+static pkgmgr_client        *conf_pc = NULL;
+static conf_pkgmgr_event_t  *conf_prog_event = NULL;
+static Ico_Uxf_AppUpdata_Cb conf_cb_func = NULL;
 
 /*--------------------------------------------------------------------------*/
 /**
@@ -54,6 +86,7 @@ ico_uxf_getAppConfig(void)
         return _ico_app_config;
     }
     _ico_app_config = g_new0(Ico_Uxf_App_Config,1);
+    _ico_app_config_update = _ico_app_config;
     return readAilApplist();
 }
 
@@ -85,6 +118,8 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
     bool    bval;
     struct stat buff;
     Ico_Uxf_conf_application *apptbl;
+
+    _ico_app_config_update->ailNum++;
 
     /* get package name for appid */
     ail_appinfo_get_str(appinfo, AIL_PROP_PACKAGE_STR, &package);
@@ -169,7 +204,7 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
     }
 
     if ((package != NULL) && (*package != 0))   {
-        apptbl = &_ico_app_config->application[_ico_app_config->applicationNum];
+        apptbl = &_ico_app_config_update->application[_ico_app_config_update->applicationNum];
         apptbl->appid = strdup(package);
         if (icon)   {
             apptbl->icon_key_name = strdup(icon);
@@ -188,6 +223,7 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
         apptbl->hostId = sys_config->misc.default_hostId;
         apptbl->kindId = sys_config->misc.default_kindId;
         apptbl->categoryId = sys_config->misc.default_categoryId;
+        apptbl->invisiblecpu = 100;
 
         /* get NoDisplay    */
         if ((icon != NULL) && (*icon != 0)) {
@@ -211,7 +247,7 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
             Ico_Uxf_conf_sound      *sound;
             char    work[64];
 
-            apfw_trace("Ail.%d category=%s", _ico_app_config->applicationNum, category);
+            apfw_trace("Ail.%d category=%s", _ico_app_config_update->applicationNum, category);
 
             j = 0;
             for (i = 0;; i++)   {
@@ -557,12 +593,43 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                         apfw_error("infoAilpkg: [%s] unknown input", work);
                     }
 
+                    /* NoDisplay                */
+                    if ((found == 0) && (work[0] != 0)) {
+                        if (strncasecmp(work, "NoDisplay", 9) == 0)  {
+                            apptbl->noicon = 1;
+                            if (work[9] == '=') {
+                                if (strcasecmp(&work[10], "false") == 0)    {
+                                    apptbl->noicon = 0;
+                                }
+                            }
+                            found = 9;
+                        }
+                    }
+
+                    /* cpu % at invisible       */
+                    if ((found == 0) && (work[0] != 0)) {
+                        if (strncasecmp(work, "invisiblecpu", 12) == 0)  {
+                            apptbl->invisiblecpu = 0;
+                            if (work[12] == '=')    {
+                                if (strcasecmp(&work[13], "yes") == 0)  {
+                                    apptbl->invisiblecpu = 100;
+                                }
+                                else if (strcasecmp(&work[13], "no") != 0)  {
+                                    apptbl->invisiblecpu = strtol(&work[13], (char **)0, 0);
+                                    if (apptbl->invisiblecpu > 100)
+                                        apptbl->invisiblecpu = 100;
+                                }
+                            }
+                            found = 9;
+                        }
+                    }
+
                     /* start mode               */
                     if ((found == 0) && (work[0] != 0)) {
-                        if (strcasecmp(work, "auto") == 0)  {
+                        if (strcasecmp(work, "autostart") == 0)  {
                             apptbl->autostart = 1;
                         }
-                        else if (strcasecmp(work, "noauto") == 0)   {
+                        else if (strcasecmp(work, "noautostart") == 0)   {
                             apptbl->autostart = 0;
                         }
                         else    {
@@ -588,20 +655,21 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
             apptbl->sound[0].zoneId = sys_config->misc.default_soundzoneId;
         }
         apfw_trace("Ail.%d: appid=%s name=%s exec=%s type=%s",
-                   _ico_app_config->applicationNum, apptbl->appid, apptbl->name,
+                   _ico_app_config_update->applicationNum, apptbl->appid, apptbl->name,
                    apptbl->exec, apptbl->type);
         apfw_trace("Ail.%d: categ=%d kind=%d disp=%d layer=%d zone=%d "
-                   "sound=%d zone=%d auto=%d noicon=%d",
-                   _ico_app_config->applicationNum, apptbl->categoryId, apptbl->kindId,
+                   "sound=%d zone=%d auto=%d noicon=%d cpu=%d",
+                   _ico_app_config_update->applicationNum, apptbl->categoryId, apptbl->kindId,
                    apptbl->display[0].displayId, apptbl->display[0].layerId,
                    apptbl->display[0].zoneId, apptbl->sound[0].soundId,
-                   apptbl->sound[0].zoneId, apptbl->autostart, apptbl->noicon);
-        _ico_app_config->applicationNum++;
+                   apptbl->sound[0].zoneId, apptbl->autostart, apptbl->noicon,
+                   apptbl->invisiblecpu);
+        _ico_app_config_update->applicationNum++;
     }
     else    {
     }
 
-    if (_ico_app_config->applicationNum > num)
+    if (_ico_app_config_update->applicationNum > num)
         return AIL_CB_RET_CANCEL;
 
     return AIL_CB_RET_CONTINUE;
@@ -623,6 +691,8 @@ readAilApplist(void)
     int     ret, num, wnum;
     ail_filter_h filter;
     GError  *error = NULL;
+
+    _ico_app_config_update->applicationNum = 0;
 
     /* get system configuration */
     sys_config = (Ico_Uxf_Sys_Config *)ico_uxf_getSysConfig();
@@ -653,43 +723,90 @@ readAilApplist(void)
             g_key_file_free(sappfile);
             sappfile = NULL;
         }
+        apfw_trace("readAilApplist: Leave(Ail:cannot count appinfo) = %d", ret);
         return NULL;
     }
     apfw_trace("readAilApplist: number of off AIL package = %d", num);
 
     ail_filter_new(&filter);
     ail_filter_add_str(filter, AIL_PROP_TYPE_STR, "menu");
-    ail_filter_count_appinfo(filter, &num);
+    ret = ail_filter_count_appinfo(filter, &num);
+    if (ret != AIL_ERROR_OK) {
+        if( sappfile)   {
+            g_key_file_free(sappfile);
+            sappfile = NULL;
+        }
+        apfw_trace("readAilApplist: Leave(Ail:cannot count appinfo(menu)) = %d", ret);
+        return NULL;
+    }
     apfw_trace("readAilApplist: number of menu AIL package = %d", num);
     ail_filter_destroy(filter);
 
     ail_filter_new(&filter);
     ail_filter_add_str(filter, AIL_PROP_TYPE_STR, "Application");
-    ail_filter_count_appinfo(filter, &wnum);
+    ret = ail_filter_count_appinfo(filter, &wnum);
+    if (ret != AIL_ERROR_OK) {
+        if( sappfile)   {
+            g_key_file_free(sappfile);
+            sappfile = NULL;
+        }
+        apfw_trace("readAilApplist: Leave(Ail:cannot count appinfo(Application)) = %d", ret);
+        return NULL;
+    }
     apfw_trace("readAilApplist: number of Application AIL package = %d", wnum);
     ail_filter_destroy(filter);
     num += wnum;
 
-    _ico_app_config->application = g_new0(Ico_Uxf_conf_application, num);
+    _ico_app_config_update->application = g_new0(Ico_Uxf_conf_application, num);
 
     ail_filter_new(&filter);
-    ail_filter_add_str(filter, AIL_PROP_TYPE_STR, "menu");
-    ail_filter_list_appinfo_foreach(filter, infoAilpkg, (void *)num);
+    ret = ail_filter_add_str(filter, AIL_PROP_TYPE_STR, "menu");
+    ret = ail_filter_list_appinfo_foreach(filter, infoAilpkg, (void *)num);
+    if (ret != AIL_ERROR_OK) {
+        if( sappfile)   {
+            g_key_file_free(sappfile);
+            sappfile = NULL;
+        }
+        ail_filter_destroy(filter);
+        apfw_trace("readAilApplist: Leave(Ail:cannot get appinfo(menu)) = %d", ret);
+        return NULL;
+    }
     ail_filter_destroy(filter);
 
     ail_filter_new(&filter);
     ail_filter_add_str(filter, AIL_PROP_TYPE_STR, "Application");
-    ail_filter_list_appinfo_foreach(filter, infoAilpkg, (void *)num);
+    ret = ail_filter_list_appinfo_foreach(filter, infoAilpkg, (void *)num);
+    if (ret != AIL_ERROR_OK) {
+        if( sappfile)   {
+            g_key_file_free(sappfile);
+            sappfile = NULL;
+        }
+        ail_filter_destroy(filter);
+        apfw_trace("readAilApplist: Leave(Ail:cannot get appinfo(Application)) = %d", ret);
+        return NULL;
+    }
     ail_filter_destroy(filter);
 
+    if (_ico_app_config_update->ailNum != num) {
+        if( sappfile)   {
+            g_key_file_free(sappfile);
+            sappfile = NULL;
+        }
+        apfw_trace("readAilApplist: Leave(cannot read ail correctly %d =! %d", 
+                    _ico_app_config_update->ailNum, num);
+        return NULL;
+    }
+
     /* create Hash Table                    */
-    Ico_Uxf_conf_remakeAppHash();
+    ico_uxf_conf_remakeAppHash();
 
     if( sappfile)   {
         g_key_file_free(sappfile);
     }
+    
+    apfw_trace("readAilApplist: Leave");
 
-    return _ico_app_config;
+    return _ico_app_config_update;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -712,47 +829,47 @@ ico_uxf_closeAppConfig(void)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   Ico_Uxf_conf_remakeAppHash: make application hash table(static function)
+ * @brief   ico_uxf_conf_remakeAppHash: make application hash table(static function)
  *
  * @param       none
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
 static void
-Ico_Uxf_conf_remakeAppHash(void)
+ico_uxf_conf_remakeAppHash(void)
 {
     int         i;
     int         hash;
     Ico_Uxf_conf_application    *app;
 
-    memset(_ico_app_config->hashnametable, 0, sizeof(_ico_app_config->hashnametable));
+    memset(_ico_app_config_update->hashnametable, 0, sizeof(_ico_app_config_update->hashnametable));
 
-    for (i = 0; i < _ico_app_config->applicationNum; i++)  {
+    for (i = 0; i < _ico_app_config_update->applicationNum; i++)  {
 
-        _ico_app_config->application[i].nextidhash = NULL;
+        _ico_app_config_update->application[i].nextidhash = NULL;
         hash = ICO_UXF_MISC_HASHBYID(i);
-        app = _ico_app_config->hashidtable[hash];
+        app = _ico_app_config_update->hashidtable[hash];
         if (! app) {
-            _ico_app_config->hashidtable[hash] = &_ico_app_config->application[i];
+            _ico_app_config_update->hashidtable[hash] = &_ico_app_config_update->application[i];
         }
         else    {
             while (app->nextidhash)    {
                 app = app->nextidhash;
             }
-            app->nextidhash = &_ico_app_config->application[i];
+            app->nextidhash = &_ico_app_config_update->application[i];
         }
 
-        _ico_app_config->application[i].nextnamehash = NULL;
-        hash = ICO_UXF_MISC_HASHBYNAME(_ico_app_config->application[i].appid);
-        app = _ico_app_config->hashnametable[hash];
+        _ico_app_config_update->application[i].nextnamehash = NULL;
+        hash = ICO_UXF_MISC_HASHBYNAME(_ico_app_config_update->application[i].appid);
+        app = _ico_app_config_update->hashnametable[hash];
         if (! app) {
-            _ico_app_config->hashnametable[hash] = &_ico_app_config->application[i];
+            _ico_app_config_update->hashnametable[hash] = &_ico_app_config_update->application[i];
         }
         else    {
             while (app->nextnamehash)  {
                 app = app->nextnamehash;
             }
-            app->nextnamehash = &_ico_app_config->application[i];
+            app->nextnamehash = &_ico_app_config_update->application[i];
         }
     }
 }
@@ -856,5 +973,301 @@ ico_uxf_getAppDisplay(const Ico_Uxf_conf_application *app, const int idx,
     if (height) *height = zone->height;
 
     return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_conf_addPkgmgrEventListener:
+ *          request to listen the pkgmgr's broadcasting.
+ *
+ * @param       none
+ * @return      result
+ * @retval      ICO_UXF_EOK     success
+ * @retval      ICO_UXF_ENOSYS  cannot regist listener
+ */
+/*--------------------------------------------------------------------------*/
+static int
+ico_uxf_conf_addPkgmgrEventListener(void)
+{
+    int     ret;
+
+    if (conf_pc) {
+        /* already registied listener */
+        return ICO_UXF_EOK;
+    }
+
+    conf_pc = pkgmgr_client_new(PC_LISTENING);
+    if (conf_pc == NULL) {
+        apfw_trace("ico_uxf_conf_addPkgmgrEventListener: cannot create pkgmgr client");
+        return ICO_UXF_ENOSYS;
+    }
+
+    ret = pkgmgr_client_listen_status(conf_pc, ico_uxf_conf_pkgmgrEvent, NULL);
+    if (ret < 0) {
+        apfw_trace("ico_uxf_conf_addPkgmgrEventListener: "
+                   "cannot register listener of pkgmgr(%d)", ret);
+        pkgmgr_client_free(conf_pc);
+        conf_pc = NULL;
+        return ICO_UXF_ENOSYS;
+    }
+
+    return ICO_UXF_EOK;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_conf_pkgmgrEvent:
+ *          This is callback function from pkgmgr.
+ *
+ * @param[in]   req_id          request id
+ * @param[in]   pkg_type        package type
+ * @param[in]   pkg_name        package name
+ * @param[in]   key             broadcast key(=start/end/...)
+ * @param[in]   val             broadcast value(=install/uninstall/ok/fail)
+ * @param[in]   pmsg            broadcast comment
+ * @param[in]   data            user data
+ * @return      always 0
+ */
+/*--------------------------------------------------------------------------*/
+static int
+ico_uxf_conf_pkgmgrEvent(int req_id, const char *pkg_type, const char *pkg_name,
+                    const char *key, const char *val, const void *pmsg, void *data)
+{
+    apfw_trace("ico_uxf_conf_PkgmgrEvent: "
+               "Enter(pkg_type=%s, pkg_name=%s, key=%s, val=%s, pmsg=%s)",
+               pkg_type, pkg_name, key, val, pmsg);
+
+    if (strcasecmp(key, "start") == 0) {
+        if (strcasecmp(val, "install") == 0) {
+            ico_uxf_conf_startEvent(pkg_name, ICO_UXF_CONF_EVENT_INSTALL);
+        }
+        else if (strcasecmp(val, "uninstall") == 0) {
+            ico_uxf_conf_startEvent(pkg_name, ICO_UXF_CONF_EVENT_UNINSTALL);
+        }
+    }
+    else if (strcasecmp(key, "install_percent") == 0) {
+        ico_uxf_conf_startEvent(pkg_name, ICO_UXF_CONF_EVENT_INSTALL);
+    }
+    else if (strcasecmp(key, "progress_percent") == 0) {
+
+    }
+    else if (strcasecmp(key, "error") == 0) {
+    }
+    else if (strcasecmp(key, "end") == 0) {
+        if (strcasecmp(val, "ok") == 0) {
+            ico_uxf_conf_endEvent(pkg_name, APP_CONF_EVENT_OK);
+        }
+        else if (strcasecmp(val, "fail") == 0) {
+            ico_uxf_conf_endEvent(pkg_name, APP_CONF_EVENT_FAIL);
+        }
+    }
+
+    return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_conf_startEvent: mark event is start
+ *
+ * @param[in]   pkg_name        package name
+ * @param[in]   type            event type
+ * @return      result
+ * @retval      ICO_UXF_EOK     success
+ * @retval      ICO_UXF_ENOMEM  cannot allocate memory
+ */
+/*--------------------------------------------------------------------------*/
+static int
+ico_uxf_conf_startEvent(const char *pkg_name, int type)
+{
+    conf_pkgmgr_event_t *new = NULL;
+    conf_pkgmgr_event_t *event = NULL;
+
+    /* check the queue whether the package' event is exist */
+    event = conf_prog_event;
+    while (event) {
+        if (strncmp(event->pkg_name, pkg_name, ICO_UXF_MAX_PROCESS_NAME) == 0) {
+            new = event;
+            break;
+        }
+        event = event->next;
+    }
+
+    if (!new) {
+        new = malloc(sizeof(conf_pkgmgr_event_t));
+        if (!new) {
+            apfw_warn("ico_uxf_conf_startEvent: cannot allocate memory");
+            return ICO_UXF_ENOMEM;
+        }
+        memset(new, 0, sizeof(new));
+        /* insert queue */
+        event = conf_prog_event;
+        while (event) {
+            if (!event->next) {
+                break;
+            }
+            event = event->next;
+        }
+        if (!event) {
+            conf_prog_event = new;
+        }
+        else {
+            event->next = new;
+        }
+        strncpy(new->pkg_name, pkg_name, ICO_UXF_MAX_PROCESS_NAME);
+        new->type = type;
+    }
+
+
+
+    return ICO_UXF_EOK;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_conf_endEvent: mark event is end
+ *
+ * @param[in]   pkg_name        package name
+ * @param[in]   status          end status
+ * @return      result
+ * @retval      ICO_UXF_EOK     success
+ */
+/*--------------------------------------------------------------------------*/
+static int
+ico_uxf_conf_endEvent(const char *pkg_name, int status)
+{
+    int     type;
+    int     cnt;
+    int     ii, jj;
+    int     exist = 0;
+    conf_pkgmgr_event_t *current = NULL;
+    conf_pkgmgr_event_t *event;
+    conf_pkgmgr_event_t *bevent;
+    static Ico_Uxf_App_Config *config = NULL;
+    static Ico_Uxf_App_Config *tmp = NULL;
+
+    apfw_trace("ico_uxf_conf_endEvent: Enter(pkg=%s, stat=%d)", pkg_name, status);
+    /* get start event from queue */
+    event = conf_prog_event;
+    bevent = NULL;
+    while (event) {
+        if (strncmp(event->pkg_name, pkg_name, ICO_UXF_MAX_PROCESS_NAME) == 0) {
+            current = event;
+            break;
+        }
+        bevent = event;
+        event = event->next;
+    }
+    if (current) {
+        if (!bevent) {
+            /* top */
+            conf_prog_event = current->next;
+            current->next = NULL;
+        }
+        else {
+            bevent->next = current->next;
+            current->next = NULL;
+        }
+    }
+    else {
+        return ICO_UXF_ENOSYS;
+    }
+
+    type = current->type;
+    free(current);
+
+    if (status == APP_CONF_EVENT_OK) {
+        config = g_new0(Ico_Uxf_App_Config, 1);
+        _ico_app_config_update = config;
+        config = readAilApplist();
+        cnt = 0;
+        while (! config) {
+            usleep(10000);
+            apfw_trace("ico_uxf_conf_endEvent: Retry %d", cnt);
+            config = readAilApplist();
+            if (cnt > 500) {
+                break;
+            }
+            else {
+                cnt++;
+            }
+        }
+        if (! config) {
+            apfw_warn("ico_uxf_getAppByAppid: cannot access ail normally");
+            return ICO_UXF_EBUSY;
+        }
+        tmp = config;
+        /* old list */
+        config = _ico_app_config;
+        /* new list */
+        _ico_app_config = tmp;
+
+        if (type == ICO_UXF_CONF_EVENT_INSTALL) {
+            for (ii = 0; ii < _ico_app_config->applicationNum; ii++) {
+                exist = 0;
+                for (jj = 0; jj < config->applicationNum; jj++) {
+                    if (strcmp(_ico_app_config->application[ii].appid,
+                               config->application[jj].appid) == 0) {
+                        exist = 1;
+                        break;
+                    }
+                }
+                if ((exist == 0) && conf_cb_func) {
+                    conf_cb_func(_ico_app_config->application[ii].appid,
+                                 ICO_UXF_CONF_EVENT_INSTALL);
+                }
+            }
+        }
+        else if (type == ICO_UXF_CONF_EVENT_UNINSTALL) {
+            for (jj = 0; jj < config->applicationNum; jj++) {
+                exist = 0;
+                for (ii = 0; ii < _ico_app_config->applicationNum; ii++) {
+                    if (strcmp(config->application[jj].appid,
+                               _ico_app_config->application[ii].appid) == 0) {
+                        exist = 1;
+                        break;
+                    }
+                }
+                if ((exist == 0) && conf_cb_func) {
+                    conf_cb_func(config->application[jj].appid,
+                                 ICO_UXF_CONF_EVENT_UNINSTALL);
+                }
+            }
+        }
+        /* free old list */
+        if (config != NULL) {
+            g_free(config->application);
+            g_free(config);
+        }
+    }
+
+    apfw_trace("ico_uxf_conf_endEvent: Leave");
+
+    return ICO_UXF_EOK;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_setAppUpdateCb:
+ *
+ * @param       none
+ * @return      result
+ * @retval      ICO_UXF_EOK     success
+ * @retval      ICO_UXF_ENOSYS  cannot regist callback
+ */
+/*--------------------------------------------------------------------------*/
+ICO_APF_API int
+ico_uxf_conf_setAppUpdateCb(Ico_Uxf_AppUpdata_Cb func)
+{
+    int     ret;
+
+    ret = ico_uxf_conf_addPkgmgrEventListener();
+
+    if (ret != ICO_UXF_EOK) {
+        apfw_trace("ico_uxf_conf_setAppUpdateCb: cannot add listener");
+        return ICO_UXF_ENOSYS;
+    }
+    conf_cb_func = func;
+
+    return ICO_UXF_EOK;
 }
 

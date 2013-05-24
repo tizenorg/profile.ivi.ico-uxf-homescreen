@@ -1,6 +1,6 @@
 Name:       ico-uxf-HomeScreen
 Summary:    sample homescreen
-Version:    0.3.02
+Version:    0.3.04
 Release:    1.1
 Group:		TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
@@ -9,7 +9,7 @@ Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.0
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.5.0
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.5.03
 BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(evas)
 BuildRequires: pkgconfig(eina)
@@ -22,11 +22,12 @@ BuildRequires: pkgconfig(json-glib-1.0)
 BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(bundle)
 BuildRequires: pkgconfig(ail)
+BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: libwebsockets-devel
 BuildRequires: capi-base-common-devel
 BuildRequires: edje-tools
 Requires: weston >= 1.0
-Requires: ico-uxf-weston-plugin >= 0.5.0
+Requires: ico-uxf-weston-plugin >= 0.5.03
 
 %description
 Sample homescreen application.
@@ -106,6 +107,8 @@ cp -rf data/apps/%{APP} %{buildroot}/%{PREFIX}/
 cp -rf res/apps/%{APP}/* %{buildroot}%{APPSDIR}/res/config/
 install -m 0755 src/StatusBar %{buildroot}%{APPSDIR}/bin/
 install -m 0644 res/images/time*.png %{buildroot}%{APPSDIR}/res/images/
+install -m 0644 res/images/applist_*.png %{buildroot}%{APPSDIR}/res/images/
+install -m 0644 res/images/home*.png %{buildroot}%{APPSDIR}/res/images/
 install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/opt/share/applications/
 
 #onscreen

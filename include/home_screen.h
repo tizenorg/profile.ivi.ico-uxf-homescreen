@@ -28,11 +28,13 @@
 #define ICO_HS_TOUCH_IN_HIDE    (3)
 #define ICO_HS_TOUCH_IN_SHOW    (4)
 
+#define ICO_HS_TILE_NOCHANGE    (1)
+#define ICO_HS_TILE_APPLIST     (2)
+#define ICO_HS_TILE_OTHERS      (5)
 #define ICO_HS_TILE_SMALL       (11)
 #define ICO_HS_TILE_HWIDE       (21)
 #define ICO_HS_TILE_VWIDE       (12)
 #define ICO_HS_TILE_LARGE       (22)
-#define ICO_HS_TILE_OTHERS      (0)
 
 #define ICO_HS_TILE_CHAN        (18)
 #define ICO_HS_TILE_SIZE_S      (170)
@@ -78,6 +80,7 @@
 #define ICO_HS_WINDOW_NUM_MAX       (10)
 #define ICO_HS_MSG_SIZE             (1024)
 #define ICO_HS_TEMP_BUF_SIZE        (256)
+#define ICO_HS_NOTILE_APP_MAX       (20)
 
 #define ICO_HS_PROTOCOL_CM          "gui-protocol"
                   /* protocol to communicate external tools */
@@ -95,6 +98,9 @@
 #define ICO_HS_SIZE_SB_HEIGHT        (64)
 #define ICO_HS_SIZE_LAYOUT_WIDTH     (768)
 #define ICO_HS_SIZE_LAYOUT_HEIGHT    (1024)
+
+/* define for statusbar configuration */
+#define ICO_SB_CONFIG_SHTCT_APP      "shortcut_app"
 
 /* define for sound configuration */
 #define ICO_HS_SND_TYPE_DEFAULT      (1)
@@ -132,6 +138,7 @@ extern void hs_tile_show_screen(void);
 extern int hs_get_index_appscreendata(const char *appid);
 extern void hs_req_ctlr_tile(void);
 extern void hs_click_escutcheon(void);
+extern int hs_click_applist(void);
 extern void hs_show_onscreen(void);
 extern void hs_hide_onscreen(void);
 extern void hs_show_appscreen(const char *appid);

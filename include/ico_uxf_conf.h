@@ -101,16 +101,17 @@ typedef struct _ico_uxf_conf_application {
     char *exec;
     char *type;
     int hostId;
-    char noicon;
-    char res[3];                    /* (unused)     */
     char *location;
     char *icon_key_name;
+    char autostart;
+    char noicon;
+    unsigned short invisiblecpu;
     short kindId;
     short categoryId;
-    short autostart;
     short displayzoneNum;
     short soundzoneNum;
     short inputdevNum;
+    char res[2];
     Ico_Uxf_conf_appdisplay display[ICO_UXF_APPDISPLAY_MAX];
     Ico_Uxf_conf_appsound   sound[ICO_UXF_APPSOUND_MAX];
     Ico_Uxf_conf_appinput   input[ICO_UXF_APPINPUT_MAX];
@@ -206,10 +207,13 @@ typedef struct _ico_uxf_sys_config {
 
 typedef struct _ico_uxf_app_config {
     int applicationNum;
+	int ailNum;
     Ico_Uxf_conf_application *application;
     Ico_Uxf_conf_application *hashidtable[ICO_UXF_MISC_HASHSIZE];
     Ico_Uxf_conf_application *hashnametable[ICO_UXF_MISC_HASHSIZE];
 } Ico_Uxf_App_Config;
+
+typedef void (*Ico_Uxf_AppUpdata_Cb)(const char *appid, int type);
 
 const Ico_Uxf_Sys_Config* ico_uxf_getSysConfig(void);
 const Ico_Uxf_Sys_Config* ico_uxf_ifGetSysConfig(void);
@@ -241,6 +245,8 @@ const Ico_Uxf_conf_category* ico_uxf_getAppCategoryById(const int categoryId);
 const Ico_Uxf_conf_display* ico_uxf_getSysDisplayById(const int displayId);
 const char *ico_uxf_get_SysLocation( const int hostId );
 
+int ico_uxf_conf_setAppUpdateCb(Ico_Uxf_AppUpdata_Cb func);
+
 /* define log macros    */
 #ifndef uifw_trace
 #define uifw_debug      ICO_UXF_DEBUG
@@ -254,16 +260,8 @@ const char *ico_uxf_get_SysLocation( const int hostId );
 
 void ico_uxf_closeSysConfig(void);
 
-#define ICO_UXF_EVENT_WAIT_DEFAULT      (0)
-#define ICO_UXF_EVENT_WAIT_WAYLAND      (1)
-#define ICO_UXF_EVENT_WAIT_WEBSOCKET    (2)
-#define ICO_UXF_EVENT_WAIT_JULIUS       (3)
-
-#define ICO_UXF_EFFECT_NONE             (0)
-#define ICO_UXF_EFFECT_GRAYOUT          (1)
-#define ICO_UXF_EFFECT_BLACKOUT         (2)
-#define ICO_UXF_EFFECT_INVISIBLE        (3)
-#define ICO_UXF_EFFECT_TERMINATE        (4)
+#define ICO_UXF_CONF_EVENT_INSTALL      (0)
+#define ICO_UXF_CONF_EVENT_UNINSTALL    (1)
 
 #ifdef __cplusplus
 }

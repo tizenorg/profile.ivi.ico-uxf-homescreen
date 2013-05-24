@@ -35,6 +35,8 @@ enum    _ico_syc_regulation_vehicleinfo_id  {
     ICO_SYC_VEHICLEINFO_VEHICLE_SPEED = 1,  /* vehicle speed                        */
     ICO_SYC_VEHICLEINFO_SHIFT_POSITION,     /* shift position                       */
     ICO_SYC_VEHICLEINFO_TURN_SIGNAL,        /* blinker signal                       */
+    ICO_SYC_VEHICLEINFO_LIGHT_LEFT,         /* left turn light status               */
+    ICO_SYC_VEHICLEINFO_LIGHT_RIGHT,        /* right turn light status              */
 
     ICO_SYC_VEHICLEINFO_MAX                 /* maximum number of type               */
 };

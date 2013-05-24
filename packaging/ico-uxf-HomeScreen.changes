@@ -1,3 +1,20 @@
+* Fri May 24 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130520.093309@f56086f
+- 0.3.03 release
+- Fix for TIVI-839 - [WLD] Install app with wrt install, No new app icon shown in Homescreen App list.
+  Homescreen reload the application informations when receive the package update messages from the package manager.
+  (use pkgcmd to install or uninstall application)
+- Work around TIVI-832 - [WLD]Video player Segfault when playing video from gallery.
+  Gave child process the screen right of the process that worked just before that.
+- Changed the image of application change button on the statubar.
+- Added the application list button to the statusbar.
+- Removed the application list button from the homescreen tile.
+- Added the application list button to the statusbar.
+- Added the shortcut button to the statusbar.
+- Tile menu indication and the application choice prevent them from being able to do it during a run.
+- Support of the mirror camera indication by the blinker operation.
+- Permit the operation of the music player while driving.
+- Appoint that more than ico-uxf-weston-plugin-0.5.03 are necessary for spec file.
+
 * Wed May 22 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130520.093309@23824f8
 - Fix for TIVI-803 - Enable new UI in wayland build.
 - Fix for TIVI-826 - weston-plugin should NOT create /root/

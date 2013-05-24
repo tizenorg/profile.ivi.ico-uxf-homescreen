@@ -136,35 +136,35 @@ static int hs_lib_callback_app(struct libwebsocket_context *context,
 /*============================================================================*/
 /* table                                                                      */
 /*============================================================================*/
-static struct libwebsocket_protocols protocols[] = { 
+static struct libwebsocket_protocols protocols[] = {
     {
-        "http-only", 
-        hs_lib_callback_http, 
+        "http-only",
+        hs_lib_callback_http,
         0
-    }, 
+    },
     { /* HomeScreen - command */
-        ICO_HS_PROTOCOL_CM, 
-        hs_lib_callback_command, 
+        ICO_HS_PROTOCOL_CM,
+        hs_lib_callback_command,
         0
-    }, 
+    },
     { /* HomeScreen - StatusBar */
-        ICO_HS_PROTOCOL_SB, 
-        hs_lib_callback_statusbar, 
+        ICO_HS_PROTOCOL_SB,
+        hs_lib_callback_statusbar,
         0
-    }, 
+    },
     { /* HomeScreen - OnScreen */
-        ICO_HS_PROTOCOL_OS, 
-        hs_lib_callback_onscreen, 
+        ICO_HS_PROTOCOL_OS,
+        hs_lib_callback_onscreen,
         0
-    }, 
+    },
     { /* HomeScreen - OtherNatiiveApps */
-        ICO_HS_PROTOCOL_APP, 
-        hs_lib_callback_app, 
+        ICO_HS_PROTOCOL_APP,
+        hs_lib_callback_app,
         0
-    }, 
+    },
     {
-        NULL, 
-        NULL, 
+        NULL,
+        NULL,
         0
     }
 };
@@ -175,7 +175,7 @@ static struct libwebsocket_protocols protocols[] = {
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_handle_command
- *          callback at received message from external command tools, 
+ *          callback at received message from external command tools,
  *          and handle the message.
  *
  * @param[in]   msg                 received message
@@ -247,7 +247,7 @@ hs_lib_handle_command(hs_lib_msg_t *msg)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_handle_application
- *          callback at received message from a application, and handle the 
+ *          callback at received message from a application, and handle the
  *          message.
  *
  * @param[in]   msg                 received message
@@ -300,7 +300,7 @@ hs_lib_handle_application(hs_lib_msg_t *msg)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_handle_onscreen
- *          callback at received message from onscreen, and handle the 
+ *          callback at received message from onscreen, and handle the
  *          message.
  *
  * @param[in]   msg                 received message
@@ -375,7 +375,7 @@ hs_lib_handle_onscreen(hs_lib_msg_t *msg)
             /* do nothing */
         }
         else if (strcmp(hs_active_onscreen, ICO_UXF_PROC_DEFAULT_HOMESCREEN)
-                == 0) {
+                 == 0)  {
             /* get 2nd phrase */
             ptr = get_parsed_str(p_msg_data, tmp_buf, sizeof(tmp_buf), 1);
             if (strncmp(getFileName(ptr, strlen(ptr)),
@@ -432,6 +432,11 @@ hs_lib_handle_onscreen(hs_lib_msg_t *msg)
                         (void)hs_lib_put_sendmsg(send);
                     }
                     else if (strncmp(ptr, "cancel_bt", 8) == 0) {
+                        hs_hide_onscreen();
+                        memset(hs_active_onscreen, 0,
+                               sizeof(hs_active_onscreen));
+                    }
+                    else {
                         hs_hide_onscreen();
                         memset(hs_active_onscreen, 0,
                                sizeof(hs_active_onscreen));
@@ -500,7 +505,7 @@ hs_lib_handle_onscreen(hs_lib_msg_t *msg)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_handle_statusbar
- *          callback at received message from statusbar, and handle the 
+ *          callback at received message from statusbar, and handle the
  *          message.
  *
  * @param[in]   msg                 received message
@@ -510,10 +515,94 @@ hs_lib_handle_onscreen(hs_lib_msg_t *msg)
 static void
 hs_lib_handle_statusbar(hs_lib_msg_t *msg)
 {
-    uifw_trace("hs_lib_handle_statusbar: Enter");
-    /* clicked escutcheon button and send a command to outer commander */
+    hs_lib_msg_t *send;
+    char tmp_buf[ICO_HS_MSG_SIZE];
+    char *cmd;
+    Ico_Uxf_ProcessWin wins[1];
+    Ico_Uxf_ProcessAttr attr;
+    int ret;
+    int idx;
+    int cnt = 0;
+
+    uifw_trace("hs_lib_handle_statusbar: Enter(%s)", msg->data);
+
     if (strncmp("CLICK ESCUTCHEON", msg->data, 16) == 0) {
+        /* clicked escutcheon button and send a command to outer commander */
         hs_click_escutcheon();
+        /* send "Receive OK" message to statusbar */
+        send = hs_lib_alloc_msg("RECEIVE OK", strlen("RECEIVE OK"));
+        if (send) {
+            send->type = ICO_HS_PROTOCOL_TYPE_SB;
+            hs_lib_put_sendmsg(send);
+        }
+    }
+    else if (strncmp("OPEN", msg->data, 4) == 0) {
+        /* forward the message to onscreen */
+        if (hs_click_applist()) {
+            send = hs_lib_alloc_msg(msg->data, msg->len);
+            if (send) {
+                strncpy(hs_active_onscreen, ICO_UXF_PROC_DEFAULT_HOMESCREEN,
+                        sizeof(hs_active_onscreen));
+                send->type = ICO_HS_PROTOCOL_TYPE_OS;
+                hs_lib_put_sendmsg(send);
+            }
+        }
+        /* send "Receive OK" message to statusbar */
+        send = hs_lib_alloc_msg("RECEIVE OK", strlen("RECEIVE OK"));
+        if (send) {
+            send->type = ICO_HS_PROTOCOL_TYPE_SB;
+            hs_lib_put_sendmsg(send);
+        }
+    }
+    else if (strncmp("SHOW", msg->data, 4) == 0) {
+        /* show the application on the application screen */
+        cmd = get_parsed_str(msg->data, tmp_buf, sizeof(tmp_buf), 1);
+        if (cmd) {
+            /* wait for creating the application's window */
+            memset(wins, 0, sizeof(wins));
+            while (wins[0].window <= 0) {
+                ret = ico_uxf_process_window_get(cmd, wins, 1);
+                if (ret > 0) {
+                    ret = ico_uxf_process_attribute_get(cmd, &attr);
+                    if (wins[0].window > 0) {
+                        break;
+                    }
+                    else if ((ret >= 0) && (attr.status != ICO_UXF_PROCSTATUS_RUN)) {
+                        /* launch the application */
+                        ret = ico_uxf_process_execute(cmd);
+                        if ((ret == ICO_UXF_EOK) || (ret == ICO_UXF_EBUSY)) {
+                            idx = hs_tile_get_index_app(cmd);
+                            if (idx < 0) {
+                                idx = hs_tile_get_minchange();
+                            }
+                            hs_tile_set_app(idx, cmd);
+                        }
+                    }
+                }
+                else {
+                    /* unknown application */
+                    break;
+                }
+                usleep(10000);
+                ecore_main_loop_iterate();
+
+                if (cnt > 100) {
+                    break;
+                }
+                else {
+                    cnt++;
+                }
+            }
+
+            /* show the application screen*/
+            hs_show_appscreen(cmd);
+        }
+        /* send "Receive OK" message to statusbar */
+        send = hs_lib_alloc_msg("RECEIVE OK", strlen("RECEIVE OK"));
+        if (send) {
+            send->type = ICO_HS_PROTOCOL_TYPE_SB;
+            hs_lib_put_sendmsg(send);
+        }
     }
     uifw_trace("hs_lib_handle_statusbar: Leave");
 }
@@ -523,7 +612,7 @@ hs_lib_handle_statusbar(hs_lib_msg_t *msg)
  * @brief   hs_lib_alloc_msg
  *          Allocate a msg structure
  *
- * @param[in]   data                data 
+ * @param[in]   data                data
  * @param[in]   len                 data length
  * @return      address
  * @retval      > 0                 success
@@ -560,9 +649,9 @@ hs_lib_alloc_msg(char *data, int len)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_free_msg
- *          free the msg 
+ *          free the msg
  *
- * @param[in]   data                data 
+ * @param[in]   data                data
  * @param[in]   free                data lenght
  * @return      none
  */
@@ -589,7 +678,7 @@ hs_lib_free_msg(hs_lib_msg_t *msg)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_free_handle
- *          free the indecated handle. 
+ *          free the indecated handle.
  *
  * @param       handle              handle to free
  * @return      none
@@ -624,7 +713,7 @@ hs_lib_free_handle(hs_lib_handle_t *handle)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_alloc_handle
- *          Allocate handle. 
+ *          Allocate handle.
  *
  * @param       none
  * @return      address
@@ -676,7 +765,7 @@ hs_lib_realsend(hs_lib_msg_t *msg)
 
     strcpy((char*)pt, msg->data);
 
-    uifw_trace("hs_lib_realsend: send(wsi=%x, type=h:%d(m:%d), len=%d, msg=%s)", 
+    uifw_trace("hs_lib_realsend: send(wsi=%x, type=h:%d(m:%d), len=%d, msg=%s)",
                msg->handle->wsi, msg->handle->type, msg->type, msg->len, msg->data);
     n = libwebsocket_write(msg->handle->wsi, pt, strlen((char *)pt),
                            LWS_WRITE_TEXT);
@@ -738,7 +827,7 @@ hs_lib_get_sendmsg(int type)
  * @brief   hs_lib_put_sendmsg
  *          put the send message to the send queue end.
  *
- * @param[in]   data                send message 
+ * @param[in]   data                send message
  * @return      result
  * @retval      ICO_HS_OK           success
  * @retval      ICO_HS_ERR          error
@@ -798,7 +887,7 @@ hs_lib_put_sendmsg(hs_lib_msg_t *send)
  * @brief   hs_lib_get_recvmsg
  *          get the receive message from the receive queue end.
  *
- * @param       none                
+ * @param       none
  * @return      recv message address
  * @retval      > 0                 success
  * @retval      NULL                error
@@ -823,7 +912,7 @@ hs_lib_get_recvmsg(void)
  * @brief   hs_lib_put_recvmsg
  *          put the receive message to the receive queue end.
  *
- * @param[in]   data                receive message 
+ * @param[in]   data                receive message
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
@@ -852,7 +941,7 @@ hs_lib_put_recvmsg(hs_lib_msg_t *recv)
  * @brief   hs_lib_com_dispatch
  *          The accumulated data that transmitted or received is procecssed
  *
- * @param[in]   _handle             connect handle, 
+ * @param[in]   _handle             connect handle,
  *                                  if NULL target is all connection
  * @param[in]   timeoutms           maximum wait time on miri-sec.
  *                                  0 is no wait, -1 is wait forever.
@@ -939,7 +1028,7 @@ hs_lib_poll_fd_event(hs_lib_poll_t *poll, int flags)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_lib_ecore_fdevent
- *          callback function called by Ecore when the websocket's file 
+ *          callback function called by Ecore when the websocket's file
  *          descriptor had change
  *
  * @param[in]   data                user data(ico_apf_com_poll_t)
@@ -1343,7 +1432,7 @@ hs_lib_callback_http(struct libwebsocket_context *context,
 /*--------------------------------------------------------------------------*/
 /*
  * @brief   hs_lib_callback_command
- *          this callback function is notified from libwebsockets 
+ *          this callback function is notified from libwebsockets
  *          command protocol
  *
  * @param[in]   context             libwebsockets context
@@ -1471,7 +1560,7 @@ hs_lib_callback_command(struct libwebsocket_context *context,
 /*--------------------------------------------------------------------------*/
 /*
  * @brief   hs_lib_callback_statusbar
- *          this callback function is notified from libwebsockets 
+ *          this callback function is notified from libwebsockets
  *          statusbar protocol
  *
  * @param[in]   context             libwebsockets context
@@ -1588,7 +1677,7 @@ hs_lib_callback_statusbar(struct libwebsocket_context *context,
 /*--------------------------------------------------------------------------*/
 /*
  * @brief   hs_lib_callback_onscreen
- *          this callback function is notified from libwebsockets 
+ *          this callback function is notified from libwebsockets
  *          statusbar protocol
  *
  * @param[in]   context             libwebsockets context
@@ -1707,7 +1796,7 @@ hs_lib_callback_onscreen(struct libwebsocket_context *context,
 /*--------------------------------------------------------------------------*/
 /*
  * @brief   hs_lib_callback_app
- *          this callback function is notified from libwebsockets 
+ *          this callback function is notified from libwebsockets
  *          application protocol
  *
  * @param[in]   context             libwebsockets context

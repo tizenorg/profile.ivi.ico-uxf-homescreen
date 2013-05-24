@@ -155,6 +155,7 @@ ico_uxf_init(const char *name)
     gIco_Uxf_Api_Mng.EventMask = 0;
     gIco_Uxf_Api_Mng.WaylandFd = -1;
     gIco_Uxf_Api_Mng.Wayland_Display = NULL;
+    gIco_Uxf_Api_Mng.InitTimer = ICO_UXF_SUSP_INITTIME;
 
     /* read configurations */
     sysconf = (Ico_Uxf_Sys_Config *)ico_uxf_getSysConfig();
@@ -201,6 +202,9 @@ ico_uxf_init(const char *name)
         prc->attr.type = appconf->application[dn].categoryId;
         prc->attr.hostId = appconf->application[dn].hostId;
         prc->attr.myHost = (prc->attr.hostId == sysconf->misc.myhostId) ? 1 : 0;
+        prc->attr.noicon = appconf->application[dn].noicon;
+        prc->attr.autostart = appconf->application[dn].autostart;
+        prc->attr.invisiblecpu = appconf->application[dn].invisiblecpu;
 
         appdsp = &appconf->application[dn].display[0];
         prc->attr.mainwin.window = 0;
@@ -936,16 +940,13 @@ ico_uxf_window_visiblecb(void *data, struct ico_window_mgr *ico_window_mgr,
     int                 ovisible;
     int                 oraise;
 
-    uifw_trace("ico_uxf_window_visiblecb: Enter(surf=%08x vis=%d raise=%d hint=%d)",
-               (int)surfaceid, visible, raise, hint);
-
     ico_uxf_enter_critical();
 
     win = ico_uxf_mng_window(surfaceid, 0);
 
     if (!win)  {
         ico_uxf_leave_critical();
-        uifw_trace("ico_uxf_window_visiblecb: Leave(Surface=%08x dose not exist)",
+        uifw_trace("ico_uxf_window_visiblecb: Surface=%08x dose not exist",
                    (int)surfaceid);
         return;
     }
@@ -985,7 +986,6 @@ ico_uxf_window_visiblecb(void *data, struct ico_window_mgr *ico_window_mgr,
         }
     }
     ico_uxf_leave_critical();
-    uifw_trace("ico_uxf_window_visiblecb: Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1015,8 +1015,8 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
     int                 display;
     Ico_Uxf_Mng_Process *prc;
 
-    uifw_trace("ico_uxf_window_configurecb: Enter(surf=%08x app=%s layer=%d "
-               "x/y=%d/%d w/h=%d/%d hint=%d)",
+    uifw_trace("ico_uxf_window_configurecb: surf=%08x app=%s layer=%d "
+               "x/y=%d/%d w/h=%d/%d hint=%d",
                (int)surfaceid, appid, layer, x, y, width, height, hint);
 
     ico_uxf_enter_critical();
@@ -1040,6 +1040,7 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
         hint = 0;
 
         prc = ico_uxf_mng_process(appid, 0);
+        win->mng_process = prc;
         if ((prc != NULL) && (prc->attr.mainwin.window != (int)surfaceid)) {
             /* sub-window */
             win->attr.subwindow = 1;
@@ -1091,19 +1092,23 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
 
                 ico_uxf_regist_eventque(que);
             }
-            win->attr.x = x;
-            win->attr.y = y;
-            win->attr.w = width;
-            win->attr.h = height;
-            if (win->attr.layer != layer)  {
-                win->attr.layer = layer;
-                win->mng_layer = ico_uxf_mng_layer(win->mng_display->attr.display,
-                                                   layer, 0);
+            if (hint == 0)  {
+                win->attr.x = x;
+                win->attr.y = y;
+                win->attr.w = width;
+                win->attr.h = height;
+                if (win->attr.layer != layer)  {
+                    win->attr.layer = layer;
+                    win->mng_layer = ico_uxf_mng_layer(win->mng_display->attr.display,
+                                                       layer, 0);
+                }
+            }
+            else if ((win->attr.w != width) || (win->attr.h != height))    {
+                (void)ico_uxf_window_resize(win->attr.window, win->attr.w, win->attr.h);
             }
         }
     }
     ico_uxf_leave_critical();
-    uifw_trace("ico_uxf_window_configurecb: Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1384,10 +1389,13 @@ ico_uxf_aul_aulcb(int pid, void *data)
 
     dead = (int)data;
     memset(appid, 0, sizeof(appid));
-    (void) aul_app_get_appid_bypid(pid, appid, sizeof(appid));
-
-    uifw_trace("ico_uxf_aul_aulcb: Enter(pid=%d, dead=%d, appid=%s)", pid, dead, appid);
-
+    if (dead == 0)  {
+        (void) aul_app_get_appid_bypid(pid, appid, sizeof(appid));
+        uifw_trace("ico_uxf_aul_aulcb: Enter(pid=%d, dead=No, appid=%s)", pid, appid);
+    }
+    else    {
+        uifw_trace("ico_uxf_aul_aulcb: Enter(pid=%d, dead=Yes)", pid);
+    }
     for (hash = 0; hash < ICO_UXF_MISC_HASHSIZE; hash++) {
         proc = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
         while (proc)   {
@@ -1428,8 +1436,13 @@ ico_uxf_aul_aulcb(int pid, void *data)
             proc->attr.internalid = pid;
             if (proc->attr.status != ICO_UXF_PROCSTATUS_INIT)   {
                 /* child process, search parent process */
-                uifw_trace("ico_uxf_aul_aulcb: fork&exec %s", proc->attr.process);
+                uifw_trace("ico_uxf_aul_aulcb: fork&exec %s(proc=%08x, last=%08x)",
+                        proc->attr.process, (unsigned int)proc, (unsigned int)gIco_Uxf_Api_Mng.Mng_LastProcess);
                 proc->attr.child = 1;
+                /* save parent application if exist     */
+                if (proc != gIco_Uxf_Api_Mng.Mng_LastProcess) {
+                    proc->parent = gIco_Uxf_Api_Mng.Mng_LastProcess;
+                }
             }
             else    {
                 proc->attr.child = 0;
@@ -1445,6 +1458,119 @@ ico_uxf_aul_aulcb(int pid, void *data)
 
     uifw_trace("ico_uxf_aul_aulcb: Leave");
     return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_set_lastapp: save last application
+ *
+ * @param[in]   appid   applicationId (if NULL, no last application)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+ICO_APF_API void
+ico_uxf_set_lastapp(const char *appid)
+{
+    if (appid)  {
+        uifw_trace("ico_uxf_set_lastapp: set last app %s", appid);
+        gIco_Uxf_Api_Mng.Mng_LastProcess = ico_uxf_mng_process(appid, 0);
+    }
+    else    {
+        uifw_trace("ico_uxf_set_lastapp: set last app NULL");
+        gIco_Uxf_Api_Mng.Mng_LastProcess = NULL;
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_getchild_appid: get child applicationId
+ *
+ * @param[in]   appid   parent applicationId
+ * @return      last child applicationId
+ * @retval      !=NULL      success(applicationId)
+ * @retval      ==NULL      no child application
+ */
+/*--------------------------------------------------------------------------*/
+ICO_APF_API char *
+ico_uxf_getchild_appid(const char *appid)
+{
+    Ico_Uxf_Mng_Process *pproc;
+    Ico_Uxf_Mng_Process *proc;
+    int     hash;
+
+    pproc = ico_uxf_mng_process(appid, 0);
+    if (! pproc)    {
+        /* unknown parent application, no child     */
+        uifw_trace("ico_uxf_getchild_appid: Unknown parent(%s)", appid);
+        return NULL;
+    }
+
+    /* search parent        */
+    for (hash = 0; hash < ICO_UXF_MISC_HASHSIZE; hash++)    {
+        proc = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
+        while (proc)    {
+            if (proc->parent == pproc)  {
+                uifw_trace("ico_uxf_getchild_appid: child(%s) parent(%s)",
+                           proc->attr.process, appid);
+                return proc->attr.process;
+            }
+            proc = proc->nextidhash;
+        }
+    }
+    uifw_trace("ico_uxf_getchild_appid: parent(%s) has no child", appid);
+    return NULL;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_set_lastapp: save last application
+ *
+ * @param[in]   appid   applicationId (if NULL, no last application)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+ICO_APF_API void
+ico_uxf_timer_wake(const int msec)
+{
+    Ico_Uxf_Mng_Process *proc;
+    int     hash;
+
+    if (gIco_Uxf_Api_Mng.InitTimer > 0) {
+        gIco_Uxf_Api_Mng.InitTimer -= msec;
+        if (gIco_Uxf_Api_Mng.InitTimer > 0) {
+            return;
+        }
+        gIco_Uxf_Api_Mng.InitTimer = 0;
+    }
+
+    if (gIco_Uxf_Api_Mng.NeedTimer == 0)    {
+        return;
+    }
+    gIco_Uxf_Api_Mng.NeedTimer = 0;
+
+    for (hash = 0; hash < ICO_UXF_MISC_HASHSIZE; hash++)    {
+        proc = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
+        while (proc)    {
+            if (proc->susptimer > 0)    {
+                if (msec >= proc->susptimer)    {
+                    proc->susptimer = 0;
+                    if (proc->attr.suspend) {
+                        if (proc->susp == 0)    {
+                            proc->susp = 1;
+                            uifw_trace("ico_uxf_timer_wake: CPU suspend pid=%d",
+                                       proc->attr.internalid);
+                            kill(proc->attr.internalid, SIGSTOP);
+                        }
+                    }
+                }
+                else    {
+                    proc->susptimer -= msec;
+                    gIco_Uxf_Api_Mng.NeedTimer ++;
+                }
+            }
+            proc = proc->nextidhash;
+        }
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1848,6 +1974,111 @@ ico_uxf_mng_process(const char *process, const int create)
         }
     }
     return p;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_update_procwin: update a process management table
+ *
+ * @param[in]   appid       application id
+ * @param[in]   type        type(install/uninstall)
+ * @param[in]   func        window create/destroy hook function
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+ICO_APF_API void
+ico_uxf_update_procwin(const char *appid, int type)
+{
+    Ico_Uxf_Mng_Process     *prc = NULL;
+    Ico_Uxf_Sys_Config      *sysconf;
+    Ico_Uxf_App_Config      *appconf;
+    Ico_Uxf_conf_appdisplay *appdsp;
+    int                     dn, tn;
+    Ico_Uxf_conf_application *app = NULL;
+
+    uifw_trace("ico_uxf_update_procwin: Enter(appid=%s, type=%d)", appid, type);
+
+    if (gIco_Uxf_Api_Mng.Initialized <= 0) {
+        uifw_trace("ico_uxf_callback_remove: Leave(not initialized)");
+        return;
+    }
+    prc = ico_uxf_mng_process(appid, 0);
+
+    if (type == ICO_UXF_CONF_EVENT_INSTALL) {
+        if (!prc) {
+            sysconf = (Ico_Uxf_Sys_Config *)ico_uxf_getSysConfig();
+            appconf = (Ico_Uxf_App_Config *)ico_uxf_getAppConfig();
+            if ((sysconf == NULL) || (appconf == NULL)) {
+                uifw_trace("ico_uxf_update_procwin: Leave(cannot find tables)");
+                return;
+            }
+            for (dn = 0;  dn < appconf->applicationNum; dn++) {
+                app = &appconf->application[dn];
+                if (strncmp(app->appid, appid, ICO_UXF_MAX_PROCESS_NAME) == 0) {
+                    uifw_trace("ico_uxf_update_procwin: Install(%s)", appid);
+                    /* add process management table */
+                    prc = ico_uxf_mng_process(appid, 1);
+                    prc->attr.internalid = 0;
+                    prc->attr.status = ICO_UXF_PROCSTATUS_STOP;
+                    prc->attr.type = app->categoryId;
+                    prc->attr.hostId = app->hostId;
+                    prc->attr.myHost = (prc->attr.hostId == sysconf->misc.myhostId) ? 1 : 0;
+
+                    appdsp = &app->display[0];
+                    prc->attr.mainwin.window = 0;
+                    prc->attr.mainwin.windowtype = app->categoryId;
+                    prc->attr.mainwin.display = appdsp->displayId;
+                    prc->attr.mainwin.layer = appdsp->layerId;
+                    prc->attr.mainwin.x =
+                            sysconf->display[appdsp->displayId].zone[appdsp->zoneId].x;
+                    prc->attr.mainwin.y =
+                            sysconf->display[appdsp->displayId].zone[appdsp->zoneId].y;
+                    prc->attr.mainwin.w =
+                            sysconf->display[appdsp->displayId].zone[appdsp->zoneId].width;
+                    prc->attr.mainwin.h =
+                            sysconf->display[appdsp->displayId].zone[appdsp->zoneId].height;
+                    prc->attr.mainwin.name[ICO_UXF_MAX_WIN_NAME] = 0;
+                    prc->attr.numwindows = app->displayzoneNum;
+                    /* get sub windows                          */
+                    if (prc->attr.numwindows > 1)   {
+                        prc->attr.subwin = malloc(sizeof(Ico_Uxf_ProcessWin) *
+                                                  (prc->attr.numwindows - 1));
+                        if (! prc->attr.subwin) {
+                            uifw_trace("ico_uxf_update_procwin: Install(No memory)");
+                            app->displayzoneNum = 1;
+                            prc->attr.numwindows = 1;
+                        }
+                        else    {
+                            memset(prc->attr.subwin, 0, (prc->attr.numwindows - 1));
+                            for (tn = 0; tn < (prc->attr.numwindows - 1); tn++) {
+                                appdsp ++;
+                                prc->attr.subwin[tn].windowtype = prc->attr.mainwin.windowtype;
+                                prc->attr.subwin[tn].display = appdsp->displayId;
+                                prc->attr.subwin[tn].layer = appdsp->layerId;
+                                prc->attr.subwin[tn].x =
+                                    sysconf->display[appdsp->displayId].zone[appdsp->zoneId].x;
+                                prc->attr.subwin[tn].y =
+                                    sysconf->display[appdsp->displayId].zone[appdsp->zoneId].y;
+                                prc->attr.subwin[tn].w =
+                                    sysconf->display[appdsp->displayId].zone[appdsp->zoneId].width;
+                                prc->attr.subwin[tn].h =
+                                    sysconf->display[appdsp->displayId].zone[appdsp->zoneId].height;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (type == ICO_UXF_CONF_EVENT_UNINSTALL) {
+        if (prc) {
+            /* not delete process management table */
+        }
+    }
+
+    uifw_trace("ico_uxf_update_procwin: Leave");
+
+    return;
 }
 
 /*--------------------------------------------------------------------------*/

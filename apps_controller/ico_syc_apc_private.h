@@ -35,7 +35,8 @@ extern "C" {
 /* request information                          */
 typedef struct  _ico_apc_request    {
     struct _ico_apc_request     *next;          /* requestt list link               */
-    Ico_Uxf_conf_application    *conf;          /* application configuration        */
+    char                        appid[ICO_UXF_MAX_PROCESS_NAME+1];
+                                                /* application id                   */
     ico_apf_resid_e             resid;          /* resource id                      */
     char                        device[ICO_UXF_MAX_DEVICE_NAME+1];
                                                 /* request device                   */

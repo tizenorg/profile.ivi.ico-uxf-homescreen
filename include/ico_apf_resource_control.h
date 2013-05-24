@@ -17,6 +17,10 @@
 #ifndef __ICO_APF_RESOURCE_CONTROL_H__
 #define __ICO_APF_RESOURCE_CONTROL_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  *  id of resource
  */

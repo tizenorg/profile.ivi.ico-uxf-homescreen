@@ -28,6 +28,7 @@
 #include    <dbus/dbus.h>
 #include    <Ecore.h>
 #include    "ico_apf.h"
+#include    "ico_uxf.h"
 #include    "ico_syc_apc.h"
 #include    "ico_syc_apc_private.h"
 
@@ -35,8 +36,9 @@
 /* static tables                                                                */
 /*==============================================================================*/
 /* callback function            */
-static ico_apc_regulation_cb_t  regulation_cb = NULL;
-static void                     *regulation_cb_user_data = NULL;
+static int  nregulation_cb = 0;
+static ico_apc_regulation_cb_t  regulation_cb[ICO_SYC_APC_REGULATION_LISTENERS];
+static void                     *regulation_cb_user_data[ICO_SYC_APC_REGULATION_LISTENERS];
 
 /* Ecore/D-Bus static valiables */
 static Ecore_Timer *vehicle_timer = NULL;
@@ -54,8 +56,15 @@ static const struct _vehicle_info_property {
       "/org/automotive/runningstatus/vehicleSpeed", "org.automotive.vehicleSpeed" },
     { ICO_SYC_VEHICLEINFO_SHIFT_POSITION, "ShiftPosition",
       "/org/automotive/runningstatus/transmission", "org.automotive.transmission" },
+#if 0   /* use LightStatus, because AMB not support access of TurnSignal by D-Bus   */
     { ICO_SYC_VEHICLEINFO_TURN_SIGNAL, "TurnSignal",
       "/org/automotive/runningstatus/turnSignal", "org.automotive.turnSignal" },
+#else   /* use LightStatus, because AMB not support access of TurnSignal by D-Bus   */
+    { ICO_SYC_VEHICLEINFO_LIGHT_LEFT, "LeftTurn",
+      "/org/automotive/runningstatus/lightStatus", "org.automotive.lightStatus" },
+    { ICO_SYC_VEHICLEINFO_LIGHT_RIGHT, "RightTurn",
+      "/org/automotive/runningstatus/lightStatus", "org.automotive.lightStatus" },
+#endif  /* use LightStatus, because AMB not support access of TurnSignal by D-Bus   */
     { 0, "\0", "\0", "\0" }
 };
 
@@ -103,8 +112,6 @@ request_vehicle_info(void)
         vehicle_data[idx].key = vehicle_info[idx].key;
 
         if (vehicle_data[idx].pending)  {
-            apfw_trace("request_vehicle_info: (%s) not complite",
-                       vehicle_info[idx].property);
             continue;
         }
 
@@ -193,8 +200,6 @@ get_vehicle_info(void)
             continue;
         }
         if (! dbus_pending_call_get_completed(vehicle_data[idx].pending))   {
-            apfw_trace("get_vehicle_info: (%s) NOT complite",
-                       vehicle_info[idx].property);
             continue;
         }
 
@@ -254,6 +259,11 @@ get_vehicle_info(void)
                       vehicle_info[idx].property, ((int)type) & 0x0ff);
             break;
         }
+#if 0   /* too many logout, change to comment   */
+        apfw_trace("get_vehicle_info: %s = %d",
+                   vehicle_info[idx].property, (int)vehicle_data[idx].val);
+#endif  /* too many logout, change to comment   */
+
         /* free message and pending     */
         dbus_message_unref(dbus_message);
         dbus_pending_call_unref(vehicle_data[idx].pending);
@@ -274,11 +284,15 @@ static Eina_Bool
 rule_engine_wake(void *user_data)
 {
     int     idx;
+    int     i;
     ico_apc_reguration_control_t    wkcontrol[ICO_UXF_CATEGORY_MAX];
     ico_apc_reguration_control_t    change;
     double  VehicleSpeed = 0.0;
-    int     ShiftPosition = 0;
-    int     Blinker = 0;
+    int     ShiftPosition = ICO_SYC_APC_REGULATION_SHIFT_NEUTRALS;
+    int     Blinker = ICO_SYC_APC_REGULATION_BLINKER_NONE;
+
+    /* call UX-FW timer     */
+    ico_uxf_timer_wake(100);
 
     memset(wkcontrol, 0, sizeof(ico_apc_reguration_control_t) * ncategory);
 
@@ -293,9 +307,32 @@ rule_engine_wake(void *user_data)
         else if (vehicle_data[idx].key == ICO_SYC_VEHICLEINFO_SHIFT_POSITION) {
             ShiftPosition = (int)vehicle_data[idx].val;
         }
+#if 0   /* use LightStatus, because AMB not support access of TurnSignal by D-Bus   */
         else if (vehicle_data[idx].key == ICO_SYC_VEHICLEINFO_TURN_SIGNAL) {
             Blinker = (int)vehicle_data[idx].val;
         }
+#else   /* use LightStatus, because AMB not support access of TurnSignal by D-Bus   */
+        else if (vehicle_data[idx].key == ICO_SYC_VEHICLEINFO_LIGHT_LEFT) {
+            if (vehicle_data[idx].val == 0.0)   {
+                if (Blinker == ICO_SYC_APC_REGULATION_BLINKER_LEFT) {
+                    Blinker = ICO_SYC_APC_REGULATION_BLINKER_NONE;
+                }
+            }
+            else    {
+                Blinker = ICO_SYC_APC_REGULATION_BLINKER_LEFT;
+            }
+        }
+        else if (vehicle_data[idx].key == ICO_SYC_VEHICLEINFO_LIGHT_RIGHT) {
+            if (vehicle_data[idx].val == 0.0)   {
+                if (Blinker == ICO_SYC_APC_REGULATION_BLINKER_RIGHT)    {
+                    Blinker = ICO_SYC_APC_REGULATION_BLINKER_NONE;
+                }
+            }
+            else    {
+                Blinker = ICO_SYC_APC_REGULATION_BLINKER_RIGHT;
+            }
+        }
+#endif  /* use LightStatus, because AMB not support access of TurnSignal by D-Bus   */
     }
 
     /* Make control code            */
@@ -334,7 +371,6 @@ rule_engine_wake(void *user_data)
             break;
         case ICO_UXF_POLICY_BLINKER_LEFT:
             if ((Blinker != ICO_SYC_APC_REGULATION_BLINKER_LEFT) ||
-                (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_REVERSES))
                 wkcontrol[idx].display = ICO_SYC_APC_REGULATION_REGULATION;
             else
@@ -342,7 +378,6 @@ rule_engine_wake(void *user_data)
             break;
         case ICO_UXF_POLICY_BLINKER_RIGHT:
             if ((Blinker != ICO_SYC_APC_REGULATION_BLINKER_RIGHT) ||
-                (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_REVERSES))
                 wkcontrol[idx].display = ICO_SYC_APC_REGULATION_REGULATION;
             else
@@ -384,7 +419,6 @@ rule_engine_wake(void *user_data)
             break;
         case ICO_UXF_POLICY_BLINKER_LEFT:
             if ((Blinker != ICO_SYC_APC_REGULATION_BLINKER_LEFT) ||
-                (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_REVERSES))
                 wkcontrol[idx].sound = ICO_SYC_APC_REGULATION_REGULATION;
             else
@@ -392,7 +426,6 @@ rule_engine_wake(void *user_data)
             break;
         case ICO_UXF_POLICY_BLINKER_RIGHT:
             if ((Blinker != ICO_SYC_APC_REGULATION_BLINKER_RIGHT) ||
-                (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_REVERSES))
                 wkcontrol[idx].sound = ICO_SYC_APC_REGULATION_REGULATION;
             else
@@ -434,7 +467,6 @@ rule_engine_wake(void *user_data)
             break;
         case ICO_UXF_POLICY_BLINKER_LEFT:
             if ((Blinker != ICO_SYC_APC_REGULATION_BLINKER_LEFT) ||
-                (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_REVERSES))
                 wkcontrol[idx].input = ICO_SYC_APC_REGULATION_REGULATION;
             else
@@ -442,7 +474,6 @@ rule_engine_wake(void *user_data)
             break;
         case ICO_UXF_POLICY_BLINKER_RIGHT:
             if ((Blinker != ICO_SYC_APC_REGULATION_BLINKER_RIGHT) ||
-                (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_REVERSES))
                 wkcontrol[idx].input = ICO_SYC_APC_REGULATION_REGULATION;
             else
@@ -464,7 +495,7 @@ rule_engine_wake(void *user_data)
                        control[idx].sound, wkcontrol[idx].sound,
                        control[idx].input, wkcontrol[idx].input);
 
-            if (regulation_cb)  {
+            if (nregulation_cb > 0)  {
                 if (control[idx].display != wkcontrol[idx].display)
                     change.display = wkcontrol[idx].display;
                 else
@@ -478,7 +509,9 @@ rule_engine_wake(void *user_data)
                 else
                     change.input = ICO_SYC_APC_REGULATION_NOCHANGE;
 
-                (*regulation_cb)(idx, change, regulation_cb_user_data);
+                for (i = 0; i < nregulation_cb; i++)    {
+                    (*regulation_cb[i])(idx, change, regulation_cb_user_data[i]);
+                }
             }
             control[idx].display = wkcontrol[idx].display;
             control[idx].sound = wkcontrol[idx].sound;
@@ -589,13 +622,27 @@ ico_syc_apc_regulation_listener(ico_apc_regulation_cb_t func, void *user_data)
 {
     int     idx;
 
-    regulation_cb = func;
-    regulation_cb_user_data = user_data;
+    if (func == NULL)   {
+        nregulation_cb = 0;
+        return;
+    }
 
-    if (regulation_cb)  {
-        for (idx = 0; idx < ncategory; idx++) {
-            (*regulation_cb)(idx, control[idx], regulation_cb_user_data);
+    for (idx = 0; idx < nregulation_cb; idx++)  {
+        if (regulation_cb[idx] == func) break;
+    }
+    if (idx >= nregulation_cb)  {
+        if (nregulation_cb >= ICO_SYC_APC_REGULATION_LISTENERS) {
+            apfw_error("ico_syc_apc_regulation_listener: Too many listeners");
+            return;
         }
+        idx = nregulation_cb;
+        nregulation_cb ++;
+    }
+    regulation_cb[idx] = func;
+    regulation_cb_user_data[idx] = user_data;
+
+    for (idx = 0; idx < ncategory; idx++) {
+        (*func)(idx, control[idx], user_data);
     }
 }
 

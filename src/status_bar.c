@@ -21,10 +21,10 @@
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
 #include <Ecore_Evas.h>
-#include <Elementary.h>
 
 #include "ico_uxf.h"
 #include "ico_uxf_conf.h"
+#include "ico_uxf_conf_ecore.h"
 
 #include "home_screen.h"
 #include "home_screen_res.h"
@@ -59,6 +59,12 @@
 #define ICO_SB_POS_MIN2_X     (725)
 #define ICO_SB_POS_MIN2_Y     (18)
 
+#define ICO_SB_SIZE_SHTCT_W   (ICO_HS_SIZE_SB_HEIGHT)
+
+#define ICO_SB_POS_LIST_X     (ICO_HS_SIZE_SB_HEIGHT * 5)
+#define ICO_SB_POS_SHTCT1_X   (ICO_SB_POS_LIST_X + ICO_HS_SIZE_SB_HEIGHT + ICO_HS_SIZE_SB_HEIGHT * 2 / 2)
+#define ICO_SB_POS_SHTCT2_X   (ICO_SB_POS_SHTCT1_X + ICO_HS_SIZE_SB_HEIGHT + ICO_HS_SIZE_SB_HEIGHT * 1 / 2)
+
 #define ICO_SB_SIZE_COLON_W   (6)
 #define ICO_SB_SIZE_COLON_H   (17)
 #define ICO_SB_SIZE_NUM_W     (20)
@@ -66,11 +72,21 @@
 #define ICO_SB_SIZE_AMPM_W    (47)
 #define ICO_SB_SIZE_AMPM_H    (27)
 
+#define ICO_SB_CHTCT_MAX      (5)
+
+#define ICO_SB_NO_WAIT        (1)
+#define ICO_SB_WAIT_REPLY     (2)
+
+#define ICO_SB_APPLIST_OFFICON "applist_off.png"
+#define ICO_SB_APPLIST_ONICON "applist_on.png"
+#define ICO_SB_HOME_OFFICON "home_off.png"
+#define ICO_SB_HOME_ONICON "home_on.png"
+
 /*============================================================================*/
 /* static(internal) functions prototype                                       */
 /*============================================================================*/
 static void sb_on_destroy(Ecore_Evas *ee);
-static int sb_callback_http(struct libwebsocket_context *context, 
+static int sb_callback_http(struct libwebsocket_context *context,
               struct libwebsocket *wsi,
               enum libwebsocket_callback_reasons reason, void *user, void *in,
               size_t len);
@@ -82,12 +98,21 @@ static void sb_create_ws_context(void);
 static void sb_time_hour(struct tm *t_st);
 static void sb_time_min(struct tm *t_st);
 static Eina_Bool sb_time_show(void* thread_data);
-static void sb_touch_up_escathion(void *data, Evas_Object *obj, void *event_info);
+static void sb_touch_up_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+static void sb_touch_down_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+static void sb_touch_up_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+static void sb_touch_down_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info);
 static void sb_clock_display_fixation(Evas *canvas);
+static void sb_touch_up_shortcut(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+static void sb_config_event(const char *appid, int type);
+static void sb_add_shortcut(Evas *canvas);
 
 /*============================================================================*/
 /* variabe & table                                                            */
 /*============================================================================*/
+static Evas *sb_canvas;
+static Eina_List *sb_shtct_list = NULL;
+static int sb_wait_reply = ICO_SB_NO_WAIT;
 static int sb_ws_port = ICO_HS_WS_PORT;
 static int sb_ws_connected = 0;
 static struct libwebsocket_context *sb_ws_context;
@@ -118,19 +143,19 @@ struct _sb_time_data sb_time_data[ICO_SB_TIME_IMG_PARTS] = {
 
 static struct libwebsocket_protocols ws_protocols[] = {
     {
-        "http-only", 
-        sb_callback_http, 
+        "http-only",
+        sb_callback_http,
         0
-    }, 
+    },
     {
-        "statusbar-protocol", 
-        sb_callback_statusbar, 
-        0, 
-    }, 
+        "statusbar-protocol",
+        sb_callback_statusbar,
+        0,
+    },
     {
         /* end of list */
-        NULL, 
-        NULL, 
+        NULL,
+        NULL,
         0
     }
 };
@@ -184,7 +209,7 @@ sb_callback_http(struct libwebsocket_context *context, struct libwebsocket *wsi,
 /*--------------------------------------------------------------------------*/
 /*
  * @brief   sb_callback_statusbar
- *          this callback function is notified from libwebsockets 
+ *          this callback function is notified from libwebsockets
  *          statusbar protocol
  *
  * @param[in]   context             libwebsockets context
@@ -220,7 +245,12 @@ sb_callback_statusbar(struct libwebsocket_context *context,
     case LWS_CALLBACK_CLIENT_RECEIVE:
         uifw_trace("SB-RECEIVE[%d] %s", len, in);
         sb_wsi_mirror = wsi;
-        n = sprintf((char *)p, "ANS %s OK", (char *)in);
+        if (strncmp("RECEIVE OK", in, 10) == 0) {
+            sb_wait_reply = ICO_SB_NO_WAIT;
+        }
+        else {
+            n = sprintf((char *)p, "ANS %s OK", (char *)in);
+        }
         break;
     case LWS_CALLBACK_CLOSED:
         uifw_trace("SB-CLOSE");
@@ -418,32 +448,166 @@ sb_time_show(void *thread_data)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   sb_touch_up_escathion
- *          processing when change button touch up.
+ * @brief   sb_touch_up_shortcut
+ *          processing when application button touch up.
  *
  * @param[in]   data                user data
+ * @param[in]   evas                evas of the button
  * @param[in]   obj                 evas object of the button
  * @param[in]   event_info          evas event infomation
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
 static void
-sb_touch_up_escathion(void *data, Evas_Object *obj, void *event_info)
+sb_touch_up_shortcut(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
     int n = 0;
     unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
             + LWS_SEND_BUFFER_POST_PADDING];
     unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+    char *appid = (char *)data;
 
-    if (sb_wsi_mirror != NULL) {
-        n = sprintf((char *)p, "%s", "CLICK ESCUTCHEON 1");
-        libwebsocket_write(sb_wsi_mirror, p, n,
-                           LWS_WRITE_CLIENT_IGNORE_XOR_MASK | LWS_WRITE_TEXT);
-        uifw_trace("SB: CLICK ESCUTCHEON 1");
+    if (sb_wait_reply == ICO_SB_NO_WAIT) {
+        if ((sb_wsi_mirror != NULL) && (appid != NULL)) {
+            n = sprintf((char *)p, "SHOW %s %s", appid, getenv("PKG_NAME"));
+            libwebsocket_write(sb_wsi_mirror, p, n,
+                               LWS_WRITE_CLIENT_IGNORE_XOR_MASK | LWS_WRITE_TEXT);
+            uifw_trace("SB: SHOW %s", appid);
+            sb_wait_reply = ICO_SB_WAIT_REPLY;
+        }
+        /* operation sound */
+        hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));
     }
+}
 
-    /* operation sound */
-    hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   sb_touch_down_applist
+ *          processing when application button touch down.
+ *
+ * @param[in]   data                user data
+ * @param[in]   evas                evas of the button
+ * @param[in]   obj                 evas object of the button
+ * @param[in]   event_info          evas event infomation
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+sb_touch_down_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info)
+{
+    char img[ICO_HS_TEMP_BUF_SIZE];
+    char path[ICO_HS_TEMP_BUF_SIZE];
+
+    hs_get_image_path(path, sizeof(path));
+    sprintf(img, "%s"ICO_SB_APPLIST_ONICON, path);
+
+    evas_object_image_file_set(obj, img, NULL);
+    evas_object_show(obj);
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   sb_touch_up_applist
+ *          processing when application button touch up.
+ *
+ * @param[in]   data                user data
+ * @param[in]   evas                evas of the button
+ * @param[in]   obj                 evas object of the button
+ * @param[in]   event_info          evas event infomation
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+sb_touch_up_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info)
+{
+    int n = 0;
+    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
+            + LWS_SEND_BUFFER_POST_PADDING];
+    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+    char path[ICO_HS_TEMP_BUF_SIZE];
+    char img[ICO_HS_TEMP_BUF_SIZE];
+
+    hs_get_image_path(path, sizeof(path));
+    sprintf(img, "%s"ICO_SB_APPLIST_OFFICON, path);
+
+    evas_object_image_file_set(obj, img, NULL);
+    evas_object_show(obj);
+
+    if (sb_wait_reply == ICO_SB_NO_WAIT) {
+        if (sb_wsi_mirror != NULL) {
+            hs_get_ons_edj_path(path, sizeof(path));
+            n = sprintf((char *)p, "OPEN %s%s %s", path,
+                    ICO_HS_ONS_APPLI_LIST_NAME, getenv("PKG_NAME"));
+            libwebsocket_write(sb_wsi_mirror, p, n,
+                               LWS_WRITE_CLIENT_IGNORE_XOR_MASK | LWS_WRITE_TEXT);
+            uifw_trace("SB: CLICK APPLIST");
+            sb_wait_reply = ICO_SB_WAIT_REPLY;
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   sb_touch_down_escathion
+ *          processing when escathion button touch down.
+ *
+ * @param[in]   data                user data
+ * @param[in]   evas                evas of the button
+ * @param[in]   obj                 evas object of the button
+ * @param[in]   event_info          evas event infomation
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+sb_touch_down_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_info)
+{
+    char img[ICO_HS_TEMP_BUF_SIZE];
+    char path[ICO_HS_TEMP_BUF_SIZE];
+
+    hs_get_image_path(path, sizeof(path));
+    sprintf(img, "%s"ICO_SB_HOME_ONICON, path);
+
+    evas_object_image_file_set(obj, img, NULL);
+    evas_object_show(obj);
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   sb_touch_up_escathion
+ *          processing when change button touch up.
+ *
+ * @param[in]   data                user data
+ * @param[in]   evas                evas of the button
+ * @param[in]   obj                 evas object of the button
+ * @param[in]   event_info          evas event infomation
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+sb_touch_up_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_info)
+{
+    int n = 0;
+    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
+            + LWS_SEND_BUFFER_POST_PADDING];
+    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+    char path[ICO_HS_TEMP_BUF_SIZE];
+    char img[ICO_HS_TEMP_BUF_SIZE];
+
+    hs_get_image_path(path, sizeof(path));
+    sprintf(img, "%s"ICO_SB_HOME_OFFICON, path);
+
+    evas_object_image_file_set(obj, img, NULL);
+    evas_object_show(obj);
+
+    if (sb_wait_reply == ICO_SB_NO_WAIT) {
+        if (sb_wsi_mirror != NULL) {
+            n = sprintf((char *)p, "%s", "CLICK ESCUTCHEON 1");
+            libwebsocket_write(sb_wsi_mirror, p, n,
+                               LWS_WRITE_CLIENT_IGNORE_XOR_MASK | LWS_WRITE_TEXT);
+            uifw_trace("SB: CLICK ESCUTCHEON 1");
+            sb_wait_reply = ICO_SB_WAIT_REPLY;
+        }
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -458,30 +622,44 @@ sb_touch_up_escathion(void *data, Evas_Object *obj, void *event_info)
 static void
 sb_clock_display_fixation(Evas *canvas)
 {
-    Evas_Object *title, *colon;
+    Evas_Object *tile, *colon;
     int moveH;
     int escPosX;
     char file[ICO_SB_BUF_SIZE];
+    char img[ICO_HS_TEMP_BUF_SIZE];
+    char path[ICO_HS_TEMP_BUF_SIZE];
 
     moveH = sb_width - ICO_HS_SIZE_LAYOUT_WIDTH;
     escPosX = sb_width / 2 - ICO_HS_SIZE_SB_HEIGHT / 2;
 
     /* show escutcheon */
-    Evas_Object *icon, *btn;
-    title = evas_object_rectangle_add(canvas);
-    evas_object_move(title, escPosX, ICO_SB_POS_Y);
-    evas_object_resize(title, ICO_HS_SIZE_SB_HEIGHT, ICO_HS_SIZE_SB_HEIGHT);
-    evas_object_show(title);
+    hs_get_image_path(path, sizeof(path));
+    sprintf(img, "%s"ICO_SB_HOME_OFFICON, path);
+    tile = evas_object_image_filled_add(canvas);
+    evas_object_image_file_set(tile, img, NULL);
+    evas_object_move(tile, escPosX, ICO_SB_POS_Y);
+    evas_object_resize(tile, ICO_HS_SIZE_SB_HEIGHT, ICO_HS_SIZE_SB_HEIGHT);
+    evas_object_event_callback_add(tile, EVAS_CALLBACK_MOUSE_UP,
+                                  sb_touch_up_escathion, NULL);
+    evas_object_event_callback_add(tile, EVAS_CALLBACK_MOUSE_DOWN,
+                                  sb_touch_down_escathion, NULL);
+    evas_object_show(tile);
 
-    icon = elm_icon_add(title);
-    elm_icon_standard_set(icon, "refresh");
+    /* show app list */
+    hs_get_image_path(path, sizeof(path));
+    sprintf(img, "%s"ICO_SB_APPLIST_OFFICON, path);
+    tile = evas_object_image_filled_add(canvas);
+    evas_object_image_file_set(tile, img, NULL);
+    evas_object_move(tile, ICO_SB_POS_LIST_X, ICO_SB_POS_Y);
+    evas_object_resize(tile, ICO_HS_SIZE_SB_HEIGHT * 3 / 2, ICO_HS_SIZE_SB_HEIGHT);
+    evas_object_event_callback_add(tile, EVAS_CALLBACK_MOUSE_UP,
+                                  sb_touch_up_applist, NULL);
+    evas_object_event_callback_add(tile, EVAS_CALLBACK_MOUSE_DOWN,
+                                  sb_touch_down_applist, NULL);
+    evas_object_show(tile);
 
-    btn = elm_button_add(title);
-    elm_object_part_content_set(btn, "icon", icon);
-    evas_object_move(btn, escPosX, ICO_SB_POS_Y);
-    evas_object_resize(btn, ICO_HS_SIZE_SB_HEIGHT, ICO_HS_SIZE_SB_HEIGHT);
-    evas_object_smart_callback_add(btn, "clicked", sb_touch_up_escathion, NULL );
-    evas_object_show(btn);
+    /* shortcut bottun */
+    sb_add_shortcut(canvas);
 
     /* show clock's colon */
     /*Creates a new image object*/
@@ -495,6 +673,86 @@ sb_clock_display_fixation(Evas *canvas)
     evas_object_resize(colon, ICO_SB_SIZE_COLON_W, ICO_SB_SIZE_COLON_H);
     /*Makes the given Evas object visible*/
     evas_object_show(colon);
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   sb_add_shortcut
+ *          add shurtcut bottun
+ *
+ * @param[in]   canvas              evas to draw
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+sb_add_shortcut(Evas *canvas)
+{
+    Evas_Object *tile;
+    int escPosX;
+    int x, idx;
+    char config[ICO_UXF_MAX_PROCESS_NAME];
+    const char *appid;
+    const Ico_Uxf_conf_application *appconf;
+    Eina_List *l, *l_next;
+
+    escPosX = sb_width / 2 - ICO_HS_SIZE_SB_HEIGHT / 2;
+
+    /* delete shortcut */
+    EINA_LIST_FOREACH_SAFE(sb_shtct_list, l, l_next, tile) {
+        evas_object_del(tile);
+        sb_shtct_list = eina_list_remove_list(sb_shtct_list, l);
+    }
+
+    /* add shortcut */
+    for (idx = 0; idx < ICO_SB_CHTCT_MAX; idx++) {
+        sprintf(config, ICO_SB_CONFIG_SHTCT_APP"%d", idx);
+        x = ICO_SB_POS_SHTCT1_X + (ICO_SB_SIZE_SHTCT_W + ICO_HS_SIZE_SB_HEIGHT * 1 / 2) * idx;
+        if (x > escPosX) {
+            break;
+        }
+        appid = hs_conf_get_string(ICO_HS_CONFIG_STATUBAR, config, NULL);
+        if ((appid != NULL) && (strcmp(appid, "none") != 0)) {
+            appconf = ico_uxf_getAppByAppid(appid);
+            if (appid) {
+                tile = evas_object_image_filled_add(canvas);
+                evas_object_image_file_set(tile,
+                        appconf->icon_key_name, NULL);
+                evas_object_move(tile, x, ICO_SB_POS_Y);
+                evas_object_resize(tile, ICO_HS_SIZE_SB_HEIGHT, ICO_HS_SIZE_SB_HEIGHT);
+                evas_object_event_callback_add(tile, EVAS_CALLBACK_MOUSE_UP,
+                                   sb_touch_up_shortcut, appid);
+                evas_object_show(tile);
+                sb_shtct_list = eina_list_append(sb_shtct_list, tile);
+            }
+        }
+    }
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   sb_config_event
+ *          This is a callback function called when the configurations
+ *          is updata.
+ *
+ * @param[in]   appid               application id
+ * @param[in]   type                event type(install/uninstall)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+sb_config_event(const char *appid, int type)
+{
+    uifw_trace("sb_config_event: Enter(appid=%s, type=%d)", appid, type);
+
+    sb_add_shortcut(sb_canvas);
+
+    uifw_trace("sb_config_event: Leave");
+
+    return;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -511,7 +769,6 @@ sb_clock_display_fixation(Evas *canvas)
 int
 main(int argc, char *argv[])
 {
-    Evas * canvas;
     time_t timer;
     struct tm *t_st;
     Evas_Object *bg;
@@ -597,25 +854,24 @@ main(int argc, char *argv[])
     ecore_evas_show(ee);
 
     /* Wrapper of Evas */
-    canvas = ecore_evas_get(ee);
+    sb_canvas = ecore_evas_get(ee);
 
     /* BG color set */
-    bg = evas_object_rectangle_add(canvas);
+    bg = evas_object_rectangle_add(sb_canvas);
     evas_object_color_set(bg, 0, 0, 0, 255);
     evas_object_move(bg, 0, 0);
     evas_object_resize(bg, sb_width, ICO_HS_SIZE_SB_HEIGHT);
     evas_object_show(bg);
 
     /* Call the function */
-    elm_init(argc, argv);
-    sb_clock_display_fixation(canvas);
+    sb_clock_display_fixation(sb_canvas);
 
     /* ... */
-    sb_ampm = evas_object_image_filled_add(canvas);
-    sb_hour1 = evas_object_image_filled_add(canvas);
-    sb_hour2 = evas_object_image_filled_add(canvas);
-    sb_min1 = evas_object_image_filled_add(canvas);
-    sb_min2 = evas_object_image_filled_add(canvas);
+    sb_ampm = evas_object_image_filled_add(sb_canvas);
+    sb_hour1 = evas_object_image_filled_add(sb_canvas);
+    sb_hour2 = evas_object_image_filled_add(sb_canvas);
+    sb_min1 = evas_object_image_filled_add(sb_canvas);
+    sb_min2 = evas_object_image_filled_add(sb_canvas);
 
     /* This function will make layout change */
     evas_object_move(sb_ampm, moveH + ICO_SB_POS_AMPM_X, ICO_SB_POS_AMPM_Y);
@@ -651,7 +907,7 @@ main(int argc, char *argv[])
 
     /* Set the image file */
     for (ii = 0; ii < ICO_SB_TIME_IMG_PARTS; ii++) {
-        sb_time_data[ii].time_img = evas_object_image_filled_add(canvas);
+        sb_time_data[ii].time_img = evas_object_image_filled_add(sb_canvas);
         sprintf(file, "%s%s", sb_respath, sb_time_data[ii].f_name);
         evas_object_image_file_set(sb_time_data[ii].time_img, file, NULL);
     }
@@ -660,6 +916,9 @@ main(int argc, char *argv[])
     /* Init websockets */
     sb_create_ws_context();
     ecore_timer_add(ICO_SB_WS_TIMEOUT, sb_ecore_event, NULL);
+
+    /* add callback to app configuration */
+    ico_uxf_econf_setAppUpdateCb(sb_config_event);
 
     /* Runs the application main loop */
     ecore_main_loop_begin();

@@ -67,6 +67,9 @@ static const struct {
     { "Blinker", "TURN_SIGNAL", {TYPE_INT32, TYPE_NULL, 0, 0} },
     { "Winker", "TURN_SIGNAL", {TYPE_INT32, TYPE_NULL, 0, 0} },
     { "TurnSignal", "TURN_SIGNAL", {TYPE_INT32, TYPE_NULL, 0, 0} },
+    { "Turn", "TURN_SIGNAL", {TYPE_INT32, TYPE_NULL, 0, 0} },
+    { "lightStatus", "LIGHTSTATUS", {TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL} },
+    { "light", "LIGHTSTATUS", {TYPE_BOOL, TYPE_BOOL, TYPE_BOOL, TYPE_BOOL} },
     { "WATER_TEMP", "WATER_TEMP", {TYPE_INT32, TYPE_NULL, 0, 0} },
     { "\0", "\0", {TYPE_NULL, 0,0,0} } };
 

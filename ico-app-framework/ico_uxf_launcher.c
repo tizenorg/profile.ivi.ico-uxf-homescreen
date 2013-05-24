@@ -60,7 +60,6 @@ ico_uxf_process_execute(const char *name)
     for (hash = 0; hash < ICO_UXF_MISC_HASHSIZE; hash++)    {
         proc = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
         while (proc)    {
-            uifw_trace("ico_uxf_process_execute: PROC(%s)", proc->attr.process);
             if (strcasecmp(proc->attr.process, name) == 0)  break;
             proc = proc->nextidhash;
         }
