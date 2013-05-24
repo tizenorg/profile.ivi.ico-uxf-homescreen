@@ -24,16 +24,16 @@
 #include <pthread.h>
 #include <libwebsockets.h>
 
+#include "ico_apf.h"
 #include "ico_uxf.h"
 #include "ico_uxf_conf.h"
+#include "ico_syc_apc.h"
+#include "ico_uxf_conf_ecore.h"
 
-#include "ico_apf_log.h"
 #include "home_screen_lib.h"
 #include "home_screen_res.h"
 #include "home_screen_conf.h"
 #include "home_screen_parser.h"
-#include "ico_uxf_conf_common.h"
-#include "ico_syc_apc.h"
 
 /*============================================================================*/
 /* definition                                                                 */
@@ -57,6 +57,7 @@ struct _hs_tile_info {
 };
 
 #define HS_DISPLAY_HOMESCREEN   0           /* HomeScreen target display Id     */
+#define NUM_ONSCREEN_WINDOWS    10          /* max number of windows in OnScreen*/
 
 #define HS_LAYER_BACKGROUND     0           /* layer of BackGround              */
 #define HS_LAYER_HOMESCREEN     1           /* layer of HomeScreen menu         */
@@ -70,6 +71,7 @@ struct _hs_tile_info {
 /* static(internal) functions prototype                                       */
 /*============================================================================*/
 static int hs_is_special_app(const char *appid);
+static int hs_is_noicon_app(const char *appid);
 static void hs_set_invisible_all(void);
 static void hs_set_appscreen(const char *appid);
 static void hs_tile_start_apps(void);
@@ -83,15 +85,18 @@ static void hs_sound_control(const Ico_Uxf_conf_application *conf, const int adj
 static void hs_input_control(const Ico_Uxf_conf_application *conf, const int inputsw);
 static void *hs_create_window(int type);
 static void hs_touch_up_api_list(void *data, Evas *evas, Evas_Object *obj,
-                             void *event_info);
+                                 void *event_info);
 static void hs_touch_down_api_list(void *data, Evas *evas, Evas_Object *obj,
-                       void *event_info);
+                                   void *event_info);
 static Eina_Bool hs_ecore_timer_event(void *data);
 static void hs_touch_up_tile(void *data, Evas *evas, Evas_Object *obj, void *event_info);
 static void hs_touch_down_tile(void *data, Evas *evas, Evas_Object *obj, void *event_info);
 static void hs_add_touch_listener(Evas *canvas_fg);
 static void hs_add_bg_image(Evas *canvas_bg);
 static void hs_terminate_all_app(void);
+static void hs_regulation_listener(const int appcategory,
+                                   const ico_apc_reguration_control_t control,
+                                   void *user_data);
 
 /*============================================================================*/
 /* variables and tables                                                       */
@@ -107,6 +112,9 @@ static char gStatusbarName[ICO_UXF_MAX_PROCESS_NAME + 1];
 static char gOnscreenName[ICO_UXF_MAX_PROCESS_NAME + 1];
 static hs_tile_info_t *hs_tile_info;
 static int hs_tile_cnt = 0;
+static int hs_notile_cnt = 0;
+static int hs_regulation_category = 0;
+static int hs_regulation_visible = 1;
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -180,12 +188,18 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
             else {
                 /* other normal application */
                 if (hs_is_special_app(winAttr.process) == FALSE) {
-                    if (hs_stat_touch == ICO_HS_TOUCH_IN_SHOW) {
+                    if (hs_is_noicon_app(winAttr.process) != FALSE) {
+                        hs_set_appscreen(winAttr.process);
+                        if (hs_stat_touch == ICO_HS_TOUCH_IN_SHOW) {
+                            hs_tile_show_screen();
+                        }
+                    }
+                    else if (hs_stat_touch == ICO_HS_TOUCH_IN_SHOW) {
                         /* set layer of Application in HomeScreen menu  */
                         ico_uxf_window_layer(dd.window.window, HS_LAYER_HOMESCREEN);
                         hs_tile_show_screen();
                     }
-                    if (hs_stat_touch == ICO_HS_TOUCH_IN_HIDE) {
+                    else if (hs_stat_touch == ICO_HS_TOUCH_IN_HIDE) {
                         hs_set_appscreen(winAttr.process);
                     }
                 }
@@ -342,6 +356,8 @@ hs_set_appscreen(const char *appid)
     int ret;
     Ico_Uxf_ProcessWin window;
     const Ico_Uxf_conf_application *appConf;
+    const Ico_Uxf_Sys_Config       *sysConf;
+    Ico_Uxf_conf_display_zone      *zone;
 
     idx = hs_get_index_appscreendata(appid);
 
@@ -352,27 +368,10 @@ hs_set_appscreen(const char *appid)
     /* visible raise */
     ret = ico_uxf_process_window_get(hs_app_screen_window[idx].appid, &window, 1);
     if ((ret > 0) || (ret == ICO_UXF_E2BIG))    {
-        uifw_trace(
-                   "hs_set_appscreen: app[%d]:visible=%d raise=%d %dx%d(%d,%d)",
-                   idx, hs_app_screen_window[idx].visible,
-                   hs_app_screen_window[idx].raise,
-                   hs_app_screen_window[idx].resize_w,
-                   hs_app_screen_window[idx].resize_h,
-                   hs_app_screen_window[idx].move_x,
-                   hs_app_screen_window[idx].move_y);
-#if 0
-#if 1   /* 05/15 TEST TEST TEST */
-        if ((hs_app_screen_window[idx].move_x < 0) &&
-            (hs_app_screen_window[idx].move_y < 0)) {
-            hs_app_screen_window[idx].visible = 1;
-            hs_app_screen_window[idx].raise = 1;
-            hs_app_screen_window[idx].resize_w = 1920;
-            hs_app_screen_window[idx].resize_h = 1016;
-            hs_app_screen_window[idx].move_x = 0;
-            hs_app_screen_window[idx].move_y = 64;
-        }
-#endif
-#endif
+        uifw_trace("hs_set_appscreen: app[%d]:visible=%d raise=%d %dx%d(%d,%d)",
+                   idx, hs_app_screen_window[idx].visible, hs_app_screen_window[idx].raise,
+                   hs_app_screen_window[idx].resize_w, hs_app_screen_window[idx].resize_h,
+                   hs_app_screen_window[idx].move_x, hs_app_screen_window[idx].move_y);
         /* move application window to application layer */
         appConf = ico_uxf_getAppByAppid(hs_app_screen_window[idx].appid);
         if (! appConf)  {
@@ -384,6 +383,23 @@ hs_set_appscreen(const char *appid)
             ico_uxf_window_layer(window.window, appConf->display[0].layerId);
             /* show application layer                       */
             ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, appConf->display[0].layerId, 1);
+
+            if ((hs_app_screen_window[idx].resize_w <= 0) &&
+                (hs_app_screen_window[idx].resize_h <= 0) &&
+                (hs_app_screen_window[idx].move_x <= 0) &&
+                (hs_app_screen_window[idx].move_y <= 0))    {
+                /* not set size and position, set default(zone size)    */
+                sysConf = ico_uxf_getSysConfig();
+                zone = (Ico_Uxf_conf_display_zone *)&sysConf->
+                           display[appConf->display[0].displayId].
+                               zone[appConf->display[0].zoneId];
+                hs_app_screen_window[idx].resize_w = zone->width;
+                hs_app_screen_window[idx].resize_h = zone->height;
+                hs_app_screen_window[idx].move_x = zone->x;
+                hs_app_screen_window[idx].move_y = zone->y;
+                hs_app_screen_window[idx].visible = 1;
+                hs_app_screen_window[idx].raise = 1;
+            }
         }
         ico_uxf_window_move(window.window, hs_app_screen_window[idx].move_x,
                             hs_app_screen_window[idx].move_y);
@@ -480,8 +496,7 @@ hs_show_appscreen(const char *appid)
                 uifw_trace("hs_show_appscreen: move %d=%dx%d(%d,%d)", ii,
                            hs_app_screen_window[ii].resize_w,
                            hs_app_screen_window[ii].resize_h,
-                           hs_app_screen_window[ii].move_x,
-                           hs_app_screen_window[ii].move_y);
+                           hs_app_screen_window[ii].move_x, hs_app_screen_window[ii].move_y);
                 /* move application window to application layer */
                 ico_uxf_window_resize(window.window,
                                       hs_app_screen_window[ii].resize_w,
@@ -506,6 +521,10 @@ hs_show_appscreen(const char *appid)
     }
     /* hide HomeScreen layer menu                   */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
+    /* hide Touch layer                             */
+    ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_TOUCH, 0);
+    /* hide OnScreen windows                        */
+    hs_hide_onscreen();
 
     /* show own apps */
     if (appid != NULL) {
@@ -584,7 +603,6 @@ hs_show_appscreen(const char *appid)
             ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
         }
     }
-
     hs_stat_touch = ICO_HS_TOUCH_IN_HIDE;
     ico_uxf_main_loop_iterate();
 
@@ -606,25 +624,49 @@ hs_tile_start_apps(void)
 {
     char cName[ICO_UXF_MAX_PROCESS_NAME + 1];
     int idx, ret;
+    int idx1, idx2;
     const char *appName;
+    const Ico_Uxf_App_Config *appConf;
     hs_tile_info_t *tinfo;
 
-    /* excute */
+    /* excute applications in tile menu */
     for (idx = 0; idx < hs_tile_cnt; idx++) {
         tinfo = &hs_tile_info[idx];
-        if (tinfo->valid == 0)
-            continue; sprintf(cName, ICO_HS_CONFIG_TILE_APP"%d", idx);
+        if (tinfo->valid == 0) continue;
+        sprintf(cName, ICO_HS_CONFIG_TILE_APP"%d", idx);
         appName = hs_conf_get_string(ICO_HS_CONFIG_HOMESCREEN, cName, NULL);
         if ((appName != NULL) && (strcmp(appName, "none") != 0)) {
             ret = ico_uxf_process_execute(appName);
             if (ret >= 0) {
-                uifw_trace("hs_tile_start_apps: execute tile[%d]=%s", idx,
-                           appName);
+                uifw_trace("hs_tile_start_apps: execute tile[%d]=%s", idx, appName);
                 memset(tinfo->appid, 0, ICO_UXF_MAX_PROCESS_NAME + 1);
                 strncpy(tinfo->appid, appName, ICO_UXF_MAX_PROCESS_NAME);
             }
         }
     }
+
+    /* excute no menu applications      */
+    appConf = ico_uxf_getAppConfig();
+    idx = hs_tile_cnt;
+    for (idx1 = 0; idx1 < appConf->applicationNum; idx1++)  {
+        if (appConf->application[idx1].autostart == 0)  continue;
+        for (idx2 = 0; idx2 < hs_tile_cnt; idx2++)  {
+            if (! strcmp(hs_tile_info[idx2].appid, appConf->application[idx1].appid)) break;
+        }
+        if (idx2 >= hs_tile_cnt)    {
+            ret = ico_uxf_process_execute(appConf->application[idx1].appid);
+            if (ret >= 0) {
+                uifw_trace("hs_tile_start_apps: execute no tile[%d]=%s",
+                           idx, appConf->application[idx1].appid);
+                memset(hs_tile_info[idx].appid, 0, ICO_UXF_MAX_PROCESS_NAME + 1);
+                strncpy(hs_tile_info[idx].appid,
+                        appConf->application[idx1].appid, ICO_UXF_MAX_PROCESS_NAME);
+                idx ++;
+                if ((idx - hs_tile_cnt) >= ICO_HS_NOTILE_APP_MAX)   break;
+            }
+        }
+    }
+    hs_notile_cnt = idx - hs_tile_cnt;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -663,9 +705,9 @@ hs_tile_init_info(void)
     tilecnt = colcnt * rowcnt;
 
     /* allocate tile info structure */
-    hs_tile_info = malloc(sizeof(hs_tile_info_t) * tilecnt);
-    valid = (int *)malloc(sizeof(int) * tilecnt);
-    type = (int *)malloc(sizeof(int) * tilecnt);
+    hs_tile_info = malloc(sizeof(hs_tile_info_t) * (tilecnt + ICO_HS_NOTILE_APP_MAX));
+    valid = (int *)malloc(sizeof(int) * (tilecnt + ICO_HS_NOTILE_APP_MAX));
+    type = (int *)malloc(sizeof(int) * (tilecnt + ICO_HS_NOTILE_APP_MAX));
     if (!hs_tile_info || !valid || !type) {
         uifw_warn("hs_tile_init_info: Leave(err malloc tile str failed)");
         return ICO_HS_ERR;
@@ -802,6 +844,11 @@ hs_tile_show_screen(void)
     int idx, sid;
     hs_tile_info_t *tinfo;
 
+    if (hs_regulation_visible == 0) {
+        uifw_trace("hs_regulation_visible: regulation, no menu display");
+        return;
+    }
+
     /* all apps invisible */
     /* hide HomeScreen layer menu                   */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
@@ -834,10 +881,12 @@ hs_tile_show_screen(void)
     }
     /* show HomeScreen layer menu                   */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 1);
+    /* show Touch layer                             */
+    ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_TOUCH, 1);
     /* hide application layer                       */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 0);
 
-    /* chnage to noraml mode for AppsControler  */
+    /* chnage to menu mode for AppsControler        */
     ico_uxf_window_control(NULL, -1, ICO_UXF_APPSCTL_TEMPVISIBLE, 1);
 
     ico_uxf_main_loop_iterate();
@@ -892,12 +941,12 @@ hs_tile_get_minchange(void)
 
     for (ii = 0; ii < hs_tile_cnt; ii++) {
         tinfo = &hs_tile_info[ii];
-        if ((tinfo->type != ICO_HS_TILE_OTHERS) && ((tinfo->change <= min)
+        if ((tinfo->type > ICO_HS_TILE_OTHERS) && ((tinfo->change <= min)
                 || (min == -1))) {
             idx = ii;
             min = tinfo->change;
         }
-        if ((tinfo->type != ICO_HS_TILE_OTHERS) && (strlen(tinfo->appid) == 0)) {
+        if ((tinfo->type > ICO_HS_TILE_OTHERS) && (strlen(tinfo->appid) == 0)) {
             return ii;
         }
     }
@@ -1044,10 +1093,6 @@ hs_show_onscreen(void)
     if ((ret > 0) || (ret == ICO_UXF_E2BIG))    {
         ico_uxf_window_layer(window.window, HS_LAYER_ONSCREEN);
     }
-
-    usleep(10000);
-
-    ico_uxf_main_loop_iterate();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1071,10 +1116,6 @@ hs_hide_onscreen(void)
         ico_uxf_window_layer(window.window, HS_LAYER_BACKGROUND);
         ico_uxf_window_lower(window.window);
     }
-
-    usleep(10000);
-
-    ico_uxf_main_loop_iterate();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1089,22 +1130,62 @@ hs_hide_onscreen(void)
 void
 hs_click_escutcheon(void)
 {
-    uifw_trace("hs_click_escutcheon: Enter");
+    uifw_trace("hs_click_escutcheon: Enter(regulation=%d)", hs_regulation_visible);
 
     if (strlen(hs_active_onscreen) > 0) {
-        uifw_trace("hs_click_escutcheon: do nothing(active=%s)", hs_active_onscreen);
+        uifw_trace("hs_click_escutcheon: Leave(active=%s)", hs_active_onscreen);
+        return;
+    }
+    if (hs_regulation_visible == 0) {
+        uifw_trace("hs_click_escutcheon: Leave(regulation)");
         return;
     }
 
     if (hs_stat_touch == ICO_HS_TOUCH_IN_SHOW) {
+        hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));
         uifw_trace("hs_click_escutcheon: hs_show_appscreen");
         hs_show_appscreen(NULL);
     }
     else if (hs_stat_touch == ICO_HS_TOUCH_IN_HIDE) {
+        hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));
         uifw_trace("hs_click_escutcheon: hs_tile_show_screen");
         hs_tile_show_screen();
     }
     uifw_trace("hs_click_escutcheon: Leave");
+}
+
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   hs_click_applist
+ *          processing when application list button is clicked.
+ *
+ * @param       none
+ * @return      regulation
+ * @retval      =0      regulation controlled(no display)
+ * @retval      =1      no regulation
+ */
+/*--------------------------------------------------------------------------*/
+int
+hs_click_applist(void)
+{
+    uifw_trace("hs_click_applist: Enter(regulation=%d)", hs_regulation_visible);
+
+    if (hs_regulation_visible == 0) {
+        uifw_trace("hs_click_applist: Leave(regulation)");
+        return 0;
+    }
+
+    /* operation sound */
+    hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));
+    uifw_trace("hs_click_applist: Leave");
+
+    /* show Touch layer                             */
+    ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_TOUCH, 1);
+    /* show OnScreen windows                        */
+    hs_show_onscreen();
+
+    return 1;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1113,23 +1194,54 @@ hs_click_escutcheon(void)
  *          return 1 if the application is special one(homescreen)
  *          /statusbar/onscreen).
  *
- * @param       none
- * @return      none
+ * @param[in]   appid       applicationId
+ * @return      special application
+ * @retval      1           special application(HomeScreen/StatusBar ... etc)
+ * @retval      0           normal application
  */
 /*--------------------------------------------------------------------------*/
 static int
 hs_is_special_app(const char *appid)
 {
-    uifw_trace("hs_is_special_app: Enter(%s)", appid);
     if ((strncmp(appid, hs_name_homescreen, ICO_UXF_MAX_PROCESS_NAME) == 0)
             || (strncmp(appid, gStatusbarName, ICO_UXF_MAX_PROCESS_NAME) == 0)
             || (strncmp(appid, gOnscreenName, ICO_UXF_MAX_PROCESS_NAME) == 0)
             || (strncmp(appid, ICO_HS_APPID_DEFAULT_TOUCH,
                         ICO_UXF_MAX_PROCESS_NAME) == 0)) {
-        uifw_trace("hs_is_special_app: Leave(TURE)");
+        uifw_trace("hs_is_special_app: app(%s) is special", appid);
         return 1;
     }
-    uifw_trace("hs_is_special_app: Leave(FALSE)");
+    uifw_trace("hs_is_special_app: app(%s) is normal", appid);
+    return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   hs_is_noicon_app
+ *          return 1 if the application has no menu icon
+ *
+ * @param[in]   appid       applicationId
+ * @return      no need menu
+ * @retval      1           no need menu
+ * @retval      0           need menu
+ */
+/*--------------------------------------------------------------------------*/
+static int
+hs_is_noicon_app(const char *appid)
+{
+    const Ico_Uxf_conf_application  *appConf;
+
+    appConf = ico_uxf_getAppByAppid(appid);
+    if (! appConf)  {
+        uifw_trace("hs_is_noicon_app: appid(%s) dose not exist", appid);
+        return 0;
+    }
+
+    if (appConf->noicon)    {
+        uifw_trace("hs_is_noicon_app: appid(%s) has no icon", appid);
+        return 1;
+    }
+    uifw_trace("hs_is_noicon_app: appid(%s) has icon", appid);
     return 0;
 }
 
@@ -1382,8 +1494,11 @@ hs_touch_down_tile(void *data, Evas *evas, Evas_Object *obj, void *event_info)
     tinfo->l_press = 1;
     if (strlen(tinfo->appid) != 0) {
     }
-    /* add timer to detect long push */
-    ecore_timer_add(ICO_HS_TOUCH_TIME_OUT, hs_ecore_timer_event, &tinfo->idx);
+
+    if (tinfo->type > ICO_HS_TILE_OTHERS) {
+        /* add timer to detect long push */
+        ecore_timer_add(ICO_HS_TOUCH_TIME_OUT, hs_ecore_timer_event, &tinfo->idx);
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1460,7 +1575,7 @@ hs_add_touch_listener(Evas *canvas_fg)
     sprintf(img, "%s"fname_api_all_off, path);
 
     /* setup tile */
-    for (idx = 0; idx < hs_tile_cnt - 1; idx++) {
+    for (idx = 0; idx < hs_tile_cnt; idx++) {
         tinfo = &hs_tile_info[idx];
         if (tinfo->valid == 0)
             continue;
@@ -1481,15 +1596,17 @@ hs_add_touch_listener(Evas *canvas_fg)
     }
     /* application menu icon */
     tinfo = &hs_tile_info[hs_tile_cnt - 1];
-    canvas = evas_object_image_filled_add(canvas_fg);
-    evas_object_image_file_set(canvas, img, NULL);
-    evas_object_move(canvas, tinfo->coord_x, tinfo->coord_y - ICO_HS_SIZE_SB_HEIGHT);
-    evas_object_resize(canvas, tinfo->size_x, tinfo->size_y);
-    evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_UP,
-                                   hs_touch_up_api_list, &tinfo->idx);
-    evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_DOWN,
-                                   hs_touch_down_api_list, &tinfo->idx);
-    evas_object_show(canvas);
+    if ((tinfo->valid == 0) && (tinfo->type == ICO_HS_TILE_APPLIST)) {
+        canvas = evas_object_image_filled_add(canvas_fg);
+        evas_object_image_file_set(canvas, img, NULL);
+        evas_object_move(canvas, tinfo->coord_x, tinfo->coord_y - ICO_HS_SIZE_SB_HEIGHT);
+        evas_object_resize(canvas, tinfo->size_x, tinfo->size_y);
+        evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_UP,
+                                       hs_touch_up_api_list, &tinfo->idx);
+        evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_DOWN,
+                                       hs_touch_down_api_list, &tinfo->idx);
+        evas_object_show(canvas);
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1636,6 +1753,45 @@ hs_input_control(const Ico_Uxf_conf_application *conf, const int inputsw)
 
 /*--------------------------------------------------------------------------*/
 /**
+ * @brief   hs_regulation_listener: change regulation callback(static function)
+ *
+ * @param[in]   appcategory     category Id
+ * @param[in]   control         control(display/sound/input active/inactive)
+ * @param[in]   user_data       user data(unused)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+hs_regulation_listener(const int appcategory,
+                       const ico_apc_reguration_control_t control, void *user_data)
+{
+    if ((appcategory == hs_regulation_category) &&
+        (control.display != ICO_SYC_APC_REGULATION_NOCHANGE))   {
+        uifw_trace("hs_regulation_listener: Enter(category=%d disp=%d)",
+                   appcategory, control.display);
+
+        if (control.display == ICO_SYC_APC_REGULATION_REGULATION)   {
+            /* Invisible by reguration      */
+            if (hs_regulation_visible)  {
+                hs_regulation_visible = 0;
+                if (hs_stat_touch == ICO_HS_TOUCH_IN_SHOW) {
+                    uifw_trace("hs_regulation_listener: Change to App screen");
+                    hs_show_appscreen(NULL);
+                }
+                hs_hide_onscreen();
+        		memset(hs_active_onscreen, 0, sizeof(hs_active_onscreen));
+            }
+        }
+        else    {
+            /* Visible                      */
+            uifw_trace("hs_regulation_listener: Change to ALl screen");
+            hs_regulation_visible = 1;
+        }
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
  * @brief   main
  *          homescreen main. initialize UXF, app manager, and ecore.
  *
@@ -1741,6 +1897,22 @@ main(int argc, char *argv[])
 
     /* HomeScreen Menu(touch) */
     hs_create_window(ICO_HS_WINDOW_TYPE_TOUCH);
+
+    /* initiailze regulation control    */
+    hs_regulation_category = ico_uxf_getSysCategoryByName("CarSetting");
+    ico_syc_apc_regulation_listener(hs_regulation_listener, NULL);
+
+    if (hs_regulation_visible)  {
+        uifw_trace("main: no regulation");
+        hs_tile_show_screen();
+    }
+    else    {
+        uifw_trace("main: regulation");
+        hs_show_appscreen(NULL);
+    }
+
+    /* add callback to app configuration */
+    ico_uxf_econf_setAppUpdateCb(NULL);
 
     /* wait events */
     ecore_main_loop_begin();

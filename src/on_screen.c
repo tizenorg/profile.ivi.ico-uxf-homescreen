@@ -22,6 +22,7 @@
 
 #include "ico_uxf.h"
 #include "ico_uxf_conf.h"
+#include "ico_uxf_conf_ecore.h"
 
 #include "home_screen.h"
 #include "home_screen_res.h"
@@ -72,14 +73,16 @@ static int ons_callback_onscreen(
 static void ons_create_context(void);
 static Eina_Bool ons_ecore_event(void *data);
 static void ons_on_destroy(Ecore_Evas *ee);
-static void ons_touch_up_edje(void *data, Evas *evas, 
+static void ons_touch_up_edje(void *data, Evas *evas,
                               Evas_Object *obj, void *event_info);
-static void ons_touch_up_next(void *data, Evas *evas, Evas_Object *obj, 
+static void ons_touch_up_next(void *data, Evas *evas, Evas_Object *obj,
                               void *event_info);
 static const char *ons_get_fname(const char *filepath);
 static int ons_get_appindex(int idx);
 static void ons_set_appicon(Evas *evas, Evas_Object *edje, Evas_Object* part,
                             const char *partname);
+static void ons_load_config(void);
+static void ons_config_event(const char *appid, int type);
 
 /*============================================================================*/
 /* variabe & table                                                            */
@@ -89,7 +92,6 @@ static int ons_ws_connected = 0;
 static struct libwebsocket_context *ons_ws_context = NULL;
 static struct libwebsocket *ons_wsi_mirror = NULL;
 static char ons_edje_str[ICO_ONS_BUF_SIZE];
-static char ons_respath[ICO_ONS_BUF_SIZE];
 
 static Ecore_Evas *ons_window; /* ecore-evas object */
 static Evas *ons_evas = NULL; /* evas object */
@@ -104,21 +106,21 @@ static ons_msg_t *ons_send_msg = NULL;
 
 static int ons_command_wait = ICO_ONS_NO_WAIT;
 
-static struct libwebsocket_protocols ws_protocols[] = { 
+static struct libwebsocket_protocols ws_protocols[] = {
     {
-        "http-only", 
-        ons_callback_http, 
+        "http-only",
+        ons_callback_http,
         0
-    }, 
+    },
     {
-        "onscreen-protocol", 
-        ons_callback_onscreen, 
-        0, 
-    }, 
+        "onscreen-protocol",
+        ons_callback_onscreen,
+        0,
+    },
     {
         /* end of list */
-        NULL, 
-        NULL, 
+        NULL,
+        NULL,
         0
     }
 };
@@ -148,7 +150,7 @@ ons_event_message(char *format, ...)
     va_end(list);
 
     uifw_trace("OnScreen: ons_event_message %s", message);
-    
+
     send = ons_alloc_seendmsg(message, strlen(message));
     if (!send) {
         uifw_warn("ons_event_message: ERROR(allocate send msg)");
@@ -190,7 +192,7 @@ ons_get_sendmsg(void)
  * @brief   ons_put_sendmsg
  *          put the send message to the send queue end.
  *
- * @param[in]   data                send message 
+ * @param[in]   data                send message
  * @return      result
  * @retval      ICO_HS_OK           success
  * @retval      ICO_HS_ERR          error
@@ -237,7 +239,7 @@ ons_put_sendmsg(ons_msg_t *send)
  * @brief   ons_alloc_seendmsg
  *          Allocate a send message buffer.
  *
- * @param[in]   data                data 
+ * @param[in]   data                data
  * @param[in]   len                 data length
  * @return      address
  * @retval      > 0                 success
@@ -316,7 +318,7 @@ ons_callback_http(struct libwebsocket_context *context, struct libwebsocket *wsi
 /*--------------------------------------------------------------------------*/
 /*
  * @brief   ons_callback_onscreen
- *          this callback function is notified from libwebsockets 
+ *          this callback function is notified from libwebsockets
  *          onscreen protocol
  *
  * @param[in]   context             libwebsockets context
@@ -808,6 +810,80 @@ ons_loadinons_edje_file(const char *edje_file)
 }
 
 /*--------------------------------------------------------------------------*/
+/**
+ * @brief   ons_load_config
+ *          load/reload configuration.
+ *
+ * @param       none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ons_load_config(void)
+{
+    Ico_Uxf_App_Config *appconf;
+    int appcnt;
+    int appidx, idx, cnt;
+
+    uifw_trace("ons_load_config: Enter");
+
+    appconf = (Ico_Uxf_App_Config *)ico_uxf_getAppConfig();
+    appcnt = appconf->applicationNum;
+    for (appidx = 0; appidx < appconf->applicationNum; appidx++) {
+        if ((appconf->application[appidx].noicon) ||
+            (strcmp(appconf->application[appidx].type, ICO_HS_GROUP_SPECIAL) == 0)) {
+            appcnt--;
+            uifw_trace("ons_load_config: No Need appid=%s noicon=%d type=%s",
+                       appconf->application[appidx].appid,
+                       appconf->application[appidx].noicon,
+                       appconf->application[appidx].type);
+        }
+    }
+    cnt = 0;
+    for (idx = 0; idx < appcnt; idx++) {
+        appidx = ons_get_appindex(idx);
+        if (appidx > 0) {
+            uifw_trace("ons_load_config: appid=%s seat=%d idx=%d seatcnt=%d",
+                       appconf->application[appidx].appid, cnt
+                               / ICO_ONS_APPLI_NUM, idx - ICO_ONS_APPLI_NUM
+                               * (cnt / ICO_ONS_APPLI_NUM), ((appcnt - 1)
+                               / ICO_ONS_APPLI_NUM) + 1);
+            cnt++;
+        }
+    }
+
+    ons_app_cnt = appcnt;
+    ons_applist_idx = 0;
+
+    uifw_trace("ons_load_config: Leave(appcnt=%d)", appcnt);
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ons_config_event
+ *          This is a callback function called when the configurations
+ *          is updata.
+ *
+ * @param[in]   appid               application id
+ * @param[in]   type                event type(install/uninstall)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ons_config_event(const char *appid, int type)
+{
+    uifw_trace("ons_config_event: Enter(appid=%s, type=%d)", appid, type);
+
+    ons_load_config();
+
+    uifw_trace("ons_config_event: Leave");
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
 /*
  * @brief   onscreen application
  *          main routine
@@ -822,8 +898,6 @@ int
 main(int argc, char *argv[])
 {
     int width, height;
-    Ico_Uxf_App_Config *appconf;
-    int appidx, idx, cnt;
     int orientation = ICO_ONS_HORIZONTAL;
     int ii;
     int ret;
@@ -861,33 +935,8 @@ main(int argc, char *argv[])
                                           ICO_HS_CONFIG_ORIENTAION,
                                           orientation);
     }
+    ons_load_config();
     hs_snd_init();
-
-    hs_get_image_path(ons_respath, ICO_ONS_BUF_SIZE);
-    appconf = (Ico_Uxf_App_Config *)ico_uxf_getAppConfig();
-    ons_app_cnt = appconf->applicationNum;
-    for (appidx = 0; appidx < appconf->applicationNum; appidx++) {
-        if ((appconf->application[appidx].noicon) ||
-            (strcmp(appconf->application[appidx].type, ICO_HS_GROUP_SPECIAL) == 0)) {
-            ons_app_cnt--;
-            uifw_trace("Application list: No Need appid=%s noicon=%d type=%s",
-                       appconf->application[appidx].appid,
-                       appconf->application[appidx].noicon,
-                       appconf->application[appidx].type);
-        }
-    }
-    cnt = 0;
-    for (idx = 0; idx < ons_app_cnt; idx++) {
-        appidx = ons_get_appindex(idx);
-        if (appidx > 0) {
-            uifw_trace("Application list: appid=%s seat=%d idx=%d seatcnt=%d",
-                       appconf->application[appidx].appid, cnt
-                               / ICO_ONS_APPLI_NUM, idx - ICO_ONS_APPLI_NUM
-                               * (cnt / ICO_ONS_APPLI_NUM), ((ons_app_cnt - 1)
-                               / ICO_ONS_APPLI_NUM) + 1);
-            cnt++;
-        }
-    }
 
     /* Reset a ecore_evas */
     ecore_evas_init();
@@ -926,6 +975,9 @@ main(int argc, char *argv[])
     /* Init websockets */
     ons_create_context();
     ecore_timer_add(ICO_ONS_WS_TIMEOUT, ons_ecore_event, NULL);
+
+    /* add callback to app configuration */
+    ico_uxf_econf_setAppUpdateCb(ons_config_event);
 
     /* Start main loop */
     ecore_main_loop_begin();

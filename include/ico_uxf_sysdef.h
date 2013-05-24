@@ -29,7 +29,7 @@ extern "C" {
 #define ICO_UXF_HOST_MAX            16      /* Maximum number of ECUs               */
 #define ICO_UXF_DISPLAY_LAYER_MAX   16      /* Maximum number of Layers             */
 #define ICO_UXF_CATEGORY_MAX        20      /* Maximum number of application categorys*/
-#define ICO_UXF_DISPLAY_ZONE_MAX    10      /* Maximum zone on display in car       */
+#define ICO_UXF_DISPLAY_ZONE_MAX    30      /* Maximum zone on display in car       */
 #define ICO_UXF_SOUND_ZONE_MAX      10      /* Maximum zone on sound in car         */
 #define ICO_UXF_INPUT_SW_MAX        50      /* Maximum input sw in car              */
 #define ICO_UXF_REGULATION_VIC_MAX  20      /* Maxumum vehicle info for regulation  */
@@ -60,6 +60,10 @@ extern "C" {
 
 /* maximum value        */
 #define ICO_UXF_MAX_COORDINATE      16384   /* maximum coordinate position + 1      */
+
+/* timer                */
+#define ICO_UXF_SUSP_INITTIME   (10*1000)   /* initiale no suspend time (ms)        */
+#define ICO_UXF_SUSP_DELAY      (300)       /* suspend delay time (ms)              */
 
 #ifdef __cplusplus
 }

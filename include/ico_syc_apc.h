@@ -25,6 +25,9 @@
 extern "C" {
 #endif
 
+/* Maximum values                           */
+#define ICO_SYC_APC_REGULATION_LISTENERS    4   /* number of regulation listeners   */
+
 /* Vehicle information values               */
 #define ICO_SYC_APC_REGULATION_SPEED_RUNNING    (4.0)
 #define ICO_SYC_APC_REGULATION_SHIFT_NEUTRALS   (0)
@@ -34,12 +37,13 @@ extern "C" {
 #define ICO_SYC_APC_REGULATION_SHIFT_DRIVE      (4)
 #define ICO_SYC_APC_REGULATION_SHIFT_REVERSES   (128)
 #define ICO_SYC_APC_REGULATION_SHIFT_PARKING    (255)
-#define ICO_SYC_APC_REGULATION_BLINKER_LEFT     (2)
+#define ICO_SYC_APC_REGULATION_BLINKER_NONE     (0)
 #define ICO_SYC_APC_REGULATION_BLINKER_RIGHT    (1)
+#define ICO_SYC_APC_REGULATION_BLINKER_LEFT     (2)
 
-#define ICO_SYC_APC_REGULATION_NOCHANGE         (9)
-#define ICO_SYC_APC_REGULATION_NOREGULATION     (1)
 #define ICO_SYC_APC_REGULATION_REGULATION       (0)
+#define ICO_SYC_APC_REGULATION_NOREGULATION     (1)
+#define ICO_SYC_APC_REGULATION_NOCHANGE         (9)
 
 typedef struct _ico_apc_reguration_control  {
     unsigned char   display;                /* display(1=visible/0=invisible)   */

@@ -10,7 +10,7 @@
 # 2. Delete log file
 /bin/mkdir /var/log/ico > /dev/null 2>&1
 /bin/chmod -R 0777 /var/log/ico > /dev/null 2>&1
-/bin/rm -f /var/log/ico/* > /dev/null 2>&1
+/bin/rm -f /var/log/ico/* /var/log/weston.log > /dev/null 2>&1
 
 # 3. Weston/Wayland Envionment
 export XDG_RUNTIME_DIR=/tmp/run-root

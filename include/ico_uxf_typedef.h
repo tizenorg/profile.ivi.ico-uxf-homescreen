@@ -133,6 +133,10 @@ typedef struct  _Ico_Uxf_ProcessAttr    {
     short               status;         /* Running status                       */
     char                active;         /* Active/Inactive                      */
     char                child;          /* Child process                        */
+    char                noicon;         /* No icon flag                         */
+    char                autostart;      /* Autostart flag                       */
+    char                suspend;        /* application susupend flag            */
+    unsigned char       invisiblecpu;   /* cpu % at invisible                   */
 }   Ico_Uxf_ProcessAttr;
 
 /* Detail of event                          */

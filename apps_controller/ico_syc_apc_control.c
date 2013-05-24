@@ -94,6 +94,9 @@ static ico_apc_request_t *search_soundrequest(const Ico_Uxf_conf_application *co
 /*==============================================================================*/
 /* define fixed value                                                           */
 /*==============================================================================*/
+/* initiale allocate request blocks     */
+#define INIT_REQCB  50
+
 /* maximum number of request blocks     */
 #if ICO_UXF_DISPLAY_ZONE_MAX > ICO_UXF_SOUND_ZONE_MAX
   #if ICO_UXF_INPUT_SW_MAX > ICO_UXF_DISPLAY_ZONE_MAX
@@ -108,6 +111,30 @@ static ico_apc_request_t *search_soundrequest(const Ico_Uxf_conf_application *co
     #define MAXREQ  ICO_UXF_SOUND_ZONE_MAX
   #endif
 #endif
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   get_appconf: application configure(static function)
+ *
+ * @param       appid           application id
+ * @return      result
+ * @retval      != NULL         success(request block address)
+ * @retval      == NULL         error(out of memory)
+ */
+/*--------------------------------------------------------------------------*/
+static Ico_Uxf_conf_application *
+get_appconf(const char *appid)
+{
+    Ico_Uxf_conf_application *appconf = NULL;
+
+    appconf = (Ico_Uxf_conf_application *)ico_uxf_getAppByAppid(appid);
+    if (! appconf)  {
+        /* application id dose not exist, search application name   */
+        appconf = (Ico_Uxf_conf_application *)ico_uxf_getAppByName(appid);
+    }
+
+    return appconf;
+}
 
 /*--------------------------------------------------------------------------*/
 /**
@@ -170,7 +197,7 @@ search_disprequest(const Ico_Uxf_conf_application *conf, const int resid, const 
     for (i = 0; i < ndispzone; i++) {
         p = dispzone[i].req;
         while (p)   {
-            if ((p->conf == conf) &&
+            if ((strcmp(p->appid, conf->appid) == 0) &&
                 ((int)p->resid == resid))    {
                 if ((id < 0) || (p->id == id))  {
                     return p;
@@ -207,7 +234,7 @@ search_soundrequest(const Ico_Uxf_conf_application *conf, const int resid,
     for (i = 0; i < nsoundzone; i++) {
         p = soundzone[i].req;
         while (p)   {
-            if ((p->conf == conf) &&
+            if ((strcmp(p->appid, conf->appid) == 0) &&
                 ((int)p->resid == resid))    {
                 if ((id < 0) || (p->id == id))  {
                     if (first_req)  {
@@ -296,7 +323,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
         for (i = 0; i < ndispzone; i++) {
             p = dispzone[i].req;
             while (p)   {
-                if (p->conf == appconf) {
+                if (strcmp(p->appid, appconf->appid) == 0) {
                     reqsave[count++] = p;
                 }
                 p = p->next;
@@ -310,7 +337,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
         for (i = 0; i < nsoundzone; i++)    {
             p = soundzone[i].req;
             while (p)   {
-                if (p->conf == appconf) {
+                if (strcmp(p->appid, appconf->appid) == 0) {
                     reqsave[count++] = p;
                 }
                 p = p->next;
@@ -324,7 +351,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
         for (i = 0; i < ninputsw; i++)  {
             p = inputsw[i].req;
             while (p)   {
-                if (p->conf == appconf) {
+                if (strcmp(p->appid, appconf->appid) == 0) {
                     reqsave[count++] = p;
                 }
                 p = p->next;
@@ -341,7 +368,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
     if (! req)  {
         return;
     }
-    req->conf = appconf;
+    strncpy(req->appid, appconf->appid, ICO_UXF_MAX_PROCESS_NAME);
     req->resid = info->resid;
     if (info->device[0])    {
         strcpy(req->device, info->device);
@@ -490,7 +517,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
                         apfw_warn("resource_reqcb: send MSM Error");
                     }
                     if (soundcontrol) {
-                        (*soundcontrol)(p->conf, 1);
+                        (*soundcontrol)(get_appconf(req->appid), 1);
                     }
                 }
                 p->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
@@ -502,7 +529,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
             p = search_soundrequest(appconf, ICO_APF_RESID_BASIC_SOUND, -1, &freq);
             if (p)  {
                 apfw_trace("resource_reqcb: app(%s,state=%x,prio=%08x,pid=%d=>%d) "
-                           "requested sound, Nop", p->conf->appid, p->state, p->prio,
+                           "requested sound, Nop", p->appid, p->state, p->prio,
                            p->pid, info->pid);
                 p->pid = info->pid;
                 if (p->state & ICO_APC_REQSTATE_WAITREQ)    {
@@ -512,7 +539,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
                         apfw_warn("resource_reqcb: send MSM Error");
                     }
                     if (soundcontrol) {
-                        (*soundcontrol)(p->conf, 0);
+                        (*soundcontrol)(get_appconf(p->appid), 0);
                     }
                     if ((freq->state & ICO_APC_REQSTATE_WAITREQ) == 0)  {
                         if (ico_apf_resource_send_to_soundctl(ICO_APF_SOUND_COMMAND_MUTEOFF,
@@ -521,7 +548,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
                             apfw_warn("resource_reqcb: send MSM Error");
                         }
                         if (soundcontrol) {
-                            (*soundcontrol)(freq->conf, 1);
+                            (*soundcontrol)(get_appconf(freq->appid), 1);
                         }
                     }
                 }
@@ -569,7 +596,7 @@ resource_reqcb(ico_apf_resource_notify_info_t* info, void *user_data)
                         apfw_warn("resource_reqcb: send MSM Error");
                     }
                     if (soundcontrol) {
-                        (*soundcontrol)(p->conf, 1);
+                        (*soundcontrol)(get_appconf(p->appid), 1);
                     }
                 }
                 p->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
@@ -637,7 +664,7 @@ app_getdisplay(ico_apc_request_t *req, const int addprio)
 {
     int     prio;
     int     i, j;
-    Ico_Uxf_conf_application    *conf = req->conf;
+    Ico_Uxf_conf_application    *conf = (Ico_Uxf_conf_application *)get_appconf(req->appid);
     Ico_Uxf_conf_display_zone   *zone;
     ico_apc_dispzone_t          *czone;
     ico_apc_request_t           *p;
@@ -685,7 +712,7 @@ app_getdisplay(ico_apc_request_t *req, const int addprio)
     p = czone->req;
     bp = NULL;
     while (p)   {
-        if ((p->conf == req->conf) && (p->resid == req->resid) &&
+        if ((strcmp(p->appid, req->appid) == 0) && (p->resid == req->resid) &&
             (p->zoneidx == req->zoneidx))   {
             break;
         }
@@ -726,13 +753,13 @@ app_getdisplay(ico_apc_request_t *req, const int addprio)
         req->next = bp->next;
         bp->next = req;
         apfw_trace("app_getdisplay: app(%s) set after(%s) of zone(%s)",
-                   conf->appid, bp->conf->appid, req->device);
+                   conf->appid, bp->appid, req->device);
     }
     else    {
         req->next = czone->req;
         czone->req = req;
         apfw_trace("app_getdisplay: app(%s) set top of zone(%s) next %s",
-                   conf->appid, req->device, req->next ? req->next->conf->appid : "(NULL)");
+                   conf->appid, req->device, req->next ? req->next->appid : "(NULL)");
     }
 
     /* check if maximum priority    */
@@ -812,7 +839,7 @@ app_getdisplay(ico_apc_request_t *req, const int addprio)
         }
         /* send change event to invisible application   */
         apfw_trace("app_getdisplay: next=%08x %s next_state=%x",
-                   req->next, req->next ? req->next->conf->appid : " ",
+                   req->next, req->next ? req->next->appid : " ",
                    req->next ? req->next->state : 0x9999);
         if ((req->next) && ((req->next->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
             p = req->next;
@@ -826,12 +853,12 @@ app_getdisplay(ico_apc_request_t *req, const int addprio)
             if (p != NULL)  {
                 if ((p->state & ICO_APC_REQSTATE_WAITREQ) == 0)   {
                     p->state |= ICO_APC_REQSTATE_WAITREQ;
-                    apfw_trace("app_getdisplay: overlaped(%s), waitting", p->conf->appid);
+                    apfw_trace("app_getdisplay: overlaped(%s), waitting", p->appid);
                     if (p->reqtype == ICO_APC_REQTYPE_REQUEST)  {
                         if (ico_apf_resource_send_to_client(
-                                p->conf->appid, ICO_APF_RESOURCE_STATE_DEPRIVED,
+                                p->appid, ICO_APF_RESOURCE_STATE_DEPRIVED,
                                 p->resid, p->device, p->id) != ICO_APF_RESOURCE_E_NONE) {
-                            apfw_warn("app_getdisplay: send(%s) Error)", p->conf->appid);
+                            apfw_warn("app_getdisplay: send(%s) Error)", p->appid);
                         }
                         else    {
                             req->state &= ~ICO_APC_REQSTATE_REPLYACTIVE;
@@ -840,9 +867,9 @@ app_getdisplay(ico_apc_request_t *req, const int addprio)
                             timer_count ++;
                         }
                     }
-                    ico_uxf_window_control(p->conf->appid, -1, ICO_UXF_APPSCTL_INVISIBLE, 1);
+                    ico_uxf_window_control(p->appid, -1, ICO_UXF_APPSCTL_INVISIBLE, 1);
                     if (displaycontrol) {
-                        (*displaycontrol)(p->conf, 0);
+                        (*displaycontrol)(get_appconf(p->appid), 0);
                     }
                 }
             }
@@ -867,12 +894,12 @@ static void
 app_freedisplay(ico_apc_request_t *req, const int send)
 {
     int     idx;
-    Ico_Uxf_conf_application    *conf = req->conf;
+    Ico_Uxf_conf_application    *conf = get_appconf(req->appid);
     ico_apc_dispzone_t          *czone;
     ico_apc_request_t           *p;
     ico_apc_request_t           *bp;
 
-    apfw_trace("app_freedisplay: Entry(app=%s)", conf->appid);
+    apfw_trace("app_freedisplay: Entry(app=%s)", req->appid);
 
     czone = &dispzone[req->zoneidx];
     idx = czone->conf->display->id;
@@ -883,7 +910,7 @@ app_freedisplay(ico_apc_request_t *req, const int send)
     }
     if ((send !=0) && (req->reqtype == ICO_APC_REQTYPE_REQUEST))   {
         (void) ico_apf_resource_send_to_client(
-                                req->conf->appid, ICO_APF_RESOURCE_STATE_RELEASED,
+                                req->appid, ICO_APF_RESOURCE_STATE_RELEASED,
                                 req->resid, req->device, req->id);
     }
 
@@ -933,17 +960,17 @@ static void
 change_disprequest(ico_apc_request_t *req, const int active)
 {
     apfw_trace("change_disprequest: change to %s(%s)", active ? "active" : "inactive",
-               req->conf->appid);
+               req->appid);
 
     req->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
 
     if (req->reqtype == ICO_APC_REQTYPE_REQUEST)   {
         if (ico_apf_resource_send_to_client(
-                        req->conf->appid,
+                        req->appid,
                         active ? ICO_APF_RESOURCE_STATE_ACQUIRED :
                                  ICO_APF_RESOURCE_STATE_DEPRIVED,
                         req->resid, req->device, req->id) != ICO_APF_RESOURCE_E_NONE) {
-            apfw_warn("change_disprequest: send(%s) Error", req->conf->appid);
+            apfw_warn("change_disprequest: send(%s) Error", req->appid);
         }
         else    {
             req->state |= (active ? ICO_APC_REQSTATE_REPLYACTIVE :
@@ -953,10 +980,10 @@ change_disprequest(ico_apc_request_t *req, const int active)
         }
     }
     if ((req->state & ICO_APC_REQSTATE_REPLYACTIVE) == 0)   {
-        ico_uxf_window_control(req->conf->appid, req->id, ICO_UXF_APPSCTL_INVISIBLE,
+        ico_uxf_window_control(req->appid, req->id, ICO_UXF_APPSCTL_INVISIBLE,
                                active ? 0 : 1);
         if (displaycontrol) {
-            (*displaycontrol)(req->conf, active);
+            (*displaycontrol)(get_appconf(req->appid), active);
         }
     }
     if (active)   {
@@ -1014,7 +1041,7 @@ recalc_dispzone(const int idx)
             p->state &= ~ICO_APC_REQSTATE_WAITPROC;
         }
         apfw_trace("recalc_dispzone: Leave(%s no need visible control)",
-                   czone2->req->conf->appid);
+                   czone2->req->appid);
         return;
     }
 
@@ -1059,7 +1086,7 @@ app_getsound(ico_apc_request_t *req, const int addprio)
 {
     int     prio;
     int     i, j;
-    Ico_Uxf_conf_application    *conf = req->conf;
+    Ico_Uxf_conf_application    *conf = get_appconf(req->appid);
     Ico_Uxf_conf_sound_zone     *zone;
     ico_apc_soundzone_t         *czone;
     ico_apc_request_t           *p;
@@ -1107,7 +1134,7 @@ app_getsound(ico_apc_request_t *req, const int addprio)
     p = czone->req;
     bp = NULL;
     while (p)   {
-        if ((p->conf == req->conf) && (p->resid == req->resid) &&
+        if ((strcmp(p->appid, req->appid) == 0) && (p->resid == req->resid) &&
             (p->zoneidx == req->zoneidx))   {
             break;
         }
@@ -1205,7 +1232,7 @@ app_getsound(ico_apc_request_t *req, const int addprio)
         }
         /* send change event to mute application    */
         apfw_trace("app_getsound: next=%08x %s next_state=%x",
-                   req->next, req->next ? req->next->conf->appid : " ",
+                   req->next, req->next ? req->next->appid : " ",
                    req->next ? req->next->state : 0x9999);
         if ((req->next) && ((req->next->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
             p = req->next;
@@ -1219,12 +1246,12 @@ app_getsound(ico_apc_request_t *req, const int addprio)
             if (p != NULL)  {
                 if ((p->state & ICO_APC_REQSTATE_WAITREQ) == 0)   {
                     p->state |= ICO_APC_REQSTATE_WAITREQ;
-                    apfw_trace("app_getsound: overlaped(%s), waitting", p->conf->appid);
+                    apfw_trace("app_getsound: overlaped(%s), waitting", p->appid);
                     if (p->reqtype == ICO_APC_REQTYPE_REQUEST)  {
                         if (ico_apf_resource_send_to_client(
-                                p->conf->appid, ICO_APF_RESOURCE_STATE_DEPRIVED,
+                                p->appid, ICO_APF_RESOURCE_STATE_DEPRIVED,
                                 p->resid, p->device, p->id) != ICO_APF_RESOURCE_E_NONE) {
-                            apfw_warn("app_getsound: send(%s) Error)", p->conf->appid);
+                            apfw_warn("app_getsound: send(%s) Error)", p->appid);
                         }
                         else    {
                             p->state |= ICO_APC_REQSTATE_REPLYQUIET;
@@ -1238,7 +1265,7 @@ app_getsound(ico_apc_request_t *req, const int addprio)
                     apfw_warn("app_getsound: send MSM Error");
                 }
                 if (soundcontrol) {
-                    (*soundcontrol)(p->conf, 0);
+                    (*soundcontrol)(get_appconf(p->appid), 0);
                 }
             }
             if (i >= czone->noverlap)   break;
@@ -1263,12 +1290,12 @@ static void
 app_freesound(ico_apc_request_t *req, const int send)
 {
     int     idx;
-    Ico_Uxf_conf_application    *conf = req->conf;
+    Ico_Uxf_conf_application    *conf = get_appconf(req->appid);
     ico_apc_soundzone_t         *czone;
     ico_apc_request_t           *p;
     ico_apc_request_t           *bp;
 
-    apfw_trace("app_freesound: Entry(app=%s)", conf->appid);
+    apfw_trace("app_freesound: Entry(app=%s)", req->appid);
 
     czone = &soundzone[req->zoneidx];
     idx = czone->conf->sound->id;
@@ -1282,7 +1309,7 @@ app_freesound(ico_apc_request_t *req, const int send)
     }
     if ((send !=0) && (req->reqtype == ICO_APC_REQTYPE_REQUEST))   {
         (void) ico_apf_resource_send_to_client(
-                                req->conf->appid, ICO_APF_RESOURCE_STATE_RELEASED,
+                                req->appid, ICO_APF_RESOURCE_STATE_RELEASED,
                                 req->resid, req->device, req->id);
     }
 
@@ -1332,17 +1359,17 @@ static void
 change_soundrequest(ico_apc_request_t *req, const int active)
 {
     apfw_trace("change_soundrequest: change to %s(%s)", active ? "active" : "quiet",
-               req->conf->appid);
+               req->appid);
 
     req->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
 
     if (req->reqtype == ICO_APC_REQTYPE_REQUEST)   {
         if (ico_apf_resource_send_to_client(
-                        req->conf->appid,
+                        req->appid,
                         active ? ICO_APF_RESOURCE_STATE_ACQUIRED :
                                  ICO_APF_RESOURCE_STATE_DEPRIVED,
                         req->resid, req->device, req->id) != ICO_APF_RESOURCE_E_NONE) {
-            apfw_warn("change_soundrequest: send(%s) Error", req->conf->appid);
+            apfw_warn("change_soundrequest: send(%s) Error", req->appid);
         }
         else    {
             req->state |= (active ? ICO_APC_REQSTATE_REPLYACTIVE :
@@ -1358,7 +1385,7 @@ change_soundrequest(ico_apc_request_t *req, const int active)
             apfw_warn("change_soundrequest: send MSM Error");
         }
         if (soundcontrol) {
-            (*soundcontrol)(req->conf, active);
+            (*soundcontrol)(get_appconf(req->appid), active);
         }
     }
     if (active)   {
@@ -1416,7 +1443,7 @@ recalc_soundzone(const int idx)
             p->state &= ~ICO_APC_REQSTATE_WAITPROC;
         }
         apfw_trace("recalc_soundzone: Leave(%s no need sound control)",
-                   czone2->req->conf->appid);
+                   czone2->req->appid);
         return;
     }
 
@@ -1425,7 +1452,7 @@ recalc_soundzone(const int idx)
     p->state &= ~ICO_APC_REQSTATE_WAITPROC;
     if (p->prio & ICO_UXF_PRIO_REGULATION)  {
         apfw_trace("recalc_soundzone: Start %s(prio=%08x and no regulation)",
-                   p->conf->appid, p->prio);
+                   p->appid, p->prio);
         change_soundrequest(p, 1);
     }
 
@@ -1437,7 +1464,7 @@ recalc_soundzone(const int idx)
                 p->state &= ~ICO_APC_REQSTATE_WAITPROC;
                 if (p->prio & ICO_UXF_PRIO_REGULATION)  {
                     apfw_trace("recalc_soundzone: Overlap Stop %s(top and no regulation)",
-                               p->conf->appid);
+                               p->appid);
                     change_soundrequest(p, 0);
                 }
                 else    {
@@ -1456,7 +1483,7 @@ recalc_soundzone(const int idx)
         if (p->state & ICO_APC_REQSTATE_WAITREQ)    {
             if (p->prio & ICO_UXF_PRIO_REGULATION)  {
                 apfw_trace("recalc_soundzone: Overlap Start %s(top and no regulation)",
-                           p->conf->appid);
+                           p->appid);
                 change_soundrequest(p, 1);
             }
         }
@@ -1478,7 +1505,7 @@ app_getinput(ico_apc_request_t *req, const int addprio)
 {
     int     prio;
     int     i;
-    Ico_Uxf_conf_application    *conf = req->conf;
+    Ico_Uxf_conf_application    *conf = get_appconf(req->appid);
     ico_apc_inputsw_t           *czone;
     ico_apc_request_t           *p;
     ico_apc_request_t           *bp;
@@ -1524,7 +1551,7 @@ app_getinput(ico_apc_request_t *req, const int addprio)
     p = czone->req;
     bp = NULL;
     while (p)   {
-        if ((p->conf == req->conf) && (p->resid == req->resid) &&
+        if ((strcmp(p->appid, req->appid) == 0) && (p->resid == req->resid) &&
             (p->zoneidx == req->zoneidx))   {
             break;
         }
@@ -1575,7 +1602,7 @@ app_getinput(ico_apc_request_t *req, const int addprio)
         /* insert application to zone application list and      */
         /* change zone priority, if request application is top priority */
         req->state |= ICO_APC_REQSTATE_WAITREQ;
-        if (ico_uxf_input_control(0, req->conf->appid, czone->inputdev->device,
+        if (ico_uxf_input_control(0, req->appid, czone->inputdev->device,
                                   czone->inputsw->input) != ICO_UXF_EOK)    {
             apfw_warn("app_getinput: send MIM Error");
         }
@@ -1611,7 +1638,7 @@ app_getinput(ico_apc_request_t *req, const int addprio)
                 timer_count ++;
             }
         }
-        if (ico_uxf_input_control(1, req->conf->appid, czone->inputdev->device,
+        if (ico_uxf_input_control(1, req->appid, czone->inputdev->device,
                                   czone->inputsw->input) != ICO_UXF_EOK)    {
             apfw_warn("app_getinput: send MIM Error");
         }
@@ -1619,12 +1646,12 @@ app_getinput(ico_apc_request_t *req, const int addprio)
         if ((req->next) && ((req->next->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
             p = req->next;
             p->state |= ICO_APC_REQSTATE_WAITREQ;
-            apfw_trace("app_getinput: lower priority(%s), waitting", p->conf->appid);
+            apfw_trace("app_getinput: lower priority(%s), waitting", p->appid);
             if (p->reqtype == ICO_APC_REQTYPE_REQUEST)  {
                 if (ico_apf_resource_send_to_client(
-                            p->conf->appid, ICO_APF_RESOURCE_STATE_DEPRIVED,
+                            p->appid, ICO_APF_RESOURCE_STATE_DEPRIVED,
                             p->resid, p->device, p->id) != ICO_APF_RESOURCE_E_NONE) {
-                    apfw_warn("app_getinput: send(%s) Error)", p->conf->appid);
+                    apfw_warn("app_getinput: send(%s) Error)", p->appid);
                 }
                 else    {
                     p->state |= ICO_APC_REQSTATE_REPLYQUIET;
@@ -1650,12 +1677,12 @@ app_getinput(ico_apc_request_t *req, const int addprio)
 static void
 app_freeinput(ico_apc_request_t *req, const int send)
 {
-    Ico_Uxf_conf_application    *conf = req->conf;
+    Ico_Uxf_conf_application    *conf = get_appconf(req->appid);
     ico_apc_inputsw_t           *czone;
     ico_apc_request_t           *p;
     ico_apc_request_t           *bp;
 
-    apfw_trace("app_freeinput: Entry(app=%s)", conf->appid);
+    apfw_trace("app_freeinput: Entry(app=%s)", req->appid);
 
     czone = &inputsw[req->zoneidx];
 
@@ -1668,7 +1695,7 @@ app_freeinput(ico_apc_request_t *req, const int send)
     }
     if ((send !=0) && (req->reqtype == ICO_APC_REQTYPE_REQUEST))   {
         (void) ico_apf_resource_send_to_client(
-                                req->conf->appid, ICO_APF_RESOURCE_STATE_RELEASED,
+                                req->appid, ICO_APF_RESOURCE_STATE_RELEASED,
                                 req->resid, req->device, req->id);
     }
 
@@ -1720,17 +1747,17 @@ change_inputrequest(ico_apc_request_t *req, const int active)
     ico_apc_inputsw_t       *czone;
 
     apfw_trace("change_inputrequest: change to %s(%s)", active ? "use" : "unuse",
-               req->conf->appid);
+               req->appid);
 
     czone = &inputsw[req->zoneidx];
 
     if (req->reqtype == ICO_APC_REQTYPE_REQUEST)   {
         if (ico_apf_resource_send_to_client(
-                        req->conf->appid,
+                        req->appid,
                         active ? ICO_APF_RESOURCE_STATE_ACQUIRED :
                                  ICO_APF_RESOURCE_STATE_DEPRIVED,
                         req->resid, req->device, req->id) != ICO_APF_RESOURCE_E_NONE) {
-            apfw_warn("change_inputrequest: send(%s) Error", req->conf->appid);
+            apfw_warn("change_inputrequest: send(%s) Error", req->appid);
         }
         else    {
             req->state |= (active ? ICO_APC_REQSTATE_REPLYACTIVE :
@@ -1739,12 +1766,12 @@ change_inputrequest(ico_apc_request_t *req, const int active)
             timer_count ++;
         }
     }
-    if (ico_uxf_input_control(active, req->conf->appid, czone->inputdev->device,
+    if (ico_uxf_input_control(active, req->appid, czone->inputdev->device,
                               czone->inputsw->input) != ICO_UXF_EOK)    {
         apfw_warn("app_getinput: send MIM Error");
     }
     if (inputcontrol) {
-        (*inputcontrol)(req->conf, active);
+        (*inputcontrol)(get_appconf(req->appid), active);
     }
     if (active)   {
         req->state &= ~ICO_APC_REQSTATE_WAITREQ;
@@ -1780,7 +1807,7 @@ recalc_inputsw(const int idx)
     }
     if ((p->state & ICO_APC_REQSTATE_WAITREQ) == 0)   {
         /* not wait request                 */
-        apfw_trace("recalc_inputsw: Leave(%s no need input control)", p->conf->appid);
+        apfw_trace("recalc_inputsw: Leave(%s no need input control)", p->appid);
         return;
     }
 
@@ -1788,7 +1815,7 @@ recalc_inputsw(const int idx)
     p->state &= ~ICO_APC_REQSTATE_WAITPROC;
     if (p->prio & ICO_UXF_PRIO_REGULATION)  {
         apfw_trace("recalc_inputsw: Start %s(prio=%08x and no regulation)",
-                   p->conf->appid, p->prio);
+                   p->appid, p->prio);
         change_inputrequest(p, 1);
     }
 
@@ -1824,6 +1851,8 @@ regulation_listener(const int appcategory,
     sound = 0;
     input = 0;
 
+    confapp = (Ico_Uxf_App_Config *)ico_uxf_getAppConfig();
+
     if (control.display != ICO_SYC_APC_REGULATION_NOCHANGE) {
         /* display regulation control       */
         apfw_trace("regulation_listener: disp category=%d display=%d",
@@ -1835,13 +1864,13 @@ regulation_listener(const int appcategory,
                 if (!p) continue;
                 bp = NULL;
                 while (p)   {
-                    if (p->conf == &confapp->application[i])    {
+                    if (strcmp(p->appid, confapp->application[i].appid) == 0)    {
                         flag = 0;
                         if (control.display == ICO_SYC_APC_REGULATION_REGULATION)   {
                             if (p->prio & ICO_UXF_PRIO_REGULATION)  {
                                 p->prio &= ~ICO_UXF_PRIO_REGULATION;
                                 flag ++;
-                                ico_uxf_window_control(p->conf->appid, p->id,
+                                ico_uxf_window_control(p->appid, p->id,
                                                        ICO_UXF_APPSCTL_REGULATION, 1);
                             }
                         }
@@ -1849,7 +1878,7 @@ regulation_listener(const int appcategory,
                             if ((p->prio & ICO_UXF_PRIO_REGULATION) == 0)   {
                                 p->prio |= ICO_UXF_PRIO_REGULATION;
                                 flag ++;
-                                ico_uxf_window_control(p->conf->appid, p->id,
+                                ico_uxf_window_control(p->appid, p->id,
                                                        ICO_UXF_APPSCTL_REGULATION, 0);
                             }
                         }
@@ -1861,7 +1890,7 @@ regulation_listener(const int appcategory,
                                 reqdisp[disp++] = dispzone[k].conf->display->id;
                             }
                             apfw_trace("regulation_listener: disp %s %08x",
-                                       p->conf->appid, p->prio);
+                                       p->appid, p->prio);
                             if (bp) {
                                 bp->next = p->next;
                             }
@@ -1915,7 +1944,7 @@ regulation_listener(const int appcategory,
         }
     }
 
-    if (control.sound != ICO_SYC_APC_REGULATION_NOCHANGE)   {
+    if (control.sound != ICO_SYC_APC_REGULATION_NOCHANGE) {
         /* sound regulation control         */
         apfw_trace("regulation_listener: sound category=%d sound=%d",
                    appcategory, control.sound);
@@ -1926,7 +1955,7 @@ regulation_listener(const int appcategory,
                 if (!p) continue;
                 bp = NULL;
                 while (p)   {
-                    if (p->conf == &confapp->application[i])    {
+                    if (strcmp(p->appid, confapp->application[i].appid) == 0)    {
                         flag = 0;
                         if (control.sound == ICO_SYC_APC_REGULATION_REGULATION) {
                             if (p->prio & ICO_UXF_PRIO_REGULATION)  {
@@ -1946,7 +1975,7 @@ regulation_listener(const int appcategory,
                         if (flag)   {
                             apfw_trace("regulation_listener: sound change category=%d "
                                        "app(%s) sound=%d prio=%08x",
-                                       appcategory, p->conf->appid, control.sound, p->prio);
+                                       appcategory, p->appid, control.sound, p->prio);
                             for (j = 0; j < sound; j++)  {
                                 if (soundzone[k].conf->sound->id == reqsound[j])    break;
                             }
@@ -1954,7 +1983,7 @@ regulation_listener(const int appcategory,
                                 reqsound[sound++] = soundzone[k].conf->sound->id;
                             }
                             apfw_trace("regulation_listener: sound %s %08x %08x",
-                                       p->conf->appid, p->prio, (int)bp);
+                                       p->appid, p->prio, (int)bp);
                             if (bp) {
                                 bp->next = p->next;
                             }
@@ -2019,7 +2048,7 @@ regulation_listener(const int appcategory,
                 if (!p) continue;
                 bp = NULL;
                 while (p)   {
-                    if (p->conf == &confapp->application[i])    {
+                    if (strcmp(p->appid, confapp->application[i].appid) == 0)    {
                         flag = 0;
                         if (control.input == ICO_SYC_APC_REGULATION_REGULATION) {
                             if (p->prio & ICO_UXF_PRIO_REGULATION)  {
@@ -2039,7 +2068,7 @@ regulation_listener(const int appcategory,
                         if (flag)   {
                             apfw_trace("regulation_listener: input change category=%d "
                                        "app(%s) input=%d prio=%08x",
-                                       appcategory, p->conf->appid, control.input, p->prio);
+                                       appcategory, p->appid, control.input, p->prio);
                             for (j = 0; j < sound; j++)  {
                                 if (inputsw[k].inputsw->input == reqinput[j])    break;
                             }
@@ -2047,7 +2076,7 @@ regulation_listener(const int appcategory,
                                 reqinput[input++] = inputsw[k].inputsw->input;
                             }
                             apfw_trace("regulation_listener: input %s %08x %08x",
-                                       p->conf->appid, p->prio, (int)bp);
+                                       p->appid, p->prio, (int)bp);
                             if (bp) {
                                 bp->next = p->next;
                             }
@@ -2137,13 +2166,13 @@ request_timer(void *user_data)
                 p->timer --;
                 if (p->timer == 0)  {
                     apfw_trace("request_timer: display timedout(%s %d %d prio=%08x)",
-                               p->conf->appid, p->resid, p->id, p->prio);
+                               p->appid, p->resid, p->id, p->prio);
                     if ((p->state & ICO_APC_REQSTATE_REPLYACTIVE) &&
                         ((p->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
-                        ico_uxf_window_control(p->conf->appid, p->id,
+                        ico_uxf_window_control(p->appid, p->id,
                                                ICO_UXF_APPSCTL_INVISIBLE, 0);
                         if (displaycontrol) {
-                            (*displaycontrol)(p->conf, 1);
+                            (*displaycontrol)(get_appconf(p->appid), 1);
                         }
                     }
                     p->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
@@ -2164,7 +2193,7 @@ request_timer(void *user_data)
                 p->timer --;
                 if (p->timer == 0)  {
                     apfw_trace("request_timer: sound timedout(%s %d %d prio=%08x)",
-                               p->conf->appid, p->resid, p->id, p->prio);
+                               p->appid, p->resid, p->id, p->prio);
                     if ((p->state & ICO_APC_REQSTATE_REPLYACTIVE) &&
                         ((p->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
                         if (ico_apf_resource_send_to_soundctl(ICO_APF_SOUND_COMMAND_MUTEOFF,
@@ -2173,7 +2202,7 @@ request_timer(void *user_data)
                             apfw_warn("request_timer: send MSM Error");
                         }
                         if (soundcontrol) {
-                            (*soundcontrol)(p->conf, 1);
+                            (*soundcontrol)(get_appconf(p->appid), 1);
                         }
                     }
                     p->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
@@ -2203,6 +2232,7 @@ ico_syc_apc_active(const char *appid)
     int     disp, sound, input;
     int     flag;
     Ico_Uxf_conf_application    *appconf;
+    char    *child_appid;
     ico_apc_request_t   *p;
     ico_apc_request_t   *bp;
     ico_apc_request_t   *p2;
@@ -2225,6 +2255,18 @@ ico_syc_apc_active(const char *appid)
         appconf = NULL;
     }
 
+    if (appconf)    {
+        /* save child process if exist          */
+        child_appid = ico_uxf_getchild_appid(appconf->appid);
+        /* set last active process for child process    */
+        ico_uxf_set_lastapp(appconf->appid);
+    }
+    else    {
+        /* reset last active process for child process  */
+        ico_uxf_set_lastapp(NULL);
+        child_appid = NULL;
+    }
+
     /* change all screen request from this application  */
     disp = 0;
     for (i = 0; i < ndispzone; i++) {
@@ -2232,13 +2274,13 @@ ico_syc_apc_active(const char *appid)
         flag = 0;
         bp = NULL;
         while (p)   {
-            if (p->conf == appconf) {
+            if (appconf && (strcmp(p->appid, appconf->appid) == 0)) {
                 apfw_trace("ico_syc_apc_active: disp %s prio=%08x is %s",
-                           p->conf->appid, p->prio, bp ? "not top" : "top");
+                           p->appid, p->prio, bp ? "not top" : "top");
                 if ((p->prio & ICO_UXF_PRIO_ACTIVEAPP) != ICO_UXF_PRIO_ACTIVEAPP)   {
                     p->prio |= ICO_UXF_PRIO_ACTIVEAPP;
                     apfw_trace("ico_syc_apc_active: cgange active %s prio to %08x",
-                               p->conf->appid, p->prio);
+                               p->appid, p->prio);
                     flag ++;
 
                     if (bp) {
@@ -2250,12 +2292,12 @@ ico_syc_apc_active(const char *appid)
                                 p->next = p2;
                                 if (bp2) {
                                     apfw_trace("ico_syc_apc_active: %s is not top=%s(%08x)",
-                                               p->conf->appid, dispzone[i].req->conf->appid,
+                                               p->appid, dispzone[i].req->appid,
                                                dispzone[i].req->prio);
                                     bp2->next = p;
                                 }
                                 else    {
-                                    if ((p2->conf != appconf) &&
+                                    if (appconf && (strcmp(p2->appid, appconf->appid) != 0) &&
                                         ((p2->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
                                         change_disprequest(p2, 0);
                                     }
@@ -2268,7 +2310,7 @@ ico_syc_apc_active(const char *appid)
                         }
                         if (! p2)   {
                             apfw_trace("ico_syc_apc_active: %s is not top=%s(%08x)",
-                                       p->conf->appid, dispzone[i].req->conf->appid,
+                                       p->appid, dispzone[i].req->appid,
                                        dispzone[i].req->prio);
                             if (bp2)    {
                                 bp2->next = p;
@@ -2280,7 +2322,7 @@ ico_syc_apc_active(const char *appid)
                         }
                     }
                     else    {
-                        apfw_trace("ico_syc_apc_active: app %s is top", p->conf->appid);
+                        apfw_trace("ico_syc_apc_active: app %s is top", p->appid);
                     }
                 }
             }
@@ -2312,13 +2354,13 @@ ico_syc_apc_active(const char *appid)
         flag = 0;
         bp = NULL;
         while (p)   {
-            if (p->conf == appconf) {
+            if (appconf && (strcmp(p->appid, appconf->appid) == 0)) {
                 apfw_trace("ico_syc_apc_active: sound %s prio=%08x is %s",
-                           p->conf->appid, p->prio, bp ? "not top" : "top");
+                           p->appid, p->prio, bp ? "not top" : "top");
                 if ((p->prio & ICO_UXF_PRIO_ACTIVEAPP) != ICO_UXF_PRIO_ACTIVEAPP)   {
                     p->prio |= ICO_UXF_PRIO_ACTIVEAPP;
                     apfw_trace("ico_syc_apc_active: cgange active %s prio to %08x",
-                               p->conf->appid, p->prio);
+                               p->appid, p->prio);
                     flag ++;
 
                     if (bp) {
@@ -2330,12 +2372,12 @@ ico_syc_apc_active(const char *appid)
                                 p->next = p2;
                                 if (bp2) {
                                     apfw_trace("ico_syc_apc_active: %s is not top=%s(%08x)",
-                                               p->conf->appid, soundzone[i].req->conf->appid,
+                                               p->appid, soundzone[i].req->appid,
                                                soundzone[i].req->prio);
                                     bp2->next = p;
                                 }
                                 else    {
-                                    if ((p2->conf != appconf) &&
+                                    if (appconf && (strcmp(p2->appid, appconf->appid) != 0) &&
                                         ((p2->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
                                         change_soundrequest(p2, 0);
                                     }
@@ -2348,7 +2390,7 @@ ico_syc_apc_active(const char *appid)
                         }
                         if (! p2)   {
                             apfw_trace("ico_syc_apc_active: %s is not top=%s(%08x)",
-                                       p->conf->appid, soundzone[i].req->conf->appid,
+                                       p->appid, soundzone[i].req->appid,
                                        soundzone[i].req->prio);
                             if (bp2)    {
                                 bp2->next = p;
@@ -2360,7 +2402,7 @@ ico_syc_apc_active(const char *appid)
                         }
                     }
                     else    {
-                        apfw_trace("ico_syc_apc_active: app %s is top", p->conf->appid);
+                        apfw_trace("ico_syc_apc_active: app %s is top", p->appid);
                     }
                 }
             }
@@ -2392,11 +2434,11 @@ ico_syc_apc_active(const char *appid)
         flag = 0;
         bp = NULL;
         while (p)   {
-            if (p->conf == appconf) {
+            if (appconf && (strcmp(p->appid, appconf->appid) == 0)) {
                 if ((p->prio & ICO_UXF_PRIO_ACTIVEAPP) != ICO_UXF_PRIO_ACTIVEAPP)   {
                     p->prio |= ICO_UXF_PRIO_ACTIVEAPP;
                     apfw_trace("ico_syc_apc_active: cgange active %s prio to %08x",
-                               p->conf->appid, p->prio);
+                               p->appid, p->prio);
                     flag ++;
 
                     if (bp) {
@@ -2408,12 +2450,12 @@ ico_syc_apc_active(const char *appid)
                                 p->next = p2;
                                 if (bp2) {
                                     apfw_trace("ico_syc_apc_active: %s is not top=%s(%08x)",
-                                               p->conf->appid, inputsw[i].req->conf->appid,
+                                               p->appid, inputsw[i].req->appid,
                                                inputsw[i].req->prio);
                                     bp2->next = p;
                                 }
                                 else    {
-                                    if ((p2->conf != appconf) &&
+                                    if (appconf && (strcmp(p2->appid, appconf->appid) != 0) &&
                                         ((p2->state & ICO_APC_REQSTATE_WAITREQ) == 0))  {
                                         change_inputrequest(p2, 0);
                                     }
@@ -2426,7 +2468,7 @@ ico_syc_apc_active(const char *appid)
                         }
                         if (! p2)   {
                             apfw_trace("ico_syc_apc_active: %s is not top=%s(%08x)",
-                                       p->conf->appid, inputsw[i].req->conf->appid,
+                                       p->appid, inputsw[i].req->appid,
                                        inputsw[i].req->prio);
                             if (bp2)    {
                                 bp2->next = p;
@@ -2438,7 +2480,7 @@ ico_syc_apc_active(const char *appid)
                         }
                     }
                     else    {
-                        apfw_trace("ico_syc_apc_active: app %s is top", p->conf->appid);
+                        apfw_trace("ico_syc_apc_active: app %s is top", p->appid);
                     }
                 }
             }
@@ -2473,6 +2515,10 @@ ico_syc_apc_active(const char *appid)
     for (i = 0; i < input; i++) {
         recalc_inputsw(reqinput[i]);
     }
+    if (child_appid)    {
+        apfw_trace("ico_syc_apc_active: active child app(%s)", child_appid);
+        ico_syc_apc_active(child_appid);
+    }
     apfw_trace("ico_syc_apc_active: Leave");
 }
 
@@ -2495,7 +2541,7 @@ app_display_hook(const char *appid, const int surface, const int object)
     Ico_Uxf_conf_application    *appconf;
     ico_apc_request_t           *req;
 
-    apfw_trace("app_display_hook: Enter(%s,%x,%x)", appid, surface, object);
+    apfw_trace("app_display_hook: Enter(%s,%08x,%x)", appid, surface, object);
 
     appconf = (Ico_Uxf_conf_application *)ico_uxf_getAppByAppid(appid);
     if (! appconf)  {
@@ -2516,7 +2562,7 @@ app_display_hook(const char *appid, const int surface, const int object)
         for (i = 0; i < ndispzone; i++) {
             req = dispzone[i].req;
             while (req)   {
-                if ((req->conf == appconf) &&
+                if ((strcmp(req->appid, appconf->appid) == 0) &&
                     (req->resid == ICO_APF_RESID_BASIC_SCREEN)) break;
                 req = req->next;
             }
@@ -2526,16 +2572,18 @@ app_display_hook(const char *appid, const int surface, const int object)
             apfw_trace("app_display_hook: app(%s) requested display, Nop", appid);
         }
         else    {
-            apfw_trace("app_display_hook: app(%s) not requested display, set default",
-                       appid);
+            apfw_trace("app_display_hook: app(%s) not requested display, set default[%s]",
+                       appid,
+                       confsys->display[appconf->display[0].displayId].
+                           zone[appconf->display[0].zoneId].name);
             req = get_freereq();
             if (req)    {
-                req->conf = appconf;
+                strncpy(req->appid, appconf->appid, ICO_UXF_MAX_PROCESS_NAME);
                 req->resid = ICO_APF_RESID_BASIC_SCREEN;
                 req->reqtype = ICO_APC_REQTYPE_CREATE;
                 strcpy(req->device,
-                       confsys->display[confsys->misc.default_displayId].
-                           zone[confsys->misc.default_dispzoneId].name);
+                       confsys->display[appconf->display[0].displayId].
+                           zone[appconf->display[0].zoneId].name);
                 app_getdisplay(req, 0);
             }
         }
@@ -2546,7 +2594,7 @@ app_display_hook(const char *appid, const int surface, const int object)
         for (i = 0; i < ndispzone; i++) {
             req = dispzone[i].req;
             while (req)   {
-                if (req->conf == appconf) {
+                if (strcmp(req->appid, appconf->appid) == 0) {
                     reqsave[count++] = req;
                 }
                 req = req->next;
@@ -2652,7 +2700,7 @@ ico_syc_apc_init(ico_apc_resource_control_t display, ico_apc_resource_control_t 
         apfw_error("ico_syc_apc_init: Leave(No Memory)");
         return ICO_SYC_ENOMEM;
     }
-    memset(soundzone, 0, sizeof(ico_apc_dispzone_t) * nsoundzone);
+    memset(soundzone, 0, sizeof(ico_apc_soundzone_t) * nsoundzone);
     count = 0;
     for (i = 0; i < confsys->soundNum; i++) {
         base_count = count;
@@ -2705,16 +2753,16 @@ ico_syc_apc_init(ico_apc_resource_control_t display, ico_apc_resource_control_t 
     }
 
     /* initialize request table                     */
-    ico_apc_request_t *req = malloc(sizeof(ico_apc_request_t) * 50);
+    ico_apc_request_t *req = malloc(sizeof(ico_apc_request_t) * INIT_REQCB);
     ico_apc_request_t *breq;
     if (! req)  {
         ico_apps_controller_init = 0;
         apfw_error("ico_syc_apc_init: Leave(No Memory)");
         return ICO_SYC_ENOMEM;
     }
-    memset(req, 0, sizeof(ico_apc_request_t) * 50);
+    memset(req, 0, sizeof(ico_apc_request_t) * INIT_REQCB);
     free_request = req;
-    for (count = 1; count < 50; count++)    {
+    for (count = 1; count < INIT_REQCB; count++)    {
         breq = req;
         req ++;
         breq->next = req;

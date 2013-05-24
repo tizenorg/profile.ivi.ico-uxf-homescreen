@@ -33,6 +33,8 @@ int ico_uxf_callback_set(const unsigned int mask,
 int ico_uxf_callback_remove(const unsigned int mask,
                             Ico_Uxf_Event_Cb func, const int arg);
                                         /* Remove event callback function       */
+void ico_uxf_timer_wake(const int msec);
+                                        /* UX-FW timer                          */
 
 /* Control window                               */
 int ico_uxf_window_event_mask(const int window, const unsigned int mask);
@@ -75,6 +77,8 @@ int ico_uxf_window_lower(const int window);
                                         /* Lower window                         */
 int ico_uxf_window_active(const int window, const int target);
                                         /* Activate window                      */
+int ico_uxf_window_animation(const int window, const char *animation);
+                                        /* Set window animation                 */
 int ico_uxf_window_control(const char *appid, const int winidx,
                            const int control, const int onoff);
                                         /* Window visible control from AppsController*/
@@ -109,6 +113,10 @@ int ico_uxf_process_window_get_one(const char *process,
                                         /* Get one windows of one application   */
 int ico_uxf_process_query_processes(Ico_Uxf_ProcessAttr attr[], const int num);
                                         /* Get all aplications attribute        */
+void ico_uxf_set_lastapp(const char *appid);
+                                        /* Set/Reset last application           */
+char *ico_uxf_getchild_appid(const char *appid);
+                                        /* Get child applicationId              */
 
 /* Wayland depend function                      */
 int ico_uxf_wl_display_fd(void);

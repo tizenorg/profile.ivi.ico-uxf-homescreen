@@ -62,6 +62,10 @@ typedef struct  _Ico_Uxf_Mng_Process    {
     struct _Ico_Uxf_Mng_Process *nextidhash;/* next process of the same id and hash */
     Ico_Uxf_Mng_ProcWin *procwin;           /* process's subwindow                  */
     void                *exttable;          /* extended table                       */
+    struct _Ico_Uxf_Mng_Process *parent;    /* parent process                       */
+    short               susptimer;          /* suspend timer                        */
+    char                susp;               /* real suspend flag                    */
+    char                res;                /* (unused)                             */
     Ico_Uxf_ProcessAttr attr;               /* process configuration                */
 }   Ico_Uxf_Mng_Process;
 
@@ -92,7 +96,7 @@ typedef struct  _Ico_Uxf_Mng_Window {
     struct _Ico_Uxf_Mng_Window *mng_parent; /* parent window                        */
     short               state;              /* Window status                        */
     unsigned char       request;            /* Request                              */
-    unsigned char       timecount;          /* Time counter                         */
+    char                res;                /* (unused)                             */
     Ico_Uxf_WindowAttr  attr;               /* window attribute                     */
 }   Ico_Uxf_Mng_Window;
 
@@ -110,12 +114,15 @@ typedef struct  _Ico_Uxf_Api_Mng    {
     int                     EventMask;      /* receive event                        */
     unsigned int            LastEvent;      /* last receive event(end synchronization)*/
     int                     AppsCtlVisible; /* Tempolary visible all windows        */
+    int                     NeedTimer;      /* need timer control                   */
+    int                     InitTimer;      /* initial timer                        */
 
     /* process information myprocess        */
     char                    MyProcess[ICO_UXF_MAX_PROCESS_NAME+1];
                                             /* process id                           */
     Ico_Uxf_Mng_Process     *Mng_MyProcess; /* process management table             */
     int                     MyMainWindow;   /* main window id                       */
+    Ico_Uxf_Mng_Process     *Mng_LastProcess;/* last active process management table*/
 
     /* table management callback function            */
     Ico_Uxf_Mng_Callback    *Callback;      /* callback management table            */
@@ -179,8 +186,13 @@ Ico_Uxf_Mng_Window *ico_uxf_mng_window(const int window, const int create);
                                             /* get a window management table        */
 Ico_Uxf_Mng_Process *ico_uxf_mng_process(const char *process, const int create);
                                             /* get a process management table       */
+void ico_uxf_update_procwin(const char *appid, int type);
+                                            /* update a process management table    */
 void ico_uxf_free_procwin(Ico_Uxf_Mng_Process *prc);
                                             /* release application windows          */
+void ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng,
+                                    const int show, const int raise);
+                                            /* Window visible and cpu control       */
 int ico_uxf_gl_create_window(const int display, const int layer, const int x,
                              const int y, const int w, const int h, const int full);
                                             /* create window by OpenGL ES/EGL       */

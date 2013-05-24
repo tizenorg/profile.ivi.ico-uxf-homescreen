@@ -54,6 +54,8 @@ cp -rf data/apps/$PKGNAME /opt/apps/
 mkdir -p /opt/apps/$PKGNAME/bin/
 cp src/StatusBar /opt/apps/$PKGNAME/bin/
 cp res/images/time*.png /opt/apps/$PKGNAME/res/images
+cp res/images/applist_*.png /opt/apps/$PKGNAME/res/images
+cp res/images/home*.png /opt/apps/$PKGNAME/res/images
 chmod 666 /opt/apps/$PKGNAME/res/images/time*.png
 cp data/share/applications/$PKGNAME.desktop /opt/share/applications/
 cp res/apps/$PKGNAME/* /opt/apps/$PKGNAME/res/config
@@ -70,7 +72,7 @@ cp src/OnScreen /opt/apps/$PKGNAME/bin/
 cp src/appli_list.edj /opt/apps/$PKGNAME/res/edj
 cp src/appli_kill.edj /opt/apps/$PKGNAME/res/edj
 chmod 666 /opt/apps/$PKGNAME/res/edj/*.edj
-chmod 666 /opt/apps/$PKGNAME/res/images/*.png
+chmod 666 /opt/apps/$PKGNAME/res/images/*.png > /dev/null 2>&1
 cp data/share/applications/$PKGNAME.desktop /opt/share/applications/
 cp res/apps/$PKGNAME/* /opt/apps/$PKGNAME/res/config
 
