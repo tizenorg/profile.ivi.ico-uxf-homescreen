@@ -370,6 +370,9 @@ hs_conftrol_form(const char *process, int window)
             if (idx >= 0) {
                 hs_tile_free_app(idx);
             }
+            else {
+                hs_tile_delete_hide(hs_command_req[ii].program.terminate.appid);
+            }
             uifw_debug("FORM terminate %s = %d",
                        hs_command_req[ii].program.terminate.appid, st);
             if (hs_command_delay > 0)

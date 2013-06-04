@@ -142,6 +142,7 @@ extern int hs_click_applist(void);
 extern void hs_show_onscreen(void);
 extern void hs_hide_onscreen(void);
 extern void hs_show_appscreen(const char *appid);
+extern void hs_tile_delete_hide(const char *appid);
 
 extern void hs_get_image_path(char *buff, int len);
 extern void hs_get_sound_path(char *buff, int len);

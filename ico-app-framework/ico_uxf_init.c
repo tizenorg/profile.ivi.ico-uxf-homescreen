@@ -198,6 +198,7 @@ ico_uxf_init(const char *name)
     for(dn = 0; dn < appconf->applicationNum; dn++)  {
         prc = ico_uxf_mng_process(appconf->application[dn].appid, 1);
         prc->attr.internalid = 0;
+        prc->appconf = (void *)&appconf->application[dn];
         prc->attr.status = ICO_UXF_PROCSTATUS_STOP;
         prc->attr.type = appconf->application[dn].categoryId;
         prc->attr.hostId = appconf->application[dn].hostId;
@@ -288,6 +289,20 @@ ico_uxf_init(const char *name)
     }
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
     uifw_trace("ico_uxf_init: Wayland/Weston connect OK");
+
+    /* set client attribute if need     */
+    if (gIco_Uxf_Api_Mng.Wayland_WindowMgr) {
+        for(dn = 0; dn < appconf->applicationNum; dn++)  {
+            if (appconf->application[dn].noconfigure)   {
+                uifw_trace("ico_uxf_init: %s no need configure event",
+                           appconf->application[dn].appid);
+                ico_window_mgr_set_client_attr(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
+                                               appconf->application[dn].appid,
+                                               ICO_WINDOW_MGR_CLIENT_ATTR_NOCONFIGURE, 1);
+                wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
+            }
+        }
+    }
 
     gIco_Uxf_Api_Mng.WaylandFd
         = wl_display_get_fd(gIco_Uxf_Api_Mng.Wayland_Display);
@@ -780,6 +795,27 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
     prc = ico_uxf_mng_process(appid, 0);
 
     if (prc)    {
+        /* set window animation     */
+        if (prc->appconf != NULL)   {
+            if (((Ico_Uxf_conf_application *)prc->appconf)->animation_visible)  {
+                ico_window_mgr_set_animation(
+                    gIco_Uxf_Api_Mng.Wayland_WindowMgr,
+                    surfaceid, ICO_WINDOW_MGR_ANIMATION_CHANGE_VISIBLE,
+                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_visible);
+            }
+            if (((Ico_Uxf_conf_application *)prc->appconf)->animation_resize)   {
+                ico_window_mgr_set_animation(
+                    gIco_Uxf_Api_Mng.Wayland_WindowMgr,
+                    surfaceid, ICO_WINDOW_MGR_ANIMATION_CHANGE_RESIZE,
+                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_resize);
+            }
+            if (((Ico_Uxf_conf_application *)prc->appconf)->animation_move) {
+                ico_window_mgr_set_animation(
+                    gIco_Uxf_Api_Mng.Wayland_WindowMgr,
+                    surfaceid, ICO_WINDOW_MGR_ANIMATION_CHANGE_MOVE,
+                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_move);
+            }
+        }
         if (prc->attr.mainwin.window <= 0)  {
             uifw_trace("ico_uxf_window_createdcb: Set Main Window, Config Data");
             prc->attr.mainwin.window = surfaceid;
@@ -1103,7 +1139,7 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
                                                        layer, 0);
                 }
             }
-            else if ((win->attr.w != width) || (win->attr.h != height))    {
+            else if ((win->attr.w != width) || (win->attr.h != height)) {
                 (void)ico_uxf_window_resize(win->attr.window, win->attr.w, win->attr.h);
             }
         }
@@ -1436,12 +1472,15 @@ ico_uxf_aul_aulcb(int pid, void *data)
             proc->attr.internalid = pid;
             if (proc->attr.status != ICO_UXF_PROCSTATUS_INIT)   {
                 /* child process, search parent process */
-                uifw_trace("ico_uxf_aul_aulcb: fork&exec %s(proc=%08x, last=%08x)",
-                        proc->attr.process, (unsigned int)proc, (unsigned int)gIco_Uxf_Api_Mng.Mng_LastProcess);
+                uifw_trace("ico_uxf_aul_aulcb: fork&exec %s", proc->attr.process);
                 proc->attr.child = 1;
                 /* save parent application if exist     */
-                if (proc != gIco_Uxf_Api_Mng.Mng_LastProcess) {
+                if (gIco_Uxf_Api_Mng.Mng_LastProcess != proc)   {
                     proc->parent = gIco_Uxf_Api_Mng.Mng_LastProcess;
+                }
+                else    {
+                    uifw_trace("ico_uxf_aul_aulcb: same process %s real %s", proc->attr.process,
+                               proc->parent ? proc->parent->attr.process : "(None)");
                 }
             }
             else    {
@@ -1472,11 +1511,9 @@ ICO_APF_API void
 ico_uxf_set_lastapp(const char *appid)
 {
     if (appid)  {
-        uifw_trace("ico_uxf_set_lastapp: set last app %s", appid);
         gIco_Uxf_Api_Mng.Mng_LastProcess = ico_uxf_mng_process(appid, 0);
     }
     else    {
-        uifw_trace("ico_uxf_set_lastapp: set last app NULL");
         gIco_Uxf_Api_Mng.Mng_LastProcess = NULL;
     }
 }
@@ -1547,7 +1584,6 @@ ico_uxf_timer_wake(const int msec)
         return;
     }
     gIco_Uxf_Api_Mng.NeedTimer = 0;
-
     for (hash = 0; hash < ICO_UXF_MISC_HASHSIZE; hash++)    {
         proc = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
         while (proc)    {
@@ -1561,6 +1597,18 @@ ico_uxf_timer_wake(const int msec)
                                        proc->attr.internalid);
                             kill(proc->attr.internalid, SIGSTOP);
                         }
+                    }
+                    else if (proc->susp == 0)    {
+                        uifw_trace("ico_uxf_timer_wake: CPU resume pid=%d(show=%d)",
+                                   proc->attr.internalid, proc->showmode);
+                        ico_window_mgr_set_visible(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
+                                                   proc->attr.mainwin.window,
+                                                   proc->showmode ==
+                                                       ICO_WINDOW_MGR_VISIBLE_SHOW_WO_ANIMATION ?
+                                                     ICO_WINDOW_MGR_VISIBLE_SHOW_WO_ANIMATION :
+                                                     ICO_WINDOW_MGR_VISIBLE_SHOW,
+                                                   ICO_WINDOW_MGR_RAISE_NOCHANGE);
+                        wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
                     }
                 }
                 else    {

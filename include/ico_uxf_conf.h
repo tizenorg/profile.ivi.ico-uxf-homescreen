@@ -100,18 +100,22 @@ typedef struct _ico_uxf_conf_application {
     char *group;
     char *exec;
     char *type;
+    char *animation_visible;
+    char *animation_resize;
+    char *animation_move;
     int hostId;
     char *location;
     char *icon_key_name;
     char autostart;
     char noicon;
+    char noconfigure;
+    char res;
     unsigned short invisiblecpu;
     short kindId;
     short categoryId;
     short displayzoneNum;
     short soundzoneNum;
     short inputdevNum;
-    char res[2];
     Ico_Uxf_conf_appdisplay display[ICO_UXF_APPDISPLAY_MAX];
     Ico_Uxf_conf_appsound   sound[ICO_UXF_APPSOUND_MAX];
     Ico_Uxf_conf_appinput   input[ICO_UXF_APPINPUT_MAX];
@@ -207,7 +211,7 @@ typedef struct _ico_uxf_sys_config {
 
 typedef struct _ico_uxf_app_config {
     int applicationNum;
-	int ailNum;
+    int ailNum;
     Ico_Uxf_conf_application *application;
     Ico_Uxf_conf_application *hashidtable[ICO_UXF_MISC_HASHSIZE];
     Ico_Uxf_conf_application *hashnametable[ICO_UXF_MISC_HASHSIZE];

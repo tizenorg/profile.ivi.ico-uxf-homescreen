@@ -1,3 +1,10 @@
+* Tue Jun 04 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130603.172554@344634f
+- 0.3.05 release.
+- Fix for TIVI-842 - [WLD] Previously existing app thumbnails missing on homescreen after launch and terminate more apps
+  Homescreen stores the hided app thumbnail's information.
+- Work around - Addition of the window animation interface.
+- Appoint that more than ico-uxf-weston-plugin-0.5.04 are necessary for spec file.
+
 * Fri May 24 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130520.093309@f56086f
 - 0.3.03 release
 - Fix for TIVI-839 - [WLD] Install app with wrt install, No new app icon shown in Homescreen App list.

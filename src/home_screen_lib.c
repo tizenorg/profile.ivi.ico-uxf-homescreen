@@ -570,13 +570,6 @@ hs_lib_handle_statusbar(hs_lib_msg_t *msg)
                     else if ((ret >= 0) && (attr.status != ICO_UXF_PROCSTATUS_RUN)) {
                         /* launch the application */
                         ret = ico_uxf_process_execute(cmd);
-                        if ((ret == ICO_UXF_EOK) || (ret == ICO_UXF_EBUSY)) {
-                            idx = hs_tile_get_index_app(cmd);
-                            if (idx < 0) {
-                                idx = hs_tile_get_minchange();
-                            }
-                            hs_tile_set_app(idx, cmd);
-                        }
                     }
                 }
                 else {
@@ -592,6 +585,14 @@ hs_lib_handle_statusbar(hs_lib_msg_t *msg)
                 else {
                     cnt++;
                 }
+            }
+            ret = ico_uxf_process_attribute_get(cmd, &attr);
+            if ((ret >= 0) && (attr.status == ICO_UXF_PROCSTATUS_RUN)) {
+                idx = hs_tile_get_index_app(cmd);
+                if (idx < 0) {
+                    idx = hs_tile_get_minchange();
+                }
+                hs_tile_set_app(idx, cmd);
             }
 
             /* show the application screen*/

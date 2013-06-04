@@ -57,7 +57,8 @@ struct _ons_msg {
 /*============================================================================*/
 static int ons_loadinons_edje_file(const char *edje_file);
 static void ons_event_message(char *format, ...);
-static ons_msg_t *ons_alloc_seendmsg(char *data, int len);
+static ons_msg_t *ons_alloc_sendmsg(char *data, int len);
+static void ons_free_msgst(ons_msg_t *msg);
 static ons_msg_t *ons_get_sendmsg(void);
 static int ons_put_sendmsg(ons_msg_t *send);
 static char *ons_edje_parse_str(void *in, int arg_num);
@@ -151,7 +152,7 @@ ons_event_message(char *format, ...)
 
     uifw_trace("OnScreen: ons_event_message %s", message);
 
-    send = ons_alloc_seendmsg(message, strlen(message));
+    send = ons_alloc_sendmsg(message, strlen(message));
     if (!send) {
         uifw_warn("ons_event_message: ERROR(allocate send msg)");
     }
@@ -236,7 +237,35 @@ ons_put_sendmsg(ons_msg_t *send)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ons_alloc_seendmsg
+ * @brief   ons_free_msgst
+ *          free the message structure
+ *
+ * @param[in]   msg                 message to free
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ons_free_msgst(ons_msg_t *msg)
+{
+    if (!msg) {
+        return;
+    }
+
+    if (msg->data) {
+        free(msg->data);
+    }
+
+    memset(msg, 0, sizeof(ons_msg_t));
+
+    msg->next = ons_free_msg;
+    ons_free_msg = msg;
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ons_alloc_sendmsg
  *          Allocate a send message buffer.
  *
  * @param[in]   data                data
@@ -247,7 +276,7 @@ ons_put_sendmsg(ons_msg_t *send)
  */
 /*--------------------------------------------------------------------------*/
 static ons_msg_t *
-ons_alloc_seendmsg(char *data, int len)
+ons_alloc_sendmsg(char *data, int len)
 {
     ons_msg_t *msg;
 
@@ -389,6 +418,7 @@ ons_callback_onscreen(struct libwebsocket_context *context,
                 uifw_warn("ons_callback_onscreen: ERROR(fail to write ws)");
             }
         }
+        ons_free_msgst(msg);
         if (ons_send_msg) {
             libwebsocket_callback_on_writable(context, wsi);
         }

@@ -62,8 +62,8 @@ extern "C" {
 #define ICO_UXF_MAX_COORDINATE      16384   /* maximum coordinate position + 1      */
 
 /* timer                */
-#define ICO_UXF_SUSP_INITTIME   (10*1000)   /* initiale no suspend time (ms)        */
-#define ICO_UXF_SUSP_DELAY      (300)       /* suspend delay time (ms)              */
+#define ICO_UXF_SUSP_INITTIME   (5*1000)    /* initiale no suspend time (ms)        */
+#define ICO_UXF_SUSP_DELAY      (200)       /* suspend delay time (ms)              */
 
 #ifdef __cplusplus
 }

@@ -42,8 +42,15 @@
 #define ICO_HS_WINDOW_TYPE_TOUCH (2)
 #define ICO_HS_TOUCH_TIME_OUT    (1.0) /* Long press for timer */
 typedef struct _hs_tile_info hs_tile_info_t;
+typedef struct _hs_tile_hide hs_tile_hide_t;
+
+struct _hs_tile_hide {
+    hs_tile_hide_t *next;               /* next hide app on the same tile */
+    char appid[ICO_UXF_MAX_PROCESS_NAME];
+};
 
 struct _hs_tile_info {
+    hs_tile_hide_t *next;
     int idx; /* index: 0 to ... */
     int valid; /* 0: invalid, 1:valid */ /* dont't touch now */
     char appid[ICO_UXF_MAX_PROCESS_NAME]; /* active app id */
@@ -214,6 +221,9 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
             if (idx >= 0) {
                 hs_tile_free_app(idx);
             }
+            else {
+                hs_tile_delete_hide(dd.process.process);
+            }
         }
     }
     else if (ev == ICO_UXF_EVENT_ACTIVEWINDOW)  {
@@ -237,7 +247,6 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
                     }
                     else    {
                         ico_uxf_window_active(dd.window.window,
-                                              ICO_UXF_WINDOW_POINTER_ACTIVE |
                                                   ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
                         ico_uxf_window_raise(dd.window.window);
                         ico_syc_apc_active(winAttr.process);
@@ -573,7 +582,6 @@ hs_show_appscreen(const char *appid)
             }
             else    {
                 ico_uxf_window_active(window.window,
-                                      ICO_UXF_WINDOW_POINTER_ACTIVE |
                                           ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
             }
             ico_uxf_window_raise(window.window);
@@ -712,6 +720,7 @@ hs_tile_init_info(void)
         uifw_warn("hs_tile_init_info: Leave(err malloc tile str failed)");
         return ICO_HS_ERR;
     }
+    memset(hs_tile_info, 0, sizeof(hs_tile_info_t) * (tilecnt + ICO_HS_NOTILE_APP_MAX));
 
     /* get screen size */
     ico_uxf_window_screen_size_get(&dispW, &dispH);
@@ -809,6 +818,45 @@ hs_tile_init_info(void)
 
 /*--------------------------------------------------------------------------*/
 /**
+ * @brief   hs_tile_delete_hide
+ *          delete hide app information.
+ *
+ * @param[in]   appid               application id
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+hs_tile_delete_hide(const char *appid)
+{
+    int ii;
+    hs_tile_info_t *tinfo;
+    hs_tile_hide_t *hide, *bhide;
+
+    for (ii = 0; ii < hs_tile_cnt; ii++) {
+        tinfo = &hs_tile_info[ii];
+        hide = tinfo->next;
+        bhide = NULL;
+        while (hide) {
+            if (strcmp(appid, hide->appid) == 0) {
+                if (! bhide) {
+                    tinfo->next = hide->next;
+                }
+                else {
+                    bhide->next = hide->next;
+                }
+                free(hide);
+                break;
+            }
+            bhide = hide;
+            hide = hide->next;
+        }
+    }
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
  * @brief   hs_tile_free_app
  *          delete all information of the indicated tile.
  *
@@ -820,10 +868,38 @@ void
 hs_tile_free_app(int idx)
 {
     hs_tile_info_t *tinfo;
+    hs_tile_hide_t *hide;
+    int win;
 
     if ((idx >= 0) && (idx < hs_tile_cnt)) {
         tinfo = &hs_tile_info[idx];
-        memset(tinfo->appid, 0, ICO_UXF_MAX_PROCESS_NAME + 1);
+        if (tinfo->next) {
+            hide = tinfo->next;
+            tinfo->next = hide->next;
+            strncpy(tinfo->appid, hide->appid, ICO_UXF_MAX_PROCESS_NAME);
+            free(hide);
+        }
+        else {
+            memset(tinfo->appid, 0, ICO_UXF_MAX_PROCESS_NAME + 1);
+        }
+    }
+    else {
+        return;
+    }
+
+    if (strlen(hs_active_onscreen) > 0) {
+        return;
+    }
+    if (hs_regulation_visible == 0) {
+        return;
+    }
+
+    if ((hs_stat_touch == ICO_HS_TOUCH_IN_SHOW)
+        && (strlen(tinfo->appid) > 0)) {
+        win = hs_get_process_window(tinfo->appid);
+        if (win > 0) {
+            ico_uxf_window_visible_raise(win, 1, 1);
+        }
     }
 }
 
@@ -970,13 +1046,15 @@ hs_tile_kill_app(const char *appid)
     int idx, ret;
 
     idx = hs_tile_get_index_app(appid);
-    if (idx < 0) {
-        return;
-    }
 
     ret = ico_uxf_process_terminate(appid);
     if (ret == ICO_UXF_EOK) {
-        hs_tile_free_app(idx);
+        if (idx >= 0) {
+            hs_tile_free_app(idx);
+        }
+        else {
+            hs_tile_delete_hide(appid);
+        }
     }
 
     return;
@@ -1024,19 +1102,76 @@ void
 hs_tile_set_app(int idx, const char *appid)
 {
     hs_tile_info_t *tinfo;
+    hs_tile_hide_t *search, *bsearch, *hide = NULL;
+    int ii;
 
     uifw_trace("hs_tile_set_app: Enter(idx=%d appid=%s)", idx, appid);
 
-    if (idx >= 0) {
-        tinfo = &hs_tile_info[idx];
-        if (tinfo->valid > 0) {
+    if ((idx < 0) && (idx >= hs_tile_cnt)) {
+        return;
+    }
+
+    /* check whether the app is same as tile one */
+    tinfo = &hs_tile_info[idx];
+    if (strcmp(tinfo->appid, appid) == 0) {
+        return;
+    }
+
+    /* check whether the app is hide */
+    for (ii = 0; ii < hs_tile_cnt; ii++) {
+        tinfo = &hs_tile_info[ii];
+        if (tinfo->valid == 0) continue;
+        search = tinfo->next;
+        bsearch = NULL;
+        while (search) {
+            if (strcmp(search->appid, appid) == 0) {
+                hide = search;
+                if (! bsearch) {
+                    tinfo->next = search->next;
+                }
+                else {
+                    bsearch->next = search->next;
+                }
+                break;
+            }
+            bsearch = search;
+            search = search->next;
+        }
+        if (hide) {
+            break;
+        }
+    }
+
+    /* set */
+    tinfo = &hs_tile_info[idx];
+    if (tinfo->valid > 0) {
+        if (strlen(tinfo->appid) != 0) {
             int oldwin = hs_get_process_window(tinfo->appid);
             if (oldwin > 0) {
                 (void) ico_uxf_window_hide(oldwin);
             }
-            strncpy(tinfo->appid, appid, ICO_UXF_MAX_PROCESS_NAME);
-            tinfo->change++;
+
+            if (! hide) {
+                hide = malloc(sizeof(hs_tile_hide_t));
+            }
+            if (! hide) {
+                uifw_warn("hs_tile_set_app: cannot allocate app table");
+            }
+            else {
+                memset(hide, 0, sizeof(hs_tile_hide_t));
+                strncpy(hide->appid, tinfo->appid, ICO_UXF_MAX_PROCESS_NAME);
+                if (tinfo->next) {
+                    hide->next = tinfo->next;
+                }
+                tinfo->next = hide;
+            }
         }
+        else {
+            free(hide);
+        }
+
+        strncpy(tinfo->appid, appid, ICO_UXF_MAX_PROCESS_NAME);
+        tinfo->change++;
     }
 }
 
@@ -1453,6 +1588,12 @@ hs_touch_up_tile(void *data, Evas *evas, Evas_Object *obj, void *event_info)
     hs_tile_info_t *tinfo;
 
     uifw_trace("hs_touch_up_tile: idx=%d", idx);
+
+    if (strlen(hs_active_onscreen) != 0) {
+        uifw_trace("hs_touch_up_tile: active=%s", hs_active_onscreen);
+        return;
+    }
+
     tinfo = &hs_tile_info[idx];
     if (tinfo->l_press == 1) {
         /* flag reset */
@@ -1779,7 +1920,7 @@ hs_regulation_listener(const int appcategory,
                     hs_show_appscreen(NULL);
                 }
                 hs_hide_onscreen();
-        		memset(hs_active_onscreen, 0, sizeof(hs_active_onscreen));
+                memset(hs_active_onscreen, 0, sizeof(hs_active_onscreen));
             }
         }
         else    {

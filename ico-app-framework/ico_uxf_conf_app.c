@@ -113,7 +113,10 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
     char    *exec;
     GError  *error;
     char    *app_category;
-    char    add_category[256];
+    int     app_category_type;
+    char    add_category[400];
+    int     add_category_len;
+    char    work[80];
     int     i;
     bool    bval;
     struct stat buff;
@@ -155,25 +158,43 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
     add_category[0] = 0;
     error = NULL;
     app_category = g_key_file_get_string(sappfile, "app-attributes", package, &error);
-    if (error != NULL)  {
+    if (error == NULL)  {
+        app_category_type = 0;
+    }
+    else    {
         g_clear_error(&error);
         error = NULL;
         app_category = g_key_file_get_string(sappfile, "app-attributes", name, &error);
+        if (error == NULL)  {
+            app_category_type = 1;
+        }
     }
+    add_category_len = 0;
     if (error != NULL)  {
         g_clear_error(&error);
         apfw_trace("infoAilpkg: %s(%s) dose not has app-attributes", package, name);
     }
     else    {
-        apfw_trace("infoAilpkg: %s(%s) has app-category=%s", package, name, app_category);
-        strncpy(add_category, app_category, sizeof(add_category)-2);
-        add_category[sizeof(add_category)-2] = 0;
-        i = strlen(add_category);
-        if (i > 0)  {
-            if (add_category[i-1] != ';')   {
-                strcpy(&add_category[i], ";");
+        for (i = 1;; i++)   {
+            strncpy(&add_category[add_category_len], 
+                    app_category, sizeof(add_category)-add_category_len-2);
+            add_category[sizeof(add_category)-2] = 0;
+            add_category_len = strlen(add_category);
+            if (add_category_len > 0)  {
+                if (add_category[add_category_len-1] != ';')   {
+                    strcpy(&add_category[add_category_len++], ";");
+                }
+            }
+            snprintf(work, sizeof(work)-1, "%s.%d",
+                     app_category_type == 0 ? package : name, i);
+            error = NULL;
+            app_category = g_key_file_get_string(sappfile, "app-attributes", work, &error);
+            if (error != NULL)  {
+                g_clear_error(&error);
+                break;
             }
         }
+        apfw_trace("infoAilpkg: %s(%s) has app-category=%s", package, name, add_category);
     }
     g_clear_error(&error);
 
@@ -181,9 +202,9 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
     ail_appinfo_get_str(appinfo, AIL_PROP_CATEGORIES_STR, &category);
     if (strcmp(category, APP_CONF_AIL_NULL_STR) != 0) {
         apfw_trace("infoAilpkg: %s + %s", add_category, category);
-        i = strlen(add_category);
-        strncpy(&add_category[i], category, sizeof(add_category)-i-1);
-        add_category[sizeof(add_category)-i-1] = 0;
+        strncpy(&add_category[add_category_len],
+                category, sizeof(add_category)-add_category_len-1);
+        add_category[sizeof(add_category)-1] = 0;
     }
     if (add_category[0])    {
         category = add_category;
@@ -606,6 +627,36 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                         }
                     }
 
+                    /* surface animation        */
+                    if ((found == 0) && (work[0] != 0)) {
+                        if (strncasecmp(work, "Animation", 9) == 0)  {
+                            k = 9;
+                            if (work[9] == '.')    {
+                                if (strncasecmp(&work[10], "visible", 7) == 0)  {
+                                    k = 17;
+                                }
+                                else if (strncasecmp(&work[10], "resize", 6) == 0)  {
+                                    k = 16;
+                                }
+                                else if (strncasecmp(&work[10], "move", 4) == 0)    {
+                                    k = 14;
+                                }
+                            }
+                            if (work[k] == '=')    {
+                                if (k == 14)    {
+                                    apptbl->animation_move = strdup(&work[k+1]);
+                                }
+                                else if (k == 16)   {
+                                    apptbl->animation_resize = strdup(&work[k+1]);
+                                }
+                                else    {
+                                    apptbl->animation_visible = strdup(&work[k+1]);
+                                }
+                            }
+                            found = 9;
+                        }
+                    }
+
                     /* cpu % at invisible       */
                     if ((found == 0) && (work[0] != 0)) {
                         if (strncasecmp(work, "invisiblecpu", 12) == 0)  {
@@ -624,12 +675,20 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                         }
                     }
 
+                    /* configure event          */
+                    if ((found == 0) && (work[0] != 0)) {
+                        if (strcasecmp(work, "noconfigure") == 0)  {
+                            apptbl->noconfigure = 1;
+                            found = 9;
+                        }
+                    }
+
                     /* start mode               */
                     if ((found == 0) && (work[0] != 0)) {
-                        if (strcasecmp(work, "autostart") == 0)  {
+                        if (strncasecmp(work, "auto", 4) == 0)  {
                             apptbl->autostart = 1;
                         }
-                        else if (strcasecmp(work, "noautostart") == 0)   {
+                        else if (strncasecmp(work, "noauto", 6) == 0)   {
                             apptbl->autostart = 0;
                         }
                         else    {
@@ -658,12 +717,13 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                    _ico_app_config_update->applicationNum, apptbl->appid, apptbl->name,
                    apptbl->exec, apptbl->type);
         apfw_trace("Ail.%d: categ=%d kind=%d disp=%d layer=%d zone=%d "
-                   "sound=%d zone=%d auto=%d noicon=%d cpu=%d",
+                   "sound=%d zone=%d auto=%d noicon=%d anim=%s cpu=%d",
                    _ico_app_config_update->applicationNum, apptbl->categoryId, apptbl->kindId,
                    apptbl->display[0].displayId, apptbl->display[0].layerId,
                    apptbl->display[0].zoneId, apptbl->sound[0].soundId,
                    apptbl->sound[0].zoneId, apptbl->autostart, apptbl->noicon,
-                   apptbl->invisiblecpu);
+                   apptbl->animation_visible ? apptbl->animation_visible : "(none)",
+                    apptbl->invisiblecpu);
         _ico_app_config_update->applicationNum++;
     }
     else    {
@@ -792,7 +852,7 @@ readAilApplist(void)
             g_key_file_free(sappfile);
             sappfile = NULL;
         }
-        apfw_trace("readAilApplist: Leave(cannot read ail correctly %d =! %d", 
+        apfw_trace("readAilApplist: Leave(cannot read ail correctly %d =! %d",
                     _ico_app_config_update->ailNum, num);
         return NULL;
     }
@@ -803,7 +863,7 @@ readAilApplist(void)
     if( sappfile)   {
         g_key_file_free(sappfile);
     }
-    
+
     apfw_trace("readAilApplist: Leave");
 
     return _ico_app_config_update;

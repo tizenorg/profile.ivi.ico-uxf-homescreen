@@ -64,6 +64,8 @@ int ico_uxf_window_show(const int window);
                                         /* Show window                          */
 int ico_uxf_window_hide(const int window);
                                         /* Hide window                          */
+int ico_uxf_window_visible_noanimation(const int window, const int show);
+                                        /* Show/Hide without animation          */
 int ico_uxf_window_visible_raise(const int window,
                                  const int visible, const int raise);
                                         /* Set window show/hide and raise/lower */
@@ -77,7 +79,8 @@ int ico_uxf_window_lower(const int window);
                                         /* Lower window                         */
 int ico_uxf_window_active(const int window, const int target);
                                         /* Activate window                      */
-int ico_uxf_window_animation(const int window, const char *animation);
+int ico_uxf_window_animation(const int window, const char *animation_visible,
+                             const char *animation_resize, const char *animation_move);
                                         /* Set window animation                 */
 int ico_uxf_window_control(const char *appid, const int winidx,
                            const int control, const int onoff);

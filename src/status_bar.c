@@ -467,6 +467,8 @@ sb_touch_up_shortcut(void *data, Evas *evas, Evas_Object *obj, void *event_info)
     unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
     char *appid = (char *)data;
 
+    uifw_trace("TOUCH UP: SHORTCUT %s", appid);
+
     if (sb_wait_reply == ICO_SB_NO_WAIT) {
         if ((sb_wsi_mirror != NULL) && (appid != NULL)) {
             n = sprintf((char *)p, "SHOW %s %s", appid, getenv("PKG_NAME"));
@@ -498,6 +500,8 @@ sb_touch_down_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info
     char img[ICO_HS_TEMP_BUF_SIZE];
     char path[ICO_HS_TEMP_BUF_SIZE];
 
+    uifw_trace("TOUCH DOWN: APPLIST");
+
     hs_get_image_path(path, sizeof(path));
     sprintf(img, "%s"ICO_SB_APPLIST_ONICON, path);
 
@@ -526,6 +530,8 @@ sb_touch_up_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info)
     unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
     char path[ICO_HS_TEMP_BUF_SIZE];
     char img[ICO_HS_TEMP_BUF_SIZE];
+
+    uifw_trace("TOUCH UP: APPLIST");
 
     hs_get_image_path(path, sizeof(path));
     sprintf(img, "%s"ICO_SB_APPLIST_OFFICON, path);
@@ -564,6 +570,8 @@ sb_touch_down_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_in
     char img[ICO_HS_TEMP_BUF_SIZE];
     char path[ICO_HS_TEMP_BUF_SIZE];
 
+    uifw_trace("TOUCH DOWN: CHANGE");
+
     hs_get_image_path(path, sizeof(path));
     sprintf(img, "%s"ICO_SB_HOME_ONICON, path);
 
@@ -592,6 +600,8 @@ sb_touch_up_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_info
     unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
     char path[ICO_HS_TEMP_BUF_SIZE];
     char img[ICO_HS_TEMP_BUF_SIZE];
+
+    uifw_trace("TOUCH UP: CHANGE");
 
     hs_get_image_path(path, sizeof(path));
     sprintf(img, "%s"ICO_SB_HOME_OFFICON, path);
@@ -715,7 +725,7 @@ sb_add_shortcut(Evas *canvas)
         appid = hs_conf_get_string(ICO_HS_CONFIG_STATUBAR, config, NULL);
         if ((appid != NULL) && (strcmp(appid, "none") != 0)) {
             appconf = ico_uxf_getAppByAppid(appid);
-            if (appid) {
+            if (appconf) {
                 tile = evas_object_image_filled_add(canvas);
                 evas_object_image_file_set(tile,
                         appconf->icon_key_name, NULL);

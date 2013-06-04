@@ -61,11 +61,11 @@ typedef struct  _Ico_Uxf_Mng_ProcWin    {
 typedef struct  _Ico_Uxf_Mng_Process    {
     struct _Ico_Uxf_Mng_Process *nextidhash;/* next process of the same id and hash */
     Ico_Uxf_Mng_ProcWin *procwin;           /* process's subwindow                  */
-    void                *exttable;          /* extended table                       */
+    void                *appconf;           /* configuration table address          */
     struct _Ico_Uxf_Mng_Process *parent;    /* parent process                       */
     short               susptimer;          /* suspend timer                        */
     char                susp;               /* real suspend flag                    */
-    char                res;                /* (unused)                             */
+    char                showmode;           /* resume show mode                     */
     Ico_Uxf_ProcessAttr attr;               /* process configuration                */
 }   Ico_Uxf_Mng_Process;
 
