@@ -29,6 +29,7 @@
 #include "home_screen_conf.h"
 
 #include <libwebsockets.h>
+#include <bundle.h>
 
 /*============================================================================*/
 /* Define data types                                                          */
@@ -929,8 +930,9 @@ main(int argc, char *argv[])
 {
     int width, height;
     int orientation = ICO_ONS_HORIZONTAL;
-    int ii;
     int ret;
+    bundle *b;
+    const char *val;
 
     /* configure */
     if (getenv("PKG_NAME")) {
@@ -941,17 +943,14 @@ main(int argc, char *argv[])
     }
 
     /* get argment */
-    for (ii = 1; ii < argc; ii++) {
-        if (argv[ii][0] != '-')
-            continue;
-        if (strncasecmp(argv[ii], "-orientaion=", strlen("-orientaion=")) == 0) {
-            if (strcmp(&argv[ii][strlen("-orientaion=")], "vertical") == 0) {
-                orientation = ICO_ONS_VERTICAL;
-            }
-            else if (strcmp(&argv[ii][strlen("-orientaion=")], "horizontal")
-                    == 0) {
-                orientation = ICO_ONS_HORIZONTAL;
-            }
+    b = bundle_import_from_argv(argc, argv);
+    val = bundle_get_val(b, "orientation");
+    if (val != NULL) {
+        if (strcmp(val, "vertical") == 0) {
+            orientation = ICO_ONS_VERTICAL;
+        }
+        else if (strcmp(val, "horizontal") == 0) {
+            orientation = ICO_ONS_HORIZONTAL;
         }
     }
 

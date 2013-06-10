@@ -629,30 +629,15 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
 
                     /* surface animation        */
                     if ((found == 0) && (work[0] != 0)) {
-                        if (strncasecmp(work, "Animation", 9) == 0)  {
-                            k = 9;
-                            if (work[9] == '.')    {
-                                if (strncasecmp(&work[10], "visible", 7) == 0)  {
-                                    k = 17;
-                                }
-                                else if (strncasecmp(&work[10], "resize", 6) == 0)  {
-                                    k = 16;
-                                }
-                                else if (strncasecmp(&work[10], "move", 4) == 0)    {
-                                    k = 14;
-                                }
-                            }
-                            if (work[k] == '=')    {
-                                if (k == 14)    {
-                                    apptbl->animation_move = strdup(&work[k+1]);
-                                }
-                                else if (k == 16)   {
-                                    apptbl->animation_resize = strdup(&work[k+1]);
-                                }
-                                else    {
-                                    apptbl->animation_visible = strdup(&work[k+1]);
-                                }
-                            }
+                        if (strncasecmp(work, "Animation=", 10) == 0)  {
+                            apptbl->animation = strdup(&work[10]);
+                            found = 9;
+                        }
+                    }
+                    /* surface animation time   */
+                    if ((found == 0) && (work[0] != 0)) {
+                        if (strncasecmp(work, "Animation_time=", 15) == 0)  {
+                            apptbl->animation_time = strtol(&work[15], (char **)0, 0);
                             found = 9;
                         }
                     }
@@ -679,6 +664,14 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                     if ((found == 0) && (work[0] != 0)) {
                         if (strcasecmp(work, "noconfigure") == 0)  {
                             apptbl->noconfigure = 1;
+                            found = 9;
+                        }
+                    }
+
+                    /* overlap on HomeScreen menu   */
+                    if ((found == 0) && (work[0] != 0)) {
+                        if (strcasecmp(work, "menuoverlap") == 0)  {
+                            apptbl->menuoverlap = 1;
                             found = 9;
                         }
                     }
@@ -717,13 +710,13 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                    _ico_app_config_update->applicationNum, apptbl->appid, apptbl->name,
                    apptbl->exec, apptbl->type);
         apfw_trace("Ail.%d: categ=%d kind=%d disp=%d layer=%d zone=%d "
-                   "sound=%d zone=%d auto=%d noicon=%d anim=%s cpu=%d",
+                   "sound=%d zone=%d auto=%d noicon=%d anim=%s.%d overlap=%d cpu=%d",
                    _ico_app_config_update->applicationNum, apptbl->categoryId, apptbl->kindId,
                    apptbl->display[0].displayId, apptbl->display[0].layerId,
                    apptbl->display[0].zoneId, apptbl->sound[0].soundId,
                    apptbl->sound[0].zoneId, apptbl->autostart, apptbl->noicon,
-                   apptbl->animation_visible ? apptbl->animation_visible : "(none)",
-                    apptbl->invisiblecpu);
+                   apptbl->animation ? apptbl->animation : "(none)",
+                   apptbl->animation_time, apptbl->menuoverlap, apptbl->invisiblecpu);
         _ico_app_config_update->applicationNum++;
     }
     else    {

@@ -11,8 +11,8 @@ LAUNCH_APP_INDEX=0
 LAUNCH_APP_SEATCNT=0
 LAUNCH_APP_X=0
 LAUNCH_APP_Y=0
-SHIFT_X=896
-SHIFT_Y=448
+SHIFT_X=576
+SHIFT_Y=28
 
 #determin screen size 768x1024 or 1080x1920
 /bin/grep "ico_uxf_window_screen_size_get width=768 height=1024" $HOMESCREEN_LOG
@@ -25,7 +25,7 @@ if [ "$?" = 0 ]; then
 fi
 
 #determin launch app index/position on application list
-for str in `/bin/grep "Application list: appid=$LAUNCH_APP" $ONSCREEN_LOG`
+for str in `/bin/grep "ons_load_config: appid=$LAUNCH_APP" $ONSCREEN_LOG`
 do
 	para=`echo $str|cut -d "=" -f 1`
 	val=`echo $str|cut -d "=" -f 2`
@@ -39,6 +39,8 @@ do
 		LAUNCH_APP_SEATCNT=$val
 	fi
 done
+
+echo $LAUNCH_APP_INDEX
 
 LAUNCH_APP_X=`expr $LAUNCH_APP_INDEX % 5 \* 130 + 124 + $SHIFT_X`
 LAUNCH_APP_Y=`expr $LAUNCH_APP_INDEX / 5 \* 130 + 374 + $SHIFT_Y`

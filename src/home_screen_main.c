@@ -576,17 +576,8 @@ hs_show_appscreen(const char *appid)
                        hs_app_screen_window[idx].resize_h,
                        hs_app_screen_window[idx].move_x,
                        hs_app_screen_window[idx].move_y);
-            /* activate application window                  */
-            if ((appConf != NULL) && (appConf->display[0].layerId == HS_LAYER_SOFTKEYBOARD)) {
-                ico_uxf_window_active(window.window, ICO_UXF_WINDOW_POINTER_ACTIVE);
-            }
-            else    {
-                ico_uxf_window_active(window.window,
-                                          ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
-            }
-            ico_uxf_window_raise(window.window);
-            ico_syc_apc_active(appid);
-
+            /* window hide and resize (for animation)       */
+            ico_uxf_window_hide(window.window);
             /* move application window to application layer */
             ico_uxf_window_resize(window.window,
                                   hs_app_screen_window[idx].resize_w,
@@ -594,7 +585,6 @@ hs_show_appscreen(const char *appid)
             ico_uxf_window_move(window.window,
                                 hs_app_screen_window[idx].move_x,
                                 hs_app_screen_window[idx].move_y);
-            ico_uxf_window_visible_raise(window.window, 1, 1);
             if (! appConf)  {
                 ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
                 /* show application layer                       */
@@ -606,9 +596,22 @@ hs_show_appscreen(const char *appid)
                 ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN,
                                       appConf->display[0].layerId, 1);
             }
+            ico_uxf_window_raise(window.window);
+            /* activate application window                  */
+            if ((appConf != NULL) && (appConf->display[0].layerId == HS_LAYER_SOFTKEYBOARD)) {
+                ico_uxf_window_active(window.window, ICO_UXF_WINDOW_POINTER_ACTIVE);
+            }
+            else    {
+                ico_uxf_window_active(window.window,
+                                          ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
+            }
+            ico_syc_apc_active(appid);
+
             hs_app_screen_window[idx].visible = 1;
             /* hide HomeScreen layer                        */
             ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
+            /* visible application window with animation    */
+            ico_uxf_window_visible_animation(window.window, 1);
         }
     }
     hs_stat_touch = ICO_HS_TOUCH_IN_HIDE;
@@ -925,6 +928,9 @@ hs_tile_show_screen(void)
         return;
     }
 
+    /* chnage to menu mode for AppsControler        */
+    ico_uxf_window_control(NULL, -1, ICO_UXF_APPSCTL_TEMPVISIBLE, 1);
+
     /* all apps invisible */
     /* hide HomeScreen layer menu                   */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_HOMESCREEN, 0);
@@ -961,9 +967,6 @@ hs_tile_show_screen(void)
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_TOUCH, 1);
     /* hide application layer                       */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_APPLICATION, 0);
-
-    /* chnage to menu mode for AppsControler        */
-    ico_uxf_window_control(NULL, -1, ICO_UXF_APPSCTL_TEMPVISIBLE, 1);
 
     ico_uxf_main_loop_iterate();
 }

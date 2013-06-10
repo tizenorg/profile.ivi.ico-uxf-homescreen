@@ -53,6 +53,7 @@ typedef struct  _ico_apc_request    {
 #define ICO_APC_REQTYPE_REQUEST 0               /* Request from application         */
 #define ICO_APC_REQTYPE_CREATE  1               /* Request automaticaly             */
 
+#define ICO_APC_REQREPLY_INTERVAL    100        /* Request timer interval (ms)      */
 #define ICO_APC_REQREPLY_MAXTIME     500        /* Maximum reply wait (ms)          */
 #define ICO_APC_REQSTATE_WAITREQ     0x01       /* Waitting resource                */
 #define ICO_APC_REQSTATE_WAITPROC    0x08       /* Priotiry process work flag       */

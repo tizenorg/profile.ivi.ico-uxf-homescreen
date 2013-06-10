@@ -17,6 +17,7 @@
 #include <pthread.h>
 
 #include <libwebsockets.h>
+#include <bundle.h>
 
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
@@ -789,6 +790,8 @@ main(int argc, char *argv[])
     int ii;
     int ret;
     static Ecore_Evas *ee;
+    bundle *b;
+    const char *val;
 
     /* configure */
     hs_get_image_path(sb_respath, ICO_SB_BUF_SIZE);
@@ -803,17 +806,14 @@ main(int argc, char *argv[])
     }
 
     /* get argment */
-    for (ii = 1; ii < argc; ii++) {
-        if (argv[ii][0] != '-')
-            continue;
-        if (strncasecmp(argv[ii], "-orientaion=", strlen("-orientaion=")) == 0) {
-            if (strcmp(&argv[ii][strlen("-orientaion=")], "vertical") == 0) {
-                orientation = ICO_SB_VERTICAL;
-            }
-            else if (strcmp(&argv[ii][strlen("-orientaion=")], "horizontal")
-                    == 0) {
-                orientation = ICO_SB_HORIZONTAL;
-            }
+    b = bundle_import_from_argv(argc, argv);
+    val = bundle_get_val(b, "orientation");
+    if (val != NULL) {
+        if (strcmp(val, "vertical") == 0) {
+            orientation = ICO_SB_VERTICAL;
+        }
+        else if (strcmp(val, "horizontal") == 0) {
+            orientation = ICO_SB_HORIZONTAL;
         }
     }
 

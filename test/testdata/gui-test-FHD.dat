@@ -42,7 +42,7 @@ Button=Up
 sleep 2
 
 #Cancel selected on confirmation screen
-XY=994,784
+XY=1115,664
 sleep 0.1
 Button=Down
 sleep 0.1
@@ -56,7 +56,7 @@ Button=Down
 sleep 3
 Button=Up
 sleep 2
-XY=669,784
+XY=669,664
 sleep 0.1
 Button=Down
 sleep 0.1
@@ -64,7 +64,7 @@ Button=Up
 sleep 2
 
 #Application list button is pushed
-XY=1615,898
+XY=335,32
 sleep 0.1
 Button=Down
 sleep 0.1
@@ -72,7 +72,7 @@ Button=Up
 sleep 2
 
 #Next selected on applicaton list 
-XY=669,900
+XY=800,794
 sleep 0.1
 Button=Down
 sleep 0.1
@@ -80,7 +80,7 @@ Button=Up
 sleep 2
 
 #Cancel selected on applicaton list 
-XY=994,900
+XY=1115,794
 sleep 0.1
 Button=Down
 sleep 0.1
@@ -88,7 +88,7 @@ Button=Up
 sleep 2
 
 #application icon selected on applicaton list 
-XY=1615,898
+XY=335,32
 sleep 0.1
 Button=Down
 sleep 0.1

@@ -173,8 +173,7 @@ reloadSysConfig(void)
     GKeyFileFlags flags;
     GError *error = NULL;
     gsize length;
-    int i;
-    int j;
+    int i, j, k;
     int zoneidx;
     GList*  idlist;
     char*   dirp;
@@ -648,6 +647,8 @@ reloadSysConfig(void)
 
         /* display layer            */
         int displayer_length;
+        gchar **layerlist;
+        gsize layersize;
         GString* layer_key = g_string_new("");
         for (displayer_length = 0;
              displayer_length < ICO_UXF_DISPLAY_LAYER_MAX; displayer_length++)  {
@@ -661,11 +662,24 @@ reloadSysConfig(void)
         for (j = 0; j < displayer_length; j++)  {
             g_string_printf(layer_key,"%s.layer.%d",key,j);
             display->layer[j].id = j;
-            display->layer[j].name =
-                    g_key_file_get_string(keyfile, g, layer_key->str, &error);
+            layerlist = g_key_file_get_string_list(keyfile, g, layer_key->str,
+                                                   &layersize, &error);
             ico_uxf_conf_checkGerror(&error);
-            apfw_trace("Display.%d Layer.%d id = %d name = %s", i, j,
-                       display->layer[j].id, display->layer[j].name);
+            if (layersize <= 0) {
+                apfw_error("Display.%d Layer.%d has no name", i, j);
+            }
+            else    {
+                display->layer[j].name = strdup((char *)layerlist[0]);
+                for (k = 1; k < (int)layersize; k++)    {
+                    if (strcasecmp((char *)layerlist[k], "menuoverlap") == 0)   {
+                        display->layer[j].menuoverlap = 1;
+                    }
+                }
+                apfw_trace("Display.%d Layer.%d id = %d name = %s overlap=%d", i, j,
+                           display->layer[j].id, display->layer[j].name,
+                           display->layer[j].menuoverlap);
+            }
+            if (layerlist)  g_strfreev(layerlist);
         }
         g_string_free(layer_key,TRUE);
 
@@ -689,7 +703,7 @@ reloadSysConfig(void)
         for (j = 0; j < dispzone_length; j++)   {
             g_string_printf(zone_key,"%s.zone.%d",key,j);
             zonelists[j] = g_key_file_get_string_list(
-                                    keyfile,g,zone_key->str,&zonesizes[j],&error);
+                                    keyfile, g, zone_key->str, &zonesizes[j], &error);
             ico_uxf_conf_checkGerror(&error);
             if ((! zonelists[j]) || (zonesizes[j] <= 0)) {
                 apfw_error("reloadSysConfig: display.%d zone.%d dose not exist",i,j);

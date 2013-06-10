@@ -100,16 +100,16 @@ typedef struct _ico_uxf_conf_application {
     char *group;
     char *exec;
     char *type;
-    char *animation_visible;
-    char *animation_resize;
-    char *animation_move;
     int hostId;
     char *location;
     char *icon_key_name;
+    char *animation;
+    short animation_time;
     char autostart;
     char noicon;
     char noconfigure;
-    char res;
+    char menuoverlap;
+    char res[2];
     unsigned short invisiblecpu;
     short kindId;
     short categoryId;
@@ -126,6 +126,8 @@ typedef struct _ico_uxf_conf_application {
 typedef struct _ico_uxf_conf_display_layer {
     int id;
     char *name;
+    char menuoverlap;
+    char res[3];                                /* (unused)         */
 } Ico_Uxf_conf_display_layer;
 
 #define ZONE_MAX_OVERLAP    (ICO_UXF_DISPLAY_ZONE_MAX-1)
@@ -137,7 +139,7 @@ typedef struct _ico_uxf_conf_display_zone {
     short width;
     short height;
     short zoneidx;
-    short res;                                  /* (unused)         */
+    char res[2];                                /* (unused)         */
     struct _ico_uxf_conf_display *display;
     unsigned char overlapNum;
     unsigned char overlap[ZONE_MAX_OVERLAP];

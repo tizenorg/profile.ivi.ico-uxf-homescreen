@@ -188,6 +188,7 @@ ico_uxf_init(const char *name)
             lay->attr.display = sysconf->display[dn].id;
             lay->attr.w = sysconf->display[dn].width;
             lay->attr.h = sysconf->display[dn].height;
+            lay->attr.menuoverlap = sysconf->display[dn].layer[tn].menuoverlap;
             lay->mng_display = dsp;
         }
     }
@@ -793,27 +794,19 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
                (int)surfaceid, pid, appid, gIco_Uxf_Api_Mng.MyProcess);
 
     prc = ico_uxf_mng_process(appid, 0);
-
     if (prc)    {
         /* set window animation     */
         if (prc->appconf != NULL)   {
-            if (((Ico_Uxf_conf_application *)prc->appconf)->animation_visible)  {
+            if (((Ico_Uxf_conf_application *)prc->appconf)->animation)  {
                 ico_window_mgr_set_animation(
-                    gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                    surfaceid, ICO_WINDOW_MGR_ANIMATION_CHANGE_VISIBLE,
-                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_visible);
+                    gIco_Uxf_Api_Mng.Wayland_WindowMgr, surfaceid,
+                    ((Ico_Uxf_conf_application *)prc->appconf)->animation,
+                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_time);
             }
-            if (((Ico_Uxf_conf_application *)prc->appconf)->animation_resize)   {
+            else if (((Ico_Uxf_conf_application *)prc->appconf)->animation_time > 0)    {
                 ico_window_mgr_set_animation(
-                    gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                    surfaceid, ICO_WINDOW_MGR_ANIMATION_CHANGE_RESIZE,
-                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_resize);
-            }
-            if (((Ico_Uxf_conf_application *)prc->appconf)->animation_move) {
-                ico_window_mgr_set_animation(
-                    gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                    surfaceid, ICO_WINDOW_MGR_ANIMATION_CHANGE_MOVE,
-                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_move);
+                    gIco_Uxf_Api_Mng.Wayland_WindowMgr, surfaceid, " ",
+                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_time);
             }
         }
         if (prc->attr.mainwin.window <= 0)  {
@@ -1051,9 +1044,11 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
     int                 display;
     Ico_Uxf_Mng_Process *prc;
 
+#if 0               /* too many logout, change to comment out   */
     uifw_trace("ico_uxf_window_configurecb: surf=%08x app=%s layer=%d "
                "x/y=%d/%d w/h=%d/%d hint=%d",
                (int)surfaceid, appid, layer, x, y, width, height, hint);
+#endif              /* too many logout, change to comment out   */
 
     ico_uxf_enter_critical();
 
@@ -1138,9 +1133,6 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
                     win->mng_layer = ico_uxf_mng_layer(win->mng_display->attr.display,
                                                        layer, 0);
                 }
-            }
-            else if ((win->attr.w != width) || (win->attr.h != height)) {
-                (void)ico_uxf_window_resize(win->attr.window, win->attr.w, win->attr.h);
             }
         }
     }
@@ -1604,8 +1596,8 @@ ico_uxf_timer_wake(const int msec)
                         ico_window_mgr_set_visible(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
                                                    proc->attr.mainwin.window,
                                                    proc->showmode ==
-                                                       ICO_WINDOW_MGR_VISIBLE_SHOW_WO_ANIMATION ?
-                                                     ICO_WINDOW_MGR_VISIBLE_SHOW_WO_ANIMATION :
+                                                       ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION ?
+                                                     ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION :
                                                      ICO_WINDOW_MGR_VISIBLE_SHOW,
                                                    ICO_WINDOW_MGR_RAISE_NOCHANGE);
                         wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
@@ -1996,7 +1988,6 @@ ico_uxf_mng_process(const char *process, const int create)
     int                 hash;
 
     hash = ICO_UXF_MISC_HASHBYNAME(process);
-    uifw_trace("ico_uxf_mng_process: find(hash=%d)", hash);
     p = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
     while (p)  {
         if(strncmp(p->attr.process, process, ICO_UXF_MAX_PROCESS_NAME) == 0) break;
@@ -2013,7 +2004,6 @@ ico_uxf_mng_process(const char *process, const int create)
         }
         memset((char *)p, 0, sizeof(Ico_Uxf_Mng_Process));
         strncpy(p->attr.process, process, ICO_UXF_MAX_PROCESS_NAME);
-        uifw_trace("ico_uxf_mng_process: create table(hash=%d, proc=%s)", hash, process);
         if (plast) {
             plast->nextidhash = p;
         }

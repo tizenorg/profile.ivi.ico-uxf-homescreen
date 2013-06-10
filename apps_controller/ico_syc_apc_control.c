@@ -21,6 +21,7 @@
 #include    <pthread.h>
 #include    <sys/ioctl.h>
 #include    <sys/time.h>
+#include    <sys/resource.h>
 #include    <fcntl.h>
 
 #include    <wayland-client.h>
@@ -671,7 +672,10 @@ app_getdisplay(ico_apc_request_t *req, const int addprio)
     ico_apc_request_t           *bp;
 
     /* priority     */
-    prio = confsys->category[conf->categoryId].priority * ICO_UXF_PRIO_CATEGORY;
+    prio = getpriority(PRIO_PROCESS, req->pid);
+    if (prio > 19)          prio = 19;
+    else if (prio < -20)    prio = -20;
+    prio = confsys->category[conf->categoryId].priority * ICO_UXF_PRIO_CATEGORY + 19 - prio;
     prio += addprio;
     if (ico_syc_apc_regulation_app_visible(conf->categoryId))   {
         prio |= ICO_UXF_PRIO_REGULATION;
@@ -1093,7 +1097,10 @@ app_getsound(ico_apc_request_t *req, const int addprio)
     ico_apc_request_t           *bp;
 
     /* priority     */
-    prio = (confsys->category[conf->categoryId].priority * ICO_UXF_PRIO_CATEGORY);
+    prio = getpriority(PRIO_PROCESS, req->pid);
+    if (prio > 19)          prio = 19;
+    else if (prio < -20)    prio = -20;
+    prio = (confsys->category[conf->categoryId].priority * ICO_UXF_PRIO_CATEGORY) + 19 - prio;
     prio += addprio;
     if (ico_syc_apc_regulation_app_sound(conf->categoryId)) {
         prio |= ICO_UXF_PRIO_REGULATION;
@@ -1511,7 +1518,10 @@ app_getinput(ico_apc_request_t *req, const int addprio)
     ico_apc_request_t           *bp;
 
     /* priority     */
-    prio = (confsys->category[conf->categoryId].priority * ICO_UXF_PRIO_CATEGORY);
+    prio = getpriority(PRIO_PROCESS, req->pid);
+    if (prio > 19)          prio = 19;
+    else if (prio < -20)    prio = -20;
+    prio = (confsys->category[conf->categoryId].priority * ICO_UXF_PRIO_CATEGORY) + 19 - prio;
     prio += addprio;
     if (ico_syc_apc_regulation_app_input(conf->categoryId)) {
         prio |= ICO_UXF_PRIO_REGULATION;
@@ -2155,7 +2165,7 @@ request_timer(void *user_data)
         /* no need timedout check   */
         return ECORE_CALLBACK_RENEW;
     }
-
+    apfw_trace("request_timer: start(%d)", timer_count);
     timer_count = 0;
 
     /* check display request timedout   */
@@ -2163,7 +2173,11 @@ request_timer(void *user_data)
         p = dispzone[i].req;
         while (p)   {
             if (p->timer > 0)   {
-                p->timer --;
+                if (p->timer >= ICO_APC_REQREPLY_INTERVAL)
+                    p->timer -= ICO_APC_REQREPLY_INTERVAL;
+                else
+                    p->timer = 0;
+                apfw_trace("request_timer: dispzone[%d] timer(%d)", i, p->timer);
                 if (p->timer == 0)  {
                     apfw_trace("request_timer: display timedout(%s %d %d prio=%08x)",
                                p->appid, p->resid, p->id, p->prio);
@@ -2177,9 +2191,9 @@ request_timer(void *user_data)
                     }
                     p->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
                 }
-            }
-            else    {
-                timer_count ++;
+                else    {
+                    timer_count ++;
+                }
             }
             p = p->next;
         }
@@ -2191,6 +2205,7 @@ request_timer(void *user_data)
         while (p)   {
             if (p->timer > 0)   {
                 p->timer --;
+                apfw_trace("request_timer: soundzone[%d] timer(%d)", i, p->timer);
                 if (p->timer == 0)  {
                     apfw_trace("request_timer: sound timedout(%s %d %d prio=%08x)",
                                p->appid, p->resid, p->id, p->prio);
@@ -2207,14 +2222,50 @@ request_timer(void *user_data)
                     }
                     p->state &= ~(ICO_APC_REQSTATE_REPLYACTIVE|ICO_APC_REQSTATE_REPLYQUIET);
                 }
-            }
-            else    {
-                timer_count ++;
+                else    {
+                    timer_count ++;
+                }
             }
             p = p->next;
         }
     }
+    apfw_trace("request_timer: end(%d)", timer_count);
     return ECORE_CALLBACK_RENEW;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_apc_is_waitshow: check if application is waiting show
+ *
+ * @param[in]   appid           application Id
+ * @return      answer
+ * @retval      =1              waiting show
+ * @retval      =0              not wait
+ */
+/*--------------------------------------------------------------------------*/
+int
+ico_syc_apc_is_waitshow(const char *appid)
+{
+    int                 i;
+    ico_apc_request_t   *p;
+
+    /* check display request list   */
+    for (i = 0; i < ndispzone; i++) {
+        p = dispzone[i].req;
+        while (p)   {
+            if (p->timer > 0)   {
+                /* waiting show         */
+                if (strcmp(p->appid, appid) == 0)   {
+                    /* found application    */
+                    uifw_trace("ico_syc_apc_is_waitshow: %s is waiting", appid);
+                    return 1;
+                }
+            }
+            p = p->next;
+        }
+    }
+    uifw_trace("ico_syc_apc_is_waitshow: %s is not wait", appid);
+    return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -2563,7 +2614,8 @@ app_display_hook(const char *appid, const int surface, const int object)
             req = dispzone[i].req;
             while (req)   {
                 if ((strcmp(req->appid, appconf->appid) == 0) &&
-                    (req->resid == ICO_APF_RESID_BASIC_SCREEN)) break;
+                    ((req->resid == ICO_APF_RESID_BASIC_SCREEN) ||
+                     (req->resid == ICO_APF_RESID_ON_SCREEN)))  break;
                 req = req->next;
             }
             if (req)    break;
@@ -2802,7 +2854,9 @@ ico_syc_apc_init(ico_apc_resource_control_t display, ico_apc_resource_control_t 
     (void) ico_uxf_window_hook(app_display_hook);
 
     /* create timer     */
-    ecore_timer = ecore_timer_add(0.1, request_timer, NULL);
+    ecore_timer = ecore_timer_add(((double)ICO_APC_REQREPLY_INTERVAL)/1000.0,
+                                  request_timer, NULL);
+    timer_count = 1;
 
     /* send sound stream list request to Multi Sound manager    */
     ret = ico_apf_resource_send_to_soundctl(ICO_APF_SOUND_COMMAND_GETLIST, 0);

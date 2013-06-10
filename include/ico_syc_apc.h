@@ -70,6 +70,8 @@ int ico_syc_apc_init(ico_apc_resource_control_t display,
                      ico_apc_resource_control_t input);
                                             /* Terminate Apps Controller        */
 void ico_syc_apc_term(void);
+                                            /* Check waiting application        */
+int ico_syc_apc_is_waitshow(const char *appid);
                                             /* Select active application        */
 void ico_syc_apc_active(const char *appid);
 

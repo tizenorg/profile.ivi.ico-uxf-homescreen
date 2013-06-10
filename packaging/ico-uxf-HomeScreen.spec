@@ -1,6 +1,6 @@
 Name:       ico-uxf-HomeScreen
 Summary:    sample homescreen
-Version:    0.3.05
+Version:    0.3.06
 Release:    1.1
 Group:		TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
@@ -9,7 +9,7 @@ Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.0
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.5.04
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.5.05
 BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(evas)
 BuildRequires: pkgconfig(eina)
@@ -27,7 +27,7 @@ BuildRequires: libwebsockets-devel
 BuildRequires: capi-base-common-devel
 BuildRequires: edje-tools
 Requires: weston >= 1.0
-Requires: ico-uxf-weston-plugin >= 0.5.04
+Requires: ico-uxf-weston-plugin >= 0.5.05
 
 %description
 Sample homescreen application.

@@ -44,6 +44,8 @@ typedef struct  _Ico_Uxf_LayerAttr  {
     int                 display;        /* Display ID                           */
     short               w;              /* The number of the lateral pixels     */
     short               h;              /* The number of vertical pixels        */
+    char                menuoverlap;    /* Overlap HomeScreen menu              */
+    char                res[3];         /* (unused)                             */
 }   Ico_Uxf_LayerAttr;
 
 /* Structure of display zone attribute      */

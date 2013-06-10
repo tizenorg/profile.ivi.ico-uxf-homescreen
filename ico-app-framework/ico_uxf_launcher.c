@@ -88,12 +88,14 @@ ico_uxf_process_execute(const char *name)
     apptbl = (Ico_Uxf_conf_application *)ico_uxf_getAppByAppid(name);
     if ((appBundle != NULL) && (apptbl != NULL))    {
         char *opt = strdup(apptbl->exec);
-        char *str = strtok(opt, " ");
-        while (str != NULL) {
-            str = strtok(NULL, " ");
-            if (str != NULL)    {
-                bundle_add(appBundle, str, "Application");
-                uifw_trace("ico_uxf_process_execute: option(%s)", str);
+        char *key = strtok(opt, " ");
+        char *val = NULL;
+        while (key != NULL) {
+            key = strtok(NULL, " ");
+            val = strtok(NULL, " ");
+            if ((key != NULL) && (val != NULL))    {
+                bundle_add(appBundle, key, val);
+                uifw_trace("ico_uxf_process_execute: option(key=%s, val=%s)", key, val);
             }
         }
         free(opt);

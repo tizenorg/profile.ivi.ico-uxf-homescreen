@@ -66,9 +66,11 @@ fi
 ## delete dat file
 rm -f testdata/gui-test.dat
 
+echo " "
+echo " "
 if [ $FOUND_ERR = 0 ] ; then
 	echo "org.tizen.ico.homescreen Test: OK"
 else
-    echo "org.tizen.ico.homescreen Test: ERROR"
+    echo "org.tizen.ico.homescreen Test: Please check the upper log whether there is not a critical bug"
 fi
 
