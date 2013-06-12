@@ -467,6 +467,18 @@ hs_show_appscreen(const char *appid)
     int sid;
 
     uifw_trace("hs_show_appscreen: Enter(appid=%s)", appid ? appid : "(NULL)");
+
+    if (hs_stat_touch == ICO_HS_TOUCH_IN_HIDE)  {
+        /* if it is the transition from an application screen to        */
+        /* an other application screen, perform animation at hide screen*/
+        ico_uxf_window_animation_control(0, 1);
+    }
+    else    {
+        /* if it is the transition from menu to an application screen,  */
+        /* do not perform animation at hide appllication screen         */
+        ico_uxf_window_animation_control(0, 0);
+    }
+
     /* change to noraml mode for AppsControler  */
     ico_uxf_window_control(NULL, -1, ICO_UXF_APPSCTL_TEMPVISIBLE, 0);
 
@@ -615,6 +627,7 @@ hs_show_appscreen(const char *appid)
         }
     }
     hs_stat_touch = ICO_HS_TOUCH_IN_HIDE;
+    ico_uxf_window_animation_control(0, 1);     /* change hide animation to default */
     ico_uxf_main_loop_iterate();
 
     uifw_trace("hs_show_appscreen: Leave");

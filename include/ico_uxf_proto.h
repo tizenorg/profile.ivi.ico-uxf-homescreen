@@ -81,6 +81,8 @@ int ico_uxf_window_active(const int window, const int target);
                                         /* Activate window                      */
 int ico_uxf_window_animation(const int window, const char *animation, const int time);
                                         /* Set window animation                 */
+void ico_uxf_window_animation_control(const int control, const int animation);
+                                        /* Set animation control                */
 int ico_uxf_window_control(const char *appid, const int winidx,
                            const int control, const int onoff);
                                         /* Window visible control from AppsController*/

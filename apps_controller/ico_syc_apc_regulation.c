@@ -358,10 +358,11 @@ rule_engine_wake(void *user_data)
             break;
         case ICO_UXF_POLICY_SHIFT_PARKING:
             if ((VehicleSpeed < ICO_SYC_APC_REGULATION_SPEED_RUNNING) &&
-                (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING))
-                wkcontrol[idx].display = ICO_SYC_APC_REGULATION_REGULATION;
-            else
+                ((ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
+                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_NEUTRALS)))
                 wkcontrol[idx].display = ICO_SYC_APC_REGULATION_NOREGULATION;
+            else
+                wkcontrol[idx].display = ICO_SYC_APC_REGULATION_REGULATION;
             break;
         case ICO_UXF_POLICY_SHIFT_REVERSES:
             if (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_REVERSES)
@@ -406,7 +407,9 @@ rule_engine_wake(void *user_data)
                 wkcontrol[idx].sound = ICO_SYC_APC_REGULATION_NOREGULATION;
             break;
         case ICO_UXF_POLICY_SHIFT_PARKING:
-            if (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING)
+            if ((VehicleSpeed < ICO_SYC_APC_REGULATION_SPEED_RUNNING) &&
+                ((ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
+                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_NEUTRALS)))
                 wkcontrol[idx].sound = ICO_SYC_APC_REGULATION_NOREGULATION;
             else
                 wkcontrol[idx].sound = ICO_SYC_APC_REGULATION_REGULATION;
@@ -454,7 +457,9 @@ rule_engine_wake(void *user_data)
                 wkcontrol[idx].input = ICO_SYC_APC_REGULATION_NOREGULATION;
             break;
         case ICO_UXF_POLICY_SHIFT_PARKING:
-            if (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING)
+            if ((VehicleSpeed < ICO_SYC_APC_REGULATION_SPEED_RUNNING) &&
+                ((ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_PARKING) ||
+                 (ShiftPosition == ICO_SYC_APC_REGULATION_SHIFT_NEUTRALS)))
                 wkcontrol[idx].input = ICO_SYC_APC_REGULATION_NOREGULATION;
             else
                 wkcontrol[idx].input = ICO_SYC_APC_REGULATION_REGULATION;

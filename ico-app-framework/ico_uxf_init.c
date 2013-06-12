@@ -156,6 +156,8 @@ ico_uxf_init(const char *name)
     gIco_Uxf_Api_Mng.WaylandFd = -1;
     gIco_Uxf_Api_Mng.Wayland_Display = NULL;
     gIco_Uxf_Api_Mng.InitTimer = ICO_UXF_SUSP_INITTIME;
+    gIco_Uxf_Api_Mng.Win_Show_Anima = 1;
+    gIco_Uxf_Api_Mng.Win_Hide_Anima = 1;
 
     /* read configurations */
     sysconf = (Ico_Uxf_Sys_Config *)ico_uxf_getSysConfig();

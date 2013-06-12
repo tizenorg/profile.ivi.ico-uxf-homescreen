@@ -683,11 +683,20 @@ ico_uxf_window_control(const char *appid, const int winidx,
                         else                                            newcontrol = 1;
                     }
                     /* request to Weston(Multi Window Manager)  */
-                    ico_uxf_window_visible_control(
-                            winmng,
-                            (newcontrol != 0) ? ICO_WINDOW_MGR_VISIBLE_HIDE_ANIMATION :
-                                                ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION,
-                            ICO_WINDOW_MGR_RAISE_NOCHANGE);
+                    if (newcontrol == 0)    {
+                        if (gIco_Uxf_Api_Mng.Win_Show_Anima)
+                            i = ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION;
+                        else
+                            i = ICO_WINDOW_MGR_VISIBLE_SHOW;
+                    }
+                    else    {
+                        if (gIco_Uxf_Api_Mng.Win_Hide_Anima)
+                            i = ICO_WINDOW_MGR_VISIBLE_HIDE_ANIMATION;
+                        else
+                            i = ICO_WINDOW_MGR_VISIBLE_HIDE;
+                    }
+                    ico_uxf_window_visible_control(winmng, i,
+                                                   ICO_WINDOW_MGR_RAISE_NOCHANGE);
                 }
             }
             uifw_trace("ico_uxf_window_control: Leave(EOK) control=%x(%d) visible=%d",
@@ -696,6 +705,28 @@ ico_uxf_window_control(const char *appid, const int winidx,
         }
     }
     return ICO_UXF_EOK;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_window_control: target window control from AppsController
+ *
+ * @param[in]   control     Control Target(0=Hide/1=Show)
+ * @param[in]   animation   Animation(0=Without Animation/1=With Animation)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+ICO_APF_API void
+ico_uxf_window_animation_control(const int control, const int animation)
+{
+    uifw_trace("ico_uxf_window_animation_control: %s to %s",
+        control ? "Show" : "Hide", animation ? "Animation" : "No Animation");
+    if (control)    {
+        gIco_Uxf_Api_Mng.Win_Show_Anima = animation;
+    }
+    else    {
+        gIco_Uxf_Api_Mng.Win_Hide_Anima = animation;
+    }
 }
 
 /*--------------------------------------------------------------------------*/

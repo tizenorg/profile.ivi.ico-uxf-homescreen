@@ -114,6 +114,8 @@ typedef struct  _Ico_Uxf_Api_Mng    {
     int                     EventMask;      /* receive event                        */
     unsigned int            LastEvent;      /* last receive event(end synchronization)*/
     int                     AppsCtlVisible; /* Tempolary visible all windows        */
+    short                   Win_Show_Anima; /* Window animation at show             */
+    short                   Win_Hide_Anima; /* Window animation at hide             */
     int                     NeedTimer;      /* need timer control                   */
     int                     InitTimer;      /* initial timer                        */
 

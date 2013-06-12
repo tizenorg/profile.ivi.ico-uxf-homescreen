@@ -2204,7 +2204,10 @@ request_timer(void *user_data)
         p = soundzone[i].req;
         while (p)   {
             if (p->timer > 0)   {
-                p->timer --;
+                if (p->timer >= ICO_APC_REQREPLY_INTERVAL)
+                    p->timer -= ICO_APC_REQREPLY_INTERVAL;
+                else
+                    p->timer = 0;
                 apfw_trace("request_timer: soundzone[%d] timer(%d)", i, p->timer);
                 if (p->timer == 0)  {
                     apfw_trace("request_timer: sound timedout(%s %d %d prio=%08x)",

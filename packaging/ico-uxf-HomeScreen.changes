@@ -1,3 +1,14 @@
+* Wed Jun 12 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/2.0alpha-wayland/20130612.051552@7006a0f
+- 0.3.07 release
+- Fix for TIVI-1002 - [WLD] Entertainment.Visual APP doesn't stop the audio play and show the window while vehicle speed>=4
+  The spelling of the category name that defined in configuration file(/opt/apps/org.tizen.ico.homescreen/res/config/system.conf) was wrong with "Entertainment.visiual".
+  A judgment logic had an error about the control of the sound by the run regulation.
+- fix for - Run regulation was it in an error in a judgment logic of the run regulation about shift_back (e.g., a application category of Camera.back).
+- fix for - A definition of category CarSetting was wrong in configuration.
+- Add an transition of the fading at the time of a change of the application screen.
+- Appoint that more than ico-uxf-weston-plugin-0.5.06 are necessary for spec file.
+- Delete logic of setting argment when Homescreen launch a application
+
 * Wed Jun 12 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130606.173158@c36bbb6
 - 0.3.06 release
 - Fix for TIVI-840 - [WLD] Nothing rendered when launching Contacts app 

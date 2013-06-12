@@ -39,6 +39,7 @@
 #define TYPE_UINT32 6
 #define TYPE_DOUBLE 7
 #define TYPE_STRING 8
+#define TYPE_SHIFT  12
 
 #if     LWS_INTERFACE > 0               /* WebSocket Interface              */
 #define LWS_DEFAULTIP       "127.0.0.1" /* websockets default ip(localhost) */
@@ -59,8 +60,8 @@ static const struct {
     { "Direction", "DIRECTION", {TYPE_DOUBLE, TYPE_NULL, 0,0} },
     { "EngineSpeed", "ENGINE_SPEED", {TYPE_INT32, TYPE_NULL, 0, 0} },
     { "Engine", "ENGINE_SPEED", {TYPE_INT32, TYPE_NULL, 0, 0} },
-    { "Shift", "SHIFT", {TYPE_BYTE, TYPE_BYTE, TYPE_NULL, 0} },
-    { "ShiftPosition", "SHIFT", {TYPE_BYTE, TYPE_BYTE, TYPE_NULL, 0} },
+    { "Shift", "SHIFT", {TYPE_SHIFT, TYPE_BYTE, TYPE_NULL, 0} },
+    { "ShiftPosition", "SHIFT", {TYPE_SHIFT, TYPE_BYTE, TYPE_NULL, 0} },
     { "Break_Signal", "BRAKE_SIGNAL", {TYPE_BOOL, TYPE_NULL, 0,0} },
     { "BreakSignal", "BRAKE_SIGNAL", {TYPE_BOOL, TYPE_NULL, 0,0} },
     { "Break", "BRAKE_SIGNAL", {TYPE_BOOL, TYPE_NULL, 0,0} },
@@ -291,9 +292,35 @@ set_vehicleinfo(const char *cmd)
             if (value[j] != 0)  {
                 value[j++] = 0;
             }
-            switch (vehicleinfo_key[key].datatype[idx]) {
+            switch (vehicleinfo_key[key].datatype[idx] % 10) {
             case TYPE_BOOL:
             case TYPE_BYTE:
+                if (vehicleinfo_key[key].datatype[idx] == TYPE_SHIFT)   {
+                    if ((strcasecmp(&value[i], "sp") == 0) ||
+                        (strcasecmp(&value[i], "s0") == 0)) {
+                        strcpy(&value[i], "0");
+                    }
+                    else if (strcasecmp(&value[i], "sr") == 0)  {
+                        strcpy(&value[i], "1");
+                    }
+                    else if (strcasecmp(&value[i], "sn") == 0)  {
+                        strcpy(&value[i], "2");
+                    }
+                    else if ((strcasecmp(&value[i], "sd") == 0) ||
+                             (strcasecmp(&value[i], "s4") == 0))    {
+                        strcpy(&value[i], "4");
+                    }
+                    else if ((strcasecmp(&value[i], "s1") == 0) ||
+                             (strcasecmp(&value[i], "sl") == 0))    {
+                        strcpy(&value[i], "5");
+                    }
+                    else if (strcasecmp(&value[i], "s2") == 0)  {
+                        strcpy(&value[i], "6");
+                    }
+                    else if (strcasecmp(&value[i], "s3") == 0)  {
+                        strcpy(&value[i], "7");
+                    }
+                }
                 msg.msg.data.status[pt++] = strtoul(&value[i], (char **)0, 0);
                 msgsize += 1;
                 break;

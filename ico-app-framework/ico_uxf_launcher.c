@@ -47,7 +47,6 @@ ico_uxf_process_execute(const char *name)
 {
     Ico_Uxf_Mng_Process *proc;              /* process management table         */
     int         hash;
-    bundle      *appBundle = NULL;
     Ico_Uxf_conf_application    *apptbl = NULL;
 
     uifw_trace("ico_uxf_process_execute: Enter(%s)", name);
@@ -83,29 +82,8 @@ ico_uxf_process_execute(const char *name)
     proc->attr.status = ICO_UXF_PROCSTATUS_INIT;
     ico_uxf_leave_critical();               /* leave critical section           */
 
-    /* setup option */
-    appBundle = bundle_create();
-    apptbl = (Ico_Uxf_conf_application *)ico_uxf_getAppByAppid(name);
-    if ((appBundle != NULL) && (apptbl != NULL))    {
-        char *opt = strdup(apptbl->exec);
-        char *key = strtok(opt, " ");
-        char *val = NULL;
-        while (key != NULL) {
-            key = strtok(NULL, " ");
-            val = strtok(NULL, " ");
-            if ((key != NULL) && (val != NULL))    {
-                bundle_add(appBundle, key, val);
-                uifw_trace("ico_uxf_process_execute: option(key=%s, val=%s)", key, val);
-            }
-        }
-        free(opt);
-    }
-
     /* execute program                      */
-    proc->attr.internalid = aul_launch_app(name ,appBundle);
-    if (appBundle != NULL) {
-        bundle_free(appBundle);
-    }
+    proc->attr.internalid = aul_launch_app(name , NULL);
     if (proc->attr.internalid < 0)  {
         uifw_error("ico_uxf_process_execute: Leave(ENOSYS), Launch App Error(%d)",
                    proc->attr.internalid);

@@ -50,9 +50,9 @@ if [ "$?" = "1" ] ; then
 fi
 
 # 5 start sample wayland client for display cursor
-sync;sync
-/usr/bin/nice -19 /usr/bin/wayland-smoke &
-sleep 0.3
+#sync;sync
+#/usr/bin/nice -19 /usr/bin/wayland-smoke &
+#sleep 0.3
 
 # 6 start app core daemon
 /bin/ps ax | /bin/grep launchpad_preloading_preinitializing_daemon | /bin/grep -v grep > /dev/null

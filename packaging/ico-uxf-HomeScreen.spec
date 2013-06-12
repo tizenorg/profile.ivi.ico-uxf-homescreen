@@ -1,6 +1,6 @@
 Name:       ico-uxf-HomeScreen
 Summary:    sample homescreen
-Version:    0.3.06
+Version:    0.3.07
 Release:    1.1
 Group:		TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
