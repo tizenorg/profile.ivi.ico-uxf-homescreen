@@ -1,3 +1,12 @@
+* Wed Jun 12 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130606.173158@c36bbb6
+- 0.3.06 release
+- Fix for TIVI-840 - [WLD] Nothing rendered when launching Contacts app 
+  Change the way of setting argument.
+- Fix for TIVI-987 - [WLD]App priority does not work
+  A priority judgment error of the interrupt image right.
+- The change of the package test program with the interface change of ico-uxf-weston-plugin.
+- Appoint that more than ico-uxf-weston-plugin-0.5.05 are necessary for spec file.
+
 * Tue Jun 04 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130603.172554@344634f
 - 0.3.05 release.
 - Fix for TIVI-842 - [WLD] Previously existing app thumbnails missing on homescreen after launch and terminate more apps
