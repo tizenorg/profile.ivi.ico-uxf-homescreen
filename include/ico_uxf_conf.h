@@ -134,12 +134,12 @@ typedef struct _ico_uxf_conf_display_layer {
 typedef struct _ico_uxf_conf_display_zone {
     int id;
     char *name;
+    short node;
     short x;
     short y;
     short width;
     short height;
     short zoneidx;
-    char res[2];                                /* (unused)         */
     struct _ico_uxf_conf_display *display;
     unsigned char overlapNum;
     unsigned char overlap[ZONE_MAX_OVERLAP];
@@ -185,6 +185,7 @@ typedef struct _ico_uxf_conf_inputsw {
     struct _ico_uxf_conf_inputdev   *inputdev;
     char *name;
     char *appid;
+    int keycode;
 } Ico_Uxf_conf_inputsw;
 
 typedef struct _ico_uxf_conf_inputdev {

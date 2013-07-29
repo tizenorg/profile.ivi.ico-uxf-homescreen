@@ -50,6 +50,7 @@ initHomeScreenConfig(const char *conf)
     GKeyFile *homescreen;
     GString *filepath;
 
+    uifw_trace("initHomeScreenConfig: open=%d", hs_is_open_config);
     if (hs_is_open_config == TRUE) {
         return ICO_HS_ERR;
     }
@@ -60,6 +61,7 @@ initHomeScreenConfig(const char *conf)
     hs_get_conf_path(path, sizeof(path));
     g_string_printf(filepath, "%s/%s", path, conf);
     if (!g_file_test(filepath->str, G_FILE_TEST_IS_REGULAR)) {
+        uifw_warn("%s: config file dose not exist", filepath->str);
         return ICO_HS_ERR;
     }
 
@@ -70,6 +72,7 @@ initHomeScreenConfig(const char *conf)
         uifw_warn("%s: %s", filepath->str, error->message);
         g_error_free(error);
     }
+    uifw_trace("config file(%s)", filepath->str);
 
     g_string_free(filepath, TRUE);
     if (error != NULL) {
@@ -84,7 +87,7 @@ initHomeScreenConfig(const char *conf)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_conf_get_integer
- *          Return integer value in homescreen configuration file. 
+ *          Return integer value in homescreen configuration file.
  *          If not exist,return defaultvlaue in params.
  *
  * @param[in]   group_name          configuration group name
@@ -106,7 +109,7 @@ hs_conf_get_integer(const char *group_name, const char *key, int default_value)
 
     int value = g_key_file_get_integer(hs_config_key, group_name, key, &error);
     if (error != NULL) {
-        uifw_warn("%s", error->message);
+        uifw_warn("%s:%s %s", group_name, key, error->message);
         g_error_free(error);
         return default_value;
     }
@@ -116,7 +119,7 @@ hs_conf_get_integer(const char *group_name, const char *key, int default_value)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   hs_conf_get_string
- *          Return string value in homescreen configuration file. 
+ *          Return string value in homescreen configuration file.
  *          If not exist,return defaultvlaue in params.
  *
  * @param[in]   group_name          configuration group name
@@ -140,7 +143,7 @@ hs_conf_get_string(const char *group_name, const char *key,
     const char *value = g_key_file_get_string(hs_config_key, group_name, key,
                                               &error);
     if (error != NULL) {
-        uifw_warn("%s", error->message);
+        uifw_warn("%s:%s %s", group_name, key, error->message);
         g_error_free(error);
         return default_value;
     }

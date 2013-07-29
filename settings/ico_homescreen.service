@@ -1,0 +1,10 @@
+[Unit]
+Description=Ico HomeScreen
+Requires=graphical.target
+After=graphical.target
+
+[Service]
+ExecStart=/usr/bin/launch_app org.tizen.ico.homescreen &
+
+[Install]
+WantedBy=graphical.target

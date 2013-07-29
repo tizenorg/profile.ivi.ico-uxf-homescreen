@@ -145,10 +145,12 @@ hs_get_conf_path(char *buff, int len)
     memset(buff, 0, len);
     pkg = getenv("PKG_NAME");
     if (pkg) {
+        uifw_trace("hs_get_conf_path: PKG_NAME=%s", pkg);
         snprintf(buff, len, manifest_path, pkg);
     }
     else {
         pkg = getenv(ICO_UXF_TOP_ENV);
         snprintf(buff, len, local_manifest_path, pkg ? pkg : local_top_path);
+        uifw_warn("hs_get_conf_path: no PKG_NAME, path=%s", buff);
     }
 }

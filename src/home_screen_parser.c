@@ -85,8 +85,6 @@ hs_parse_form(char *data, int length)
         hs_command_req[ii].input.del_app.input = IGNORE;
     }
 
-    g_type_init();
-
     parser = json_parser_new();
 
     error = NULL;
@@ -460,7 +458,7 @@ hs_conftrol_form(const char *process, int window)
                 if (target >= 0) {
                     st = ico_uxf_window_move(target,
                                        hs_command_req[ii].window[jj].move.x,
-                                       hs_command_req[ii].window[jj].move.y);
+                                       hs_command_req[ii].window[jj].move.y, 0);
                 }
                 uifw_debug("FORM move %d %d %d = %d", target,
                            hs_command_req[ii].window[jj].move.x,

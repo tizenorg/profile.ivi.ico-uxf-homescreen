@@ -16,24 +16,24 @@ HomeScreen_SOURCES = \
 	home_screen_lib.c		\
 	home_screen_sound.c		\
 	resource_conf.c
-HomeScreen_CFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS)
-HomeScreen_LDADD = $(EFL_LIBS) $(OPT_LIBS) $(WL_LIBS) $(COMMON_LIBS) ../apps_controller/libico_syc-apc.a ../ico-app-framework/.libs/libico-app-fw-efl.so ../ico-app-framework/.libs/libico-app-fw.so 
+HomeScreen_CFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS) $(UWS_CFLAGS)
+HomeScreen_LDADD = ../apps_controller/libico_syc-apc.a ../ico-app-framework/.libs/libico-app-fw-efl.so ../ico-app-framework/.libs/libico-app-fw.so $(EFL_LIBS) $(OPT_LIBS) $(WL_LIBS) $(COMMON_LIBS) $(DBUS_LIBS) $(UWS_LIBS)
 
 OnScreen_SOURCES = \
 	on_screen.c		\
 	home_screen_conf.c	\
 	home_screen_sound.c		\
 	resource_conf.c
-OnScreen_CFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS)
-OnScreen_LDADD = $(EFL_LIBS) $(OPT_LIBS) $(WL_LIBS) $(COMMON_LIBS) $(AUL_LIBS) ../apps_controller/libico_syc-apc.a ../ico-app-framework/.libs/libico-app-fw-efl.so ../ico-app-framework/.libs/libico-app-fw.so
+OnScreen_CFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS) $(UWS_CFLAGS) -I/usr/include/ico-util
+OnScreen_LDADD = ../apps_controller/libico_syc-apc.a ../ico-app-framework/.libs/libico-app-fw-efl.so ../ico-app-framework/.libs/libico-app-fw.so $(EFL_LIBS) $(OPT_LIBS) $(WL_LIBS) $(COMMON_LIBS) $(AUL_LIBS) $(UWS_LIBS)
 
 StatusBar_SOURCES = \
 	status_bar.c	\
 	home_screen_conf.c	\
 	home_screen_sound.c		\
 	resource_conf.c
-StatusBar_CFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS) 
-StatusBar_LDADD = $(EFL_LIBS) $(OPT_LIBS) $(WL_LIBS) $(COMMON_LIBS) $(AUL_LIBS) ../apps_controller/libico_syc-apc.a ../ico-app-framework/.libs/libico-app-fw-efl.so ../ico-app-framework/.libs/libico-app-fw.so
+StatusBar_CFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS) $(UWS_CFLAGS)
+StatusBar_LDADD = ../apps_controller/libico_syc-apc.a ../ico-app-framework/.libs/libico-app-fw-efl.so ../ico-app-framework/.libs/libico-app-fw.so $(EFL_LIBS) $(OPT_LIBS) $(WL_LIBS) $(COMMON_LIBS) $(AUL_LIBS) $(UWS_LIBS)
 
 SUFFIXES = .edc .edj
 

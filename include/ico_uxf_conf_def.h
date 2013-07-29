@@ -23,7 +23,7 @@ extern "C" {
 #define ICO_UXF_TOP_ENV         "UIFW_TOPDIR"
 
 /* Default top directory of UI-FW                           */
-#define ICO_UXF_TOP_TOPDIR      "/opt/apps/org.tizen.ico.homescreen"
+#define ICO_UXF_TOP_TOPDIR      "/usr/apps/org.tizen.ico.homescreen"
 
 /* Environment variable for top directory of cconfiguration files   */
 #define ICO_UXF_CONFIG_ENV      "UIFW_CONFDIR"

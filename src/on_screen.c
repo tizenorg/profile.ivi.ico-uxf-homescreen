@@ -28,7 +28,8 @@
 #include "home_screen_res.h"
 #include "home_screen_conf.h"
 
-#include <libwebsockets.h>
+#include <ico_uws.h>
+
 #include <bundle.h>
 
 /*============================================================================*/
@@ -46,32 +47,15 @@
 #define ICO_ONS_CMD_WAIT    (1)
 #define ICO_ONS_NO_WAIT     (2)
 
-typedef struct _ons_msg ons_msg_t;
-struct _ons_msg {
-    ons_msg_t *next;
-    char *data;
-    int len;
-};
-
 /*============================================================================*/
 /* static(internal) functions prototype                                       */
 /*============================================================================*/
+static void ons_callback_uws(const struct ico_uws_context *context,
+                const ico_uws_evt_e event, const void *id,
+                const ico_uws_detail *detail, void *data);
 static int ons_loadinons_edje_file(const char *edje_file);
 static void ons_event_message(char *format, ...);
-static ons_msg_t *ons_alloc_sendmsg(char *data, int len);
-static void ons_free_msgst(ons_msg_t *msg);
-static ons_msg_t *ons_get_sendmsg(void);
-static int ons_put_sendmsg(ons_msg_t *send);
 static char *ons_edje_parse_str(void *in, int arg_num);
-static int ons_callback_http(
-              struct libwebsocket_context *context, struct libwebsocket *wsi,
-              enum libwebsocket_callback_reasons reason, void *user, void *in,
-              size_t len);
-static int ons_callback_onscreen(
-                  struct libwebsocket_context *context,
-                  struct libwebsocket *wsi,
-                  enum libwebsocket_callback_reasons reason, void *user,
-                  void *in, size_t len);
 static void ons_create_context(void);
 static Eina_Bool ons_ecore_event(void *data);
 static void ons_on_destroy(Ecore_Evas *ee);
@@ -91,8 +75,8 @@ static void ons_config_event(const char *appid, int type);
 /*============================================================================*/
 static int ons_ws_port = ICO_HS_WS_PORT;
 static int ons_ws_connected = 0;
-static struct libwebsocket_context *ons_ws_context = NULL;
-static struct libwebsocket *ons_wsi_mirror = NULL;
+static struct ico_uws_context *ons_uws_context = NULL;
+static void *ons_uws_id = NULL;
 static char ons_edje_str[ICO_ONS_BUF_SIZE];
 
 static Ecore_Evas *ons_window; /* ecore-evas object */
@@ -103,29 +87,7 @@ static int ons_width, ons_height;
 static int ons_applist_idx = 0; /* only for applist, it's index */
 static int ons_app_cnt = 0; /* only for applist. a number of app to listed */
 
-static ons_msg_t *ons_free_msg = NULL;
-static ons_msg_t *ons_send_msg = NULL;
-
-static int ons_command_wait = ICO_ONS_NO_WAIT;
-
-static struct libwebsocket_protocols ws_protocols[] = {
-    {
-        "http-only",
-        ons_callback_http,
-        0
-    },
-    {
-        "onscreen-protocol",
-        ons_callback_onscreen,
-        0,
-    },
-    {
-        /* end of list */
-        NULL,
-        NULL,
-        0
-    }
-};
+static int ons_wait_reply = ICO_ONS_NO_WAIT;
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -144,163 +106,17 @@ static void
 ons_event_message(char *format, ...)
 {
     va_list list;
-    char message[ICO_HS_TEMP_BUF_SIZE];
-    ons_msg_t *send;
+    unsigned char message[ICO_HS_TEMP_BUF_SIZE];
 
     va_start(list, format);
-    vsnprintf(message, sizeof(message), format, list);
+    vsnprintf((char *)message, sizeof(message), format, list);
     va_end(list);
 
     uifw_trace("OnScreen: ons_event_message %s", message);
 
-    send = ons_alloc_sendmsg(message, strlen(message));
-    if (!send) {
-        uifw_warn("ons_event_message: ERROR(allocate send msg)");
-    }
-    else {
-        ons_put_sendmsg(send);
-    }
+    ico_uws_send(ons_uws_context, ons_uws_id, message, strlen((char *)message));
 
     return;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ons_get_sendmsg
- *          get the send message from the send buffer.
- *
- * @param       none
- * @return      send buffer address
- * @retval      > 0                 success
- * @retval      NULL                error
- */
-/*--------------------------------------------------------------------------*/
-static ons_msg_t *
-ons_get_sendmsg(void)
-{
-    ons_msg_t *msg;
-
-    msg = ons_send_msg;
-    if (msg) {
-        ons_send_msg = msg->next;
-        msg->next = NULL;
-    }
-
-    return msg;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ons_put_sendmsg
- *          put the send message to the send queue end.
- *
- * @param[in]   data                send message
- * @return      result
- * @retval      ICO_HS_OK           success
- * @retval      ICO_HS_ERR          error
- */
-/*--------------------------------------------------------------------------*/
-static int
-ons_put_sendmsg(ons_msg_t *send)
-{
-    ons_msg_t *msg;
-
-    uifw_trace("ons_put_sendmsg: Enter");
-
-    msg = ons_send_msg;
-    while (msg) {
-        if (!msg->next) {
-            break;
-        }
-        msg = msg->next;
-    }
-    if (!msg) {
-        ons_send_msg = send;
-    }
-    else {
-        msg->next = send;
-    }
-
-    if (ons_ws_context && ons_wsi_mirror) {
-        uifw_trace("ons_put_sendmsg: libwebsocket_callback_on_writable"
-            "(wsi_ctx=%x, wsi=%x", ons_ws_context, ons_wsi_mirror);
-        libwebsocket_callback_on_writable(ons_ws_context, ons_wsi_mirror);
-    }
-    else {
-        uifw_trace("ons_put_sendmsg: Leave(do not have wsi)");
-        return ICO_HS_ERR;
-    }
-
-    uifw_trace("ons_put_sendmsg: Leave");
-
-    return ICO_HS_OK;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ons_free_msgst
- *          free the message structure
- *
- * @param[in]   msg                 message to free
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-static void
-ons_free_msgst(ons_msg_t *msg)
-{
-    if (!msg) {
-        return;
-    }
-
-    if (msg->data) {
-        free(msg->data);
-    }
-
-    memset(msg, 0, sizeof(ons_msg_t));
-
-    msg->next = ons_free_msg;
-    ons_free_msg = msg;
-
-    return;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ons_alloc_sendmsg
- *          Allocate a send message buffer.
- *
- * @param[in]   data                data
- * @param[in]   len                 data length
- * @return      address
- * @retval      > 0                 success
- * @retval      NULL                error
- */
-/*--------------------------------------------------------------------------*/
-static ons_msg_t *
-ons_alloc_sendmsg(char *data, int len)
-{
-    ons_msg_t *msg;
-
-    if (!ons_free_msg) {
-        msg = malloc(sizeof(ons_msg_t));
-        if (!msg) {
-            return NULL;
-        }
-    }
-    else {
-        msg = ons_free_msg;
-        ons_free_msg = ons_free_msg->next;
-    }
-    memset(msg, 0, sizeof(ons_msg_t));
-
-    msg->len = len;
-    msg->data = strdup(data);
-    if (!msg->data) {
-        free(msg);
-        return NULL;
-    }
-
-    return msg;
 }
 
 static char *
@@ -321,120 +137,82 @@ ons_edje_parse_str(void *in, int arg_num)
 
 /*--------------------------------------------------------------------------*/
 /*
- * @brief   ons_callback_http
- *          Connection status is notified from libwebsockets.
+ * @brief   ons_callback_uws
+ *          callback function from UWS
  *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
+ * @param[in]   context             context
+ * @param[in]   event               event kinds
+ * @param[in]   id                  client id
+ * @param[in]   detail              event detail
+ * @param[in]   data                user data
+ * @return      none
  */
 /*--------------------------------------------------------------------------*/
-static int
-ons_callback_http(struct libwebsocket_context *context, struct libwebsocket *wsi,
-              enum libwebsocket_callback_reasons reason, void *user, void *in,
-              size_t len)
+static void
+ons_callback_uws(const struct ico_uws_context *context,
+                const ico_uws_evt_e event, const void *id,
+                const ico_uws_detail *detail, void *data)
 {
-    uifw_trace("ons_callback_http %p", context);
-    uifw_trace("OS-REASON %d", reason);
-    return 0;
-}
+    uifw_trace("ons_callback_uws %p", context);
+    char *in;
 
-/*--------------------------------------------------------------------------*/
-/*
- * @brief   ons_callback_onscreen
- *          this callback function is notified from libwebsockets
- *          onscreen protocol
- *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
- */
-/*--------------------------------------------------------------------------*/
-static int
-ons_callback_onscreen(struct libwebsocket_context *context,
-                  struct libwebsocket *wsi,
-                  enum libwebsocket_callback_reasons reason, void *user,
-                  void *in, size_t len)
-{
-    int n = 0;
-    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
-            + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-    ons_msg_t *msg;
-
-    uifw_trace("ons_callback_onscreen %p", context);
-
-    switch (reason) {
-    case LWS_CALLBACK_CLIENT_ESTABLISHED:
-        uifw_trace("OS-ESTABLISHED %x", wsi);
-        ons_wsi_mirror = wsi;
-        ons_event_message("ANS HELLO");
+    switch (event) {
+    case ICO_UWS_EVT_OPEN:
+        uifw_trace("ons_callback_uws: ICO_UWS_EVT_OPEN(id=%d)", (int)id);
+        ons_uws_id = (void *)id;
+        ons_event_message("%s ANS HELLO", ICO_HS_MSG_HEAD_OS);
         break;
 
-    case LWS_CALLBACK_CLIENT_RECEIVE:
-        uifw_trace("OS-RECEIVE[%d] %s", len, in);
+    case ICO_UWS_EVT_CLOSE:
+        uifw_trace("ons_callback_uws: ICO_UWS_EVT_CLOSE(id=%d)", (int)id);
+        ons_uws_context = NULL;
+        ons_ws_connected = 0;
+        ons_uws_id = NULL;
+        break;
+
+    case ICO_UWS_EVT_RECEIVE:
+        uifw_trace("ons_callback_uws: ICO_UWS_EVT_RECEIVE(id=%d, msg=%s, len=%d)",
+                   (int)id, (char *)detail->_ico_uws_message.recv_data,
+                   detail->_ico_uws_message.recv_len);
+        in = (char *)detail->_ico_uws_message.recv_data;
 
         if (strlen(in) == 0)
             break;
-        ons_command_wait = ICO_ONS_NO_WAIT;
+        ons_wait_reply = ICO_ONS_NO_WAIT;
         /* onscreen activate request */
         if (strncmp("OPEN", in, 4) == 0) {
             uifw_trace("%s", in);
             strncpy(ons_edje_str, ons_edje_parse_str(in, 1), sizeof(ons_edje_str));
             uifw_trace("ons_loadinons_edje_file: %s", &ons_edje_str[0]);
             if (ons_loadinons_edje_file(&ons_edje_str[0]) == 0) {
-                ons_event_message("RESULT SUCCESS");
+                ons_event_message("%s RESULT SUCCESS", ICO_HS_MSG_HEAD_OS);
             }
             else {
-                ons_event_message("RESULT FAILED");
+                ons_event_message("%s RESULT FAILED", ICO_HS_MSG_HEAD_OS);
             }
         }
         break;
 
-    case LWS_CALLBACK_CLOSED:
-        uifw_trace("OS-CLOSE");
-        ons_wsi_mirror = NULL;
+    case ICO_UWS_EVT_ERROR:
+        uifw_trace("ons_callback_uws: ICO_UWS_EVT_ERROR(id=%d, err=%d)",
+                   (int)id, detail->_ico_uws_error.code);
         break;
 
-    case LWS_CALLBACK_CLIENT_WRITEABLE:
-        uifw_trace("LWS_CALLBACK_CLIENT_WRITEABLE:(wsi=%x)", wsi);
+    case ICO_UWS_EVT_ADD_FD:
+        uifw_trace("ons_callback_uws: ICO_UWS_EVT_ADD_FD(id=%d, fd=%d)",
+                   (int)id, detail->_ico_uws_fd.fd);
+        break;
 
-        msg = ons_get_sendmsg();
-        if (msg) {
-            strcpy((char *)p, msg->data);
-            n = libwebsocket_write(wsi, p, strlen((char *)p), LWS_WRITE_TEXT);
-            if (n < 0) {
-                uifw_warn("ons_callback_onscreen: ERROR(fail to write ws)");
-            }
-        }
-        ons_free_msgst(msg);
-        if (ons_send_msg) {
-            libwebsocket_callback_on_writable(context, wsi);
-        }
-
-        usleep(200);
+    case ICO_UWS_EVT_DEL_FD:
+        uifw_trace("ons_callback_uws: ICO_UWS_EVT_DEL_FD(id=%d, fd=%d)",
+                   (int)id, detail->_ico_uws_fd.fd);
         break;
 
     default:
-        uifw_trace("OS-REASON %d", reason);
         break;
     }
 
-    uifw_trace("ons_callback_onscreen: Leave");
-
-    return 0;
+    return;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -449,26 +227,27 @@ ons_callback_onscreen(struct libwebsocket_context *context,
 static void
 ons_create_context(void)
 {
-    ons_ws_context
-            = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN, NULL,
-                                          ws_protocols,
-                                          libwebsocket_internal_extensions,
-                                          NULL, NULL, -1, -1, 0);
-    uifw_trace("OnScreen: ons_create_context ctx = %p", ons_ws_context);
+    int ret;
+    char uri[ICO_HS_TEMP_BUF_SIZE];
+
+    /* set up URI "ws://HOST:PORT" */
+    sprintf(uri, "ws://%s:%d", ICO_HS_WS_HOST, ons_ws_port);
+
+    /* create context */
+    ons_uws_context = ico_uws_create_context(uri, ICO_HS_PROTOCOL);
+    uifw_trace("ons_create_context: ctx = %p", ons_uws_context);
 
     ons_ws_connected = 0;
-    if (ons_ws_context == NULL) {
-        uifw_trace("OnScreen: libwebsocket_create_context failed.");
+    if (ons_uws_context == NULL) {
+        uifw_trace("ons_create_context: libwebsocket_create_context failed.");
     }
     else {
-        ons_wsi_mirror = libwebsocket_client_connect(ons_ws_context,
-                                                 ICO_ONS_WS_ADDRESS, ons_ws_port, 0, "/",
-                                                 ICO_ONS_WS_ADDRESS, NULL,
-                                                 ICO_ONS_WS_PROTOCOL_NAME, -1);
-        uifw_trace("OnScreen: ons_create_context wsi = %p", ons_wsi_mirror);
-        if (ons_wsi_mirror != NULL) {
-            ons_ws_connected = 1;
+        /* set callback */
+        ret = ico_uws_set_event_cb(ons_uws_context, ons_callback_uws, NULL);
+        if (ret != ICO_UWS_ERR_NONE) {
+            uifw_trace("ons_create_context: cannnot set callback");
         }
+        ons_ws_connected = 1;
     }
 }
 
@@ -486,29 +265,14 @@ static Eina_Bool
 ons_ecore_event(void *data)
 {
     if (ons_ws_connected) {
-        libwebsocket_service(ons_ws_context, 0);
+        ico_uws_service(ons_uws_context);
     }
     else {
-        if (ons_ws_context != NULL) {
-            libwebsocket_context_destroy(ons_ws_context);
+        if (ons_uws_context != NULL) {
+            ico_uws_close(ons_uws_context);
+            ons_uws_context = NULL;
         }
-        ons_ws_context
-                = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN, NULL,
-                                              ws_protocols,
-                                              libwebsocket_internal_extensions,
-                                              NULL, NULL, -1, -1, 0);
-        if (ons_ws_context == NULL) {
-            uifw_trace("OnScreen: libwebsocket_create_context failed.");
-        }
-        else {
-            ons_wsi_mirror = libwebsocket_client_connect(ons_ws_context,
-                                                     ICO_ONS_WS_ADDRESS, ons_ws_port, 0,
-                                                     "/", ICO_ONS_WS_ADDRESS, NULL,
-                                                     ICO_ONS_WS_PROTOCOL_NAME, -1);
-            if (ons_wsi_mirror != NULL) {
-                ons_ws_connected = 1;
-            }
-        }
+        ons_create_context();
     }
 
     return ECORE_CALLBACK_RENEW;
@@ -530,15 +294,15 @@ ons_on_destroy(Ecore_Evas *ee)
     uifw_trace("ons_on_destroy: Enter");
 
     ecore_main_loop_quit();
-    libwebsocket_context_destroy(ons_ws_context);
+    ico_uws_close(ons_uws_context);
     edje_shutdown();
 }
 
 static void
 ons_touch_up_edje(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-    if (ons_command_wait == ICO_ONS_CMD_WAIT) return;
-    ons_command_wait = ICO_ONS_CMD_WAIT;
+    if (ons_wait_reply == ICO_ONS_CMD_WAIT) return;
+    ons_wait_reply = ICO_ONS_CMD_WAIT;
 
     /* get name from userdata */
     if (data != NULL) {
@@ -547,7 +311,7 @@ ons_touch_up_edje(void *data, Evas *evas, Evas_Object *obj, void *event_info)
     else {
         uifw_trace("OnScreen: user data is NULL");
     }
-    ons_event_message("TOUCH %s %s", ons_edje_str, data);
+    ons_event_message("%s TOUCH %s %s", ICO_HS_MSG_HEAD_OS, ons_edje_str, data);
 
     /* operation sound */
     hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));
@@ -569,8 +333,8 @@ ons_touch_up_next(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
     int listcnt;
 
-    if (ons_command_wait == ICO_ONS_CMD_WAIT) return;
-    ons_command_wait = ICO_ONS_CMD_WAIT;
+    if (ons_wait_reply == ICO_ONS_CMD_WAIT) return;
+    ons_wait_reply = ICO_ONS_CMD_WAIT;
 
     if (ons_app_cnt > 0) {
         listcnt = ((ons_app_cnt - 1) / ICO_ONS_APPLI_NUM) + 1;
@@ -590,7 +354,7 @@ ons_touch_up_next(void *data, Evas *evas, Evas_Object *obj, void *event_info)
     else {
         uifw_trace("OnScreen: user data is NULL");
     }
-    ons_event_message("TOUCH %s %s", ons_edje_str, data);
+    ons_event_message("%s TOUCH %s %s", ICO_HS_MSG_HEAD_OS, ons_edje_str, data);
 
     /* operation sound */
     hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));

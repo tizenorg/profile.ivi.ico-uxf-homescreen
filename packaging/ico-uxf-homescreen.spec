@@ -1,15 +1,15 @@
-Name:       ico-uxf-HomeScreen
+Name:       ico-uxf-homescreen
 Summary:    sample homescreen
-Version:    0.3.07
+Version:    0.7.01
 Release:    1.1
 Group:		TO_BE/FILLED_IN
 License:    Apache License, Version 2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
-BuildRequires: pkgconfig(wayland-client) >= 1.0
+BuildRequires: pkgconfig(wayland-client) >= 1.2
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.5.05
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.7
 BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(evas)
 BuildRequires: pkgconfig(eina)
@@ -26,8 +26,10 @@ BuildRequires: pkgconfig(pkgmgr)
 BuildRequires: libwebsockets-devel
 BuildRequires: capi-base-common-devel
 BuildRequires: edje-tools
-Requires: weston >= 1.0
-Requires: ico-uxf-weston-plugin >= 0.5.05
+BuildRequires: ico-uxf-utilities-devel
+Requires: weston >= 1.2
+Requires: ico-uxf-weston-plugin >= 0.7
+Requires: ico-uxf-utilities
 
 %description
 Sample homescreen application.
@@ -44,6 +46,7 @@ Requires: pkgconfig(edje)
 Requires: pkgconfig(elementary)
 Requires: pkgconfig(ecore-wayland)
 Requires: pkgconfig(ecore-x)
+Requires: ico-uxf-utilities
 
 %description devel
 Development files for application that communicate homescreen.
@@ -51,7 +54,7 @@ Development files for application that communicate homescreen.
 %prep
 %setup -q -n %{name}-%{version}
 
-%define PREFIX /opt/apps/
+%define PREFIX /usr/apps/
 
 %build
 autoreconf --install
@@ -61,14 +64,14 @@ autoreconf --install
 %configure
 make %{?_smp_mflags}
 
-%global ico_sysvlinkdir %{_sysconfdir}/rc.d/rc3.d
+%define ico_unitdir_system /usr/lib/systemd/system
 
 %install
 rm -rf %{buildroot}
 %make_install
 
-%define ictl_conf /opt/etc/ico-uxf-device-input-controller
-mkdir -p %{buildroot}/opt/share/applications/
+mkdir -p %{buildroot}/usr/share/applications/
+mkdir -p %{buildroot}/usr/share/packages/
 
 # include
 mkdir -p %{buildroot}/%{_includedir}/ico-appfw/
@@ -94,7 +97,8 @@ install -m 0644 src/home_screen_bg.edj %{buildroot}%{APPSDIR}/res/edj
 install -m 0644 src/home_screen_touch.edj %{buildroot}%{APPSDIR}/res/edj
 install -m 0644 res/images/api_all_off.png %{buildroot}%{APPSDIR}/res/images
 install -m 0644 res/images/api_all_on.png %{buildroot}%{APPSDIR}/res/images
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/opt/share/applications/
+install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/usr/share/applications/
+install -m 0644 data/share/packages/%{APP}.xml %{buildroot}/usr/share/packages/
 
 #statusbar
 %define APP org.tizen.ico.statusbar
@@ -109,7 +113,8 @@ install -m 0755 src/StatusBar %{buildroot}%{APPSDIR}/bin/
 install -m 0644 res/images/time*.png %{buildroot}%{APPSDIR}/res/images/
 install -m 0644 res/images/applist_*.png %{buildroot}%{APPSDIR}/res/images/
 install -m 0644 res/images/home*.png %{buildroot}%{APPSDIR}/res/images/
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/opt/share/applications/
+install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/usr/share/applications/
+install -m 0644 data/share/packages/%{APP}.xml %{buildroot}/usr/share/packages/
 
 #onscreen
 %define APP org.tizen.ico.onscreen
@@ -123,53 +128,37 @@ cp -rf res/apps/%{APP}/* %{buildroot}%{APPSDIR}/res/config/
 install -m 0755 src/OnScreen %{buildroot}%{APPSDIR}/bin/
 install -m 0644 src/appli_list.edj %{buildroot}%{APPSDIR}/res/edj/
 install -m 0644 src/appli_kill.edj %{buildroot}%{APPSDIR}/res/edj/
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/opt/share/applications/
+install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/usr/share/applications/
+install -m 0644 data/share/packages/%{APP}.xml %{buildroot}/usr/share/packages/
 
 #settings
-mkdir -p %{buildroot}/opt/etc/ico
+mkdir -p %{buildroot}/opt/etc/ico/
 install -m 0644 settings/mediation_table.txt  %{buildroot}/opt/etc/ico/
-mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
-mkdir -p %{buildroot}%{ico_sysvlinkdir}
-install -m 0755 settings/ico_weston  %{buildroot}%{_sysconfdir}/rc.d/init.d/
-ln -sf %{_sysconfdir}/rc.d/init.d/ico_weston %{buildroot}%{ico_sysvlinkdir}/S91ico_weston
+mkdir -p %{buildroot}/etc/systemd/system/graphical.target.wants
+mkdir -p %{buildroot}%{ico_unitdir_system}/
+install -m 0644 settings/ico_homescreen.service %{buildroot}%{ico_unitdir_system}/
+ln -sf ../../../../usr/lib/systemd/system/ico_homescreen.service %{buildroot}/etc/systemd/system/graphical.target.wants/
 
-%global ico_packagestatedir %{_localstatedir}/lib/rpm-state/%{name}
+# Update the package database (post only).
 %post
-# The homescreen boot script will start Weston in a specific order.
-# Disable stand-alone boot of Weston by removing the link to its boot
-# script in /etc/rc.d/rc3.d.  Store it for later restoration after
-# uninstallation of this package.
-mkdir -p %{ico_packagestatedir} > /dev/null 2>&1
-mv -f %{ico_sysvlinkdir}/S??weston %{ico_packagestatedir} > /dev/null 2>&1
-set $?=0
-
-# Update the app database.
-rm -f /opt/dbspace/.app_info.db*
-ail_initdb
-
-%postun
-# Restore the link to the Weston boot script.
-mv %{ico_packagestatedir}/S??weston %{ico_sysvlinkdir} > /dev/nukk 2>&1
-rm -fr %{ico_packagestatedir}
-set $?=0
-
-# Update the app database.
-rm -f /opt/dbspace/.app_info.db*
-ail_initdb
+mkdir -p /var/log/ico/
+chmod 0777 /var/log/ico/
+/usr/bin/pkg_initdb
+/usr/bin/ail_initdb
 
 %files
 %defattr(-,root,root,-)
 %{PREFIX}/org.tizen.ico.homescreen
 %{PREFIX}/org.tizen.ico.statusbar
 %{PREFIX}/org.tizen.ico.onscreen
-/opt/share/applications/*.desktop
+/usr/share/applications/*.desktop
+/usr/share/packages/*.xml
+/opt/etc/ico/mediation_table.txt
+%{ico_unitdir_system}/ico_homescreen.service
+/etc/systemd/system/graphical.target.wants/ico_homescreen.service
 
 %{_libdir}/*.so.*
 %{_bindir}/ico_*
-
-/opt/etc/ico/mediation_table.txt
-%{_sysconfdir}/rc.d/init.d/ico_weston
-%{ico_sysvlinkdir}/S91ico_weston
 
 %files devel
 %defattr(-,root,root,-)

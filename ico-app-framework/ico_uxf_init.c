@@ -41,24 +41,35 @@ static void ico_uxf_output_geometrycb(void *data, struct wl_output *wl_output,
 static void ico_uxf_output_modecb(void *data, struct wl_output *wl_output,
                                   uint32_t flags, int32_t width, int32_t height,
                                   int32_t refresh);
+static void ico_uxf_create_window(uint32_t surfaceid, const char *appid, uint32_t node,
+                                  uint32_t layer, int32_t x, int32_t y,
+                                  int32_t width, int32_t height);
 
 /* ico_window_mgr(Multi Window Manager) callback functions  */
 struct ico_window;
 static void ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
-                                     uint32_t surfaceid, int32_t pid, const char *appid);
+                                     uint32_t surfaceid, const char *winname, int32_t pid,
+                                     const char *appid);
+static void ico_uxf_window_namecb(void *data, struct ico_window_mgr *ico_window_mgr,
+                                  uint32_t surfaceid, const char *winname);
 static void ico_uxf_window_destroyedcb(void *data, struct ico_window_mgr *ico_window_mgr,
                                        uint32_t surfaceid);
 static void ico_uxf_window_visiblecb(void *data, struct ico_window_mgr *ico_window_mgr,
                                      uint32_t surfaceid, int32_t visible, int32_t raise,
                                      int32_t hint);
 static void ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
-                                       uint32_t surfaceid, const char *appid,
-                                       int32_t layer, int32_t x, int32_t y,
+                                       uint32_t surfaceid, uint32_t node,
+                                       uint32_t layer, int32_t x, int32_t y,
                                        int32_t width, int32_t height, int32_t hint);
-static void ico_uxf_window_activecb(void *data,
-                                    struct ico_window_mgr *ico_window_mgr,
-                                    uint32_t surfaceid,
-                                    uint32_t active);
+static void ico_uxf_window_activecb(void *data, struct ico_window_mgr *ico_window_mgr,
+                                    uint32_t surfaceid, int32_t active);
+static void ico_uxf_window_layer_visiblecb(void *data, struct ico_window_mgr *ico_window_mgr,
+                                           uint32_t layer, int32_t visible);
+static void ico_uxf_window_surfacecb(void *data, struct ico_window_mgr *ico_window_mgr,
+                                     const char *appid, struct wl_array *surfaces);
+static void ico_uxf_window_mapcb(void *data, struct ico_window_mgr *ico_window_mgr,
+                                 int32_t event, uint32_t surfaceid, int32_t width,
+                                 int32_t height, int32_t stride, int32_t format);
 
 /* ico_input_mgr(Multi Input Manager) callback functions    */
 static void ico_uxf_input_capabilitiescb(void *data, struct ico_exinput *ico_exinput,
@@ -88,10 +99,14 @@ static const struct wl_registry_listener ico_uxf_registry_listener = {
 /* Window Manger Interface */
 static const struct ico_window_mgr_listener     windowlistener = {
     ico_uxf_window_createdcb,
+    ico_uxf_window_namecb,
     ico_uxf_window_destroyedcb,
     ico_uxf_window_visiblecb,
     ico_uxf_window_configurecb,
-    ico_uxf_window_activecb
+    ico_uxf_window_activecb,
+    ico_uxf_window_layer_visiblecb,
+    ico_uxf_window_surfacecb,
+    ico_uxf_window_mapcb
 };
 
 /* Input Manger Interface */
@@ -266,14 +281,19 @@ ico_uxf_init(const char *name)
 
     dsp = ico_uxf_mng_display(gIco_Uxf_Api_Mng.Mng_MyProcess->attr.mainwin.display, 0);
 
-    uifw_trace("ico_uxf_init: App.%d MainDisplay.%d %08x",
+    uifw_trace("ico_uxf_init: App.%s MainDisplay.%d %08x",
                gIco_Uxf_Api_Mng.Mng_MyProcess->attr.process,
                gIco_Uxf_Api_Mng.Mng_MyProcess->attr.mainwin.display, dsp);
 
-    for (ret = 0; ret < (5000/50); ret++)  {
+    for (ret = 0; ret < (2000/50); ret++)  {
         gIco_Uxf_Api_Mng.Wayland_Display = wl_display_connect(NULL);
         if (gIco_Uxf_Api_Mng.Wayland_Display)  break;
         usleep(50*1000);
+    }
+    if (! gIco_Uxf_Api_Mng.Wayland_Display) {
+        uifw_error("ico_uxf_init:Can not connect to wayland, Abort!!");
+        fprintf(stderr, "ico_uxf_init:Can not connect to wayland, Abort!!\n");
+        exit(1);
     }
 
     gIco_Uxf_Api_Mng.Wayland_Registry
@@ -292,20 +312,6 @@ ico_uxf_init(const char *name)
     }
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
     uifw_trace("ico_uxf_init: Wayland/Weston connect OK");
-
-    /* set client attribute if need     */
-    if (gIco_Uxf_Api_Mng.Wayland_WindowMgr) {
-        for(dn = 0; dn < appconf->applicationNum; dn++)  {
-            if (appconf->application[dn].noconfigure)   {
-                uifw_trace("ico_uxf_init: %s no need configure event",
-                           appconf->application[dn].appid);
-                ico_window_mgr_set_client_attr(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                                               appconf->application[dn].appid,
-                                               ICO_WINDOW_MGR_CLIENT_ATTR_NOCONFIGURE, 1);
-                wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
-            }
-        }
-    }
 
     gIco_Uxf_Api_Mng.WaylandFd
         = wl_display_get_fd(gIco_Uxf_Api_Mng.Wayland_Display);
@@ -327,7 +333,7 @@ ico_uxf_init(const char *name)
     ico_uxf_free_eventque(freeeq);
 
     /* flush wayland connection             */
-    ico_window_mgr_set_eventcb(gIco_Uxf_Api_Mng.Wayland_WindowMgr, 1);
+    ico_window_mgr_declare_manager(gIco_Uxf_Api_Mng.Wayland_WindowMgr, 1);
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
 
     /* application launch/dead callback from AppCore(aul)   */
@@ -664,8 +670,6 @@ ico_uxf_wayland_globalcb(void *data, struct wl_registry *registry,
                 wl_registry_bind(registry, name, &ico_window_mgr_interface, 1);
         ico_window_mgr_add_listener(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
                                     &windowlistener, NULL);
-        ico_window_mgr_set_user(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                                getpid(), gIco_Uxf_Api_Mng.MyProcess);
     }
     else if (strcmp(interface, "ico_exinput") == 0) {
         /* regist exinput */
@@ -774,11 +778,85 @@ ico_uxf_output_modecb(void *data, struct wl_output *wl_output, uint32_t flags,
 
 /*--------------------------------------------------------------------------*/
 /**
+ * @brief   ico_uxf_create_window: Create/Set Window management table(static function)
+ *
+ * @param[in]   surfaceid       ico_window_mgr surface Id
+ * @param[in]   appid           client application Id
+ * @param[in]   node            surface node Id
+ * @param[in]   layer           surface layer
+ * @param[in]   x               surface upper-left X coodinate
+ * @param[in]   y               surface upper-left Y coodinate
+ * @param[in]   width           surface width
+ * @param[in]   height          surface height
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ico_uxf_create_window(uint32_t surfaceid, const char *appid, uint32_t node, uint32_t layer,
+                      int32_t x, int32_t y, int32_t width, int32_t height)
+{
+    Ico_Uxf_Mng_Window  *win;
+    Ico_Uxf_Mng_EventQue *que;
+    int                 display;
+    Ico_Uxf_Mng_Process *prc;
+
+    ico_uxf_enter_critical();
+
+    win = ico_uxf_mng_window(surfaceid, 0);
+
+    if (! win)  {
+        win = ico_uxf_mng_window(surfaceid, 1);
+        win->attr.eventmask = ICO_UXF_EVENT_NEWWINDOW;
+    }
+    display = ICO_UXF_SURFACEID_2_NODEID(surfaceid);
+    win->mng_display = ico_uxf_mng_display(display, 0);
+    win->mng_layer = ico_uxf_mng_layer(display, layer, 0);
+    win->attr.display = display;
+    win->attr.layer = layer;
+    memset(win->attr.process, 0, ICO_UXF_MAX_PROCESS_NAME + 1);
+    strncpy(win->attr.process, appid, ICO_UXF_MAX_PROCESS_NAME);
+    win->attr.node = node;
+    win->attr.x = x;
+    win->attr.y = y;
+    win->attr.w = width;
+    win->attr.h = height;
+
+    prc = ico_uxf_mng_process(appid, 0);
+    win->mng_process = prc;
+    if ((prc != NULL) && (prc->attr.mainwin.window != (int)surfaceid)) {
+        /* sub-window */
+        win->attr.subwindow = 1;
+    }
+
+    if (gIco_Uxf_Api_Mng.EventMask & ICO_UXF_EVENT_NEWWINDOW)    {
+
+        que = ico_uxf_alloc_eventque();
+
+        que->detail.event = ICO_UXF_EVENT_NEWWINDOW;
+        que->detail.window.display = display;
+        que->detail.window.window = surfaceid;
+        que->detail.window.layer = layer;
+        que->detail.window.x = win->attr.x;
+        que->detail.window.y = win->attr.y;
+        que->detail.window.w = win->attr.w;
+        que->detail.window.h = win->attr.h;
+        que->detail.window.visible = win->attr.visible;
+        que->detail.window.raise = win->attr.raise;
+        que->detail.window.active = win->attr.active;
+
+        ico_uxf_regist_eventque(que);
+    }
+    ico_uxf_leave_critical();
+}
+
+/*--------------------------------------------------------------------------*/
+/**
  * @brief   ico_uxf_window_createdcb: wayland surface create callback(static function)
  *
  * @param[in]   data            user data(unused)
  * @param[in]   ico_window_mgr  wayland ico_window_mgr plugin interface
  * @param[in]   surfaceid       ico_window_mgr surface Id
+ * @param[in]   winname         surface window name(title)
  * @param[in]   pid             wayland client process Id
  * @param[in]   appid           wayland client application Id
  * @return      none
@@ -786,14 +864,15 @@ ico_uxf_output_modecb(void *data, struct wl_output *wl_output, uint32_t flags,
 /*--------------------------------------------------------------------------*/
 static void
 ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
-                         uint32_t surfaceid, int32_t pid, const char *appid)
+                         uint32_t surfaceid, const char *winname, int32_t pid,
+                         const char *appid)
 {
     Ico_Uxf_Mng_Process *prc;
     Ico_Uxf_Mng_ProcWin *ppwin;
     Ico_Uxf_Mng_ProcWin *ppw;
 
-    uifw_trace("ico_uxf_window_createdcb: Enter(surf=%08x pid=%d appid=%s myapp=%s)",
-               (int)surfaceid, pid, appid, gIco_Uxf_Api_Mng.MyProcess);
+    uifw_trace("ico_uxf_window_createdcb: Enter(surf=%08x name=%s pid=%d appid=%s myapp=%s)",
+               (int)surfaceid, winname, pid, appid, gIco_Uxf_Api_Mng.MyProcess);
 
     prc = ico_uxf_mng_process(appid, 0);
     if (prc)    {
@@ -802,22 +881,26 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
             if (((Ico_Uxf_conf_application *)prc->appconf)->animation)  {
                 ico_window_mgr_set_animation(
                     gIco_Uxf_Api_Mng.Wayland_WindowMgr, surfaceid,
+                    ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE|ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW|
+                    ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
                     ((Ico_Uxf_conf_application *)prc->appconf)->animation,
                     ((Ico_Uxf_conf_application *)prc->appconf)->animation_time);
             }
             else if (((Ico_Uxf_conf_application *)prc->appconf)->animation_time > 0)    {
                 ico_window_mgr_set_animation(
-                    gIco_Uxf_Api_Mng.Wayland_WindowMgr, surfaceid, " ",
-                    ((Ico_Uxf_conf_application *)prc->appconf)->animation_time);
+                    gIco_Uxf_Api_Mng.Wayland_WindowMgr, surfaceid,
+                    ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE|ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW|
+                    ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
+                    " ", ((Ico_Uxf_conf_application *)prc->appconf)->animation_time);
             }
         }
         if (prc->attr.mainwin.window <= 0)  {
             uifw_trace("ico_uxf_window_createdcb: Set Main Window, Config Data");
             prc->attr.mainwin.window = surfaceid;
-            ico_uxf_window_configurecb(data, ico_window_mgr, surfaceid, appid,
-                                       prc->attr.mainwin.layer, prc->attr.mainwin.x,
-                                       prc->attr.mainwin.y, prc->attr.mainwin.w,
-                                       prc->attr.mainwin.h, 0);
+            ico_uxf_create_window(surfaceid, appid, prc->attr.mainwin.node,
+                                  prc->attr.mainwin.layer, prc->attr.mainwin.x,
+                                  prc->attr.mainwin.y, prc->attr.mainwin.w,
+                                  prc->attr.mainwin.h);
             if (gIco_Uxf_Api_Mng.Hook_Window)   {
                 (*gIco_Uxf_Api_Mng.Hook_Window)(prc->attr.process, surfaceid,
                                                 ICO_UXF_HOOK_WINDOW_CREATE_MAIN);
@@ -825,8 +908,9 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
         }
         else    {
             uifw_trace("ico_uxf_window_createdcb: Sub Window, Dummy Data");
-            ico_uxf_window_configurecb(data, ico_window_mgr, surfaceid, appid,
-                                       prc->attr.mainwin.layer, 16384, 16384, 1, 1, 0);
+            ico_uxf_create_window(surfaceid, appid, prc->attr.mainwin.node,
+                                  prc->attr.mainwin.layer, ICO_UXF_MAX_COORDINATE,
+                                  ICO_UXF_MAX_COORDINATE, 1, 1);
             ppwin = (Ico_Uxf_Mng_ProcWin *)malloc(sizeof(Ico_Uxf_Mng_ProcWin));
             if (ppwin) {
                 memset(ppwin, 0, sizeof(Ico_Uxf_Mng_ProcWin));
@@ -853,6 +937,24 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
         uifw_warn("ico_uxf_window_createdcb: Application.%s dose not exist", appid);
     }
     uifw_trace("ico_uxf_window_createdcb: Leave");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_window_namecb: wayland change surface name callback(static function)
+ *
+ * @param[in]   data            user data(unused)
+ * @param[in]   ico_window_mgr  wayland ico_window_mgr plugin interface
+ * @param[in]   surfaceid       ico_window_mgr surface Id
+ * @param[in]   winname         surface window name(title)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ico_uxf_window_namecb(void *data, struct ico_window_mgr *ico_window_mgr,
+                      uint32_t surfaceid, const char *winname)
+{
+    uifw_trace("ico_uxf_window_namecb: surf=%08x name=%s, NOP", (int)surfaceid, winname);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -956,8 +1058,8 @@ ico_uxf_window_destroyedcb(void *data, struct ico_window_mgr *ico_window_mgr,
  * @param[in]   data            user data(unused)
  * @param[in]   ico_window_mgr  wayland ico_window_mgr plugin interface
  * @param[in]   surfaceid       ico_window_mgr surface Id
- * @param[in]   visibility      surface visible(1=visible/0=unvisible/9=nochange)
- * @param[in]   raise           surface raise(1=raise/0=lower/9=nochange)
+ * @param[in]   visible         surface visible(1=visible/0=unvisible/other=nochange)
+ * @param[in]   raise           surface raise(1=raise/0=lower/other=nochange)
  * @param[in]   hint            client request(1=client request(not changed)/0=changed)
  * @return      none
  */
@@ -1026,7 +1128,7 @@ ico_uxf_window_visiblecb(void *data, struct ico_window_mgr *ico_window_mgr,
  * @param[in]   data            user data(unused)
  * @param[in]   ico_window_mgr  wayland ico_window_mgr plugin interface
  * @param[in]   surfaceid       ico_window_mgr surface Id
- * @param[in]   appid           client application Id
+ * @param[in]   node            surface node Id
  * @param[in]   x               surface upper-left X coodinate
  * @param[in]   y               surface upper-left Y coodinate
  * @param[in]   width           surface width
@@ -1037,19 +1139,17 @@ ico_uxf_window_visiblecb(void *data, struct ico_window_mgr *ico_window_mgr,
 /*--------------------------------------------------------------------------*/
 static void
 ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
-                           uint32_t surfaceid, const char *appid, int32_t layer,
-                           int32_t x, int32_t y, int32_t width, int32_t height,
-                           int32_t hint)
+                           uint32_t surfaceid, uint32_t node,
+                           uint32_t layer, int32_t x, int32_t y,
+                           int32_t width, int32_t height, int32_t hint)
 {
     Ico_Uxf_Mng_Window  *win;
     Ico_Uxf_Mng_EventQue *que;
-    int                 display;
-    Ico_Uxf_Mng_Process *prc;
 
 #if 0               /* too many logout, change to comment out   */
-    uifw_trace("ico_uxf_window_configurecb: surf=%08x app=%s layer=%d "
+    uifw_trace("ico_uxf_window_configurecb: surf=%08x node=%x layer=%x "
                "x/y=%d/%d w/h=%d/%d hint=%d",
-               (int)surfaceid, appid, layer, x, y, width, height, hint);
+               (int)surfaceid, node, layer, x, y, width, height, hint);
 #endif              /* too many logout, change to comment out   */
 
     ico_uxf_enter_critical();
@@ -1057,49 +1157,10 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
     win = ico_uxf_mng_window(surfaceid, 0);
 
     if (!win)  {
-        win = ico_uxf_mng_window(surfaceid, 1);
-        display = ICO_UXF_GETDISPLAYID(surfaceid);
-        win->mng_display = ico_uxf_mng_display(display, 0);
-        win->mng_layer = ico_uxf_mng_layer(display, layer, 0);
-        win->attr.eventmask = ICO_UXF_EVENT_NEWWINDOW;
-        win->attr.display = display;
-        win->attr.layer = layer;
-        memset(win->attr.process, 0, ICO_UXF_MAX_PROCESS_NAME + 1);
-        strncpy(win->attr.process, appid, ICO_UXF_MAX_PROCESS_NAME);
-        win->attr.x = x;
-        win->attr.y = y;
-        win->attr.w = width;
-        win->attr.h = height;
-        hint = 0;
-
-        prc = ico_uxf_mng_process(appid, 0);
-        win->mng_process = prc;
-        if ((prc != NULL) && (prc->attr.mainwin.window != (int)surfaceid)) {
-            /* sub-window */
-            win->attr.subwindow = 1;
-        }
-
-        if (gIco_Uxf_Api_Mng.EventMask & ICO_UXF_EVENT_NEWWINDOW)    {
-
-            que = ico_uxf_alloc_eventque();
-
-            que->detail.event = ICO_UXF_EVENT_NEWWINDOW;
-            que->detail.window.display = display;
-            que->detail.window.window = surfaceid;
-            que->detail.window.layer = layer;
-            que->detail.window.x = win->attr.x;
-            que->detail.window.y = win->attr.y;
-            que->detail.window.w = win->attr.w;
-            que->detail.window.h = win->attr.h;
-            que->detail.window.visible = win->attr.visible;
-            que->detail.window.raise = win->attr.raise;
-            que->detail.window.active = win->attr.active;
-
-            ico_uxf_regist_eventque(que);
-        }
+        uifw_error("ico_uxf_window_configurecb: Unknown surface Id(%08x)", (int)surfaceid);
     }
     else    {
-        if ((win->attr.layer != layer) ||
+        if ((win->attr.layer != (int)layer) ||
             (win->attr.x != x) || (win->attr.y != y) ||
             (win->attr.w != width) || (win->attr.h != height)) {
 
@@ -1130,7 +1191,7 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
                 win->attr.y = y;
                 win->attr.w = width;
                 win->attr.h = height;
-                if (win->attr.layer != layer)  {
+                if (win->attr.layer != (int)layer)  {
                     win->attr.layer = layer;
                     win->mng_layer = ico_uxf_mng_layer(win->mng_display->attr.display,
                                                        layer, 0);
@@ -1154,7 +1215,7 @@ ico_uxf_window_configurecb(void *data, struct ico_window_mgr *ico_window_mgr,
 /*--------------------------------------------------------------------------*/
 static void
 ico_uxf_window_activecb(void *data, struct ico_window_mgr *ico_window_mgr,
-                        uint32_t surfaceid, uint32_t active)
+                        uint32_t surfaceid, int32_t active)
 {
     Ico_Uxf_Mng_Window  *win;
     Ico_Uxf_Mng_EventQue *que;
@@ -1171,16 +1232,88 @@ ico_uxf_window_activecb(void *data, struct ico_window_mgr *ico_window_mgr,
             que = ico_uxf_alloc_eventque();
 
             que->detail.event = ICO_UXF_EVENT_ACTIVEWINDOW;
-            que->detail.window.display = ICO_UXF_GETDISPLAYID(surfaceid);
+            que->detail.window.display = ICO_UXF_SURFACEID_2_NODEID(surfaceid);
             que->detail.window.window = surfaceid;
-            que->detail.window.active = active;
-            win->attr.active = active;
-
+            if (active == ICO_WINDOW_MGR_ACTIVE_SELECTED)   {
+                que->detail.window.active = ICO_UXF_WINDOW_SELECT;
+                win->attr.active = ICO_UXF_WINDOW_POINTER_ACTIVE |
+                                   ICO_UXF_WINDOW_KEYBOARD_ACTIVE;
+            }
+            else    {
+                que->detail.window.active = 0;
+                if (active & ICO_WINDOW_MGR_ACTIVE_POINTER) {
+                    que->detail.window.active |= ICO_UXF_WINDOW_POINTER_ACTIVE;
+                }
+                if (active & ICO_WINDOW_MGR_ACTIVE_KEYBOARD)    {
+                    que->detail.window.active |= ICO_UXF_WINDOW_KEYBOARD_ACTIVE;
+                }
+                win->attr.active = que->detail.window.active;
+            }
             ico_uxf_regist_eventque(que);
         }
     }
     ico_uxf_leave_critical();
     uifw_trace("ico_uxf_window_activecb: Leave");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_window_layer_visiblecb: wayland layer visible callback(static function)
+ *
+ * @param[in]   data            user data(unused)
+ * @param[in]   ico_window_mgr  wayland ico_window_mgr plugin interface
+ * @param[in]   layer           layer Id
+ * @param[in]   visible         layer visible(1=visible/0=unvisible/other=nochange)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ico_uxf_window_layer_visiblecb(void *data, struct ico_window_mgr *ico_window_mgr,
+                               uint32_t layer, int32_t visible)
+{
+    uifw_trace("ico_uxf_window_layer_visiblecb: layer=%x visible=%d, NOP", layer, visible);
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_window_surfacecb: query applicationsurface callback(static function)
+ *
+ * @param[in]   data            user data(unused)
+ * @param[in]   ico_window_mgr  wayland ico_window_mgr plugin interface
+ * @param[in]   appid           application Id
+ * @param[in]   suface          surface Id array
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ico_uxf_window_surfacecb(void *data, struct ico_window_mgr *ico_window_mgr,
+                         const char *appid, struct wl_array *surfaces)
+{
+    uifw_trace("ico_uxf_window_surfacecb: appid=%s, NOP", appid);
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_window_mapcb: surface map event callback(static function)
+ *
+ * @param[in]   data            user data(unused)
+ * @param[in]   ico_window_mgr  wayland ico_window_mgr plugin interface
+ * @param[in]   event           event
+ * @param[in]   surfaceid       surface Id
+ * @param[in]   width           surface width
+ * @param[in]   height          surface height
+ * @param[in]   stride          surface buffer(frame buffer) stride
+ * @param[in]   format          surface buffer format
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ico_uxf_window_mapcb(void *data, struct ico_window_mgr *ico_window_mgr,
+                     int32_t event, uint32_t surfaceid, int32_t width,
+                     int32_t height, int32_t stride, int32_t format)
+{
+    uifw_trace("ico_uxf_window_mapcb: surf=%08x event=%d w/h/s/f=%d/%d/%d/%d",
+               (int)surfaceid, event, width, height, stride, format);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1287,7 +1420,8 @@ ico_uxf_input_capabilitiescb(void *data, struct ico_exinput *ico_exinput,
                        sysconf->inputdev[i].inputsw[j].appid);
             ico_input_mgr_control_add_input_app(gIco_Uxf_Api_Mng.Wayland_InputMgr,
                                                 sysconf->inputdev[i].inputsw[j].appid,
-                                                inputdev->device, inputsw->input, 1);
+                                                inputdev->device, inputsw->input, 1,
+                                                sysconf->inputdev[i].inputsw[j].keycode);
             inputsw->fix = 1;
             break;
         }
@@ -1597,11 +1731,11 @@ ico_uxf_timer_wake(const int msec)
                                    proc->attr.internalid, proc->showmode);
                         ico_window_mgr_set_visible(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
                                                    proc->attr.mainwin.window,
-                                                   proc->showmode ==
-                                                       ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION ?
-                                                     ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION :
-                                                     ICO_WINDOW_MGR_VISIBLE_SHOW,
-                                                   ICO_WINDOW_MGR_RAISE_NOCHANGE);
+                                                   ICO_WINDOW_MGR_VISIBLE_SHOW,
+                                                   ICO_WINDOW_MGR_V_NOCHANGE,
+                                                   (proc->showmode != 0) ?
+                                                     ICO_WINDOW_MGR_ANIMATION_ANIMATION :
+                                                     ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
                         wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
                     }
                 }

@@ -48,16 +48,6 @@ typedef struct  _Ico_Uxf_LayerAttr  {
     char                res[3];         /* (unused)                             */
 }   Ico_Uxf_LayerAttr;
 
-/* Structure of display zone attribute      */
-typedef struct  _Ico_Uxf_DispZoneAttr  {
-    int                 zone;           /* Zone ID                              */
-    int                 display;        /* Display ID                           */
-    short               x;              /* Left upper X coordinate of the screen*/
-    short               y;              /* Left upper Y coordinate of the screen*/
-    short               w;              /* The number of the lateral pixels     */
-    short               h;              /* The number of vertical pixels        */
-}   Ico_Uxf_DispZoneAttr;
-
 /* Structure of window attribute            */
 typedef struct  _Ico_Uxf_WindowAttr {
     int                 window;         /* Window ID                            */
@@ -66,8 +56,9 @@ typedef struct  _Ico_Uxf_WindowAttr {
     int                 zone;           /* Display Zone ID                      */
     char                process[ICO_UXF_MAX_PROCESS_NAME+1];
                                         /* Application ID                       */
-    int                 subwindow;      /* Main window(=0) or Sub window(>0)    */
     unsigned int        eventmask;      /* Event to receive through this window */
+    short               subwindow;      /* Main window(=0) or Sub window(>0)    */
+    short               node;           /* Node Id                              */
     short               x;              /* Upper left X coordinate of the window*/
     short               y;              /* Upper left Y coordinate of the window*/
     short               w;              /* Width of window                      */
@@ -110,7 +101,8 @@ typedef struct  _Ico_Uxf_ProcessWin {
     int                 windowtype;     /* Type                                 */
     int                 display;        /* Display ID                           */
     int                 layer;          /* Layer ID                             */
-    int                 zone;           /* Zone ID                              */
+    short               zone;           /* Zone ID                              */
+    short               node;           /* Default node Id                      */
     short               x;              /* Default X coordinate of the window   */
     short               y;              /* Default Y coordinate of the window   */
     short               w;              /* Default width of window              */

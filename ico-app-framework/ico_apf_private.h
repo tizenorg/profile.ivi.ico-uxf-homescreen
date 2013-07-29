@@ -91,10 +91,10 @@ extern "C" {
  *                                  ... reply of #get_stream_list# (no stream)
  */
 
-/* Protocol name on libwebsockets for Application Manager   */
+/* Protocol name on communication for Application Manager   */
 #define ICO_PROTOCOL_APPSCONTROLLER     "ico_apps_controller"
 
-/* Protocol name on libwebsockets for Pulse-Audio Plugin(Multi Sound Manager)*/
+/* Protocol name on communication for Pulse-Audio Plugin(Multi Sound Manager)*/
 #define ICO_PROTOCOL_MULTISOUNDMANAGER  "ico_soundmgr-protocol"
 
 /* AppsController resource control command and event    */
@@ -185,12 +185,11 @@ struct  _ico_apf_com_handle {
     ico_apf_com_poll_t  *poll;          /* poll table                           */
     int     pid;                        /* client pid (server only)             */
 
-    struct libwebsocket_context *wsi_context;
-                                        /* Context of libwebsockets             */
-    struct libwebsocket *wsi_connection;/* WSI of libwebsockets                 */
+    struct ico_uws_context *uws_context;/* Context of comminucation             */
+    void    *uws_id;                    /* Communication Id                     */
 
     short   retry;                      /* Retry counter                        */
-    short   stoprecv;                   /* Receive stopped(flow control)        */
+    short   res;                        /* (unused)                             */
     unsigned short  shead;              /* Head position of send datas          */
     unsigned short  stail;              /* Tail position of send datas          */
     ico_apf_com_buffer_t *sbuf[ICO_APF_RESOURCE_WSOCK_BUFS];
@@ -225,7 +224,7 @@ int ico_apf_com_addeventlistener(ico_apf_com_handle_t *handle,
                                  ico_apf_com_eventlistener listener,
                                  void *user_data);
 int ico_apf_com_removeeventlistener(ico_apf_com_handle_t *handle);
-void ico_apf_com_dispatch(ico_apf_com_handle_t *handle, const int timeoutms);
+void ico_apf_com_dispatch(ico_apf_com_handle_t *handle);
 
 /* API for file descriptor poll                 */
 int ico_apf_com_poll_fd_control(ico_apf_com_pollfd_cb poll_fd_cb);

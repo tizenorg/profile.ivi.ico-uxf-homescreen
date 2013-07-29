@@ -117,20 +117,22 @@ ico_uxf_inputsw_attribute_get(Ico_Uxf_InputDev *inputdev, const int swidx)
  *  @param[in]  appid       target application id
  *  @param[in]  device      target input device name
  *  @param[in]  input       target input switch number
+ *  @param[in]  keycode     emulated keyboard key-code
  *  @return     result status
  *  @retval     ICO_UXF_EOK success(cullentry always success)
  */
 /*--------------------------------------------------------------------------*/
 ICO_APF_API int
-ico_uxf_input_control(const int add, const char *appid, const char *device, const int input)
+ico_uxf_input_control(const int add, const char *appid,
+                      const char *device, const int input, const int keycode)
 {
-    apfw_trace("ico_uxf_input_control: input switch %s %s %s.%d",
+    apfw_trace("ico_uxf_input_control: input switch %s %s %s.%d(%d)",
                add ? "add" : "del", appid ? appid : "all-app",
-               device ? device : "all-device", input);
+               device ? device : "all-device", input, keycode);
 
     if (add)    {
         ico_input_mgr_control_add_input_app(gIco_Uxf_Api_Mng.Wayland_InputMgr, appid,
-                                            device, input, 0);
+                                            device, input, 0, keycode);
     }
     else    {
         ico_input_mgr_control_del_input_app(gIco_Uxf_Api_Mng.Wayland_InputMgr, appid,

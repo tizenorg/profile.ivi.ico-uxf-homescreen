@@ -75,12 +75,15 @@
 #define ICO_HS_ONS_PART_CANCEL_NAME  "cancel_bt"
 
 #define ICO_HS_WS_PORT              (10001)
+#define ICO_HS_WS_HOST              ("127.0.0.1")
 
 #define ICO_HS_APP_NUM_MAX          (128)
 #define ICO_HS_WINDOW_NUM_MAX       (10)
 #define ICO_HS_MSG_SIZE             (1024)
 #define ICO_HS_TEMP_BUF_SIZE        (256)
 #define ICO_HS_NOTILE_APP_MAX       (20)
+
+#define ICO_HS_PROTOCOL             "hs-protocol"
 
 #define ICO_HS_PROTOCOL_CM          "gui-protocol"
                   /* protocol to communicate external tools */
@@ -94,6 +97,11 @@
 #define ICO_HS_PROTOCOL_TYPE_SB      (2)
 #define ICO_HS_PROTOCOL_TYPE_OS      (3)
 #define ICO_HS_PROTOCOL_TYPE_APP     (4)
+#define ICO_HS_MSG_HEAD_CM           "GUI"
+#define ICO_HS_MSG_HEAD_SB           "STB"
+#define ICO_HS_MSG_HEAD_OS           "ONS"
+#define ICO_HS_MSG_HEAD_APP          "APP"
+#define HS_REQ_ANS_HELLO        "REQ_ANS_HELLO"
 
 #define ICO_HS_SIZE_SB_HEIGHT        (64)
 #define ICO_HS_SIZE_LAYOUT_WIDTH     (768)

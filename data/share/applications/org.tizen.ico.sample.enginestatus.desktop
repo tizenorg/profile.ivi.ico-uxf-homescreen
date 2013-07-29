@@ -1,7 +1,0 @@
-Name=sampleEnginestatus
-Type=Application
-Exec=/opt/apps/org.tizen.ico.sample.enginestatus/bin/DummyApp -number=19
-Icon=org.tizen.ico.sample.enginestatus.png
-NoDisplay=false
-Version=0.1.0
-Comment=Dummy

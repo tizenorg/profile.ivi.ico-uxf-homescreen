@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.statusbar" version="0.7.0" install-location="internal-only">
+	<label>StatusBar</label>
+  	<description>IVI StatusBar Application</description>
+	<ui-application appid="org.tizen.ico.statusbar" exec="/usr/apps/org.tizen.ico.statusbar/bin/StatusBar" nodisplay="false" multiple="false" type="capp" taskmanage="true">
+		<icon>org.tizen.ico.statusbar.png</icon>
+		<label>StatusBar</label>
+		<label xml:lang="en-gb">StatusBar</label>
+		<label xml:lang="en-us">StatusBar</label>
+	</ui-application>
+</manifest>

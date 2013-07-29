@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# 1. Delete log file
+/bin/mkdir /var/log/ico > /dev/null 2>&1
+/bin/chmod -R 0777 /var/log/ico > /dev/null 2>&1
+/bin/rm -f /var/log/ico/* /var/log/weston.log > /dev/null 2>&1
+/bin/rm -f /opt/share/crash/core.* > /dev/null 2>&1
+
+# 2. Weston/Wayland Envionment
+export QT_QPA_PLATFORM=wayland
+export ELM_ENGINE=wayland_egl
+export ECORE_EVAS_ENGINE=wayland_egl
+export XDG_CONFIG_HOME=/etc/xdg/weston
+
+# 3. Start Weston
+ORG_UMASK=`umask`
+umask 000
+/usr/bin/weston --backend=drm-backend.so --idle-time=0 --log=/var/log/weston.log &
+sync;sync
+sleep 0.8
+if [ -f $XDG_RUNTIME_DIR/wayland-0 ] ; then
+	chmod 0777 $XDG_RUNTIME_DIR/wayland-0
+fi
+umask $ORG_UMASK
+

@@ -32,7 +32,7 @@
 /*==============================================================================*/
 /* define                                                                       */
 /*==============================================================================*/
-#define APP_CONF_AIL_NULL_STR   "(null)"
+#define APP_CONF_AIL_NULL_STR   "(NULL)"
 
 #define APP_CONF_EVENT_OK           (0)
 #define APP_CONF_EVENT_FAIL         (1)
@@ -64,6 +64,7 @@ static Ico_Uxf_App_Config   *_ico_app_config = NULL;
 static Ico_Uxf_App_Config   *_ico_app_config_update = NULL;
 static Ico_Uxf_Sys_Config   *sys_config = NULL;
 static GKeyFile             *sappfile = NULL;
+static char                 *default_icon = NULL;
 
 static pkgmgr_client        *conf_pc = NULL;
 static conf_pkgmgr_event_t  *conf_prog_event = NULL;
@@ -126,31 +127,20 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
 
     /* get package name for appid */
     ail_appinfo_get_str(appinfo, AIL_PROP_PACKAGE_STR, &package);
-    if (strcmp(package, APP_CONF_AIL_NULL_STR) == 0) {
+    if (strcasecmp(package, APP_CONF_AIL_NULL_STR) == 0) {
         package = NULL;
     }
     /* get icon path */
     ail_appinfo_get_str(appinfo, AIL_PROP_ICON_STR, &icon);
-    if (strcmp(icon, APP_CONF_AIL_NULL_STR) == 0) {
+    if (strcasecmp(icon, APP_CONF_AIL_NULL_STR) == 0) {
         icon = NULL;
     }
-    else if (icon != NULL) {
-        /* file check */
-        memset(&buff, 0, sizeof(buff));
-        if (stat(icon, &buff) == 0) {
-            if (S_ISDIR(buff.st_mode)) {
-                /* is directory */
-                icon = NULL;
-            }
-        }
-        else {
-            /* is not exist */
-            icon = NULL;
-        }
+    if ((icon == NULL) || (*icon == 0)) {
+        icon = default_icon;
     }
     /* get name */
     ail_appinfo_get_str(appinfo, AIL_PROP_NAME_STR, &name);
-    if (strcmp(name, APP_CONF_AIL_NULL_STR) == 0) {
+    if (strcasecmp(name, APP_CONF_AIL_NULL_STR) == 0) {
         name = NULL;
     }
 
@@ -200,7 +190,7 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
 
     /* get category */
     ail_appinfo_get_str(appinfo, AIL_PROP_CATEGORIES_STR, &category);
-    if (strcmp(category, APP_CONF_AIL_NULL_STR) != 0) {
+    if (strcasecmp(category, APP_CONF_AIL_NULL_STR) != 0) {
         apfw_trace("infoAilpkg: %s + %s", add_category, category);
         strncpy(&add_category[add_category_len],
                 category, sizeof(add_category)-add_category_len-1);
@@ -215,12 +205,9 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
 
     /* get type */
     ail_appinfo_get_str(appinfo, AIL_PROP_TYPE_STR, &type);
-    if (strcmp(type, APP_CONF_AIL_NULL_STR) == 0) {
-        type = NULL;
-    }
     /* get exec */
     ail_appinfo_get_str(appinfo, AIL_PROP_EXEC_STR, &exec);
-    if (strcmp(exec, APP_CONF_AIL_NULL_STR) == 0) {
+    if (strcasecmp(exec, APP_CONF_AIL_NULL_STR) == 0) {
         exec = NULL;
     }
 
@@ -228,16 +215,28 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
         apptbl = &_ico_app_config_update->application[_ico_app_config_update->applicationNum];
         apptbl->appid = strdup(package);
         if (icon)   {
-            apptbl->icon_key_name = strdup(icon);
+            if ((stat(icon, &buff) == 0) &&
+                (! S_ISDIR(buff.st_mode))) {
+                apptbl->icon_key_name = strdup(icon);
+            }
+            else    {
+                apptbl->icon_key_name = "\0";
+            }
         }
         else    {
-            apptbl->icon_key_name = strdup("\0");
+            apptbl->icon_key_name = "\0";
         }
         if ((name != NULL) && (*name != 0)) {
             apptbl->name = strdup(name);
         }
         else    {
             apptbl->name = strdup(package);
+        }
+        if (strcasecmp(type, APP_CONF_AIL_NULL_STR) == 0) {
+            apptbl->type = NULL;
+        }
+        else    {
+            apptbl->type = strdup(type);
         }
 
         /* set default values       */
@@ -247,7 +246,7 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
         apptbl->invisiblecpu = 100;
 
         /* get NoDisplay    */
-        if ((icon != NULL) && (*icon != 0)) {
+        if ((apptbl->icon_key_name != NULL) && (*apptbl->icon_key_name != 0)) {
             bval = false;
             ail_appinfo_get_bool(appinfo, AIL_PROP_NODISPLAY_BOOL, &bval);
             apptbl->noicon = (int)bval;
@@ -326,6 +325,16 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                     }
                     if (found > 1)  {
                         apfw_error("infoAilpkg: [%s] unknown category", work);
+                    }
+                    /* find type                */
+                    if (found == 0) {
+                        if (strncasecmp(work, "type=", 5) == 0) {
+                            found = 1;
+                            if (apptbl->type)   {
+                                free(apptbl->type);
+                            }
+                            apptbl->type = strdup(&work[5]);
+                        }
                     }
                     /* find display             */
                     if ((found == 0) &&
@@ -694,7 +703,6 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
             }
         }
         apptbl->exec = strdup(exec);
-        apptbl->type = strdup(type);
         if (apptbl->displayzoneNum == 0)    {
             apptbl->displayzoneNum = 1;
             apptbl->display[0].displayId = sys_config->misc.default_displayId;
@@ -706,9 +714,9 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
             apptbl->sound[0].soundId = sys_config->misc.default_soundId;
             apptbl->sound[0].zoneId = sys_config->misc.default_soundzoneId;
         }
-        apfw_trace("Ail.%d: appid=%s name=%s exec=%s type=%s",
+        apfw_trace("Ail.%d: appid=%s name=%s exec=%s icon=%s type=%s",
                    _ico_app_config_update->applicationNum, apptbl->appid, apptbl->name,
-                   apptbl->exec, apptbl->type);
+                   apptbl->exec, apptbl->icon_key_name, apptbl->type);
         apfw_trace("Ail.%d: categ=%d kind=%d disp=%d layer=%d zone=%d "
                    "sound=%d zone=%d auto=%d noicon=%d anim=%s.%d overlap=%d cpu=%d",
                    _ico_app_config_update->applicationNum, apptbl->categoryId, apptbl->kindId,
@@ -718,8 +726,6 @@ infoAilpkg(const ail_appinfo_h appinfo, void *data)
                    apptbl->animation ? apptbl->animation : "(none)",
                    apptbl->animation_time, apptbl->menuoverlap, apptbl->invisiblecpu);
         _ico_app_config_update->applicationNum++;
-    }
-    else    {
     }
 
     if (_ico_app_config_update->applicationNum > num)
@@ -760,9 +766,17 @@ readAilApplist(void)
     GString* filepath = g_string_new("xx");
     g_string_printf(filepath, "%s/%s", sys_config->misc.confdir, ICO_UXF_CONFIG_APPATTR);
 
-    if (! g_key_file_load_from_file(sappfile, filepath->str,
-                                    G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS,
-                                    &error)) {
+    if (g_key_file_load_from_file(sappfile, filepath->str,
+                                  G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS,
+                                  &error)) {
+        error = NULL;
+        default_icon = g_key_file_get_string(sappfile, "app-icon", "default-icon", &error);
+        if (error != NULL)  {
+            g_clear_error(&error);
+            default_icon = NULL;
+        }
+    }
+    else    {
         apfw_error("readAilApplist: %s %s", (char *)filepath->str, error->message);
         g_key_file_free(sappfile);
         sappfile = NULL;

@@ -47,7 +47,6 @@ ico_uxf_process_execute(const char *name)
 {
     Ico_Uxf_Mng_Process *proc;              /* process management table         */
     int         hash;
-    Ico_Uxf_conf_application    *apptbl = NULL;
 
     uifw_trace("ico_uxf_process_execute: Enter(%s)", name);
 
@@ -87,6 +86,7 @@ ico_uxf_process_execute(const char *name)
     if (proc->attr.internalid < 0)  {
         uifw_error("ico_uxf_process_execute: Leave(ENOSYS), Launch App Error(%d)",
                    proc->attr.internalid);
+        proc->attr.status = ICO_UXF_PROCSTATUS_STOP;
         return ICO_UXF_ENOSYS;
     }
 

@@ -12,9 +12,6 @@
  * @date    Apr-09-2013
  */
 
-#define MSG_INTERFACE   0               /* 1= Message Queue Interface       */
-#define LWS_INTERFACE   1               /* 1= WebSockets Interface          */
-
 #include    <stdio.h>
 #include    <stdlib.h>
 #include    <unistd.h>
@@ -26,9 +23,7 @@
 #include    <sys/msg.h>
 #include    <sys/time.h>
 #include    <sys/types.h>
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
-#include    <libwebsockets.h>
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
+#include    <ico_uws.h>
 
 #define TYPE_NULL   0
 #define TYPE_BOOL   1
@@ -41,13 +36,10 @@
 #define TYPE_STRING 8
 #define TYPE_SHIFT  12
 
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
-#define LWS_DEFAULTIP       "127.0.0.1" /* websockets default ip(localhost) */
-#define LWS_DEFAULTPORT     25010       /* websockets default port          */
+#define LWS_DEFAULTIP       "127.0.0.1" /* connection default ip(localhost) */
+#define LWS_DEFAULTPORT     25010       /* connection default port          */
 #define LWS_PROTOCOLNAME    "standarddatamessage-only"
-                                        /* websockets protocol name         */
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
-
+                                        /* connection protocol name         */
 static const struct {
     char        *prop;
     char        *eventtype;
@@ -76,9 +68,6 @@ static const struct {
 
 struct KeyDataMsg_t
 {
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    long mtype;
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
     char KeyEventType[64];
     struct timeval recordtime;
     struct KeyData
@@ -88,109 +77,51 @@ struct KeyDataMsg_t
     } data;
 };
 
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-static int  sndqueuekey = 55555;
-static int  sndqueueid = 0;
-
-static int  mqid = -1;
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
-
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
-static struct libwebsocket_context  *context = NULL;
-                                        /* websockets context               */
-static struct libwebsocket          *websocket = NULL;
-                                        /* websockets connection            */
+static struct ico_uws_context   *context = NULL;
+                                        /* connection context               */
+static void                     *connect_id = NULL;
+                                        /* connection connection id         */
 static int  connected = 0;              /* connection flag                  */
 
-static int  lws_callback(struct libwebsocket_context *context, struct libwebsocket *wsi,
-                         enum libwebsocket_callback_reasons reason,
-                         void *user, void *in, size_t len);
+static void uws_callback(const struct ico_uws_context *context,
+                         const ico_uws_evt_e reason, const void *id,
+                         const ico_uws_detail *detail, void *user_data);
 
-static struct libwebsocket_protocols protocols[] = {
-            {LWS_PROTOCOLNAME, lws_callback, 0},
-            {NULL, NULL, -1}
-        };
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
-
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
 static void
-init_comm(const int mqkey)
+uws_callback(const struct ico_uws_context *context, const ico_uws_evt_e reason,
+             const void *id, const ico_uws_detail *detail, void *user_data)
 {
-    char    dummy[256];
-
-    if (mqkey == 0) {
-        mqid = -1;
-    }
-    else    {
-        mqid = msgget(mqkey, 0);
-        if (mqid < 0)   {
-            mqid = msgget(mqkey, IPC_CREAT);
-        }
-        if (mqid < 0)   {
-            fprintf(stderr, "Can not create message queue(%d(0x%x))[%d]\n",
-                    mqkey, mqkey, errno);
-            return;
-        }
-        while (msgrcv(mqid, dummy, sizeof(dummy)-sizeof(long), 0, IPC_NOWAIT) > 0)  ;
-    }
-}
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
-
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
-static int
-lws_callback(struct libwebsocket_context *context, struct libwebsocket *wsi,
-             enum libwebsocket_callback_reasons reason, void *user,
-             void *in, size_t len)
-{
-    if (reason == LWS_CALLBACK_CLIENT_ESTABLISHED)  {
+    if (reason == ICO_UWS_EVT_OPEN)  {
+        connect_id = (void *)id;
         connected = 1;
     }
+    else if (reason == ICO_UWS_EVT_ERROR)   {
+        fprintf(stderr, "Communication Error[%d]\n", detail->_ico_uws_error.code);
+    }
     /* do nothing       */
-    return 0;
 }
 
 static void
 init_comm(const int port, const char *spadr)
 {
     int     rep;
+    char    uri_name[128];
 
-    context = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN,
-                                          spadr, protocols,
-                                          libwebsocket_internal_extensions,
-                                          NULL, NULL, -1, -1, 0);
-    if (context == NULL)    {
-        fprintf(stderr, "Can not create libwebsockets context(ip=%s port=%d)\n",
-                spadr, port);
-        exit(2);
-    }
-
+    snprintf(uri_name, sizeof(uri_name), "ws://%s:%d", spadr, port);
     connected = 0;
-    websocket = libwebsocket_client_connect(context, spadr, port,
-                                            0, "/", spadr, "websocket",
-                                            protocols[0].name, -1);
-    if (websocket == NULL)  {
-        fprintf(stderr, "Can not connect libwebsockets context(ip=%s port=%d)\n",
-                spadr, port);
+    context = ico_uws_create_context(uri_name, LWS_PROTOCOLNAME);
+    if (context == NULL)    {
+        fprintf(stderr, "Can not create conextion context(uri=%s port=%d)\n",
+                uri_name, port);
         exit(2);
     }
+    ico_uws_set_event_cb(context, uws_callback, NULL);
+
     /* wait for connection          */
     for (rep = 0; rep < (2*1000); rep += 50)    {
         if (connected)  break;
-        libwebsocket_service(context, 50);
+        ico_uws_service(context);
     }
-}
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
-
-static void
-init_vehicleinfo(void)
-{
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    sndqueueid = msgget(sndqueuekey, 0);
-    if (sndqueueid < 0) {
-        fprintf(stderr, "Send Message Queue(%d(0x%x)) dose not exist[%d].\n",
-                sndqueuekey, sndqueuekey, errno);
-    }
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
 }
 
 static void
@@ -199,6 +130,9 @@ set_vehicleinfo(const char *cmd)
     int     i, j;
     int     idx, key, pt;
     int     msgsize;
+    short   *sp;
+    int     *ip;
+    double  *dp;
     char    prop[64];
     char    value[128];
     int     sec, msec;
@@ -206,10 +140,6 @@ set_vehicleinfo(const char *cmd)
         struct KeyDataMsg_t     msg;
         char    dummy[128];
     }       msg;
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
-    unsigned char   buf[LWS_SEND_BUFFER_PRE_PADDING + 512 + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char   *bufpt = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
 
     j = 0;
     for (i = 0; cmd[i]; i++)    {
@@ -267,17 +197,9 @@ set_vehicleinfo(const char *cmd)
     }
 
     memset(&msg, 0, sizeof(msg));
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    msg.msg.mtype = 1;
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
     strcpy(msg.msg.KeyEventType, vehicleinfo_key[key].eventtype);
     gettimeofday(&(msg.msg.recordtime), NULL);
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    msgsize = sizeof(msg) - 128 - sizeof(long);
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
     msgsize = sizeof(msg) - 128;
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
 
     i = 0;
     pt = 0;
@@ -326,18 +248,21 @@ set_vehicleinfo(const char *cmd)
                 break;
             case TYPE_INT16:
             case TYPE_UINT16:
-                *((short *)&msg.msg.data.status[pt]) = strtol(&value[i], (char **)0, 0);
+                sp = (short *)&msg.msg.data.status[pt];
+                *sp = strtol(&value[i], (char **)0, 0);
                 pt += sizeof(short);
                 msgsize += sizeof(short);
                 break;
             case TYPE_INT32:
             case TYPE_UINT32:
-                *((int *)&msg.msg.data.status[pt]) = strtol(&value[i], (char **)0, 0);
+                ip = (int *)&msg.msg.data.status[pt];
+                *ip = strtol(&value[i], (char **)0, 0);
                 pt += sizeof(int);
                 msgsize += sizeof(int);
                 break;
             case TYPE_DOUBLE:
-                *((double *)&msg.msg.data.status[pt]) = strtod(&value[i], (char **)0);
+                dp = (double *)&msg.msg.data.status[pt];
+                *dp = strtod(&value[i], (char **)0);
                 pt += sizeof(double);
                 msgsize += sizeof(double);
                 break;
@@ -369,29 +294,13 @@ set_vehicleinfo(const char *cmd)
         }
     }
 
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    if (msgsnd(sndqueueid, &msg, msgsize, 0) < 0)   {
-        fprintf(stderr, "Message Queue(%d(0x%x)) send error[%d].\n",
-                sndqueuekey, sndqueuekey, errno);
-    }
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
-    memcpy(bufpt, &msg, msgsize);
-    if (libwebsocket_write(websocket, bufpt, msgsize, LWS_WRITE_BINARY) < 0)    {
-        fprintf(stderr, "libwebsockets send error\n"); fflush(stderr);
-    }
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
+    ico_uws_send(context, connect_id, (unsigned char *)&msg, msgsize);
 }
 
 static void
 usage(const char *prog)
 {
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
     fprintf(stderr, "Usage: %s [-port=port] [-ip=ip_addr] [propaty=value] [propaty=value] ...\n", prog);
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    fprintf(stderr, "Usage: %s [-ambkey=key] [-mq[=key]] [propaty=value] [propaty=value] ...\n", prog);
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
     exit(0);
 }
 
@@ -399,40 +308,15 @@ int
 main(int argc, char *argv[])
 {
     int     i, j;
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
     int     port = LWS_DEFAULTPORT;
     char    spadr[64];
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    int     mqkey = 0;
-    struct {
-        long    mtype;
-        char    buf[240];
-    }       mqbuf;
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
     char    buf[240];
 
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
     strcpy(spadr, LWS_DEFAULTIP);
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
 
     j = 0;
     for (i = 1; i < argc; i++)  {
         if (argv[i][0] == '-')  {
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-            if (strncasecmp(argv[i], "-ambkey=", 8) == 0)   {
-                sndqueuekey = strtoul(&argv[i][8], (char **)0, 0);
-            }
-            else if (strncasecmp(argv[i], "-mq", 3) == 0)  {
-                if (argv[i][3] == '=')  {
-                    mqkey = strtol(&argv[i][4], (char **)0, 0);
-                }
-                else    {
-                    mqkey = 55552;          /* default message queue key    */
-                }
-            }
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
             if (strncasecmp(argv[i], "-port=", 6) == 0)   {
                 port = strtoul(&argv[i][6], (char **)0, 0);
             }
@@ -440,7 +324,6 @@ main(int argc, char *argv[])
                 memset(spadr, 0, sizeof(spadr));
                 strncpy(spadr, &argv[i][4], sizeof(spadr)-1);
             }
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
             else    {
                 usage(argv[0]);
             }
@@ -450,37 +333,8 @@ main(int argc, char *argv[])
         }
     }
 
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    init_comm(mqkey);
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
     init_comm(port, spadr);
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
 
-    init_vehicleinfo();
-
-#if     MSG_INTERFACE > 0               /* Message Queue Interface      */
-    if (mqid >= 0)  {
-        while (1)   {
-            memset(&mqbuf, 0, sizeof(mqbuf));
-            if (msgrcv(mqid, &mqbuf, sizeof(mqbuf)-sizeof(long), 0, 0) < 0) break;
-            k = 0;
-            j = -1;
-            for (i = 0; mqbuf.buf[i]; i++)    {
-                if ((mqbuf.buf[i] == '#') || (mqbuf.buf[i] == '\n')
-                    || (mqbuf.buf[i] == '\r'))    break;
-                if (mqbuf.buf[i] == '\t') buf[k++] = ' ';
-                else                        buf[k++] = mqbuf.buf[i];
-                if ((j < 0) && (mqbuf.buf[i] != ' ')) j = i;
-            }
-            if (j < 0)  continue;
-            buf[k] = 0;
-            set_vehicleinfo(&buf[j]);
-        }
-        msgctl(mqid, IPC_RMID, NULL);
-    }
-    else
-#endif /*MSG_INTERFACE*/                /* Message Queue Interface      */
     if (j <= 0) {
         while (fgets(buf, sizeof(buf), stdin))  {
             j = -1;
@@ -500,11 +354,10 @@ main(int argc, char *argv[])
             set_vehicleinfo(argv[i]);
         }
     }
-#if     LWS_INTERFACE > 0               /* WebSocket Interface              */
     if (context)    {
-        libwebsocket_context_destroy(context);
+        ico_uws_unset_event_cb(context);
+        ico_uws_close(context);
     }
-#endif /*LWS_INTERFACE*/                /* WebSocket Interface              */
 
     exit(0);
 }

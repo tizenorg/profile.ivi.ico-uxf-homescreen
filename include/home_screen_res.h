@@ -17,10 +17,10 @@
 
 /* file_path */
 #define default_path "./"
-#define edj_path "/opt/apps/%s/res/edj/"
-#define image_path "/opt/apps/%s/res/images/"
-#define sound_path "/opt/apps/%s/res/sounds/"
-#define manifest_path "/opt/apps/%s/res/config/"
+#define edj_path "/usr/apps/%s/res/edj/"
+#define image_path "/usr/apps/%s/res/images/"
+#define sound_path "/usr/apps/%s/res/sounds/"
+#define manifest_path "/usr/apps/%s/res/config/"
 #define local_top_path "/home/tizen/HomeScreen"
 #define local_edj_path "%s/src/"
 #define local_image_path "%s/res/images/"

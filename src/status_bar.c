@@ -16,12 +16,13 @@
 #include <time.h>
 #include <pthread.h>
 
-#include <libwebsockets.h>
 #include <bundle.h>
 
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
 #include <Ecore_Evas.h>
+
+#include <ico_uws.h>
 
 #include "ico_uxf.h"
 #include "ico_uxf_conf.h"
@@ -62,7 +63,7 @@
 
 #define ICO_SB_SIZE_SHTCT_W   (ICO_HS_SIZE_SB_HEIGHT)
 
-#define ICO_SB_POS_LIST_X     (ICO_HS_SIZE_SB_HEIGHT * 5)
+#define ICO_SB_POS_LIST_X     (ICO_HS_SIZE_SB_HEIGHT * 1)
 #define ICO_SB_POS_SHTCT1_X   (ICO_SB_POS_LIST_X + ICO_HS_SIZE_SB_HEIGHT + ICO_HS_SIZE_SB_HEIGHT * 2 / 2)
 #define ICO_SB_POS_SHTCT2_X   (ICO_SB_POS_SHTCT1_X + ICO_HS_SIZE_SB_HEIGHT + ICO_HS_SIZE_SB_HEIGHT * 1 / 2)
 
@@ -87,14 +88,9 @@
 /* static(internal) functions prototype                                       */
 /*============================================================================*/
 static void sb_on_destroy(Ecore_Evas *ee);
-static int sb_callback_http(struct libwebsocket_context *context,
-              struct libwebsocket *wsi,
-              enum libwebsocket_callback_reasons reason, void *user, void *in,
-              size_t len);
-static int sb_callback_statusbar(struct libwebsocket_context *context,
-                   struct libwebsocket *wsi,
-                   enum libwebsocket_callback_reasons reason, void *user,
-                   void *in, size_t len);
+static void sb_callback_uws(const struct ico_uws_context *context,
+                            const ico_uws_evt_e event, const void *id,
+                            const ico_uws_detail *detail, void *data);
 static void sb_create_ws_context(void);
 static void sb_time_hour(struct tm *t_st);
 static void sb_time_min(struct tm *t_st);
@@ -116,8 +112,8 @@ static Eina_List *sb_shtct_list = NULL;
 static int sb_wait_reply = ICO_SB_NO_WAIT;
 static int sb_ws_port = ICO_HS_WS_PORT;
 static int sb_ws_connected = 0;
-static struct libwebsocket_context *sb_ws_context;
-static struct libwebsocket *sb_wsi_mirror;
+static struct ico_uws_context *sb_uws_context = NULL;
+static void *sb_uws_id = NULL;
 
 static int sb_width = 0;
 static char sb_respath[ICO_SB_BUF_SIZE];
@@ -142,25 +138,6 @@ struct _sb_time_data sb_time_data[ICO_SB_TIME_IMG_PARTS] = {
        {fname_am, }, {fname_pm, }
 };
 
-static struct libwebsocket_protocols ws_protocols[] = {
-    {
-        "http-only",
-        sb_callback_http,
-        0
-    },
-    {
-        "statusbar-protocol",
-        sb_callback_statusbar,
-        0,
-    },
-    {
-        /* end of list */
-        NULL,
-        NULL,
-        0
-    }
-};
-
 /*============================================================================*/
 /* functions                                                                  */
 /*============================================================================*/
@@ -183,90 +160,76 @@ sb_on_destroy(Ecore_Evas *ee)
 
 /*--------------------------------------------------------------------------*/
 /*
- * @brief   sb_callback_http
- *          Connection status is notified from libwebsockets.
+ * @brief   sb_callback_uws
+ *          callback function from UWS
  *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
+ * @param[in]   context             context
+ * @param[in]   event               event kinds
+ * @param[in]   id                  client id
+ * @param[in]   detail              event detail
+ * @param[in]   data                user data
+ * @return      none
  */
 /*--------------------------------------------------------------------------*/
-static int
-sb_callback_http(struct libwebsocket_context *context, struct libwebsocket *wsi,
-              enum libwebsocket_callback_reasons reason, void *user, void *in,
-              size_t len)
+static void
+sb_callback_uws(const struct ico_uws_context *context,
+                const ico_uws_evt_e event, const void *id,
+                const ico_uws_detail *detail, void *data)
 {
-    uifw_trace("sb_callback_http %p", context);
-    uifw_trace("SB-REASON %d", reason);
-    return 0;
-}
+    uifw_trace("sb_callback_uws %p", context);
+    unsigned char msg[ICO_HS_TEMP_BUF_SIZE];
+    char *in;
+    int len;
 
-/*--------------------------------------------------------------------------*/
-/*
- * @brief   sb_callback_statusbar
- *          this callback function is notified from libwebsockets
- *          statusbar protocol
- *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
- */
-/*--------------------------------------------------------------------------*/
-static int
-sb_callback_statusbar(struct libwebsocket_context *context,
-                   struct libwebsocket *wsi,
-                   enum libwebsocket_callback_reasons reason, void *user,
-                   void *in, size_t len)
-{
-    int n = 0;
-    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
-            + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-
-    uifw_trace("sb_callback_statusbar %p", context);
-
-    switch (reason) {
-    case LWS_CALLBACK_CLIENT_ESTABLISHED:
-        uifw_trace("SB-ESTABLISHED %x", wsi);
-        sb_wsi_mirror = wsi;
-        n = sprintf((char *)p, "%s", "ANS HELLO");
+    switch (event) {
+    case ICO_UWS_EVT_OPEN:
+        uifw_trace("sb_callback_uws: ICO_UWS_EVT_OPEN(id=%d)", (int)id);
+        sb_uws_id = (void *)id;
+        len = sprintf((char *)msg, "%s %s", ICO_HS_MSG_HEAD_SB, "ANS HELLO");
+        ico_uws_send((struct ico_uws_context *)context, (void *)id, msg, len);
         break;
-    case LWS_CALLBACK_CLIENT_RECEIVE:
-        uifw_trace("SB-RECEIVE[%d] %s", len, in);
-        sb_wsi_mirror = wsi;
+
+    case ICO_UWS_EVT_CLOSE:
+        uifw_trace("sb_callback_uws: ICO_UWS_EVT_CLOSE(id=%d)", (int)id);
+        sb_uws_context = NULL;
+        sb_ws_connected = 0;
+        sb_uws_id = NULL;
+        break;
+
+    case ICO_UWS_EVT_RECEIVE:
+        uifw_trace("sb_callback_uws: ICO_UWS_EVT_RECEIVE(id=%d, msg=%s, len=%d)",
+                   (int)id, (char *)detail->_ico_uws_message.recv_data,
+                   detail->_ico_uws_message.recv_len);
+        in = (char *)detail->_ico_uws_message.recv_data;
         if (strncmp("RECEIVE OK", in, 10) == 0) {
             sb_wait_reply = ICO_SB_NO_WAIT;
         }
         else {
-            n = sprintf((char *)p, "ANS %s OK", (char *)in);
+            len = sprintf((char *)msg, "%s ANS %s OK", ICO_HS_MSG_HEAD_SB, (char *)in);
+            ico_uws_send((struct ico_uws_context *)context, (void *)id, msg, len);
         }
         break;
-    case LWS_CALLBACK_CLOSED:
-        uifw_trace("SB-CLOSE");
-        sb_wsi_mirror = NULL;
+
+    case ICO_UWS_EVT_ERROR:
+        uifw_trace("sb_callback_uws: ICO_UWS_EVT_ERROR(id=%d, err=%d)",
+                   (int)id, detail->_ico_uws_error.code);
         break;
+
+    case ICO_UWS_EVT_ADD_FD:
+        uifw_trace("sb_callback_uws: ICO_UWS_EVT_ADD_FD(id=%d, fd=%d)",
+                   (int)id, detail->_ico_uws_fd.fd);
+        break;
+
+    case ICO_UWS_EVT_DEL_FD:
+        uifw_trace("sb_callback_uws: ICO_UWS_EVT_DEL_FD(id=%d, fd=%d)",
+                   (int)id, detail->_ico_uws_fd.fd);
+        break;
+
     default:
-        uifw_trace("SB-REASON %d", reason);
         break;
     }
 
-    if (n != 0) {
-        n = libwebsocket_write(wsi, p, n, LWS_WRITE_TEXT);
-    }
-
-    return 0;
+    return;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -281,28 +244,30 @@ sb_callback_statusbar(struct libwebsocket_context *context,
 static void
 sb_create_ws_context(void)
 {
-    sb_ws_context
-            = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN, NULL,
-                                          ws_protocols,
-                                          libwebsocket_internal_extensions,
-                                          NULL, NULL, -1, -1, 0);
-    uifw_trace("sb_create_ws_context ctx = %p", sb_ws_context);
+    int ret;
+    char uri[ICO_HS_TEMP_BUF_SIZE];
+
+    /* set up URI "ws://HOST:PORT" */
+    sprintf(uri, "ws://%s:%d", ICO_HS_WS_HOST, sb_ws_port);
+
+    /* create context */
+    sb_uws_context = ico_uws_create_context(uri, ICO_HS_PROTOCOL);
+    uifw_trace("sb_create_ws_context: ctx = %p", sb_uws_context);
 
     sb_ws_connected = 0;
-    if (sb_ws_context == NULL) {
-        uifw_trace("libwebsocket_create_context failed.");
+    if (sb_uws_context == NULL) {
+        uifw_trace("sb_create_ws_context: libwebsocket_create_context failed.");
     }
     else {
-        sb_wsi_mirror
-                = libwebsocket_client_connect(sb_ws_context, ICO_SB_WS_ADDRESS,
-                                              sb_ws_port, 0, "/",
-                                              ICO_SB_WS_ADDRESS, NULL,
-                                              ICO_SB_WS_PROTOCOL_NAME, -1);
-        uifw_trace("sb_create_ws_context wsi = %p", sb_wsi_mirror);
-        if (sb_wsi_mirror != NULL) {
-            sb_ws_connected = 1;
+        /* set callback */
+        ret = ico_uws_set_event_cb(sb_uws_context, sb_callback_uws, NULL);
+        if (ret != ICO_UWS_ERR_NONE) {
+            uifw_trace("sb_create_ws_context: cannnot set callback");
         }
+        sb_ws_connected = 1;
     }
+
+    return;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -319,32 +284,16 @@ static Eina_Bool
 sb_ecore_event(void *data)
 {
     if (sb_ws_connected) {
-        libwebsocket_service(sb_ws_context, 0);
+        ico_uws_service(sb_uws_context);
     }
     else {
-        if (sb_ws_context != NULL) {
-            libwebsocket_context_destroy(sb_ws_context);
+        if (sb_uws_context != NULL) {
+            ico_uws_close(sb_uws_context);
+            sb_uws_context = NULL;
         }
-        sb_ws_context
-                = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN, NULL,
-                                              ws_protocols,
-                                              libwebsocket_internal_extensions,
-                                              NULL, NULL, -1, -1, 0);
-        if (sb_ws_context == NULL) {
-            uifw_trace("libwebsocket_create_context failed.");
-        }
-        else {
-            sb_wsi_mirror
-                    = libwebsocket_client_connect(sb_ws_context,
-                                                  ICO_SB_WS_ADDRESS,
-                                                  sb_ws_port, 0, "/",
-                                                  ICO_SB_WS_ADDRESS, NULL,
-                                                  ICO_SB_WS_PROTOCOL_NAME, -1);
-            if (sb_wsi_mirror != NULL) {
-                sb_ws_connected = 1;
-            }
-        }
+        sb_create_ws_context();
     }
+
     return ECORE_CALLBACK_RENEW;
 }
 
@@ -462,19 +411,16 @@ sb_time_show(void *thread_data)
 static void
 sb_touch_up_shortcut(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-    int n = 0;
-    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
-            + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+    unsigned char msg[ICO_HS_TEMP_BUF_SIZE];
+    int len;
     char *appid = (char *)data;
 
     uifw_trace("TOUCH UP: SHORTCUT %s", appid);
 
     if (sb_wait_reply == ICO_SB_NO_WAIT) {
-        if ((sb_wsi_mirror != NULL) && (appid != NULL)) {
-            n = sprintf((char *)p, "SHOW %s %s", appid, getenv("PKG_NAME"));
-            libwebsocket_write(sb_wsi_mirror, p, n,
-                               LWS_WRITE_CLIENT_IGNORE_XOR_MASK | LWS_WRITE_TEXT);
+        if ((sb_uws_id != NULL) && (appid != NULL)) {
+            len = sprintf((char *)msg, "%s SHOW %s %s", ICO_HS_MSG_HEAD_SB, appid, getenv("PKG_NAME"));
+            ico_uws_send(sb_uws_context, sb_uws_id, msg, len);
             uifw_trace("SB: SHOW %s", appid);
             sb_wait_reply = ICO_SB_WAIT_REPLY;
         }
@@ -525,10 +471,8 @@ sb_touch_down_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info
 static void
 sb_touch_up_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-    int n = 0;
-    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
-            + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+    unsigned char msg[ICO_HS_TEMP_BUF_SIZE];
+    int len;
     char path[ICO_HS_TEMP_BUF_SIZE];
     char img[ICO_HS_TEMP_BUF_SIZE];
 
@@ -541,12 +485,11 @@ sb_touch_up_applist(void *data, Evas *evas, Evas_Object *obj, void *event_info)
     evas_object_show(obj);
 
     if (sb_wait_reply == ICO_SB_NO_WAIT) {
-        if (sb_wsi_mirror != NULL) {
+        if (sb_uws_id != NULL) {
             hs_get_ons_edj_path(path, sizeof(path));
-            n = sprintf((char *)p, "OPEN %s%s %s", path,
+            len = sprintf((char *)msg, "%s OPEN %s%s %s", ICO_HS_MSG_HEAD_SB, path,
                     ICO_HS_ONS_APPLI_LIST_NAME, getenv("PKG_NAME"));
-            libwebsocket_write(sb_wsi_mirror, p, n,
-                               LWS_WRITE_CLIENT_IGNORE_XOR_MASK | LWS_WRITE_TEXT);
+            ico_uws_send(sb_uws_context, sb_uws_id, msg, len);
             uifw_trace("SB: CLICK APPLIST");
             sb_wait_reply = ICO_SB_WAIT_REPLY;
         }
@@ -595,10 +538,8 @@ sb_touch_down_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_in
 static void
 sb_touch_up_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-    int n = 0;
-    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
-            + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *p = &buf[LWS_SEND_BUFFER_PRE_PADDING];
+    unsigned char msg[ICO_HS_TEMP_BUF_SIZE];
+    int len;
     char path[ICO_HS_TEMP_BUF_SIZE];
     char img[ICO_HS_TEMP_BUF_SIZE];
 
@@ -611,10 +552,9 @@ sb_touch_up_escathion(void *data, Evas *evas, Evas_Object *obj, void *event_info
     evas_object_show(obj);
 
     if (sb_wait_reply == ICO_SB_NO_WAIT) {
-        if (sb_wsi_mirror != NULL) {
-            n = sprintf((char *)p, "%s", "CLICK ESCUTCHEON 1");
-            libwebsocket_write(sb_wsi_mirror, p, n,
-                               LWS_WRITE_CLIENT_IGNORE_XOR_MASK | LWS_WRITE_TEXT);
+        if (sb_uws_id != NULL) {
+            len = sprintf((char *)msg, "%s %s", ICO_HS_MSG_HEAD_SB, "CLICK ESCUTCHEON 1");
+            ico_uws_send(sb_uws_context, sb_uws_id, msg, len);
             uifw_trace("SB: CLICK ESCUTCHEON 1");
             sb_wait_reply = ICO_SB_WAIT_REPLY;
         }

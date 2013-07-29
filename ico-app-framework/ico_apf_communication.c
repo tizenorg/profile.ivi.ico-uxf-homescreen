@@ -17,11 +17,12 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <string.h>
+#include <poll.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include <libwebsockets.h>
+#include <ico_uws.h>
 #include "ico_apf_private.h"
 #include "ico_uxf_conf.h"
 
@@ -32,14 +33,9 @@ static ico_apf_com_handle_t *ico_apf_alloc_handle(void);
 static int ico_apf_com_connect(ico_apf_com_handle_t *handle);
 static int ico_apf_com_realsend(ico_apf_com_handle_t *handle,
                                 ico_apf_com_buffer_t *msg);
-static int ico_apf_callback_http(struct libwebsocket_context *context,
-                                 struct libwebsocket *wsi,
-                                 enum libwebsocket_callback_reasons reason,
-                                 void *user, void *in, size_t len);
-static int ico_apf_callback_websock(struct libwebsocket_context *this,
-                                    struct libwebsocket *wsi,
-                                    enum libwebsocket_callback_reasons reason,
-                                    void *user, void *in, size_t len);
+static void ico_apf_callback_uws(const struct ico_uws_context *context,
+                                 const ico_uws_evt_e reason, const void *id,
+                                 const ico_uws_detail *detail, void *user_data);
 static void ico_apf_put_recvmsg(const int cmd, const int res, const int pid,
                                 const char *appid, char *msg, const int len,
                                 ico_apf_com_handle_t *handle);
@@ -54,7 +50,7 @@ static void ico_apf_poll_write_event(ico_apf_com_handle_t *handle, const int wri
 extern const char *program_invocation_name;
 
 /* application framework control handle */
-static struct libwebsocket_context  *global_lwscontext = NULL;
+static struct ico_uws_context  *global_uwscontext = NULL;
 static ico_apf_com_handle_t *handles = NULL;
 static ico_apf_com_handle_t *freehandles = NULL;
 
@@ -67,35 +63,8 @@ static ico_apf_com_pollfd_cb   ico_apf_pollfd_func = NULL;
 static ico_apf_com_eventlistener    global_listener = NULL;
 static void                         *global_user_data = NULL;
 
-/* flag for callback from libwebsockets */
-static int      lws_callbacked = 0;
-
-/* libwebsockets's protocol number      */
-enum appsctl_protocols {
-    PROTOCOL_HTTP,                      /* HTTP handshake(Certainly required)   */
-    PROTOCOL_APPSCONTROLLER,            /* AppsController protocol              */
-    PROTOCOL_APPSEND                    /* everytime means final                */
-};
-enum soundmgr_protocols {
-    PROTOCOL_SOUNDMGR,                  /* Multi Sound Manager  protocol        */
-    PROTOCOL_SOUNDEND                   /* everytime means final                */
-};
-
-/* list of libwebsockets protocol for AppsController        */
-static struct libwebsocket_protocols apps_protocols[] = {
-                                        /* HTTP handshake(Certainly required)   */
-    { "http_only", ico_apf_callback_http, 0 },
-                                        /* callback from websocket to appscontroller*/
-    { ICO_PROTOCOL_APPSCONTROLLER, ico_apf_callback_websock, sizeof(void *) },
-    { NULL, NULL, 0 }                   /* everytime means final                */
-};
-
-/* list of libwebsockets protocol for pulse-audio plugin    */
-static struct libwebsocket_protocols sound_protocols[] = {
-                                        /* callback from websocket to soundmanager*/
-    { ICO_PROTOCOL_MULTISOUNDMANAGER, ico_apf_callback_websock, sizeof(void *) },
-    { NULL, NULL, 0 }                   /* everytime means final                */
-};
+/* flag for callback from comminucation */
+static int      uws_callbacked = 0;
 
 /* command/event string                 */
 const char  *ico_apf_cmd_table[] = {
@@ -153,6 +122,7 @@ ico_apf_com_handle_t *
 ico_apf_com_init_client(const char *uri, const int type)
 {
     int i;
+    int ret;
     int port;
     char* address;
     ico_apf_com_poll_t *p;
@@ -241,21 +211,20 @@ ico_apf_com_init_client(const char *uri, const int type)
     handle->ip[ICO_APF_RESOURCE_IP_LEN-1] = 0;
 
     /* connect to AppsController            */
-    i = ico_apf_com_connect(handle);
+    ret = ico_apf_com_connect(handle);
 
     if (! ifsysconf)    {
         ico_uxf_closeSysConfig();
     }
 
-    if (i != ICO_APF_RESOURCE_E_NONE) {
+    if (ret != ICO_APF_RESOURCE_E_NONE) {
         apfw_error("ico_apf_com_init_client: Leave(RESOURCE_E_INIT_COM_FAILD)");
         (void) ico_apf_com_term_client(handle);
         return NULL;
     }
 
     /* Try to connection        */
-    ico_apf_com_dispatch(handle, 0);
-    handle->fd = libwebsocket_get_socket_fd(handle->wsi_connection);
+    ico_apf_com_dispatch(handle);
 
     /* add poll callback if fd is exist */
     if (handle->fd > 0) {
@@ -291,6 +260,7 @@ ico_apf_com_handle_t *
 ico_apf_com_init_server(const char *uri, const int type)
 {
     int i;
+    int ret;
     int port;
     int svrtype;
     char* address;
@@ -298,6 +268,7 @@ ico_apf_com_init_server(const char *uri, const int type)
     Ico_Uxf_Sys_Config *sysconf;
     Ico_Uxf_Sys_Config *ifsysconf = (Ico_Uxf_Sys_Config *)0xffffffff;
     char *port_env;
+    char uri_name[32];
 
     apfw_trace("ico_apf_com_init_server: Enter(%s,%d)",
                uri ? uri : "(NULL)", type);
@@ -369,20 +340,27 @@ ico_apf_com_init_server(const char *uri, const int type)
     handle->ip[ICO_APF_RESOURCE_IP_LEN-1] = 0;
 
     /* connect to AppsController            */
-    handle->wsi_context = libwebsocket_create_context(port, NULL, apps_protocols,
-                                                      libwebsocket_internal_extensions,
-                                                      NULL, NULL, -1, -1, 0);
-    if (! handle->wsi_context)  {
-        apfw_error("ico_apf_com_init_server: Leave(libwebsockets create Error)");
+    snprintf(uri_name, sizeof(uri_name), ":%d", port);
+    handle->uws_context = ico_uws_create_context(uri_name, ICO_PROTOCOL_APPSCONTROLLER);
+
+    if (! handle->uws_context)  {
+        apfw_error("ico_apf_com_init_server: Leave(ico_uws_create_context create Error)");
         (void) ico_apf_com_term_server(handle);
         return NULL;
     }
     apfw_trace("ico_apf_com_init_server: create server context 0x%08x",
-               (int)handle->wsi_context);
+               (int)handle->uws_context);
 
-    global_lwscontext = handle->wsi_context;
+    ret = ico_uws_set_event_cb(handle->uws_context, ico_apf_callback_uws, (void *)handle);
+    if (ret != ICO_UWS_ERR_NONE)    {
+        apfw_error("co_apf_com_init_server: ico_uws_set_event_cb Error(%d)", ret);
+        apfw_trace("ico_apf_com_init_server: Leave(ERR)");
+        return NULL;
+    }
 
-    ico_apf_com_dispatch(handle, 0);
+    global_uwscontext = handle->uws_context;
+
+    ico_apf_com_dispatch(handle);
 
     apfw_trace("ico_apf_com_init_server: Leave(OK)");
     return handle;
@@ -433,11 +411,10 @@ ico_apf_alloc_handle(void)
         handle->next = NULL;
         handle->fd = 0;
         handle->pid = 0;
-        handle->wsi_context = NULL;
-        handle->wsi_connection = NULL;
+        handle->uws_context = NULL;
+        handle->uws_id = NULL;
         handle->service_on = 0;
         handle->retry = 0;
-        handle->stoprecv = 0;
         handle->shead = 0;
         handle->stail = 0;
         handle->rhead = 0;
@@ -469,53 +446,41 @@ ico_apf_alloc_handle(void)
 static int
 ico_apf_com_connect(ico_apf_com_handle_t *handle)
 {
-    int     rep;
+    int     ret;
+    char    *protocol;
+    char    uri_name[64];
 
     apfw_trace("ico_apf_com_connect: Enter(type=%d)", handle->type);
 
-    int ietf_version = -1;      /* latest */
-    char origin[1024];
-    sprintf(origin,"%d %s",getpid(),program_invocation_name);
+    snprintf(uri_name, sizeof(uri_name), "ws://%s:%d", handle->ip, handle->port);
+    if ((handle->type & ICO_APF_COM_TYPE_CONNECTION) == ICO_APF_COM_TYPE_SOUNDMGR)
+        protocol = ICO_PROTOCOL_MULTISOUNDMANAGER;
+    else
+        protocol = ICO_PROTOCOL_APPSCONTROLLER;
+    handle->uws_context = ico_uws_create_context(uri_name, protocol);
 
-    apfw_trace("ico_apf_com_connect: libwebsocket_create_context");
-    handle->wsi_context = libwebsocket_create_context(
-                                    CONTEXT_PORT_NO_LISTEN, NULL,
-                                    (handle->type & ICO_APF_COM_TYPE_CONNECTION)
-                                            == ICO_APF_COM_TYPE_SOUNDMGR ?
-                                        sound_protocols : apps_protocols,
-                                    libwebsocket_internal_extensions,
-                                    NULL, NULL, -1, -1, 0);
-    if (handle->wsi_context == NULL) {
-        apfw_error("ico_apf_com_connect: Leave(RESOURCE_E_INIT_COM_FAILD)");
+    if (handle->uws_context == NULL) {
+        apfw_error("ico_apf_com_connect: ico_uws_create_context Error(%s,%s)",
+                   uri_name, protocol);
+        apfw_trace("ico_apf_com_connect: Leave(RESOURCE_E_INIT_COM_FAILD)");
         return ICO_APF_RESOURCE_E_INIT_COM_FAILD;
     }
     apfw_trace("ico_apf_com_connect: create client context 0x%08x",
-               (int)handle->wsi_context);
+               (int)handle->uws_context);
 
-    /* connect to Application Manager by WebSocket      */
-    apfw_trace("ico_apf_com_connect: libwebsocket_client_connect %s:%d",
-               handle->ip, handle->port);
-    for (rep = 0; rep < (1000/50); rep++)   {
-        handle->wsi_connection = libwebsocket_client_connect(
-                                        handle->wsi_context,
-                                        handle->ip, handle->port, 0,
-                                        "/", handle->ip, origin,
-                                        (handle->type == ICO_APF_COM_TYPE_APPSCTL) ?
-                                        apps_protocols[PROTOCOL_APPSCONTROLLER].name :
-                                        sound_protocols[PROTOCOL_SOUNDMGR].name,
-                                        ietf_version);
-        if (handle->wsi_connection) break;
-        usleep(50*1000);
-    }
-    if (handle->wsi_connection == NULL) {
-        apfw_warn("ico_apf_com_connect: Leave(RESOURCE_E_INIT_COM_FAILD)");
+    ret = ico_uws_set_event_cb(handle->uws_context, ico_apf_callback_uws, (void *)handle);
+    if (ret != ICO_UWS_ERR_NONE)    {
+        apfw_error("ico_apf_com_connect: ico_uws_set_event_cb Error(%d)", ret);
+        apfw_trace("ico_apf_com_connect: Leave(RESOURCE_E_INIT_COM_FAILD)");
         return ICO_APF_RESOURCE_E_INIT_COM_FAILD;
     }
-    handle->fd = libwebsocket_get_socket_fd(handle->wsi_connection);
+
+    /* dispatch for connection  */
+    ico_apf_com_dispatch(handle);
+
     if (handle->fd > 0) {
         (void)ico_apf_poll_fd_add(handle->fd, POLLIN|POLLOUT);
     }
-    ico_apf_com_dispatch(handle, 0);
 
     apfw_trace("ico_apf_com_connect: Leave(OK, fd=%d)", handle->fd);
     return ICO_APF_RESOURCE_E_NONE;
@@ -545,13 +510,11 @@ ico_apf_com_isconnected(ico_apf_com_handle_t *handle)
  *          Connecting AppsController program must call this function.
  *
  * @param[in]   handle      connect handle, if NULL target is all connect
- * @param[in]   timeoutms   maximum wait time on miri-sec.
- *                          0 is no wait, -1 is wait forever.
  * @return      non
  */
 /*--------------------------------------------------------------------------*/
 void
-ico_apf_com_dispatch(ico_apf_com_handle_t *handle, const int timeoutms)
+ico_apf_com_dispatch(ico_apf_com_handle_t *handle)
 {
     int rh;
     int n;
@@ -571,9 +534,7 @@ ico_apf_com_dispatch(ico_apf_com_handle_t *handle, const int timeoutms)
     }
 
     while (p)   {
-        if (libwebsocket_service(p->wsi_context, timeoutms) < 0)    {
-            apfw_warn("ico_apf_com_dispatch: fd=%d is done", p->fd);
-        }
+        ico_uws_service(p->uws_context);
 
         /* If received data is suspended, it processes.     */
         while (p->rtail != p->rhead)    {
@@ -588,24 +549,16 @@ ico_apf_com_dispatch(ico_apf_com_handle_t *handle, const int timeoutms)
             if (n < 0) {
                 n = ICO_APF_RESOURCE_WSOCK_BUFR + n;
             }
-            if ((p->stoprecv != 0) &&
-                (n < (ICO_APF_RESOURCE_WSOCK_BUFR/2)))  {
-                /* If suspending received data is bellow half, request a send process */
-                p->stoprecv = 0;
-                apfw_trace("ico_apf_com_dispatch: Flow Control(Start) %d", n);
-                libwebsocket_rx_flow_control(p->wsi_connection, 1);
-                libwebsocket_service(p->wsi_context, 0);
-            }
 
             if (p->listener != NULL) {
                 handle->listener(p, p->rbuf[rh]->cmd, p->rbuf[rh]->res, p->rbuf[rh]->pid,
                                  p->rbuf[rh]->appid, p->rbuf[rh]->msg, p->user_data);
-                libwebsocket_service(p->wsi_context, 0);
+                ico_uws_service(p->uws_context);
             }
             else if (global_listener != NULL) {
                 global_listener(p, p->rbuf[rh]->cmd, p->rbuf[rh]->res, p->rbuf[rh]->pid,
                                 p->rbuf[rh]->appid, p->rbuf[rh]->msg, global_user_data);
-                libwebsocket_service(p->wsi_context, 0);
+                ico_uws_service(p->uws_context);
             }
         }
         if (handle) break;
@@ -655,8 +608,9 @@ ico_apf_com_term_client(ico_apf_com_handle_t *handle)
         p->next = handle->next;
     }
 
-    if (handle->wsi_context)    {
-        libwebsocket_context_destroy(handle->wsi_context);
+    if (handle->uws_context)    {
+        ico_uws_unset_event_cb(handle->uws_context);
+        ico_uws_close(handle->uws_context);
     }
     handle->next = freehandles;
     freehandles = handle;
@@ -705,8 +659,9 @@ ico_apf_com_term_server(ico_apf_com_handle_t *handle)
         p->next = handle->next;
     }
 
-    if (handle->wsi_context)    {
-        libwebsocket_context_destroy(handle->wsi_context);
+    if (handle->uws_context)    {
+        ico_uws_unset_event_cb(handle->uws_context);
+        ico_uws_close(handle->uws_context);
     }
     handle->next = freehandles;
     freehandles = handle;
@@ -737,9 +692,11 @@ ico_apf_com_send(ico_apf_com_handle_t *handle,
                  const int cmd, const int res, const char *appid, char *msg)
 {
     int     st;
+    int     cur;
     int     len;
 
-    apfw_trace("ico_apf_com_send: Enter(%08x, %d, %d)", (int)handle, cmd, res);
+    apfw_trace("ico_apf_com_send: Enter(%08x, %d, %d) callback=%d",
+               (int)handle, cmd, res, uws_callbacked);
 
     if ((handle == NULL) || (! ico_apf_com_isconnected(handle)))    {
         apfw_warn("ico_apf_com_send: Leave(not initialized)");
@@ -777,6 +734,7 @@ ico_apf_com_send(ico_apf_com_handle_t *handle,
     }
 
     st = handle->stail;
+    cur = st;
 
     if (st >= (ICO_APF_RESOURCE_WSOCK_BUFS-1))  {
         st = 0;
@@ -792,35 +750,50 @@ ico_apf_com_send(ico_apf_com_handle_t *handle,
         ico_apf_poll_fd_del(handle->fd);
         return ICO_APF_RESOURCE_E_COMMUNICATION;
     }
+    handle->stail = st;
 
     /* accumulate send buffer                   */
     if ((! appid) || (*appid == 0)) {
-        handle->sbuf[handle->stail]->pid = getpid();
-        handle->sbuf[handle->stail]->appid[0] = 0;
+        handle->sbuf[cur]->pid = getpid();
+        handle->sbuf[cur]->appid[0] = 0;
     }
     else    {
-        handle->sbuf[handle->stail]->pid = 0;
-        strncpy(handle->sbuf[handle->stail]->appid, appid, ICO_UXF_MAX_PROCESS_NAME);
-        handle->sbuf[handle->stail]->appid[ICO_UXF_MAX_PROCESS_NAME] = 0;
+        handle->sbuf[cur]->pid = 0;
+        strncpy(handle->sbuf[cur]->appid, appid, ICO_UXF_MAX_PROCESS_NAME);
+        handle->sbuf[cur]->appid[ICO_UXF_MAX_PROCESS_NAME] = 0;
     }
     apfw_trace("ico_apf_com_send: Send.%d:%d %d %d(%s) <%s>",
-               handle->stail, cmd, res, handle->sbuf[handle->stail]->pid,
-               handle->sbuf[handle->stail]->appid, msg);
-    handle->sbuf[handle->stail]->cmd = cmd;
-    handle->sbuf[handle->stail]->res = res;
-    memcpy(handle->sbuf[handle->stail]->msg, msg, len);
-    handle->sbuf[handle->stail]->msg[len] = 0;
-    handle->stail = st;
+               handle->stail, cmd, res, handle->sbuf[cur]->pid,
+               handle->sbuf[cur]->appid, msg);
+    handle->sbuf[cur]->cmd = cmd;
+    handle->sbuf[cur]->res = res;
+    memcpy(handle->sbuf[cur]->msg, msg, len);
+    handle->sbuf[cur]->msg[len] = 0;
 
-    libwebsocket_callback_on_writable(handle->wsi_context, handle->wsi_connection);
-
-    if (lws_callbacked) {
-        /* send call from libwensockets callback, delayed send  */
+    if (uws_callbacked) {
+        /* send call from communication callback, delayed send  */
         ico_apf_poll_write_event(handle, 1);
     }
     else    {
         /* not call from callback, direct send                  */
-        ico_apf_com_dispatch(handle, 0);        /* try to service           */
+        apfw_trace("ico_apf_com_send: direct send(context=%08x id=%08x)",
+                   (int)handle->uws_context, (int)handle->uws_id);
+        if ((handle->uws_context != NULL) &&
+            (handle->uws_id != NULL))   {
+            st = handle->shead;
+            if (handle->shead >= (ICO_APF_RESOURCE_WSOCK_BUFS-1))  {
+                handle->shead = 0;
+            }
+            else    {
+                handle->shead ++;
+            }
+            if (ico_apf_com_realsend(handle, handle->sbuf[st])
+                        != ICO_APF_RESOURCE_E_NONE) {
+                apfw_warn("ico_apf_com_send: ico_apf_com_realsend Error");
+                handle->shead = st;
+            }
+        }
+        ico_apf_com_dispatch(handle);           /* try to service           */
     }
     apfw_trace("ico_apf_com_send: Leave(OK)");
     return ICO_APF_RESOURCE_E_NONE;
@@ -843,10 +816,7 @@ ico_apf_com_send(ico_apf_com_handle_t *handle,
 static int
 ico_apf_com_realsend(ico_apf_com_handle_t *handle, ico_apf_com_buffer_t *msg)
 {
-    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512 +
-                          LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *pt = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-    int     n;
+    char    buf[256];
 
     apfw_trace("ico_apf_com_realsend: Enter");
     if ((handle == NULL) || (! ico_apf_com_isconnected(handle)))    {
@@ -857,38 +827,32 @@ ico_apf_com_realsend(ico_apf_com_handle_t *handle, ico_apf_com_buffer_t *msg)
     if ((handle->type & ICO_APF_COM_TYPE_CONNECTION) == ICO_APF_COM_TYPE_SOUNDMGR)  {
         /* send to Multi Sound Manager          */
         if (msg->res)   {
-            sprintf((char *)pt, "%s %d",
+            snprintf(buf, sizeof(buf), "%s %d",
                     ico_apf_sound_table[msg->cmd-ICO_APF_SOUND_COMMAND_MIN], msg->res);
         }
         else    {
-            strcpy((char *)pt, ico_apf_sound_table[msg->cmd-ICO_APF_SOUND_COMMAND_MIN]);
+            strcpy(buf, ico_apf_sound_table[msg->cmd-ICO_APF_SOUND_COMMAND_MIN]);
         }
     }
     else    {
         /* send tp AppsController               */
         if (msg->appid[0])  {
-            sprintf((char *)pt, "%s %s %s %s",
-                    ico_apf_cmd_table[msg->cmd-ICO_APF_RESOURCE_COMMAND_MIN],
-                    ico_apf_res_table[msg->res-ICO_APF_RESOURCE_RESID_MIN],
-                    msg->appid, msg->msg);
+            snprintf(buf, sizeof(buf), "%s %s %s %s",
+                     ico_apf_cmd_table[msg->cmd-ICO_APF_RESOURCE_COMMAND_MIN],
+                     ico_apf_res_table[msg->res-ICO_APF_RESOURCE_RESID_MIN],
+                     msg->appid, msg->msg);
         }
         else    {
-            sprintf((char *)pt, "%s %s %d %s",
-                    ico_apf_cmd_table[msg->cmd-ICO_APF_RESOURCE_COMMAND_MIN],
-                    ico_apf_res_table[msg->res-ICO_APF_RESOURCE_RESID_MIN],
-                    msg->pid, msg->msg);
+            snprintf(buf, sizeof(buf), "%s %s %d %s",
+                     ico_apf_cmd_table[msg->cmd-ICO_APF_RESOURCE_COMMAND_MIN],
+                     ico_apf_res_table[msg->res-ICO_APF_RESOURCE_RESID_MIN],
+                     msg->pid, msg->msg);
         }
     }
 
-    apfw_trace("ico_apf_com_realsend: libwebsocket_write[%s]", pt);
-    n = libwebsocket_write(handle->wsi_connection,
-                           pt, strlen((char *)pt), LWS_WRITE_TEXT);
-    if (n < 0)  {
-        apfw_error("ico_apf_com_realsend: write error[%d]", n);
-        ico_apf_poll_fd_del(handle->fd);
-        return ICO_APF_RESOURCE_E_COMMUNICATION;
-    }
-    usleep(200);    /* According to libwebsockets's sample, this is required    */
+    apfw_trace("ico_apf_com_realsend: ico_uws_send[%s]", buf);
+    ico_uws_send(handle->uws_context, handle->uws_id, (unsigned char *)buf, strlen(buf));
+
     apfw_trace("ico_apf_com_realsend: Leave(OK)");
     return ICO_APF_RESOURCE_E_NONE;
 }
@@ -968,97 +932,22 @@ ico_apf_com_removeeventlistener(ico_apf_com_handle_t *handle)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_apf_callback_http
- *          Connection status is notified from libwebsockets.
+ * @brief   ico_apf_callback_uws
+ *          this callback function notified from communication.
  *
- * @param[in]   context     libwebsockets context
- * @param[in]   wsi         libwebsockets management table
+ * @param[in]   context     communication context
  * @param[in]   reason      event type
- * @param[in]   user        intact
- * @param[in]   in          receive message
- * @param[in]   len         message size[BYTE]
- * @return      result
- * @retval      =0          success
- * @retval      =1          error
+ * @param[in]   id          communication management table
+ * @param[in]   detail      event detail information
+ * @param[in]   user_data   communication handle
+ * @return      none
  */
 /*--------------------------------------------------------------------------*/
-static int
-ico_apf_callback_http(struct libwebsocket_context *context,
-                      struct libwebsocket *wsi,
-                      enum libwebsocket_callback_reasons reason,
-                      void *user, void *in, size_t len)
+static void
+ico_apf_callback_uws(const struct ico_uws_context *context,
+                     const ico_uws_evt_e reason, const void *id,
+                     const ico_uws_detail *detail, void *user_data)
 {
-    int fd;
-
-    fd = libwebsocket_get_socket_fd(wsi);
-    lws_callbacked ++;
-
-    switch (reason) {
-    case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
-                                            /* a connection demand is received  */
-        apfw_trace("ico_apf_callback_http: LWS_CALLBACK_FILTER_NETWORK_CONNECTION fd=%d", fd);
-
-        /* If connection is refused, it will return with values other than zero.*/
-        /* At present, since access control is not introduced,                  */
-        /* connection is always permitted.                                      */
-        break;
-
-    case LWS_CALLBACK_ADD_POLL_FD:          /* add connection socket            */
-        apfw_trace("ico_apf_callback_http: LWS_CALLBACK_ADD_POLL_FD(%d) %d,%x", fd,
-                   (int)user, len);
-        (void)ico_apf_poll_fd_add((int)user, (int)len);
-        break;
-
-    case LWS_CALLBACK_DEL_POLL_FD:          /* delete connection socket         */
-        apfw_trace("ico_apf_callback_http: LWS_CALLBACK_DEL_POLL_FD(%d) %d,%x", fd,
-                   (int)user, len);
-        ico_apf_poll_fd_del((int)user);
-        break;
-
-    case LWS_CALLBACK_SET_MODE_POLL_FD:     /* set status                       */
-        apfw_trace("ico_apf_callback_http: LWS_CALLBACK_SET_MODE_POLL_FD(%d) %d,%x", fd,
-                   (int)user, len);
-        (void)ico_apf_poll_fd_add((int)user, (int)len);
-        break;
-
-    case LWS_CALLBACK_CLEAR_MODE_POLL_FD:   /* clear status                     */
-        apfw_trace("ico_apf_callback_http: LWS_CALLBACK_CLEAR_MODE_POLL_FD(%d) %d,%x", fd,
-                   (int)user, len);
-        (void)ico_apf_poll_fd_add((int)user, -((int)len));
-        break;
-
-    default:
-        apfw_trace("ico_apf_callback_http: Unknown reason(%d, fd=%d)", reason, fd);
-        break;
-    }
-    lws_callbacked --;
-
-    return 0;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ico_apf_callback_websock
- *          this callback function notified from libwebsockets.
- *
- * @param[in]   context     libwebsockets context
- * @param[in]   wsi         libwebsockets management table
- * @param[in]   reason      event type
- * @param[in]   user        intact
- * @param[in]   in          receive message
- * @param[in]   len         message size[BYTE]
- * @return      result
- * @retval      =0          success
- * @retval      =1          error
- */
-/*--------------------------------------------------------------------------*/
-static int
-ico_apf_callback_websock(struct libwebsocket_context * this,
-                         struct libwebsocket *wsi,
-                         enum libwebsocket_callback_reasons reason,
-                         void *user, void *in, size_t len)
-{
-    int     wsifd;
     int     st;
     int     cmd;
     int     res;
@@ -1066,10 +955,9 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
     int     i;
     int     strlen;
     char    *msg;
-    ico_apf_com_poll_t *p;
+    int     len;
     ico_apf_com_handle_t *handle;
-    struct sockaddr_in  sin;
-    unsigned int        sin_len;
+    ico_apf_com_handle_t *handle2;
     char    appid[ICO_UXF_MAX_PROCESS_NAME+1];
     char    strname[ICO_UXF_MAX_STREAM_NAME+1];
     int     nparam;
@@ -1078,144 +966,87 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
         short   end;
     }       param[10];
 
-    wsifd = libwebsocket_get_socket_fd(wsi);
+    handle = (ico_apf_com_handle_t *)user_data;
+    uws_callbacked ++;
 
-    lws_callbacked ++;
-
-    if (reason == LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION)  {
-        apfw_trace("ico_apf_callback_websock: server side connected from client");
-
-        /* connect from client      */
-        handle = handles;
-        while (handle)  {
-            if (handle->fd == wsifd)    break;
-            handle = handle->next;
+    if (handle->type == ICO_APF_COM_TYPE_SVR_APPSCTL)   {
+        /* search client handle for server  */
+        handle2 = handles;
+        while (handle2)  {
+            if (handle2->uws_id == id)    break;
+            handle2 = handle2->next;
         }
-        if (! handle)   {
-            handle = ico_apf_alloc_handle();
-            if (! handle)   {
-                lws_callbacked --;
-                apfw_error("ico_apf_callback_websock: No Memory");
-                return 1;
-            }
-        }
-        handle->type = ICO_APF_COM_TYPE_APPSCTL;
-        handle->wsi_context = global_lwscontext;
-        handle->wsi_connection = wsi;
-        handle->fd = wsifd;
-        handle->service_on = 0;
-        handle->stoprecv = 0;
-
-        sin_len = sizeof(sin);
-        if (getpeername(wsifd, (struct sockaddr *) &sin, &sin_len) >= 0)  {
-            sprintf(handle->ip, "%u.%u.%u.%u",
-                    (sin.sin_addr.s_addr) & 0x0ff,
-                    (sin.sin_addr.s_addr >> 8) & 0x0ff,
-                    (sin.sin_addr.s_addr >> 16) & 0x0ff,
-                    (sin.sin_addr.s_addr >> 24) & 0x0ff);
+        if (handle2)   {
+            handle = handle2;
         }
         else    {
-            strcpy(handle->ip, "127.0.0.1");
-        }
+            apfw_trace("ico_apf_callback_uws: new server side client");
 
-        p = com_polls;
-        while (p)   {
-            if (p->fd == handle->fd)    {
-                p->apf_fd_control = (void *)handle;
-                handle->poll = p;
+            handle = ico_apf_alloc_handle();
+            if (! handle)   {
+                uws_callbacked --;
+                apfw_error("ico_apf_callback_uws: No Memory");
+                return;
             }
-            p = p->next;
+            apfw_trace("ico_apf_callback_uws: create new handle(%08x)", (int)handle);
+            handle->type = ICO_APF_COM_TYPE_APPSCTL;
+            handle->uws_context = (struct ico_uws_context *)context;
+            handle->uws_id = (void *)id;
+            handle->service_on = 0;
+
+            strncpy(handle->ip, ico_uws_get_uri(handle->uws_context),
+                    ICO_APF_RESOURCE_IP_LEN-1);
         }
-        lws_callbacked --;
-        apfw_trace("ico_apf_callback_websock: server side connected");
-        return 0;
-    }
-
-    handle = handles;
-    while (handle)  {
-        if (handle->wsi_connection == wsi) break;
-        handle = handle->next;
-    }
-
-    if (! handle)   {
-        lws_callbacked --;
-        apfw_trace("ico_apf_callback_websock: Handle not exist");
-        return 0;
     }
 
     switch (reason) {
-    case LWS_CALLBACK_CLIENT_ESTABLISHED:
-    case LWS_CALLBACK_ESTABLISHED:
-        apfw_trace("ico_apf_callback_websock: LWS_CALLBACK_ESTABLISHED");
+    case ICO_UWS_EVT_OPEN:
+        apfw_trace("ico_apf_callback_uws: ICO_UWS_EVT_OPEN");
+        handle->uws_id = (void *)id;
         handle->service_on = 1;
-        handle->stoprecv = 0;
 
         /* save receive message to receive buffer       */
         ico_apf_put_recvmsg(ICO_APF_RESOURCE_STATE_CONNECTED, 0,
                             handle->pid, "\0", NULL, 0, handle);
         break;
 
-    case LWS_CALLBACK_ADD_POLL_FD:          /* add connection socket            */
-        (void)ico_apf_poll_fd_add((int)user, (int)len);
+    case ICO_UWS_EVT_ADD_FD:                /* add connection socket            */
+        apfw_trace("ico_apf_callback_uws: ICO_UWS_EVT_ADD_FD(%d)", detail->_ico_uws_fd.fd);
+        handle->fd = detail->_ico_uws_fd.fd;
+        (void)ico_apf_poll_fd_add(detail->_ico_uws_fd.fd, POLLIN|POLLOUT);
         break;
 
-    case LWS_CALLBACK_DEL_POLL_FD:          /* delete connection socket         */
-        ico_apf_poll_fd_del((int)user);
+    case ICO_UWS_EVT_DEL_FD:                /* delete connection socket         */
+        apfw_trace("ico_apf_callback_uws: ICO_UWS_EVT_DEL_FD(%d)", detail->_ico_uws_fd.fd);
+        handle->fd = 0;
+        ico_apf_poll_fd_del(detail->_ico_uws_fd.fd);
         break;
 
-    case LWS_CALLBACK_SET_MODE_POLL_FD:     /* set status                       */
-        (void)ico_apf_poll_fd_add((int)user, (int)len);
-        break;
-
-    case LWS_CALLBACK_CLEAR_MODE_POLL_FD:   /* clear status                     */
-        (void)ico_apf_poll_fd_add((int)user, -((int)len));
-        break;
-
-    case LWS_CALLBACK_CLOSED:
-        apfw_trace("ico_apf_callback_websock: LWS_CALLBACK_CLOSED");
+    case ICO_UWS_EVT_CLOSE:
+        apfw_trace("ico_apf_callback_uws: ICO_UWS_EVT_CLOSE pid=%d", handle->pid);
         handle->service_on = 0;
+        handle->uws_id = NULL;
+        pid = handle->pid;
+        handle->pid = 0;
 
         /* save receive message to receive buffer       */
         ico_apf_put_recvmsg(ICO_APF_RESOURCE_STATE_DISCONNECTED, 0,
-                            handle->pid, "\0", NULL, 0, handle);
+                            pid, "\0", NULL, 0, handle);
         break;
 
-    case LWS_CALLBACK_CLIENT_WRITEABLE:
-    case LWS_CALLBACK_SERVER_WRITEABLE:
-        if (handle->stail != handle->shead)    {
-            st = handle->shead;
-            if (handle->shead >= (ICO_APF_RESOURCE_WSOCK_BUFS-1))  {
-                handle->shead = 0;
-            }
-            else    {
-                handle->shead ++;
-            }
-            if (ico_apf_com_realsend(handle, handle->sbuf[st])
-                        != ICO_APF_RESOURCE_E_NONE) {
-                apfw_warn("ico_apf_callback_websock: ico_apf_com_realsend Error");
-                handle->shead = st;
-            }
-            if (handle->stail != handle->shead)    {
-                libwebsocket_callback_on_writable(handle->wsi_context,
-                                                  handle->wsi_connection);
-            }
-        }
-        break;
-
-    case LWS_CALLBACK_CLIENT_RECEIVE:
-    case LWS_CALLBACK_RECEIVE:
-        msg = (char *)in;
-        msg[len] = 0;
+    case ICO_UWS_EVT_RECEIVE:
+        msg = (char *)detail->_ico_uws_message.recv_data;
+        len = (int)detail->_ico_uws_message.recv_len;
         if ((len <= 9) || (len >= (ICO_APF_RESOURCE_MSG_LEN+9)))    {
-            lws_callbacked --;
-            apfw_warn("ico_apf_callback_websock: Receive Length Error, Len=%d", len);
-            return 0;
+            uws_callbacked --;
+            apfw_warn("ico_apf_callback_uws: Receive Length Error, Len=%d", len);
+            return;
         }
-        apfw_trace("ico_apf_callback_websock: LWS_CALLBACK_RECEIVE[%s]", msg);
+        msg[len] = 0;
+        apfw_trace("ico_apf_callback_uws: ICO_UWS_EVT_RECEIVE[%s]", msg);
 
         /* analize event code               */
-        if ((handle->type & ICO_APF_COM_TYPE_CONNECTION)
-                == ICO_APF_COM_TYPE_SOUNDMGR)   {
+        if ((handle->type & ICO_APF_COM_TYPE_CONNECTION) == ICO_APF_COM_TYPE_SOUNDMGR)  {
             /* Multi Sound Manager          */
             i = 0;
             for (nparam = 0; nparam < 10; nparam++) {
@@ -1230,9 +1061,9 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
                 param[nparam].end = i;
             }
             if (nparam <= 0)    {
-                lws_callbacked --;
-                apfw_warn("ico_apf_callback_websock: Illegal Message Format(no param)");
-                return 0;
+                uws_callbacked --;
+                apfw_warn("ico_apf_callback_uws: Illegal Message Format(no param)");
+                return;
             }
             for (cmd = ICO_APF_SOUND_COMMAND_CMD+1;
                  cmd <= ICO_APF_SOUND_COMMAND_MAX; cmd++)    {
@@ -1241,9 +1072,9 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
                            param[0].end - param[0].start) == 0) break;
             }
             if (cmd > ICO_APF_SOUND_COMMAND_MAX)    {
-                lws_callbacked --;
-                apfw_warn("ico_apf_callback_websock: Receive Event Error(cmd=%d)", cmd);
-                return 0;
+                uws_callbacked --;
+                apfw_warn("ico_apf_callback_uws: Receive Event Nop(cmd=%d)", cmd);
+                return;
             }
             res = ICO_APF_RESID_BASIC_SOUND;
             pid = 0;
@@ -1257,9 +1088,9 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
                     if (i < nparam) {
                         pid = strtol(&msg[param[i].start], (char **)0, 0);
                         if (ico_apf_get_app_id(pid, appid) != ICO_APP_CTL_E_NONE)   {
-                            lws_callbacked --;
-                            apfw_trace("ico_apf_callback_websock: Unknown pid=%d", pid);
-                            return 0;
+                            uws_callbacked --;
+                            apfw_trace("ico_apf_callback_uws: Unknown pid=%d", pid);
+                            return;
                         }
                     }
                 }
@@ -1285,7 +1116,10 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
                     /* no need stream_state     */
                 }
             }
-            apfw_trace("ico_apf_callback_websock: SoundMgr evt=%d res=%d(%s.%d) str=%s",
+            if (pid > 0)    {
+                handle->pid = pid;
+            }
+            apfw_trace("ico_apf_callback_uws: SoundMgr evt=%d res=%d(%s.%d) str=%s",
                        cmd, res, appid, pid, strname);
             /* save receive message to receive buffer       */
             ico_apf_put_recvmsg(cmd, res, pid, appid, strname, strlen, handle);
@@ -1294,14 +1128,14 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
             /* AppsController               */
             for (cmd = ICO_APF_RESOURCE_COMMAND_MIN;
                  cmd <= ICO_APF_RESOURCE_COMMAND_MAX; cmd++)    {
-                if (memcmp(msg,
-                           ico_apf_cmd_table[cmd-ICO_APF_RESOURCE_COMMAND_MIN], 3)
-                        == 0)   break;
+                if (memcmp(msg, ico_apf_cmd_table[cmd-ICO_APF_RESOURCE_COMMAND_MIN], 3) == 0)
+                    break;
             }
             if (cmd > ICO_APF_RESOURCE_COMMAND_MAX) {
-                lws_callbacked --;
-                apfw_warn("ico_apf_callback_appsctl: Receive Event Error(cmd=%d)", cmd);
-                return 0;
+                uws_callbacked --;
+                apfw_warn("ico_apf_callback_appsctl: Receive Event Error(cmd=%d)",
+                          cmd);
+                return;
             }
             for (res = ICO_APF_RESOURCE_RESID_MIN;
                  res <= ICO_APF_RESOURCE_RESID_MAX; res++)  {
@@ -1309,10 +1143,10 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
                     ico_apf_res_table[res-ICO_APF_RESOURCE_RESID_MIN], 4) == 0) break;
             }
             if (res > ICO_APF_RESOURCE_RESID_MAX)   {
-                lws_callbacked --;
-                apfw_warn("ico_apf_callback_websock: Receive Resource Error(resid=%d)",
+                uws_callbacked --;
+                apfw_warn("ico_apf_callback_uws: Receive Resource Error(resid=%d)",
                           res);
-                return 0;
+                return;
             }
 
             pid = 0;
@@ -1339,19 +1173,20 @@ ico_apf_callback_websock(struct libwebsocket_context * this,
                 pid = 0;
             }
             if (msg[st] == ' ') st++;
-            apfw_trace("ico_apf_callback_websock: AppsCtl evt=%d res=%d pid=%d(%s) msg=%s",
+            if (pid > 0)    {
+                handle->pid = pid;
+            }
+            apfw_trace("ico_apf_callback_uws: AppsCtl evt=%d res=%d pid=%d(%s) msg=%s",
                        cmd, res, pid, appid, &msg[st]);
             /* save receive message to receive buffer       */
             ico_apf_put_recvmsg(cmd, res, pid, appid, &msg[st], len-st, handle);
         }
         break;
     default:
-        apfw_trace("ico_apf_callback_websock: UnKnown reason=%d", reason);
+        apfw_trace("ico_apf_callback_uws: UnKnown reason=%d", reason);
         break;
     }
-    lws_callbacked --;
-
-    return 0;
+    uws_callbacked --;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1409,13 +1244,7 @@ ico_apf_put_recvmsg(const int cmd, const int res, const int pid, const char *app
     if (i <= 0)    {
         i = ICO_APF_RESOURCE_WSOCK_BUFR + i;
     }
-    if ((handle->stoprecv == 0) &&
-        (i > ((ICO_APF_RESOURCE_WSOCK_BUFR * 3) / 4)))    {
-        /* request to stop sending if an opening is less than 25%.   */
-        handle->stoprecv = 1;
-        apfw_trace("ico_apf_put_recvmsg: Flow Control(Stop) %d", i);
-        libwebsocket_rx_flow_control(handle->wsi_connection, 0);
-    }
+
     ico_apf_poll_write_event(handle, 1);
 }
 
@@ -1599,8 +1428,9 @@ ico_apf_com_poll_fd_control(ico_apf_com_pollfd_cb poll_fd_cb)
             p = p->next;
         }
 
-        apfw_trace("ico_apf_com_poll_fd_control: nfds=%d", nfds);
         if (nfds > 0)   {
+            apfw_trace("ico_apf_com_poll_fd_control: nfds=%d:%d[%x]",
+                       nfds, fds[0]->fd, fds[0]->flags);
             (*ico_apf_pollfd_func)(fds, nfds);
         }
         if (fds)    free(fds);
@@ -1624,18 +1454,20 @@ ico_apf_com_poll_fd_event(ico_apf_com_poll_t *fd_ctl, int flags)
     int     st;
     ico_apf_com_handle_t    *handle = (ico_apf_com_handle_t *)fd_ctl->apf_fd_control;
 
+    uifw_trace("ico_apf_com_poll_fd_event: handle=%08x fd=%d flags=%x",
+               (int)handle, handle ? handle->fd : 0, flags);
     if (handle) {
-        ico_apf_com_dispatch(handle, 0);        /* try to service           */
+        ico_apf_com_dispatch(handle);           /* try to service           */
     }
     else    {
-        ico_apf_com_dispatch(NULL, 0);          /* try to service for server*/
+        ico_apf_com_dispatch(NULL);             /* try to service for server*/
     }
 
     if (handle) {
         /* send if send data exist      */
         if ((handle->stail != handle->shead) &&
-            (handle->wsi_context != NULL) &&
-            (handle->wsi_connection != NULL))   {
+            (handle->uws_context != NULL) &&
+            (handle->uws_id != NULL))   {
             st = handle->shead;
             if (handle->shead >= (ICO_APF_RESOURCE_WSOCK_BUFS-1))  {
                 handle->shead = 0;
@@ -1647,23 +1479,17 @@ ico_apf_com_poll_fd_event(ico_apf_com_poll_t *fd_ctl, int flags)
                         != ICO_APF_RESOURCE_E_NONE) {
                 apfw_warn("ico_apf_com_poll_fd_event: ico_apf_com_realsend Error");
                 handle->shead = st;
-                ico_apf_com_dispatch(handle, 10);   /* try to service       */
-            }
-            if (handle->stail != handle->shead)    {
-                libwebsocket_callback_on_writable(handle->wsi_context,
-                                                  handle->wsi_connection);
+                ico_apf_com_dispatch(handle);   /* try to service       */
             }
         }
 
         /* start/stop writable event        */
         if ((handle->stail == handle->shead) ||
-            (handle->wsi_context == NULL) ||
-            (handle->wsi_connection == NULL))   {
+            (handle->uws_context == NULL) ||
+            (handle->uws_id == NULL))   {
             ico_apf_poll_write_event(handle, 0);
         }
         else    {
-            libwebsocket_callback_on_writable(handle->wsi_context,
-                                              handle->wsi_connection);
             ico_apf_poll_write_event(handle, 1);
         }
     }

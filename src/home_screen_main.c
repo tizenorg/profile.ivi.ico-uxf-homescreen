@@ -164,7 +164,7 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
                 /* HomeScreen APP: BG or TOUCH */
                 ico_uxf_window_resize(dd.window.window, dispW, dispH
                         - ICO_HS_SIZE_SB_HEIGHT);
-                ico_uxf_window_move(dd.window.window, 0, ICO_HS_SIZE_SB_HEIGHT);
+                ico_uxf_window_move(dd.window.window, 0, ICO_HS_SIZE_SB_HEIGHT, 0);
                 ico_uxf_window_show(dd.window.window);
                 if (winAttr.subwindow > 0) {
                     /* set layer of HomeScreen TouchPanel window    */
@@ -182,7 +182,7 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
                 ico_uxf_window_layer(dd.window.window, HS_LAYER_ONSCREEN);
                 /* show status bar */
                 ico_uxf_window_show(dd.window.window);
-                ico_uxf_window_move(dd.window.window, 0, 0);
+                ico_uxf_window_move(dd.window.window, 0, 0, 0);
                 ico_uxf_window_screen_size_get(&dispW, &dispH);
                 ico_uxf_window_resize(dd.window.window, dispW, ICO_HS_SIZE_SB_HEIGHT);
             }
@@ -228,6 +228,7 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
     }
     else if (ev == ICO_UXF_EVENT_ACTIVEWINDOW)  {
         /* set active window                */
+        uifw_trace("hs_uxf_event: window=%08x active=%x", dd.window.window, dd.window.active);
         if (dd.window.active == ICO_UXF_WINDOW_SELECT)  {
             if (ico_uxf_window_attribute_get(dd.window.window, &winAttr) == ICO_UXF_EOK)  {
                 if ((strncmp(winAttr.process, hs_name_homescreen, ICO_UXF_MAX_PROCESS_NAME)
@@ -247,10 +248,14 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
                     }
                     else    {
                         ico_uxf_window_active(dd.window.window,
-                                                  ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
+                                              ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
                         ico_uxf_window_raise(dd.window.window);
                         ico_syc_apc_active(winAttr.process);
                     }
+                }
+                else    {
+                    ico_uxf_window_active(dd.window.window, ICO_UXF_WINDOW_POINTER_ACTIVE |
+                                                            ICO_UXF_WINDOW_KEYBOARD_ACTIVE);
                 }
             }
         }
@@ -411,7 +416,7 @@ hs_set_appscreen(const char *appid)
             }
         }
         ico_uxf_window_move(window.window, hs_app_screen_window[idx].move_x,
-                            hs_app_screen_window[idx].move_y);
+                            hs_app_screen_window[idx].move_y, 0);
         ico_uxf_window_resize(window.window,
                               hs_app_screen_window[idx].resize_w,
                               hs_app_screen_window[idx].resize_h);
@@ -524,7 +529,7 @@ hs_show_appscreen(const char *appid)
                                       hs_app_screen_window[ii].resize_h);
                 ico_uxf_window_move(window.window,
                                     hs_app_screen_window[ii].move_x,
-                                    hs_app_screen_window[ii].move_y);
+                                    hs_app_screen_window[ii].move_y, 0);
                 ico_uxf_window_show(window.window);
                 if (! appConf)  {
                     ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
@@ -596,7 +601,7 @@ hs_show_appscreen(const char *appid)
                                   hs_app_screen_window[idx].resize_h);
             ico_uxf_window_move(window.window,
                                 hs_app_screen_window[idx].move_x,
-                                hs_app_screen_window[idx].move_y);
+                                hs_app_screen_window[idx].move_y, 0);
             if (! appConf)  {
                 ico_uxf_window_layer(window.window, HS_LAYER_APPLICATION);
                 /* show application layer                       */
@@ -963,7 +968,7 @@ hs_tile_show_screen(void)
             /* move application window to HomeScreen layer  */
             ico_uxf_window_layer(window.window, HS_LAYER_HOMESCREEN);
             ico_uxf_window_resize(window.window, tinfo->size_x, tinfo->size_y);
-            ico_uxf_window_move(window.window, tinfo->coord_x, tinfo->coord_y);
+            ico_uxf_window_move(window.window, tinfo->coord_x, tinfo->coord_y, 0);
             ico_uxf_window_visible_raise(window.window, 1, 1);
         }
     }
@@ -1329,13 +1334,13 @@ hs_click_applist(void)
 
     /* operation sound */
     hs_snd_play(hs_snd_get_filename(ICO_HS_SND_TYPE_DEFAULT));
-    uifw_trace("hs_click_applist: Leave");
 
     /* show Touch layer                             */
     ico_uxf_layer_visible(HS_DISPLAY_HOMESCREEN, HS_LAYER_TOUCH, 1);
     /* show OnScreen windows                        */
     hs_show_onscreen();
 
+    uifw_trace("hs_click_applist: Leave");
     return 1;
 }
 
@@ -1691,21 +1696,20 @@ hs_add_bg_image(Evas *canvas_bg)
         hs_get_image_path(path, sizeof(path));
         snprintf(img, sizeof(img), "%s/%s", path, fname);
     }
+    uifw_trace("hs_add_bg_image: image path=%s", img);
 
     ico_uxf_window_screen_size_get(&dispW, &dispH);
-
     canvas = evas_object_image_filled_add(canvas_bg);
     evas_object_image_file_set(canvas, img, NULL);
     err = evas_object_image_load_error_get(canvas);
     if (err != EVAS_LOAD_ERROR_NONE) {
-        uifw_trace("hs_add_bg_image: backgound image is not exist");
+        uifw_warn("hs_add_bg_image: backgound image(%s) is not exist", img);
     }
     else {
         evas_object_image_fill_set(canvas, 0, 0, dispW, dispH - ICO_HS_SIZE_SB_HEIGHT);
         evas_object_resize(canvas, dispW, dispH - ICO_HS_SIZE_SB_HEIGHT);
         evas_object_show(canvas);
     }
-
     return;
 }
 
@@ -1968,7 +1972,6 @@ main(int argc, char *argv[])
 
     /* get pkg name */
     char *pkg;
-    printf("main: %s: %s", getenv("HOME"), getenv("PKG_NAME"));
     pkg = getenv("PKG_NAME");
     memset(hs_name_homescreen, 0, ICO_UXF_MAX_PROCESS_NAME + 1);
     if (pkg) {

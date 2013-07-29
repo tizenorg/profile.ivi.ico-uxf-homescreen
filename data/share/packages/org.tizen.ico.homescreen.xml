@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.homescreen" version="0.7.0" install-location="internal-only">
+	<label>HomeScreen</label>
+  	<description>IVI HomeScreen Application</description>
+	<ui-application appid="org.tizen.ico.homescreen" exec="/usr/apps/org.tizen.ico.homescreen/bin/HomeScreen" nodisplay="false" multiple="false" type="capp" taskmanage="true">
+		<icon>org.tizen.ico.homescreen.png</icon>
+		<label>HomeScreen</label>
+		<label xml:lang="en-gb">HomeScreen</label>
+		<label xml:lang="en-us">HomeScreen</label>
+	</ui-application>
+</manifest>

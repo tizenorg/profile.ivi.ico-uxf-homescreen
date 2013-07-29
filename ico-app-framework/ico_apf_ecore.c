@@ -20,7 +20,6 @@
 #include <sys/time.h>
 #include <Ecore.h>
 
-#include <libwebsockets.h>
 #include "ico_apf_private.h"
 #include "ico_apf_ecore.h"
 

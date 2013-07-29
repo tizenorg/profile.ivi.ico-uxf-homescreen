@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.0.1], [])
+AC_INIT([org.tizen.ico.homescreen], [0.7.01], [])
 AM_INIT_AUTOMAKE([foreign 1.11])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
@@ -47,6 +47,11 @@ AUL_CFLAGS="$AUL_CFLAGS $AIL_CFLAGS $BUNDLE_CFLAGS"
 AUL_LIBS="$AUL_LIBS $AIL_LIBS $BUNDLE_LIBS"
 AC_SUBST(AUL_CFLAGS)
 AC_SUBST(AUL_LIBS)
+
+UWS_CFLAGS="-I/usr/include/ico-util"
+UWS_LIBS="-lico-util-com"
+AC_SUBST(UWS_CFLAGS)
+AC_SUBST(UWS_LIBS)
 
 PKG_CHECK_MODULES([SLPPKGMGR], [pkgmgr])
 SLPPKGMGR_CFLAGS="$SLPPKGMGR_CFLAGS"

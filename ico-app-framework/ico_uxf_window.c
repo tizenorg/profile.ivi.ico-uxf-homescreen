@@ -31,8 +31,8 @@ extern Ico_Uxf_Api_Mng         gIco_Uxf_Api_Mng;
  * @brief   ico_uxf_window_visible_control: window visible control(internal function)
  *
  * @param[in]   winmng          process management table
- * @param[in]   show            show(1)/hide(0)/nochange(9)
- * @param[in]   raise           raise(1)/lower(0)/nochange(9)
+ * @param[in]   show            show(1)/hide(0)/nochange(other)
+ * @param[in]   raise           raise(1)/lower(0)/nochange(other)
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
@@ -41,11 +41,10 @@ ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng, const int show, const
 {
     int showshow = show & 0x0ffff;
 
-    uifw_trace("ico_uxf_window_visible_control: send visible to weston(%s,%08x,%d,%d)",
+    uifw_trace("ico_uxf_window_visible_control: send visible to weston(%s,%08x,%x,%d)",
                (winmng->mng_process)->attr.process, winmng->attr.window, showshow, raise);
 
-    if ((showshow == ICO_WINDOW_MGR_VISIBLE_SHOW) ||
-        (showshow == ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION)) {
+    if ((showshow & (~ICO_UXF_WITHANIMA)) == ICO_WINDOW_MGR_VISIBLE_SHOW)   {
 
         if (((winmng->mng_process)->attr.invisiblecpu == 0) &&
             ((winmng->mng_process)->attr.suspend != 0))   {
@@ -61,10 +60,12 @@ ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng, const int show, const
                 kill((winmng->mng_process)->attr.internalid, SIGCONT);
                 uifw_trace("ico_uxf_window_visible_control: CPU resume(%s)",
                            (winmng->mng_process)->attr.process);
-                if (raise != ICO_WINDOW_MGR_RAISE_NOCHANGE) {
+                if ((raise == ICO_WINDOW_MGR_RAISE_RAISE) ||
+                    (raise == ICO_WINDOW_MGR_RAISE_LOWER))  {
                     ico_window_mgr_set_visible(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
                                                winmng->attr.window,
-                                               ICO_WINDOW_MGR_VISIBLE_NOCHANGE, raise);
+                                               ICO_WINDOW_MGR_V_NOCHANGE, raise,
+                                               ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
                     if ((show & 0x00010000) == 0)   {
                         wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
                     }
@@ -72,22 +73,22 @@ ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng, const int show, const
                 return;
             }
         }
-        else if (((winmng->mng_process)->showmode ==
-                     ICO_WINDOW_MGR_VISIBLE_SHOW) ||
-                 ((winmng->mng_process)->showmode ==
-                     ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION)) {
+        else if (((winmng->mng_process)->showmode & (~ICO_UXF_WITHANIMA)) ==
+                 ICO_WINDOW_MGR_VISIBLE_SHOW)   {
             return;
         }
     }
 
     /* send visible control to Weston(Multi Window Manager)     */
     ico_window_mgr_set_visible(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                               winmng->attr.window, showshow, raise);
+                               winmng->attr.window, showshow & (~ICO_UXF_WITHANIMA), raise,
+                               (showshow & ICO_UXF_WITHANIMA) ?
+                                 ICO_WINDOW_MGR_ANIMATION_ANIMATION :
+                                 ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
     if ((show & 0x00010000) == 0)   {
         wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
     }
-    if (((showshow == ICO_WINDOW_MGR_VISIBLE_HIDE) ||
-         (showshow == ICO_WINDOW_MGR_VISIBLE_HIDE_ANIMATION)) &&
+    if (((showshow & (~ICO_UXF_WITHANIMA)) == ICO_WINDOW_MGR_VISIBLE_HIDE) &&
         ((winmng->mng_process)->attr.invisiblecpu == 0) &&
         ((winmng->mng_process)->attr.suspend == 0))   {
         /* change to hide, application suspend  */
@@ -99,7 +100,7 @@ ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng, const int show, const
                    (winmng->mng_process)->attr.process);
     }
     else    {
-        (winmng->mng_process)->showmode = -1;
+        (winmng->mng_process)->showmode = 0xff;
         (winmng->mng_process)->susptimer = 0;
     }
 }
@@ -232,8 +233,10 @@ ico_uxf_window_resize(const int window, const int w, const int h)
     winmng->attr.h = h;
 
     ico_window_mgr_set_positionsize(gIco_Uxf_Api_Mng.Wayland_WindowMgr, window,
-                                    ICO_UXF_MAX_COORDINATE, ICO_UXF_MAX_COORDINATE,
-                                    winmng->attr.w, winmng->attr.h);
+                                    winmng->attr.node,
+                                    ICO_WINDOW_MGR_V_NOCHANGE, ICO_WINDOW_MGR_V_NOCHANGE,
+                                    winmng->attr.w, winmng->attr.h,
+                                    ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
 
     uifw_trace("ico_uxf_window_resize: Leave(EOK)");
@@ -247,6 +250,7 @@ ico_uxf_window_resize(const int window, const int w, const int h)
  * @param[in]   window          window Id(same as ico_window_mgr surface Id)
  * @param[in]   x               window upper-left X coodinate of display
  * @param[in]   y               window upper-left Y coodinate of display
+ * @param[in]   animation       move with animation(=1)/no animation(=0)
  * @return      result
  * @retval      ICO_UXF_EOK     success
  * @retval      ICO_UXF_ESRCH   error(not initialized)
@@ -254,11 +258,11 @@ ico_uxf_window_resize(const int window, const int w, const int h)
  */
 /*--------------------------------------------------------------------------*/
 ICO_APF_API int
-ico_uxf_window_move(const int window, const int x, const int y)
+ico_uxf_window_move(const int window, const int x, const int y, const int animation)
 {
     Ico_Uxf_Mng_Window  *winmng;
 
-    uifw_trace("ico_uxf_window_move: Enter(%08x,%d,%d)", window, x, y);
+    uifw_trace("ico_uxf_window_move: Enter(%08x,%d,%d,%d)", window, x, y, animation);
 
     if(gIco_Uxf_Api_Mng.Initialized <= 0)   {
         uifw_warn("ico_uxf_window_move: Leave(ESRCH)");
@@ -275,8 +279,11 @@ ico_uxf_window_move(const int window, const int x, const int y)
     winmng->attr.y = y;
 
     ico_window_mgr_set_positionsize(gIco_Uxf_Api_Mng.Wayland_WindowMgr, window,
-                                    winmng->attr.x, winmng->attr.y,
-                                    ICO_UXF_MAX_COORDINATE, ICO_UXF_MAX_COORDINATE);
+                                    winmng->attr.node, winmng->attr.x, winmng->attr.y,
+                                    ICO_WINDOW_MGR_V_NOCHANGE, ICO_WINDOW_MGR_V_NOCHANGE,
+                                    (animation == 0) ?
+                                      ICO_WINDOW_MGR_ANIMATION_NOANIMATION :
+                                      ICO_WINDOW_MGR_ANIMATION_ANIMATION);
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
 
     uifw_trace("ico_uxf_window_move: Leave(EOK)");
@@ -312,7 +319,7 @@ ico_uxf_window_raise(const int window)
         return ICO_UXF_ENOENT;
     }
 
-    ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_VISIBLE_NOCHANGE,
+    ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_V_NOCHANGE,
                                    ICO_WINDOW_MGR_RAISE_RAISE);
 
     uifw_trace("ico_uxf_window_raise: Leave(EOK)");
@@ -348,7 +355,7 @@ ico_uxf_window_lower(const int window)
         return ICO_UXF_ENOENT;
     }
 
-    ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_VISIBLE_NOCHANGE,
+    ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_V_NOCHANGE,
                                    ICO_WINDOW_MGR_RAISE_LOWER);
 
     uifw_trace("ico_uxf_window_lower: Leave(EOK)");
@@ -430,8 +437,9 @@ ico_uxf_window_active(const int window, const int target)
             proc = proc->nextidhash;
         }
     }
-    aproc->attr.active = target;
-
+    if (aproc)  {
+        aproc->attr.active = target;
+    }
     uifw_trace("ico_uxf_window_active: Leave(EOK)");
     return ICO_UXF_EOK;
 }
@@ -631,7 +639,7 @@ ico_uxf_window_control(const char *appid, const int winidx,
                             }
                         }
                         ico_uxf_window_visible_control(winmng, i | 0x00010000,
-                                                       ICO_WINDOW_MGR_RAISE_NOCHANGE);
+                                                       ICO_WINDOW_MGR_V_NOCHANGE);
                     }
                     winmng = winmng->nextidhash;
                 }
@@ -684,19 +692,17 @@ ico_uxf_window_control(const char *appid, const int winidx,
                     }
                     /* request to Weston(Multi Window Manager)  */
                     if (newcontrol == 0)    {
+                        i = ICO_WINDOW_MGR_VISIBLE_SHOW;
                         if (gIco_Uxf_Api_Mng.Win_Show_Anima)
-                            i = ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION;
-                        else
-                            i = ICO_WINDOW_MGR_VISIBLE_SHOW;
+                            i |= ICO_UXF_WITHANIMA;
                     }
                     else    {
+                        i = ICO_WINDOW_MGR_VISIBLE_HIDE;
                         if (gIco_Uxf_Api_Mng.Win_Hide_Anima)
-                            i = ICO_WINDOW_MGR_VISIBLE_HIDE_ANIMATION;
-                        else
-                            i = ICO_WINDOW_MGR_VISIBLE_HIDE;
+                            i |= ICO_UXF_WITHANIMA;
                     }
                     ico_uxf_window_visible_control(winmng, i,
-                                                   ICO_WINDOW_MGR_RAISE_NOCHANGE);
+                                                   ICO_WINDOW_MGR_V_NOCHANGE);
                 }
             }
             uifw_trace("ico_uxf_window_control: Leave(EOK) control=%x(%d) visible=%d",
@@ -763,7 +769,7 @@ ico_uxf_window_show(const int window)
     if (winmng->attr.control == 0)  {
         /* request to display to Weston(Multi Window Manager)   */
         ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_VISIBLE_SHOW,
-                                       ICO_WINDOW_MGR_RAISE_NOCHANGE);
+                                       ICO_WINDOW_MGR_V_NOCHANGE);
     }
     uifw_trace("ico_uxf_window_show: Leave(EOK) control=%x", winmng->attr.control);
     return ICO_UXF_EOK;
@@ -802,7 +808,7 @@ ico_uxf_window_hide(const int window)
 
     /* request to hide to Weston(Multi Window Manager)  */
     ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_VISIBLE_HIDE,
-                                   ICO_WINDOW_MGR_RAISE_NOCHANGE);
+                                   ICO_WINDOW_MGR_V_NOCHANGE);
 
     uifw_trace("ico_uxf_window_hide: Leave(EOK)");
     return ICO_UXF_EOK;
@@ -814,8 +820,8 @@ ico_uxf_window_hide(const int window)
  *                                        and order(raise/lower)
  *
  * @param[in]   window      target window identity
- * @param[in]   visible     visible(1)/unvisible(0)/nochange(9)
- * @param[in]   raise       forefront(1)/maximum back(0)/nochange(9)
+ * @param[in]   visible     visible(1)/unvisible(0)/nochange(other)
+ * @param[in]   raise       forefront(1)/maximum back(0)/nochange(other)
  * @return  result
  * @retval  ICO_UXF_EOK         success
  * @retval  ICO_UXF_ESRCH       error(not initialized)
@@ -867,7 +873,7 @@ ico_uxf_window_visible_raise(const int window, const int visible, const int rais
         }
     }
     else    {
-        vis = ICO_WINDOW_MGR_VISIBLE_NOCHANGE;
+        vis = ICO_WINDOW_MGR_V_NOCHANGE;
     }
     if (raise == 0) {
         rai = ICO_WINDOW_MGR_RAISE_LOWER;
@@ -876,11 +882,11 @@ ico_uxf_window_visible_raise(const int window, const int visible, const int rais
         rai = ICO_WINDOW_MGR_RAISE_RAISE;
     }
     else    {
-        rai = ICO_WINDOW_MGR_RAISE_NOCHANGE;
+        rai = ICO_WINDOW_MGR_V_NOCHANGE;
     }
 
-    if ((vis != ICO_WINDOW_MGR_VISIBLE_NOCHANGE) ||
-        (rai != ICO_WINDOW_MGR_RAISE_NOCHANGE)) {
+    if ((vis != ICO_WINDOW_MGR_V_NOCHANGE) ||
+        (rai != ICO_WINDOW_MGR_V_NOCHANGE)) {
         /* request to visible status and order status to Weston(Multi Window Manager)   */
         ico_uxf_window_visible_control(winmng, vis, rai);
     }
@@ -922,13 +928,15 @@ ico_uxf_window_visible_animation(const int window, const int show)
     if (show)   {
         if (winmng->attr.control == 0)  {
             /* request to display to Weston(Multi Window Manager)   */
-            ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_VISIBLE_SHOW_ANIMATION,
-                                           ICO_WINDOW_MGR_RAISE_NOCHANGE);
+            ico_uxf_window_visible_control(winmng,
+                                           ICO_WINDOW_MGR_VISIBLE_SHOW|ICO_UXF_WITHANIMA,
+                                           ICO_WINDOW_MGR_V_NOCHANGE);
         }
     }
     else    {
-        ico_uxf_window_visible_control(winmng, ICO_WINDOW_MGR_VISIBLE_HIDE_ANIMATION,
-                                       ICO_WINDOW_MGR_RAISE_NOCHANGE);
+        ico_uxf_window_visible_control(winmng,
+                                       ICO_WINDOW_MGR_VISIBLE_HIDE|ICO_UXF_WITHANIMA,
+                                       ICO_WINDOW_MGR_V_NOCHANGE);
     }
     uifw_trace("ico_uxf_window_visible_animation: Leave(EOK) control=%x",
                winmng->attr.control);
@@ -940,6 +948,7 @@ ico_uxf_window_visible_animation(const int window, const int show)
  * @brief   ico_uxf_window_animation: set window animation
  *
  * @param[in]   window              Window identity
+ * @param[in]   type                Target animation type,
  * @param[in]   animation           Animation name, if NULL, no change
  * @param[in]   time                Animation time(ms), if 0, default time
  * @return  result
@@ -949,12 +958,13 @@ ico_uxf_window_visible_animation(const int window, const int show)
  */
 /*--------------------------------------------------------------------------*/
 ICO_APF_API int
-ico_uxf_window_animation(const int window, const char *animation, const int time)
+ico_uxf_window_animation(const int window, const int type,
+                         const char *animation, const int time)
 {
     Ico_Uxf_Mng_Window  *winmng;            /* window management table      */
 
-    uifw_trace("ico_uxf_window_animation: Enter(%08x,%s,%d)",
-               window, animation ? animation : "NULL", time);
+    uifw_trace("ico_uxf_window_animation: Enter(%08x,%x,%s,%d)",
+               window, type, animation ? animation : "NULL", time);
 
     if (gIco_Uxf_Api_Mng.Initialized <= 0) {
         uifw_warn("ico_uxf_window_animation: Leave(ESRCH)");
@@ -969,11 +979,11 @@ ico_uxf_window_animation(const int window, const char *animation, const int time
 
     if (animation)  {
         ico_window_mgr_set_animation(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                                     winmng->attr.window, animation, time);
+                                     winmng->attr.window, type, animation, time);
     }
     else    {
         ico_window_mgr_set_animation(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
-                                     winmng->attr.window, " ", time);
+                                     winmng->attr.window, type, " ", time);
     }
     uifw_trace("ico_uxf_window_animation: Leave(EOK)");
     return ICO_UXF_EOK;

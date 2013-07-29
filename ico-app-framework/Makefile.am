@@ -1,15 +1,9 @@
 lib_LTLIBRARIES = libico-app-fw.la	\
 				libico-app-fw-efl.la
 
-#include_HEADERS =	\
-#	ico_apf.h					\
-#	ico_apf_error.h				\
-#	ico_apf_resource_control.h	\
-#	ico_apf_ecore.h
-	
-libico_app_fw_la_CFLAGS = -I../include -I/usr/include/ico-uxf-weston-plugin $(AUL_CFLAGS) $(SLPPKGMGR_CFLAGS) @GLIB_CFLAGS@
+libico_app_fw_la_CFLAGS = -I../include -I/usr/include/ico-uxf-weston-plugin -I/usr/include/ico-util $(AUL_CFLAGS) $(SLPPKGMGR_CFLAGS) @GLIB_CFLAGS@
 libico_app_fw_la_LIBADD = $(WL_LIBS) $(AUL_LIBS) $(SLPPKGMGR_LIBS) @GLIB_LIBS@
-libico_app_fw_la_LDFLAGS = -version-info 0:5:0 
+libico_app_fw_la_LDFLAGS = -version-info 0:7:0 
 libico_app_fw_la_SOURCES =          \
 	ico_uxf_conf_common.c		\
 	ico_uxf_conf_sys.c			\
@@ -25,7 +19,7 @@ libico_app_fw_la_SOURCES =          \
 
 libico_app_fw_efl_la_CFLAGS = -I../include -I/usr/include/ico-uxf-weston-plugin $(EFL_CFLAGS) @GLIB_CFLAGS@
 libico_app_fw_efl_la_LIBADD = $(WL_LIBS) $(EFL_LIBS) @GLIB_LIBS@
-libico_app_fw_efl_la_LDFLAGS = -version-info 0:5:0
+libico_app_fw_efl_la_LDFLAGS = -version-info 0:7:0
 libico_app_fw_efl_la_SOURCES =          \
 	ico_apf_ecore.c             \
 	ico_uxf_conf_ecore.c

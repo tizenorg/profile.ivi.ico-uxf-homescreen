@@ -715,6 +715,7 @@ reloadSysConfig(void)
             zone->id = j;
             zone->zoneidx = zoneidx++;
             zone->display = display;
+            zone->node = ICO_UXF_NODEDISP_2_NODEID(display->hostId, display->displayno);
 
             if (zonesizes[j] <= 0)  continue;
 
@@ -763,8 +764,8 @@ reloadSysConfig(void)
         for (j = 0; j < dispzone_length; j++)   {
             if (zonelists[j])   g_strfreev(zonelists[j]);
             zone = &(display->zone[j]);
-            apfw_trace("Disp.%d zone.%d x/y = %d/%d w/h = %d/%d over = %d.%d %d %d %d %d",
-                       i, j, zone->x, zone->y, zone->width, zone->height,
+            apfw_trace("Disp.%d zone.%d node=%x x/y=%d/%d w/h=%d/%d over=%d.%d %d %d %d %d",
+                       i, j, zone->node, zone->x, zone->y, zone->width, zone->height,
                        zone->overlapNum, zone->overlap[0], zone->overlap[1],
                        zone->overlap[2], zone->overlap[3], zone->overlap[4]);
         }
@@ -920,13 +921,18 @@ reloadSysConfig(void)
                 inputdev->inputsw[j].name = strdup((char *)swlist[0]);
                 if (swsize > 1) {
                     inputdev->inputsw[j].appid = strdup((char *)swlist[1]);
+                    if (swsize > 2) {
+                        inputdev->inputsw[j].keycode = strtol((char *)swlist[2],
+                                                              (char **)0, 0);
+                    }
                 }
             }
             g_strfreev(swlist);
-            uifw_trace("reloadSysConfig: input %s.%s app = %s",
+            uifw_trace("Input %s.%s app = %s key=%d",
                        inputdev->name,
                        inputdev->inputsw[j].name ? inputdev->inputsw[j].name : " ",
-                       inputdev->inputsw[j].appid ? inputdev->inputsw[j].appid : " ");
+                       inputdev->inputsw[j].appid ? inputdev->inputsw[j].appid : " ",
+                       inputdev->inputsw[j].keycode);
         }
         g_string_free(sw_key,TRUE);
     }

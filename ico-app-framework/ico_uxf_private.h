@@ -34,7 +34,7 @@ extern "C" {
 /* macro                                            */
                                             /* get DisplayId from SurfaceId         */
 #define ICO_UXF_GETDISPLAYID(surfaceid)   \
-            ((surfaceid >> 20) & 0x0fff)
+            ((surfaceid >> 16) & 0x00ff)
 
 /* define struct                                    */
 /* struct management callback function              */
@@ -192,6 +192,7 @@ void ico_uxf_update_procwin(const char *appid, int type);
                                             /* update a process management table    */
 void ico_uxf_free_procwin(Ico_Uxf_Mng_Process *prc);
                                             /* release application windows          */
+#define ICO_UXF_WITHANIMA   0x0100          /* with animation                       */
 void ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng,
                                     const int show, const int raise);
                                             /* Window visible and cpu control       */

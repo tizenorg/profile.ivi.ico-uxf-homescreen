@@ -1,7 +1,0 @@
-Name=sampleSetup
-Type=Application
-Exec=/opt/apps/org.tizen.ico.sample.setup/bin/DummyApp -number=12
-Icon=org.tizen.ico.sample.setup.png
-Version=0.1.0
-NoDisplay=false
-Comment=Dummy

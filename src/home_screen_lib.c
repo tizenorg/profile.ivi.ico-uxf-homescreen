@@ -23,12 +23,13 @@
 #include <sys/epoll.h>
 
 #include <getopt.h>
-#include <libwebsockets.h>
 
 #include <Eina.h>
 #include <Ecore.h>
 #include <Ecore_Evas.h>
 #include <Edje.h>
+
+#include <ico_uws.h>
 
 #include "ico_uxf.h"
 #include "ico_uxf_conf_common.h"
@@ -41,7 +42,6 @@
 /* definition                                                                 */
 /*============================================================================*/
 #define WEBSOCKET_MAX_BUFFER    (4096)
-#define HS_REQ_ANS_HELLO        "REQ_ANS_HELLO"
 typedef struct _hs_lib_poll hs_lib_poll_t;
 typedef struct _hs_lib_handle hs_lib_handle_t;
 typedef struct _hs_lib_msg hs_lib_msg_t;
@@ -49,12 +49,12 @@ typedef struct _hs_lib_msg hs_lib_msg_t;
 /* management connection */
 struct _hs_lib_handle {
     hs_lib_handle_t *next; /* next handle                          */
-    int fd; /* Socket file descriptor               */
+    int fd;                /* Socket file descriptor               */
     int service_on;
     int type;
-    struct libwebsocket_context *wsi_context;
+    struct ico_uws_context *uws_context;
     /* Context of libwebsockets             */
-    struct libwebsocket *wsi; /* WSI of libwebsockets                 */
+    void *id;              /* id                                   */
     hs_lib_poll_t *poll;
     char appid[ICO_UXF_MAX_PROCESS_NAME];
 };
@@ -78,7 +78,7 @@ struct _hs_lib_msg {
 /*============================================================================*/
 /* variabe                                                                    */
 /*============================================================================*/
-static struct libwebsocket_context *hs_wsicontext = NULL;
+static struct ico_uws_context *hs_wsicontext = NULL;
 static hs_lib_msg_t *hs_send_msg = NULL;
 static hs_lib_msg_t *hs_recv_msg = NULL;
 static hs_lib_msg_t *hs_free_msg = NULL;
@@ -90,6 +90,11 @@ static hs_lib_poll_t *hs_polls_free = NULL;
 /*============================================================================*/
 /* Function prototype for static(internal) functions                          */
 /*============================================================================*/
+static hs_lib_handle_t *hs_lib_setup_server(const char *uri, 
+        const char *protocol, ico_uws_evt_cb callback);
+static void hs_lib_callback_uws(const struct ico_uws_context *context,
+                    const ico_uws_evt_e event, const void *id,
+                    const ico_uws_detail *detail, void *data);
 static void hs_lib_handle_command(hs_lib_msg_t *msg);
 static void hs_lib_handle_application(hs_lib_msg_t *msg);
 static void hs_lib_handle_onscreen(hs_lib_msg_t *msg);
@@ -112,62 +117,6 @@ static void hs_lib_set_mode_poll_fd(int fd, int flags);
 static void hs_lib_clear_mode_poll_fd(int fd, int flags);
 static char *get_parsed_str(char *in, char *out, int len, int arg_idx);
 static char *getFileName(char *filepath, int len);
-static int hs_lib_callback_http(struct libwebsocket_context *context,
-                     struct libwebsocket *wsi,
-                     enum libwebsocket_callback_reasons reason, void *user,
-                     void *in, size_t len);
-static int hs_lib_callback_command(struct libwebsocket_context *context,
-                        struct libwebsocket *wsi,
-                        enum libwebsocket_callback_reasons reason, void *user,
-                        void *in, size_t len);
-static int hs_lib_callback_statusbar(struct libwebsocket_context *context,
-                          struct libwebsocket *wsi,
-                          enum libwebsocket_callback_reasons reason,
-                          void *user, void *in, size_t len);
-static int hs_lib_callback_onscreen(struct libwebsocket_context *context,
-                         struct libwebsocket *wsi,
-                         enum libwebsocket_callback_reasons reason, void *user,
-                         void *in, size_t len);
-static int hs_lib_callback_app(struct libwebsocket_context *context,
-                    struct libwebsocket *wsi,
-                    enum libwebsocket_callback_reasons reason, void *user,
-                    void *in, size_t len);
-
-/*============================================================================*/
-/* table                                                                      */
-/*============================================================================*/
-static struct libwebsocket_protocols protocols[] = {
-    {
-        "http-only",
-        hs_lib_callback_http,
-        0
-    },
-    { /* HomeScreen - command */
-        ICO_HS_PROTOCOL_CM,
-        hs_lib_callback_command,
-        0
-    },
-    { /* HomeScreen - StatusBar */
-        ICO_HS_PROTOCOL_SB,
-        hs_lib_callback_statusbar,
-        0
-    },
-    { /* HomeScreen - OnScreen */
-        ICO_HS_PROTOCOL_OS,
-        hs_lib_callback_onscreen,
-        0
-    },
-    { /* HomeScreen - OtherNatiiveApps */
-        ICO_HS_PROTOCOL_APP,
-        hs_lib_callback_app,
-        0
-    },
-    {
-        NULL,
-        NULL,
-        0
-    }
-};
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -287,12 +236,6 @@ hs_lib_handle_application(hs_lib_msg_t *msg)
         /* native apps only */
         hs_hide_onscreen();
         memset(hs_active_onscreen, 0, sizeof(hs_active_onscreen));
-        /* disconnect app-protocol */
-        if ((msg->handle != NULL) && (msg->handle->wsi != NULL)) {
-            libwebsocket_close_and_free_session(msg->handle->wsi_context,
-                                                msg->handle->wsi,
-                                                LWS_CLOSE_STATUS_NORMAL);
-        }
     }
     uifw_trace("hs_lib_handle_application: Leave");
 }
@@ -318,7 +261,6 @@ hs_lib_handle_onscreen(hs_lib_msg_t *msg)
     int ret, idx;
     const Ico_Uxf_conf_application *appConf = NULL;
     char *data = msg->data;
-    hs_lib_handle_t *handle;
     hs_lib_msg_t *send;
 
     uifw_trace("hs_lib_handle_onscreen: Enter");
@@ -357,17 +299,6 @@ hs_lib_handle_onscreen(hs_lib_msg_t *msg)
                 hs_hide_onscreen();
             }
             memset(hs_active_onscreen, 0, sizeof(hs_active_onscreen));
-            /* disconnect app-protocol */
-            handle = hs_handles;
-            while (handle) {
-                if (handle->type == ICO_HS_PROTOCOL_TYPE_APP) {
-                    libwebsocket_close_and_free_session(handle->wsi_context,
-                                                        handle->wsi,
-                                                        LWS_CLOSE_STATUS_NORMAL);
-
-                }
-                handle = handle->next;
-            }
         }
     }
     else if (strncmp("TOUCH", data, 5) == 0) {
@@ -384,15 +315,13 @@ hs_lib_handle_onscreen(hs_lib_msg_t *msg)
                 /* get 3rd phrase */
                 ptr = get_parsed_str(p_msg_data, tmp_buf, sizeof(tmp_buf), 2);
                 appConf = ico_uxf_getAppByAppid(ptr);
-                uifw_trace(
-                           "hs_lib_handle_onscreen: hs_tile_get_index_app = %d(%s)",
+                uifw_trace("hs_lib_handle_onscreen: hs_tile_get_index_app = %08x(%s)",
                            (int)appConf, ptr);
                 if (appConf != NULL) {
                     sprintf(msg_buf, "FOCUS %s", ptr);
                     send = hs_lib_alloc_msg(msg_buf, strlen(msg_buf));
                     if (!send) {
-                        uifw_warn(
-                                  "hs_lib_handle_onscreen: ERROR(allocate send msg)");
+                        uifw_warn("hs_lib_handle_onscreen: ERROR(allocate send msg)");
                         return;
                     }
                     send->type = ICO_HS_PROTOCOL_TYPE_CM;
@@ -759,27 +688,20 @@ hs_lib_alloc_handle(void)
 static void
 hs_lib_realsend(hs_lib_msg_t *msg)
 {
-    unsigned char buf[LWS_SEND_BUFFER_PRE_PADDING + 512
-            + LWS_SEND_BUFFER_POST_PADDING];
-    unsigned char *pt = &buf[LWS_SEND_BUFFER_PRE_PADDING];
-    int n;
-
-    strcpy((char*)pt, msg->data);
-
-    uifw_trace("hs_lib_realsend: send(wsi=%x, type=h:%d(m:%d), len=%d, msg=%s)",
-               msg->handle->wsi, msg->handle->type, msg->type, msg->len, msg->data);
-    n = libwebsocket_write(msg->handle->wsi, pt, strlen((char *)pt),
-                           LWS_WRITE_TEXT);
-
-    if (n < 0) {
-        uifw_warn("hs_lib_realsend: ERROR(fail to write ws)");
-    }
+    uifw_trace("hs_lib_realsend: send(ctx=%x(%d), type=h:%d(m:%d), len=%d, msg=%s)",
+               msg->handle->uws_context, msg->handle->id, 
+               msg->handle->type, msg->type, msg->len, msg->data);
+    ico_uws_send(msg->handle->uws_context, msg->handle->id,
+                 (unsigned char *)msg->data, msg->len);
 
     hs_lib_free_msg(msg);
 
-    uifw_warn("hs_lib_realsend: Leave(send len = %d)", n);
+    uifw_trace("hs_lib_realsend: Leave");
 
+#if 0               /* no need on websockets 1.2    */
     usleep(200);
+#endif
+    return;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -840,7 +762,7 @@ hs_lib_put_sendmsg(hs_lib_msg_t *send)
     hs_lib_msg_t *msg;
     hs_lib_handle_t *handle;
 
-    uifw_trace("hs_lib_put_sendmsg: Enter");
+    uifw_trace("hs_lib_put_sendmsg: Enter(%d:%s)", send->type, send->data);
 
     handle = hs_handles;
     while (handle) {
@@ -871,9 +793,9 @@ hs_lib_put_sendmsg(hs_lib_msg_t *send)
 
     if (handle) {
         send->handle = handle;
-        uifw_trace("hs_lib_put_sendmsg: libwebsocket_callback_on_writable"
-            "(wsi_ctx=%x, wsi=%x", handle->wsi_context, handle->wsi);
-        libwebsocket_callback_on_writable(handle->wsi_context, handle->wsi);
+        uifw_trace("hs_lib_put_sendmsg: hs_lib_set_mode_poll_fd"
+            "(uws_ctx=%08x, id=%08x", handle->uws_context, handle->id);
+        hs_lib_set_mode_poll_fd(handle->fd, EPOLLOUT);
 
         hs_lib_com_dispatch(handle, 0);
     }
@@ -963,10 +885,7 @@ hs_lib_com_dispatch(hs_lib_handle_t *_handle, int timeoutms)
     }
 
     while (handle) {
-        uifw_warn("hs_lib_com_dispatch: wsi=%x", handle->wsi_context);
-        if (libwebsocket_service(handle->wsi_context, timeoutms) < 0) {
-            uifw_warn("hs_lib_com_dispatch: fd=%d is done", handle->fd);
-        }
+        ico_uws_service(handle->uws_context);
 
         /* treate received buffer */
         msg = hs_lib_get_recvmsg();
@@ -1015,13 +934,31 @@ static void
 hs_lib_poll_fd_event(hs_lib_poll_t *poll, int flags)
 {
     hs_lib_handle_t *handle = poll->handle;
+    hs_lib_msg_t *msg;
 
-    uifw_trace("hs_lib_ecore_fdevent: Enter(flags=%08x)", flags);
+    uifw_trace("hs_lib_poll_fd_event: Enter(handle=%08x, poll=%08x flags=%08x)", 
+                (int)handle, (int)poll, flags);
 
     /* try to ws service */
     hs_lib_com_dispatch(handle, 0);
 
     /* control polling fd's event? */
+    if ((flags & EPOLLOUT) && (handle != NULL)) {
+        hs_lib_realsend(hs_lib_get_sendmsg(handle->type));
+
+        hs_lib_com_dispatch(handle, 0);
+
+        hs_lib_clear_mode_poll_fd(handle->fd, EPOLLOUT);
+        /* check send queue */
+        msg = hs_send_msg;
+        while (msg) {
+            if (msg->handle->fd == handle->fd) {
+                hs_lib_set_mode_poll_fd(handle->fd, EPOLLOUT);
+                break;
+            }
+            msg = msg->next;
+        }
+    }
 
     return;
 }
@@ -1045,12 +982,10 @@ hs_lib_ecore_fdevent(void *data, Ecore_Fd_Handler *handler)
 
     uifw_trace("hs_lib_ecore_fdevent: Enter");
 
-    flags
-            = (ecore_main_fd_handler_active_get(handler, ECORE_FD_READ))
-                                                                         ? EPOLLIN
-                                                                         : 0;
+    flags = 
+        (ecore_main_fd_handler_active_get(handler, ECORE_FD_READ)) ? EPOLLIN : 0;
     if (ecore_main_fd_handler_active_get(handler, ECORE_FD_WRITE)) {
-        flags |= ECORE_FD_WRITE;
+        flags |= EPOLLOUT;
     }
     if (ecore_main_fd_handler_active_get(handler, ECORE_FD_ERROR)) {
         flags |= EPOLLERR;
@@ -1078,6 +1013,8 @@ hs_lib_control_fd(hs_lib_poll_t *fd_ctl[], const int num_fds)
     Ecore_Fd_Handler_Flags flags;
 
     for (ii = 0; ii < num_fds; ii++) {
+        uifw_trace("hs_lib_control_fd: (handle=%08x, fd=%d, flg=%08x)",
+                          (int)fd_ctl[ii]->handle, fd_ctl[ii]->fd, fd_ctl[ii]->flags);
         if (fd_ctl[ii]->flags) {
             flags = (fd_ctl[ii]->flags & EPOLLIN) ? ECORE_FD_READ : 0;
             if (fd_ctl[ii]->flags & EPOLLOUT) {
@@ -1131,7 +1068,7 @@ static int
 hs_lib_add_poll_fd(int fd, int flags)
 {
     hs_lib_poll_t *poll;
-    hs_lib_poll_t *fds[0];
+    hs_lib_poll_t *fds[1];
     hs_lib_handle_t *handle;
 
     /* get management table */
@@ -1161,7 +1098,7 @@ hs_lib_add_poll_fd(int fd, int flags)
     }
     poll->flags = flags;
 
-    /* if the fd is same as wsi_context, set the handle */
+    /* if the fd is same as uws_context, set the handle */
     handle = hs_handles;
     while (handle) {
         if (handle->fd == fd)
@@ -1196,7 +1133,7 @@ static void
 hs_lib_del_poll_fd(int fd)
 {
     hs_lib_poll_t *poll;
-    hs_lib_poll_t *fds[0];
+    hs_lib_poll_t *fds[1];
 
     /* get management table */
     poll = hs_polls;
@@ -1234,12 +1171,13 @@ static void
 hs_lib_set_mode_poll_fd(int fd, int flags)
 {
     hs_lib_poll_t *poll;
-    hs_lib_poll_t *fds[0];
+    hs_lib_poll_t *fds[1];
 
     /* get management table */
     poll = hs_polls;
     while (poll) {
         if (poll->fd == fd) {
+uifw_trace("hs_lib_set_mode_poll_fd: fd=%d (%d)", poll->fd, fd);
             /* control fds */
             poll->flags |= flags;
             fds[0] = poll;
@@ -1265,7 +1203,7 @@ static void
 hs_lib_clear_mode_poll_fd(int fd, int flags)
 {
     hs_lib_poll_t *poll;
-    hs_lib_poll_t *fds[0];
+    hs_lib_poll_t *fds[1];
 
     /* get management table */
     poll = hs_polls;
@@ -1372,543 +1310,165 @@ hs_lib_event_message(int type, char *format, ...)
 
 /*--------------------------------------------------------------------------*/
 /*
- * @brief   hs_lib_callback_http
- *          Connection status is notified from libwebsockets.
+ * @brief   hs_lib_callback_uws
+ *          callback function from UWS
  *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
+ * @param[in]   context             context
+ * @param[in]   event               event kinds
+ * @param[in]   id                  client id
+ * @param[in]   detail              event detail
+ * @param[in]   data                user data
+ * @return      none
  */
 /*--------------------------------------------------------------------------*/
-static int
-hs_lib_callback_http(struct libwebsocket_context *context,
-                     struct libwebsocket *wsi,
-                     enum libwebsocket_callback_reasons reason, void *user,
-                     void *in, size_t len)
+static void
+hs_lib_callback_uws(const struct ico_uws_context *context,
+                    const ico_uws_evt_e event,
+                    const void *id,
+                    const ico_uws_detail *detail,
+                    void *data)
 {
-    int fd;
+    char *in;
+    int len;
+    hs_lib_handle_t *handle;
+    hs_lib_msg_t *msg;
 
-    uifw_trace("hs_lib_callback_http: context=%p", context);
-    uifw_trace("HS-REASON %d", reason);
+    uifw_trace("hs_lib_callback_uws: context=%08x id=%08x", (int)context, (int)id);
 
-    fd = libwebsocket_get_socket_fd(wsi);
-    switch (reason) {
-    case LWS_CALLBACK_ADD_POLL_FD:
-        uifw_trace("LWS_CALLBACK_ADD_POLL_FD: wsi_fd=%d fd=%d flg=%08x", fd,
-                   (int)(long)user, (int)len);
-        (void)hs_lib_add_poll_fd(fd, (int)len);
+    handle = hs_handles;
+    while (handle) {
+        if (handle->id == id)
+            break;
+        handle = handle->next;
+    }
+    if (!handle) {
+        handle = hs_lib_alloc_handle();
+        if (!handle) {
+            uifw_warn("hs_lib_callback_uws: ERROR(allocate handle)");
+            return;
+        }
+        handle->uws_context = (struct ico_uws_context *)context;
+        handle->id = (void *)id;
+        handle->service_on = 1;
+    }
+
+    switch (event) {
+    case ICO_UWS_EVT_OPEN:
+        uifw_trace("hs_lib_callback_uws: ICO_UWS_EVT_OPEN(id=%08x)", (int)id); 
         break;
 
-    case LWS_CALLBACK_DEL_POLL_FD:
-        uifw_trace("LWS_CALLBACK_DEL_POLL_FD: wsi_fd=%d fd=%d flg=%08x", fd,
-                   (int)(long)user, (int)len);
-        hs_lib_del_poll_fd(fd);
+    case ICO_UWS_EVT_CLOSE:
+        uifw_trace("hs_lib_callback_uws: ICO_UWS_EVT_CLOSE(id=%08x)", (int)id);
+        hs_lib_free_handle(handle);
         break;
 
-    case LWS_CALLBACK_SET_MODE_POLL_FD:
-        uifw_trace("LWS_CALLBACK_SET_MODE_POLL_FD: wsi_fd=%d fd=%d flg=%08x",
-                   fd, (int)(long)user, (int)len);
-        hs_lib_set_mode_poll_fd(fd, (int)len);
+    case ICO_UWS_EVT_RECEIVE:
+        uifw_trace("hs_lib_callback_uws: ICO_UWS_EVT_RECEIVE(id=%08x, msg=%s, len=%d)", 
+                   (int)id, (char *)detail->_ico_uws_message.recv_data,
+                   detail->_ico_uws_message.recv_len);
+        in = (char *)detail->_ico_uws_message.recv_data;
+        len = detail->_ico_uws_message.recv_len;
+        if (len < 4) {
+            break;
+        }
+        if (strncmp(in, ICO_HS_MSG_HEAD_CM, 3) == 0) {
+            handle->type = ICO_HS_PROTOCOL_TYPE_CM;
+        }
+        else if (strncmp(in, ICO_HS_MSG_HEAD_OS, 3) == 0) {
+            handle->type = ICO_HS_PROTOCOL_TYPE_OS;
+        }
+        else if (strncmp(in, ICO_HS_MSG_HEAD_SB, 3) == 0) {
+            handle->type = ICO_HS_PROTOCOL_TYPE_SB;
+        }
+        else if (strncmp(in, ICO_HS_MSG_HEAD_APP, 3) == 0) {
+            handle->type = ICO_HS_PROTOCOL_TYPE_APP;
+        }
+        else {
+            uifw_trace("hs_lib_callback_uws: ICO_UWS_EVT_RECEIVE(unknown)"); 
+            break;
+        }
+
+        msg = hs_lib_alloc_msg(&in[4], len - 4);
+        if (!msg) {
+            uifw_trace("hs_lib_callback_uws: cannot allocate msg");
+            break;
+        }
+        msg->type = handle->type;
+        msg->handle = handle;
+
+        hs_lib_put_recvmsg(msg);
+
+        break;
+    
+    case ICO_UWS_EVT_ERROR:
+        uifw_trace("hs_lib_callback_uws: ICO_UWS_EVT_ERROR(id=%08x, err=%d)", 
+                   (int)id, detail->_ico_uws_error.code);
         break;
 
-    case LWS_CALLBACK_CLEAR_MODE_POLL_FD:
-        uifw_trace("LWS_CALLBACK_CLEAR_MODE_POLL_FD: wsi_fd=%d fd=%d flg=%08x",
-                   fd, (int)(long)user, (int)len);
-        hs_lib_clear_mode_poll_fd(fd, (int)len);
+    case ICO_UWS_EVT_ADD_FD:
+        uifw_trace("hs_lib_callback_uws: ICO_UWS_EVT_ADD_FD(id=%08x, fd=%d)",
+                    (int)id, detail->_ico_uws_fd.fd);
+        handle->fd = detail->_ico_uws_fd.fd;
+        (void)hs_lib_add_poll_fd(detail->_ico_uws_fd.fd, EPOLLIN);
+        break;
+
+    case ICO_UWS_EVT_DEL_FD:
+        uifw_trace("hs_lib_callback_uws: ICO_UWS_EVT_DEL_FD(id=%d, fd=%d)",
+                    (int)id, detail->_ico_uws_fd.fd);
+        hs_lib_del_poll_fd(detail->_ico_uws_fd.fd);
         break;
 
     default:
         break;
     }
-
-    return 0;
 }
 
 /*--------------------------------------------------------------------------*/
 /*
- * @brief   hs_lib_callback_command
- *          this callback function is notified from libwebsockets
- *          command protocol
+ * @brief   hs_lib_setup_server
+ *          setup server
  *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
+ * @param[in]   uri                 URI
+ * @param[in]   protocol            websocket's protocol name
+ * @param[in]   callback            callback function
+ * @return      handle 
+ * @retval      >0                  success
+ * @retval      NULL                error
  */
 /*--------------------------------------------------------------------------*/
-static int
-hs_lib_callback_command(struct libwebsocket_context *context,
-                        struct libwebsocket *wsi,
-                        enum libwebsocket_callback_reasons reason, void *user,
-                        void *in, size_t len)
+static hs_lib_handle_t *
+hs_lib_setup_server(const char *uri, const char *protocol, ico_uws_evt_cb callback)
 {
-    int fd;
-    hs_lib_handle_t *handle;
-    hs_lib_poll_t *poll;
-    hs_lib_msg_t *msg;
+    int ret;
+    struct ico_uws_context *context = NULL;
+    hs_lib_handle_t *handle = NULL;
 
-    uifw_trace("hs_lib_callback_command: Enter(ctx=%p, wsi_fd=%d, reason=%d",
-               context, libwebsocket_get_socket_fd(wsi), reason);
-
-    fd = libwebsocket_get_socket_fd(wsi);
-    if (reason == LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION) {
-        /* connect from client. the client must exist only one */
-        uifw_trace("hs_lib_callback_command: "
-            "LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION(fd=%d)", fd);
-        handle = hs_handles;
-        while (handle) {
-            if (handle->fd == fd)
-                break;
-            handle = handle->next;
-        }
-        if (!handle) {
-            handle = hs_lib_alloc_handle();
-            if (!handle) {
-                uifw_warn("hs_lib_callback_command: ERROR(allocate handle)");
-            }
-        }
-        handle->wsi_context = hs_wsicontext;
-        handle->wsi = wsi;
-        handle->fd = fd;
-        handle->type = ICO_HS_PROTOCOL_TYPE_CM;
-
-        poll = hs_polls;
-        while (poll) {
-            if (poll->fd == handle->fd) {
-                poll->handle = handle;
-                handle->poll = poll;
-            }
-            poll = poll->next;
-        }
-        return 0;
+    handle = hs_lib_alloc_handle();
+    if (! handle) {
+        uifw_trace("hs_lib_setup_server: cannot allocate handle");
+        return NULL;
     }
 
-    handle = hs_handles;
-    while (handle) {
-        if (handle->wsi == wsi)
-            break;
-        handle = handle->next;
-    }
-
-    switch (reason) {
-    case LWS_CALLBACK_ESTABLISHED:
-        uifw_trace("hs_lib_callback_command: "
-            "LWS_CALLBACK_ESTABLISHED(wsi=%x)", wsi);
-        handle->service_on = 1;
-
-        msg = hs_lib_alloc_msg(HS_REQ_ANS_HELLO, strlen(HS_REQ_ANS_HELLO));
-        if (!msg) {
-            uifw_warn("hs_lib_callback_command: ERROR(allocate recv msg)");
-            break;
-        }
-        msg->type = ICO_HS_PROTOCOL_TYPE_CM;
-        msg->handle = handle;
-
-        hs_lib_put_recvmsg(msg);
-        uifw_trace("hs_lib_callback_command: "
-            "LWS_CALLBACK_ESTABLISHED: Leave");
-        break;
-
-    case LWS_CALLBACK_RECEIVE:
-        uifw_trace("hs_lib_callback_command: "
-            "LWS_CALLBACK_RECEIVE:(len=%d \"%s\")", len, in);
-        if (strlen(in) == 0)
-            break;
-
-        msg = hs_lib_alloc_msg((char *)in, len);
-        if (!msg) {
-            uifw_warn("hs_lib_callback_command: ERROR(allocate recv msg)");
-            break;
-        }
-        msg->type = ICO_HS_PROTOCOL_TYPE_CM;
-        msg->handle = handle;
-
-        hs_lib_put_recvmsg(msg);
-        uifw_trace("hs_lib_callback_command: "
-            "LWS_CALLBACK_RECEIVE: Leave");
-        break;
-
-    case LWS_CALLBACK_CLOSED:
-        uifw_trace("hs_lib_callback_command: "
-            "LWS_CALLBACK_CLOSED:(wsi=%x)", wsi);
+    /* create context */
+    context = ico_uws_create_context(uri, ICO_HS_PROTOCOL);
+    handle->uws_context = context;
+    if (! context) {
+        uifw_trace("hs_lib_setup_server: cannot create context");
         hs_lib_free_handle(handle);
-        break;
-
-    case LWS_CALLBACK_SERVER_WRITEABLE:
-        uifw_trace("hs_lib_callback_command: "
-            "LWS_CALLBACK_SERVER_WRITEABLE:(wsi=%x)", wsi);
-        hs_lib_realsend(hs_lib_get_sendmsg(ICO_HS_PROTOCOL_TYPE_CM));
-
-    default:
-        uifw_trace("HS-REASON %d", reason);
-        break;
+        return NULL;
     }
+    uifw_trace("hs_lib_setup_server: create ctx=%08x", (int)context);
+    ico_uws_service(context);
 
-    return 0;
-}
-
-/*--------------------------------------------------------------------------*/
-/*
- * @brief   hs_lib_callback_statusbar
- *          this callback function is notified from libwebsockets
- *          statusbar protocol
- *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
- */
-/*--------------------------------------------------------------------------*/
-static int
-hs_lib_callback_statusbar(struct libwebsocket_context *context,
-                          struct libwebsocket *wsi,
-                          enum libwebsocket_callback_reasons reason,
-                          void *user, void *in, size_t len)
-{
-    int fd;
-    hs_lib_handle_t *handle;
-    hs_lib_poll_t *poll;
-    hs_lib_msg_t *msg;
-
-    uifw_trace("hs_lib_callback_statusbar: Enter(ctx=%p, wsi_fd=%d, reason=%d",
-               context, libwebsocket_get_socket_fd(wsi), reason);
-
-    fd = libwebsocket_get_socket_fd(wsi);
-    if (reason == LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION) {
-        /* connect from client. the client must exist only one */
-        uifw_trace("hs_lib_callback_statusbar: "
-            "LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION(fd=%d)", fd);
-        handle = hs_handles;
-        while (handle) {
-            if (handle->fd == fd)
-                break;
-            handle = handle->next;
-        }
-        if (!handle) {
-            handle = hs_lib_alloc_handle();
-            if (!handle) {
-                uifw_warn("hs_lib_callback_statusbar: ERROR(allocate handle)");
-            }
-        }
-        handle->wsi_context = hs_wsicontext;
-        handle->wsi = wsi;
-        handle->fd = fd;
-        handle->type = ICO_HS_PROTOCOL_TYPE_SB;
-
-        poll = hs_polls;
-        while (poll) {
-            if (poll->fd == handle->fd) {
-                poll->handle = handle;
-                handle->poll = poll;
-            }
-            poll = poll->next;
-        }
-        return 0;
-    }
-
-    handle = hs_handles;
-    while (handle) {
-        if (handle->wsi == wsi)
-            break;
-        handle = handle->next;
-    }
-
-    switch (reason) {
-    case LWS_CALLBACK_ESTABLISHED:
-        uifw_trace("hs_lib_callback_statusbar: "
-            "LWS_CALLBACK_ESTABLISHED(wsi=%x)", wsi);
-        handle->service_on = 1;
-        break;
-
-    case LWS_CALLBACK_RECEIVE:
-        uifw_trace("hs_lib_callback_statusbar: "
-            "LWS_CALLBACK_RECEIVE:(len=%d \"%s\")", len, in);
-
-        if (strlen(in) == 0)
-            break;
-
-        msg = hs_lib_alloc_msg((char *)in, len);
-        if (!msg) {
-            uifw_warn("hs_lib_callback_statusbar: ERROR(allocate recv msg)");
-            break;
-        }
-        msg->type = ICO_HS_PROTOCOL_TYPE_SB;
-        msg->handle = handle;
-
-        hs_lib_put_recvmsg(msg);
-        uifw_trace("hs_lib_callback_statusbar: "
-            "LWS_CALLBACK_RECEIVE: Leave");
-        break;
-
-    case LWS_CALLBACK_CLOSED:
-        uifw_trace("hs_lib_callback_statusbar: "
-            "LWS_CALLBACK_CLOSED:(wsi=%x)", wsi);
+    /* set callback */
+    ret = ico_uws_set_event_cb(context, callback, (void *)handle);
+    if (ret != ICO_UWS_ERR_NONE) {
+        uifw_trace("hs_lib_setup_server: cannnot set callback");
         hs_lib_free_handle(handle);
-        break;
-
-    case LWS_CALLBACK_SERVER_WRITEABLE:
-        uifw_trace("hs_lib_callback_statusbar: "
-            "LWS_CALLBACK_SERVER_WRITEABLE:(wsi=%x)", wsi);
-        hs_lib_realsend(hs_lib_get_sendmsg(ICO_HS_PROTOCOL_TYPE_SB));
-
-    default:
-        uifw_trace("HS-REASON %d", reason);
-        break;
+        return NULL;
     }
 
-    return 0;
-}
-
-/*--------------------------------------------------------------------------*/
-/*
- * @brief   hs_lib_callback_onscreen
- *          this callback function is notified from libwebsockets
- *          statusbar protocol
- *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
- */
-/*--------------------------------------------------------------------------*/
-static int
-hs_lib_callback_onscreen(struct libwebsocket_context *context,
-                         struct libwebsocket *wsi,
-                         enum libwebsocket_callback_reasons reason, void *user,
-                         void *in, size_t len)
-{
-    int fd;
-    hs_lib_handle_t *handle;
-    hs_lib_poll_t *poll;
-    hs_lib_msg_t *msg;
-
-    uifw_trace("hs_lib_callback_onscreen: Enter(ctx=%p, wsi_fd=%d, reason=%d",
-               context, libwebsocket_get_socket_fd(wsi), reason);
-
-    fd = libwebsocket_get_socket_fd(wsi);
-    if (reason == LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION) {
-        /* connect from client. the client must exist only one */
-        uifw_trace("hs_lib_callback_onscreen: "
-            "LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION(fd=%d)", fd);
-        handle = hs_handles;
-        while (handle) {
-            if (handle->fd == fd)
-                break;
-            handle = handle->next;
-        }
-        if (!handle) {
-            handle = hs_lib_alloc_handle();
-            if (!handle) {
-                uifw_warn("hs_lib_callback_onscreen: ERROR(allocate handle)");
-            }
-        }
-        handle->wsi_context = hs_wsicontext;
-        handle->wsi = wsi;
-        handle->fd = fd;
-        handle->type = ICO_HS_PROTOCOL_TYPE_OS;
-
-        poll = hs_polls;
-        while (poll) {
-            if (poll->fd == handle->fd) {
-                poll->handle = handle;
-                handle->poll = poll;
-            }
-            poll = poll->next;
-        }
-        return 0;
-    }
-
-    handle = hs_handles;
-    while (handle) {
-        if (handle->wsi == wsi)
-            break;
-        handle = handle->next;
-    }
-
-    switch (reason) {
-    case LWS_CALLBACK_ESTABLISHED:
-        uifw_trace("hs_lib_callback_onscreen: "
-            "LWS_CALLBACK_ESTABLISHED(wsi=%x)", wsi);
-        handle->service_on = 1;
-        break;
-
-    case LWS_CALLBACK_RECEIVE:
-        uifw_trace("hs_lib_callback_onscreen: "
-            "LWS_CALLBACK_RECEIVE:(len=%d \"%s\")", len, in);
-
-        if (strlen(in) == 0)
-            break;
-
-        msg = hs_lib_alloc_msg((char *)in, len);
-        if (!msg) {
-            uifw_warn("hs_lib_callback_onscreen: ERROR(allocate recv msg)");
-            break;
-        }
-        msg->type = ICO_HS_PROTOCOL_TYPE_OS;
-        msg->handle = handle;
-
-        hs_lib_put_recvmsg(msg);
-        uifw_trace("hs_lib_callback_onscreen: "
-            "LWS_CALLBACK_RECEIVE: Leave");
-        break;
-
-    case LWS_CALLBACK_CLOSED:
-        uifw_trace("hs_lib_callback_onscreen: "
-            "LWS_CALLBACK_CLOSED:(wsi=%x)", wsi);
-        hs_lib_free_handle(handle);
-        break;
-
-    case LWS_CALLBACK_SERVER_WRITEABLE:
-        uifw_trace("hs_lib_callback_onscreen: "
-            "LWS_CALLBACK_SERVER_WRITEABLE:(wsi=%x)", wsi);
-        hs_lib_realsend(hs_lib_get_sendmsg(ICO_HS_PROTOCOL_TYPE_OS));
-
-        break;
-
-    default:
-        uifw_trace("hs_lib_callback_onscreen: HS-REASON %d", reason);
-        break;
-    }
-
-    return 0;
-}
-
-/*--------------------------------------------------------------------------*/
-/*
- * @brief   hs_lib_callback_app
- *          this callback function is notified from libwebsockets
- *          application protocol
- *
- * @param[in]   context             libwebsockets context
- * @param[in]   wsi                 libwebsockets management table
- * @param[in]   reason              event type
- * @param[in]   user                intact
- * @param[in]   in                  receive message
- * @param[in]   len                 message size[BYTE]
- * @return      result
- * @retval      =0                  success
- * @retval      =1                  error
- */
-/*--------------------------------------------------------------------------*/
-static int
-hs_lib_callback_app(struct libwebsocket_context *context,
-                    struct libwebsocket *wsi,
-                    enum libwebsocket_callback_reasons reason, void *user,
-                    void *in, size_t len)
-{
-    int fd;
-    hs_lib_handle_t *handle;
-    hs_lib_poll_t *poll;
-    hs_lib_msg_t *msg;
-
-    uifw_trace("hs_lib_callback_app: Enter(ctx=%p, wsi_fd=%d, reason=%d",
-               context, libwebsocket_get_socket_fd(wsi), reason);
-
-    fd = libwebsocket_get_socket_fd(wsi);
-    if (reason == LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION) {
-        /* connect from client.*/
-        uifw_trace("hs_lib_callback_app: "
-            "LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION(fd=%d)", fd);
-        handle = hs_handles;
-        while (handle) {
-            if (handle->fd == fd)
-                break;
-            handle = handle->next;
-        }
-        if (!handle) {
-            handle = hs_lib_alloc_handle();
-            if (!handle) {
-                uifw_warn("hs_lib_callback_app: ERROR(allocate handle)");
-            }
-        }
-        handle->wsi_context = hs_wsicontext;
-        handle->wsi = wsi;
-        handle->fd = fd;
-        handle->type = ICO_HS_PROTOCOL_TYPE_APP;
-
-        poll = hs_polls;
-        while (poll) {
-            if (poll->fd == handle->fd) {
-                poll->handle = handle;
-                handle->poll = poll;
-            }
-            poll = poll->next;
-        }
-        return 0;
-    }
-
-    handle = hs_handles;
-    while (handle) {
-        if (handle->wsi == wsi)
-            break;
-        handle = handle->next;
-    }
-
-    switch (reason) {
-    case LWS_CALLBACK_ESTABLISHED:
-        uifw_trace("hs_lib_callback_app: "
-            "LWS_CALLBACK_ESTABLISHED(wsi=%x)", wsi);
-        handle->service_on = 1;
-        break;
-
-    case LWS_CALLBACK_RECEIVE:
-        uifw_trace("hs_lib_callback_app: "
-            "LWS_CALLBACK_RECEIVE:(len=%d \"%s\")", len, in);
-
-        if (strlen(in) == 0)
-            break;
-
-        msg = hs_lib_alloc_msg((char *)in, len);
-        if (!msg) {
-            uifw_warn("hs_lib_callback_app: ERROR(allocate recv msg)");
-            break;
-        }
-        msg->type = ICO_HS_PROTOCOL_TYPE_APP;
-        msg->handle = handle;
-
-        hs_lib_put_recvmsg(msg);
-        uifw_trace("hs_lib_callback_app: "
-            "LWS_CALLBACK_RECEIVE: Leave");
-        break;
-
-    case LWS_CALLBACK_CLOSED:
-        uifw_trace("hs_lib_callback_app: "
-            "LWS_CALLBACK_CLOSED:(wsi=%x)", wsi);
-        hs_lib_free_handle(handle);
-        break;
-
-    case LWS_CALLBACK_SERVER_WRITEABLE:
-        uifw_trace("hs_lib_callback_app: "
-            "LWS_CALLBACK_SERVER_WRITEABLE:(wsi=%x)", wsi);
-        hs_lib_realsend(hs_lib_get_sendmsg(ICO_HS_PROTOCOL_TYPE_APP));
-
-    default:
-        uifw_trace("hs_lib_callback_app: HS-REASON %d", reason);
-        break;
-    }
-
-    return 0;
+    return handle;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1926,20 +1486,21 @@ hs_lib_callback_app(struct libwebsocket_context *context,
 int
 hs_lib_main(int port)
 {
-    int opts = 0;
-    hs_lib_handle_t *handle;
+    char uri[ICO_HS_TEMP_BUF_SIZE];
+    hs_lib_handle_t *handle = NULL;
 
-    handle = hs_lib_alloc_handle();
-    handle->wsi_context
-            = libwebsocket_create_context(ICO_HS_WS_PORT, NULL, protocols,
-                                          libwebsocket_internal_extensions,
-                                          NULL, NULL, -1, -1, opts);
-    if (handle->wsi_context == NULL) {
-        uifw_warn(
-                  "home_screen_lib_main: ERROR(libwebsocket_create_context failed.)");
+    /* set up URI ":PORT" */
+    sprintf(uri, ":%d", port);
+    
+    /* set up server */
+    handle = hs_lib_setup_server(uri, ICO_HS_PROTOCOL, hs_lib_callback_uws);
+    if ((handle == NULL) || (handle->uws_context == NULL)) {
+        uifw_warn("home_screen_lib_main: ERROR(hs_lib_setup_server failed.)");
         return ICO_HS_ERR;
     }
-    hs_wsicontext = handle->wsi_context;
+    hs_wsicontext = handle->uws_context;
+
+    ico_uws_service(hs_wsicontext);
 
     return ICO_HS_OK;
 }

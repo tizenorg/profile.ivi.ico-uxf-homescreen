@@ -71,7 +71,7 @@ int ico_uxf_window_visible_raise(const int window,
                                         /* Set window show/hide and raise/lower */
 int ico_uxf_window_resize(const int window, const int w, const int h);
                                         /* Resize window size                   */
-int ico_uxf_window_move(const int window, const int x, const int y);
+int ico_uxf_window_move(const int window, const int x, const int y, const int anima);
                                         /* Move window                          */
 int ico_uxf_window_raise(const int window);
                                         /* Raise window                         */
@@ -79,7 +79,8 @@ int ico_uxf_window_lower(const int window);
                                         /* Lower window                         */
 int ico_uxf_window_active(const int window, const int target);
                                         /* Activate window                      */
-int ico_uxf_window_animation(const int window, const char *animation, const int time);
+int ico_uxf_window_animation(const int window, const int type,
+                             const char *animation, const int time);
                                         /* Set window animation                 */
 void ico_uxf_window_animation_control(const int control, const int animation);
                                         /* Set animation control                */
@@ -94,7 +95,7 @@ Ico_Uxf_InputDev *ico_uxf_inputdev_attribute_get(const int devidx);
 Ico_Uxf_InputSw  *ico_uxf_inputsw_attribute_get(Ico_Uxf_InputDev *inputdev, const int swidx);
                                         /* get input switch attribute           */
 int ico_uxf_input_control(const int add, const char *appid,
-                          const char *device, const int input);
+                          const char *device, const int input, const int keycode);
                                         /* control input switch                 */
 /* Launcher API                                 */
 int ico_uxf_process_execute(const char *name);

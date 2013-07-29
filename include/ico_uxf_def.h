@@ -120,7 +120,17 @@ extern "C" {
 #define ICO_UXF_LOGLEVEL_INFO    64                 /* Information                  */
 #define ICO_UXF_LOGLEVEL_DEBUG  128                 /* Debug write                  */
 
-/* Macros for generate hash value               */
+/* Macros for node Id                       */
+#define ICO_UXF_NODEID_2_HOSTID(nodeid)         (((unsigned int)nodeid) >> 8)
+#define ICO_UXF_NODEID_2_DISPLAYNO(nodeid)      (((unsigned int)nodeid) & 0x0ff)
+#define ICO_UXF_NODEDISP_2_NODEID(nodeid, displayno)  \
+                                                ((nodeid << 8) | displayno)
+#define ICO_UXF_SURFACEID_2_HOSTID(surfid)      (((unsigned int)surfid) >> 24)
+#define ICO_UXF_SURFACEID_2_DISPLAYNO(surfid)   ((((unsigned int)surfid) >> 16) & 0x0ff)
+#define ICO_UXF_SURFACEID_2_NODEID(surfid)      (((unsigned int)surfid) >> 16)
+#define ICO_UXF_SURFACEID_BASE(nodeid)          (((unsigned int)nodeid) << 16)
+
+/* Macros for generate hash value           */
 extern int ico_uxf_misc_hashByName(const char *name);
 #define ICO_UXF_MISC_HASHSIZE       64      /* Hash table size(must be 2's factorial*/
 #define ICO_UXF_MISC_HASHBYID(v)        (v & (ICO_UXF_MISC_HASHSIZE-1))

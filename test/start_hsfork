@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# 1. Delete log file
+/bin/mkdir /var/log/ico > /dev/null 2>&1
+/bin/chmod -R 0777 /var/log/ico > /dev/null 2>&1
+/bin/rm -f /var/log/ico/* /var/log/weston.log > /dev/null 2>&1
+/bin/rm -f /opt/share/crash/core.* > /dev/null 2>&1
+
+# 2. Weston/Wayland Envionment
+export QT_QPA_PLATFORM=wayland
+export ELM_ENGINE=wayland_egl
+export ECORE_EVAS_ENGINE=wayland_egl
+export XDG_CONFIG_HOME=/etc/xdg/weston
+
+# 3. Start Device Input Controller for eGalax TouchPanel
+#/usr/bin/ico_ictl-touch_egalax -t
+/usr/bin/ico_ictl-touch_egalax
+sleep 0.3
+
+# 4. Start Weston
+ORG_UMASK=`umask`
+umask 000
+/usr/bin/weston --backend=drm-backend.so --idle-time=0 --log=/var/log/ico/weston.log &
+sync;sync
+sleep 0.8
+if [ -f $XDG_RUNTIME_DIR/wayland-0 ] ; then
+	chmod 0777 $XDG_RUNTIME_DIR/wayland-0
+fi
+umask $ORG_UMASK
+
+# 5 start some daemons
+## if pulseaudio dose not start ... kick pulseaudio
+/bin/ps ax | /bin/grep pulseaudio | /bin/grep -v grep > /dev/null
+if [ "$?" = "1" ] ; then
+	/usr/bin/pulseaudio --log-level=3 --log-target=file:/var/log/ico/pulse.log --system -D
+	sleep 0.5
+fi
+
+## if appcore launcher dose not start ... kick launchpad_preloading_preinitializing_daemon
+/bin/ps ax | /bin/grep launchpad_preloading_preinitializing_daemon | /bin/grep -v grep > /dev/null
+if [ "$?" = "1" ] ; then
+	/usr/bin/launchpad_preloading_preinitializing_daemon &
+	sleep 1
+fi
+
+# 6 start homescreen
+export PKG_NAME="org.tizen.ico.homescreen"
+/usr/apps/org.tizen.ico.homescreen/bin/HomeScreen &
+

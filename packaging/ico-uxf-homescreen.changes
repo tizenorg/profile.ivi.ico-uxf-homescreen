@@ -1,3 +1,17 @@
+* Mon Jul 29 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130612.174826@c0f6e8c
+- 0.7.01 release
+- Following corrections for TizenIVI 3.0M1.
+-- Correspondence to version up of Wayland/Weston(1.1.x => 1.2.0).
+-- Correspondence to version up of ico-uxf-weston-plugin(0.5.x => 0.7.01).
+-- Correspondence to start method of TizenIVI 3.0(system V => systemd).
+- Changes of the package name from 'ico-uxf-HomeScreen' to 'ico-uxf-homescreen'.
+
+- 0.3.08 release
+- fix for - SystemController may give the screen right for the application that is not active.
+- fix for - SystemController gives the screen right for two application when 3 or more apprications require the acquisition of the screen right of the screen zone.
+- Abstraction of communication library.
+  Change to libico-util-com.so(ico-uxf-utilities.rpm) from libwebsockets.so.
+
 * Wed Jun 12 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/2.0alpha-wayland/20130612.051552@7006a0f
 - 0.3.07 release
 - Fix for TIVI-1002 - [WLD] Entertainment.Visual APP doesn't stop the audio play and show the window while vehicle speed>=4
