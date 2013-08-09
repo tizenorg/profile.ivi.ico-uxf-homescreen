@@ -57,8 +57,6 @@ Development files for application that communicate homescreen.
 %define PREFIX /usr/apps/
 
 %build
-autoreconf --install
-
 %autogen
 
 %configure
