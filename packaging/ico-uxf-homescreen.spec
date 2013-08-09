@@ -1,8 +1,8 @@
 Name:       ico-uxf-homescreen
-Summary:    sample homescreen
+Summary:    Sample homescreen
 Version:    0.7.01
 Release:    1.1
-Group:		TO_BE/FILLED_IN
+Group:      Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
@@ -27,6 +27,7 @@ BuildRequires: pkgconfig(libwebsockets)
 BuildRequires: capi-base-common-devel
 BuildRequires: edje-tools
 BuildRequires: ico-uxf-utilities-devel
+BuildRequires: fdupes
 Requires: weston >= 1.2
 
 %description
@@ -34,7 +35,7 @@ Sample homescreen application.
 
 %package devel
 Summary:  Development files for %{name}
-Group:    Development/GUI/Libraries
+Group:    Graphics & UI Framework/Development
 Requires: %{name} = %{version}-%{release}
 Requires: capi-base-common-devel
 Requires: pkgconfig(eina)
@@ -134,6 +135,8 @@ mkdir -p %{buildroot}/etc/systemd/system/graphical.target.wants
 mkdir -p %{buildroot}%{ico_unitdir_system}/
 install -m 0644 settings/ico_homescreen.service %{buildroot}%{ico_unitdir_system}/
 ln -sf ../../../../usr/lib/systemd/system/ico_homescreen.service %{buildroot}/etc/systemd/system/graphical.target.wants/
+
+%fdupes -s %buildroot/%{PREFIX}
 
 # Update the package database (post only).
 %post
