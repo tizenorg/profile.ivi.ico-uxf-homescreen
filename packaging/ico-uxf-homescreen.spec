@@ -139,10 +139,13 @@ ln -sf ../../../../usr/lib/systemd/system/ico_homescreen.service %{buildroot}/et
 
 # Update the package database (post only).
 %post
+/sbin/ldconfig
 mkdir -p %{_localstatedir}/log/ico/
 chmod 0777 %{_localstatedir}/log/ico/
 %{_bindir}/pkg_initdb
 %{_bindir}/ail_initdb
+
+%postun -p /sbin/ldconfig
 
 %files
 %defattr(-,root,root,-)
