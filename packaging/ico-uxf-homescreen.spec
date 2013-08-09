@@ -23,13 +23,11 @@ BuildRequires: pkgconfig(aul)
 BuildRequires: pkgconfig(bundle)
 BuildRequires: pkgconfig(ail)
 BuildRequires: pkgconfig(pkgmgr)
-BuildRequires: libwebsockets-devel
+BuildRequires: pkgconfig(libwebsockets)
 BuildRequires: capi-base-common-devel
 BuildRequires: edje-tools
 BuildRequires: ico-uxf-utilities-devel
 Requires: weston >= 1.2
-Requires: ico-uxf-weston-plugin >= 0.7
-Requires: ico-uxf-utilities
 
 %description
 Sample homescreen application.
@@ -46,7 +44,7 @@ Requires: pkgconfig(edje)
 Requires: pkgconfig(elementary)
 Requires: pkgconfig(ecore-wayland)
 Requires: pkgconfig(ecore-x)
-Requires: ico-uxf-utilities
+Requires: ico-uxf-utilities-devel
 
 %description devel
 Development files for application that communicate homescreen.
