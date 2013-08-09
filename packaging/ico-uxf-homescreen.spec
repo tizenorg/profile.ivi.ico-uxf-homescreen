@@ -27,6 +27,7 @@ BuildRequires: libwebsockets-devel
 BuildRequires: capi-base-common-devel
 BuildRequires: edje-tools
 BuildRequires: ico-uxf-utilities-devel
+BuildRequires: pwdutils
 Requires: weston >= 1.2
 Requires: ico-uxf-weston-plugin >= 0.7
 Requires: ico-uxf-utilities
