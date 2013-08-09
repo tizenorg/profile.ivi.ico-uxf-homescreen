@@ -3,7 +3,7 @@ Summary:    sample homescreen
 Version:    0.7.01
 Release:    1.1
 Group:		TO_BE/FILLED_IN
-License:    Apache License, Version 2.0
+License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
@@ -147,6 +147,7 @@ chmod 0777 %{_localstatedir}/log/ico/
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE-2.0
 %{PREFIX}/org.tizen.ico.homescreen
 %{PREFIX}/org.tizen.ico.statusbar
 %{PREFIX}/org.tizen.ico.onscreen
