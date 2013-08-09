@@ -54,7 +54,7 @@ Development files for application that communicate homescreen.
 %prep
 %setup -q -n %{name}-%{version}
 
-%define PREFIX /usr/apps/
+%define PREFIX %{_prefix}/apps/
 
 %build
 %autogen
@@ -62,14 +62,14 @@ Development files for application that communicate homescreen.
 %configure
 make %{?_smp_mflags}
 
-%define ico_unitdir_system /usr/lib/systemd/system
+%define ico_unitdir_system %{_libdir}systemd/system
 
 %install
 rm -rf %{buildroot}
 %make_install
 
-mkdir -p %{buildroot}/usr/share/applications/
-mkdir -p %{buildroot}/usr/share/packages/
+mkdir -p %{buildroot}%{_datadir}/applications/
+mkdir -p %{buildroot}%{_datadir}/packages/
 
 # include
 mkdir -p %{buildroot}/%{_includedir}/ico-appfw/
@@ -95,8 +95,8 @@ install -m 0644 src/home_screen_bg.edj %{buildroot}%{APPSDIR}/res/edj
 install -m 0644 src/home_screen_touch.edj %{buildroot}%{APPSDIR}/res/edj
 install -m 0644 res/images/api_all_off.png %{buildroot}%{APPSDIR}/res/images
 install -m 0644 res/images/api_all_on.png %{buildroot}%{APPSDIR}/res/images
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/usr/share/applications/
-install -m 0644 data/share/packages/%{APP}.xml %{buildroot}/usr/share/packages/
+install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}%{_datadir}/applications/
+install -m 0644 data/share/packages/%{APP}.xml %{buildroot}%{_datadir}/packages/
 
 #statusbar
 %define APP org.tizen.ico.statusbar
@@ -111,8 +111,8 @@ install -m 0755 src/StatusBar %{buildroot}%{APPSDIR}/bin/
 install -m 0644 res/images/time*.png %{buildroot}%{APPSDIR}/res/images/
 install -m 0644 res/images/applist_*.png %{buildroot}%{APPSDIR}/res/images/
 install -m 0644 res/images/home*.png %{buildroot}%{APPSDIR}/res/images/
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/usr/share/applications/
-install -m 0644 data/share/packages/%{APP}.xml %{buildroot}/usr/share/packages/
+install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}%{_datadir}/applications/
+install -m 0644 data/share/packages/%{APP}.xml %{buildroot}%{_datadir}/packages/
 
 #onscreen
 %define APP org.tizen.ico.onscreen
@@ -126,8 +126,8 @@ cp -rf res/apps/%{APP}/* %{buildroot}%{APPSDIR}/res/config/
 install -m 0755 src/OnScreen %{buildroot}%{APPSDIR}/bin/
 install -m 0644 src/appli_list.edj %{buildroot}%{APPSDIR}/res/edj/
 install -m 0644 src/appli_kill.edj %{buildroot}%{APPSDIR}/res/edj/
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}/usr/share/applications/
-install -m 0644 data/share/packages/%{APP}.xml %{buildroot}/usr/share/packages/
+install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}%{_datadir}/applications/
+install -m 0644 data/share/packages/%{APP}.xml %{buildroot}%{_datadir}/packages/
 
 #settings
 mkdir -p %{buildroot}/opt/etc/ico/
@@ -139,18 +139,18 @@ ln -sf ../../../../usr/lib/systemd/system/ico_homescreen.service %{buildroot}/et
 
 # Update the package database (post only).
 %post
-mkdir -p /var/log/ico/
-chmod 0777 /var/log/ico/
-/usr/bin/pkg_initdb
-/usr/bin/ail_initdb
+mkdir -p %{_localstatedir}/log/ico/
+chmod 0777 %{_localstatedir}/log/ico/
+%{_bindir}/pkg_initdb
+%{_bindir}/ail_initdb
 
 %files
 %defattr(-,root,root,-)
 %{PREFIX}/org.tizen.ico.homescreen
 %{PREFIX}/org.tizen.ico.statusbar
 %{PREFIX}/org.tizen.ico.onscreen
-/usr/share/applications/*.desktop
-/usr/share/packages/*.xml
+%{_datadir}/applications/*.desktop
+%{_datadir}/packages/*.xml
 /opt/etc/ico/mediation_table.txt
 %{ico_unitdir_system}/ico_homescreen.service
 /etc/systemd/system/graphical.target.wants/ico_homescreen.service
