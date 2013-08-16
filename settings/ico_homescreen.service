@@ -1,10 +1,10 @@
 [Unit]
 Description=Ico HomeScreen
-Requires=graphical.target
-After=graphical.target
+Requires=weston.target
+After=weston.target
 
 [Service]
 ExecStart=/usr/bin/launch_app org.tizen.ico.homescreen &
 
 [Install]
-WantedBy=graphical.target
+WantedBy=weston.target

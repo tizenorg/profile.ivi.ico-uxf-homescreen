@@ -28,6 +28,7 @@ BuildRequires: capi-base-common-devel
 BuildRequires: edje-tools
 BuildRequires: ico-uxf-utilities-devel
 BuildRequires: fdupes
+BuildRequires: systemd
 Requires: weston >= 1.2
 
 %description
@@ -61,7 +62,7 @@ Development files for application that communicate homescreen.
 %configure
 make %{?_smp_mflags}
 
-%define ico_unitdir_system %{_libdir}systemd/system
+%define ico_unitdir_user %{_libdir}/systemd/user
 
 %install
 rm -rf %{buildroot}
@@ -131,10 +132,9 @@ install -m 0644 data/share/packages/%{APP}.xml %{buildroot}%{_datadir}/packages/
 #settings
 mkdir -p %{buildroot}/opt/etc/ico/
 install -m 0644 settings/mediation_table.txt  %{buildroot}/opt/etc/ico/
-mkdir -p %{buildroot}/etc/systemd/system/graphical.target.wants
-mkdir -p %{buildroot}%{ico_unitdir_system}/
-install -m 0644 settings/ico_homescreen.service %{buildroot}%{ico_unitdir_system}/
-ln -sf ../../../../usr/lib/systemd/system/ico_homescreen.service %{buildroot}/etc/systemd/system/graphical.target.wants/
+mkdir -p %{buildroot}%{ico_unitdir_user}/weston.target.wants
+install -m 0644 settings/ico_homescreen.service %{buildroot}%{ico_unitdir_user}
+ln -sf ../ico_homescreen.service %{buildroot}%{ico_unitdir_user}/weston.target.wants/
 
 %fdupes -s %buildroot/%{PREFIX}
 
@@ -157,8 +157,8 @@ chmod 0777 %{_localstatedir}/log/ico/
 %{_datadir}/applications/*.desktop
 %{_datadir}/packages/*.xml
 /opt/etc/ico/mediation_table.txt
-%{ico_unitdir_system}/ico_homescreen.service
-/etc/systemd/system/graphical.target.wants/ico_homescreen.service
+%{ico_unitdir_user}/ico_homescreen.service
+%{ico_unitdir_user}/weston.target.wants/ico_homescreen.service
 
 %{_libdir}/*.so.*
 %{_bindir}/ico_*
