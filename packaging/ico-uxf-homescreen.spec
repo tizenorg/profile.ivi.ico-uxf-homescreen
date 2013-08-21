@@ -1,6 +1,6 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen
-Version:    0.7.01
+Version:    0.7.02
 Release:    1.1
 Group:      Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
