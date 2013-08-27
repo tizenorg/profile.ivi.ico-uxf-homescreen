@@ -874,8 +874,12 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
     uifw_trace("ico_uxf_window_createdcb: Enter(surf=%08x name=%s pid=%d appid=%s myapp=%s)",
                (int)surfaceid, winname, pid, appid, gIco_Uxf_Api_Mng.MyProcess);
 
-    prc = ico_uxf_mng_process(appid, 0);
+    prc = ico_uxf_mng_process_find(appid, pid);
     if (prc)    {
+        /* set window(surface) attrinutes   */
+        ico_window_mgr_set_attributes(gIco_Uxf_Api_Mng.Wayland_WindowMgr, surfaceid,
+                                      ICO_WINDOW_MGR_ATTR_FIXED_ASPECT);
+
         /* set window animation     */
         if (prc->appconf != NULL)   {
             if (((Ico_Uxf_conf_application *)prc->appconf)->animation)  {
@@ -897,7 +901,7 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
         if (prc->attr.mainwin.window <= 0)  {
             uifw_trace("ico_uxf_window_createdcb: Set Main Window, Config Data");
             prc->attr.mainwin.window = surfaceid;
-            ico_uxf_create_window(surfaceid, appid, prc->attr.mainwin.node,
+            ico_uxf_create_window(surfaceid, prc->attr.process, prc->attr.mainwin.node,
                                   prc->attr.mainwin.layer, prc->attr.mainwin.x,
                                   prc->attr.mainwin.y, prc->attr.mainwin.w,
                                   prc->attr.mainwin.h);
@@ -908,7 +912,7 @@ ico_uxf_window_createdcb(void *data, struct ico_window_mgr *ico_window_mgr,
         }
         else    {
             uifw_trace("ico_uxf_window_createdcb: Sub Window, Dummy Data");
-            ico_uxf_create_window(surfaceid, appid, prc->attr.mainwin.node,
+            ico_uxf_create_window(surfaceid, prc->attr.process, prc->attr.mainwin.node,
                                   prc->attr.mainwin.layer, ICO_UXF_MAX_COORDINATE,
                                   ICO_UXF_MAX_COORDINATE, 1, 1);
             ppwin = (Ico_Uxf_Mng_ProcWin *)malloc(sizeof(Ico_Uxf_Mng_ProcWin));
@@ -1734,8 +1738,7 @@ ico_uxf_timer_wake(const int msec)
                                                    ICO_WINDOW_MGR_VISIBLE_SHOW,
                                                    ICO_WINDOW_MGR_V_NOCHANGE,
                                                    (proc->showmode != 0) ?
-                                                     ICO_WINDOW_MGR_ANIMATION_ANIMATION :
-                                                     ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
+                                                     ICO_WINDOW_MGR_FLAGS_ANIMATION : 0);
                         wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
                     }
                 }
@@ -2126,7 +2129,7 @@ ico_uxf_mng_process(const char *process, const int create)
     hash = ICO_UXF_MISC_HASHBYNAME(process);
     p = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
     while (p)  {
-        if(strncmp(p->attr.process, process, ICO_UXF_MAX_PROCESS_NAME) == 0) break;
+        if (strncmp(p->attr.process, process, ICO_UXF_MAX_PROCESS_NAME) == 0)   break;
         plast = p;
         p = p->nextidhash;
     }
@@ -2146,6 +2149,35 @@ ico_uxf_mng_process(const char *process, const int create)
         else    {
             gIco_Uxf_Api_Mng.Hash_ProcessId[hash] = p;
         }
+    }
+    return p;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_mng_process_find: get process management table(internal function)
+ *
+ * @param[in]   process     application Id
+ * @param[in]   pid         processid
+ * @return      process management table address
+ * @retval      !=NULL      process management table address
+ * @retval      ==NULL      process dose not exist(parameter 'create' only 0)
+ */
+/*--------------------------------------------------------------------------*/
+Ico_Uxf_Mng_Process *
+ico_uxf_mng_process_find(const char *process, const int pid)
+{
+    Ico_Uxf_Mng_Process *p;
+    int                 hash;
+
+    for (hash = 0; hash < ICO_UXF_MISC_HASHSIZE; hash++) {
+        p = gIco_Uxf_Api_Mng.Hash_ProcessId[hash];
+        while (p)   {
+            if (p->attr.internalid == pid)              break;
+            if (strcmp(p->attr.process, process) == 0)  break;
+            p = p->nextidhash;
+        }
+        if (p) break;
     }
     return p;
 }

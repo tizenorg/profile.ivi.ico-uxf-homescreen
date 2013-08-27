@@ -2840,7 +2840,6 @@ ico_syc_apc_init(ico_apc_resource_control_t display, ico_apc_resource_control_t 
     if (ret != ICO_APF_E_NONE)  {
         ico_apps_controller_init = 0;
         apfw_error("ico_syc_apc_init: Leave(ico_apf_ecore_init_server Error<%d>)", ret);
-        return ICO_SYC_ENOSYS;
     }
 
     /* regist callback for application resource request */
@@ -2850,7 +2849,6 @@ ico_syc_apc_init(ico_apc_resource_control_t display, ico_apc_resource_control_t 
         apfw_error("ico_syc_apc_init: Leave(ico_apf_resource_set_event_cb Error<%d>)",
                    ret);
         ico_apf_resource_term_server();
-        return ICO_SYC_ENOSYS;
     }
 
     /* initialize regulation controller    */
@@ -2860,7 +2858,6 @@ ico_syc_apc_init(ico_apc_resource_control_t display, ico_apc_resource_control_t 
         apfw_error("ico_syc_apc_init: Leave(ico_syc_apc_regulation_init Error<%d>)",
                    ret);
         ico_apf_resource_term_server();
-        return ICO_SYC_ENOSYS;
     }
 
     ico_syc_apc_regulation_listener(regulation_listener, NULL);
@@ -2878,7 +2875,6 @@ ico_syc_apc_init(ico_apc_resource_control_t display, ico_apc_resource_control_t 
     if (ret != ICO_APF_RESOURCE_E_NONE) {
         apfw_error("ico_syc_apc_init: Leave(ico_apf_resource_send_to_soundctl Error<%d>)",
                    ret);
-        return ICO_SYC_ENOSYS;
     }
 
     apfw_trace("ico_syc_apc_init: Leave(EOK)");

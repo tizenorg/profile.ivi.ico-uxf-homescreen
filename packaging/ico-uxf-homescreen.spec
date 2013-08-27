@@ -1,6 +1,6 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen
-Version:    0.7.02
+Version:    0.7.03
 Release:    1.1
 Group:      Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
@@ -9,7 +9,7 @@ Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.2
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.7
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.7.03
 BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(evas)
 BuildRequires: pkgconfig(eina)

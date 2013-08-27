@@ -726,7 +726,7 @@ main(int argc, char *argv[])
     char file[ICO_SB_BUF_SIZE];
     int width, height;
     int moveH = 0;
-    int orientation = ICO_SB_HORIZONTAL;
+    int orientation = -1;
     int ii;
     int ret;
     static Ecore_Evas *ee;
@@ -763,9 +763,22 @@ main(int argc, char *argv[])
         sb_ws_port = hs_conf_get_integer(ICO_HS_CONFIG_STATUBAR,
                                          ICO_HS_CONFIG_WS_PORT,
                                          ICO_HS_WS_PORT);
-        orientation = hs_conf_get_integer(ICO_HS_CONFIG_STATUBAR,
-                                          ICO_HS_CONFIG_ORIENTAION,
-                                          orientation);
+        if (orientation <= 0)   {
+            orientation = hs_conf_get_integer(ICO_HS_CONFIG_STATUBAR,
+                                              ICO_HS_CONFIG_ORIENTAION,
+                                              -1);
+            if (orientation < 0)    {
+                Ico_Uxf_Sys_Config  *sysconf;
+    
+                sysconf = (Ico_Uxf_Sys_Config *)ico_uxf_getSysConfig();
+                if (sysconf->display[0].width >= sysconf->display[0].height)    {
+                    orientation = ICO_SB_HORIZONTAL;
+                }
+                else    {
+                    orientation = ICO_SB_VERTICAL;
+                }
+            }
+        }
     }
     hs_snd_init();
 

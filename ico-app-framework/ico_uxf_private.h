@@ -188,6 +188,8 @@ Ico_Uxf_Mng_Window *ico_uxf_mng_window(const int window, const int create);
                                             /* get a window management table        */
 Ico_Uxf_Mng_Process *ico_uxf_mng_process(const char *process, const int create);
                                             /* get a process management table       */
+Ico_Uxf_Mng_Process *ico_uxf_mng_process_find(const char *process, const int pid);
+                                            /* get a process management table       */
 void ico_uxf_update_procwin(const char *appid, int type);
                                             /* update a process management table    */
 void ico_uxf_free_procwin(Ico_Uxf_Mng_Process *prc);

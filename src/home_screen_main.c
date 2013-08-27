@@ -195,6 +195,8 @@ hs_uxf_event(int ev, Ico_Uxf_EventDetail dd, int arg)
             else {
                 /* other normal application */
                 if (hs_is_special_app(winAttr.process) == FALSE) {
+                    /* set max window size for event to application */
+                    hs_set_appscreen(winAttr.process);
                     if (hs_is_noicon_app(winAttr.process) != FALSE) {
                         hs_set_appscreen(winAttr.process);
                         if (hs_stat_touch == ICO_HS_TOUCH_IN_SHOW) {
@@ -967,7 +969,7 @@ hs_tile_show_screen(void)
                        tinfo->size_x, tinfo->size_y, tinfo->coord_x, tinfo->coord_y);
             /* move application window to HomeScreen layer  */
             ico_uxf_window_layer(window.window, HS_LAYER_HOMESCREEN);
-            ico_uxf_window_resize(window.window, tinfo->size_x, tinfo->size_y);
+            ico_uxf_window_resize_flag(window.window, tinfo->size_x, tinfo->size_y, 1);
             ico_uxf_window_move(window.window, tinfo->coord_x, tinfo->coord_y, 0);
             ico_uxf_window_visible_raise(window.window, 1, 1);
         }
