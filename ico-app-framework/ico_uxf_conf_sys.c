@@ -345,7 +345,7 @@ reloadSysConfig(void)
                                 ico_uxf_conf_appendStr(key,".priority"), &error);
         ico_uxf_conf_checkGerror(&error);
 
-        apfw_trace("Categry.%d id = %d name = %s view = %d sound = %d input = %d prio = %d",
+        apfw_trace("Categry.%d id=%d name=%s view=%d sound=%d input=%d prio=%d",
                    i, _ico_sys_config->category[i].id, _ico_sys_config->category[i].name,
                    _ico_sys_config->category[i].view, _ico_sys_config->category[i].sound,
                    _ico_sys_config->category[i].input,
@@ -396,7 +396,7 @@ reloadSysConfig(void)
             g_key_file_free(keyfile);
             return NULL;
         }
-        apfw_trace("Kind.%d id = %d name = %s privilege = %d",
+        apfw_trace("Kind.%d id=%d name=%s privilege=%d",
                    i, _ico_sys_config->kind[i].id, _ico_sys_config->kind[i].name,
                    _ico_sys_config->kind[i].priv);
     }
@@ -446,7 +446,7 @@ reloadSysConfig(void)
             g_key_file_get_string(keyfile, g,
                                   ico_uxf_conf_appendStr(key, ".homescreen"), &error);
         ico_uxf_conf_checkGerror(&error);
-        apfw_trace("Host.%d: Id = %d Name = %s Type = %d Ip = %s HomeScreen = %s",
+        apfw_trace("Host.%d: Id=%d Name=%s Type=%d Ip=%s HomeScreen=%s",
             i, _ico_sys_config->host[i].id, (char *)_ico_sys_config->host[i].name,
             _ico_sys_config->host[i].type, (char *)_ico_sys_config->host[i].address,
             _ico_sys_config->host[i].homescreen);
@@ -640,7 +640,7 @@ reloadSysConfig(void)
             g_key_file_get_integer(keyfile,g,ico_uxf_conf_appendStr(key,".inch"),&error);
         ico_uxf_conf_checkGerror(&error);
 
-        apfw_trace("Display.%d Id = %d Name = %s Host = %d DispNo = %d W/H = %d/%d Wayland = %s inch = %d",
+        apfw_trace("Display.%d Id=%d Name=%s Host=%d DispNo=%d W/H=%d/%d Wayland=%s inch=%d",
                    i, display->id, (char *)display->name, display->hostId,
                    display->displayno, display->width, display->height,
                    display->wayland, display->inch);
@@ -675,7 +675,7 @@ reloadSysConfig(void)
                         display->layer[j].menuoverlap = 1;
                     }
                 }
-                apfw_trace("Display.%d Layer.%d id = %d name = %s overlap=%d", i, j,
+                apfw_trace("Display.%d Layer.%d id=%d name=%s overlap=%d", i, j,
                            display->layer[j].id, display->layer[j].name,
                            display->layer[j].menuoverlap);
             }
@@ -801,7 +801,7 @@ reloadSysConfig(void)
             g_clear_error(&error);
         }
 
-        apfw_trace("Sound.%d Id = %d Name = %s Host = %d SoundNo = %d",
+        apfw_trace("Sound.%d Id=%d Name=%s Host=%d SoundNo=%d",
                    i, sound->id, (char *)sound->name, sound->hostId, sound->soundno);
 
         /* sound zone           */
@@ -870,7 +870,7 @@ reloadSysConfig(void)
         for (j = 0; j < sound_length; j++)  {
             if (zonelists[j])   g_strfreev(zonelists[j]);
             zone = &(sound->zone[j]);
-            apfw_trace("Sound.%d zone.%d(%s) over = %d.%d %d %d %d %d",
+            apfw_trace("Sound.%d zone.%d(%s) over=%d.%d %d %d %d %d",
                        i, j, zone->name,
                        zone->overlapNum, zone->overlap[0], zone->overlap[1],
                        zone->overlap[2], zone->overlap[3], zone->overlap[4]);
@@ -928,7 +928,7 @@ reloadSysConfig(void)
                 }
             }
             g_strfreev(swlist);
-            uifw_trace("Input %s.%s app = %s key=%d",
+            uifw_trace("Input %s.%s app=%s key=%d",
                        inputdev->name,
                        inputdev->inputsw[j].name ? inputdev->inputsw[j].name : " ",
                        inputdev->inputsw[j].appid ? inputdev->inputsw[j].appid : " ",
@@ -967,8 +967,8 @@ reloadSysConfig(void)
                         g_key_file_get_string(keyfile, "default", "inputsw", &error));
     ico_uxf_conf_checkGerror(&error);
 
-    apfw_trace("Default host = %d kind = %d category = %d disp = %d layer = %d dispzone = %d "
-               "sound = %d soundzone = %d input = %d/%d",
+    apfw_trace("Default host=%d kind=%d category=%d disp=%d layer=%d dispzone=%d "
+               "sound=%d soundzone=%d input=%d/%d",
                _ico_sys_config->misc.default_hostId,
                _ico_sys_config->misc.default_kindId,
                _ico_sys_config->misc.default_categoryId,

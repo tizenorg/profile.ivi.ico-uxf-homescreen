@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.7.01], [])
+AC_INIT([org.tizen.ico.homescreen], [0.7.03], [])
 AM_INIT_AUTOMAKE([foreign 1.11])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])

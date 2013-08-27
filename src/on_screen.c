@@ -693,7 +693,7 @@ int
 main(int argc, char *argv[])
 {
     int width, height;
-    int orientation = ICO_ONS_HORIZONTAL;
+    int orientation = -1;
     int ret;
     bundle *b;
     const char *val;
@@ -724,9 +724,21 @@ main(int argc, char *argv[])
         ons_ws_port = hs_conf_get_integer(ICO_HS_CONFIG_ONSCREEN,
                                          ICO_HS_CONFIG_WS_PORT,
                                          ICO_HS_WS_PORT);
-        orientation = hs_conf_get_integer(ICO_HS_CONFIG_ONSCREEN,
-                                          ICO_HS_CONFIG_ORIENTAION,
-                                          orientation);
+        if (orientation < 0)    {
+            orientation = hs_conf_get_integer(ICO_HS_CONFIG_ONSCREEN,
+                                              ICO_HS_CONFIG_ORIENTAION,
+                                              -1);
+            if (orientation < 0)    {
+                Ico_Uxf_Sys_Config  *sysconf;
+                sysconf = (Ico_Uxf_Sys_Config *)ico_uxf_getSysConfig();
+                if (sysconf->display[0].width >= sysconf->display[0].height)    {
+                    orientation = ICO_ONS_HORIZONTAL;
+                }
+                else    {
+                    orientation = ICO_ONS_VERTICAL;
+                }
+            }
+        }
     }
     ons_load_config();
     hs_snd_init();

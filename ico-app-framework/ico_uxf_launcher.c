@@ -65,7 +65,7 @@ ico_uxf_process_execute(const char *name)
     }
 
     if (! proc) {
-        uifw_warn("ico_uxf_process_execute: Leave(ENOENT)");
+        uifw_warn("ico_uxf_process_execute: Leave(%s ENOENT)", name);
         return ICO_UXF_ENOENT;
     }
 
@@ -73,7 +73,7 @@ ico_uxf_process_execute(const char *name)
 
     if (proc->attr.status != ICO_UXF_PROCSTATUS_STOP)   {
         ico_uxf_leave_critical();           /* leave critical section           */
-        uifw_warn("ico_uxf_process_execute: Leave(EBUSY)");
+        uifw_warn("ico_uxf_process_execute: Leave(%s EBUSY)", name);
         return ICO_UXF_EBUSY;
     }
 
@@ -84,8 +84,8 @@ ico_uxf_process_execute(const char *name)
     /* execute program                      */
     proc->attr.internalid = aul_launch_app(name , NULL);
     if (proc->attr.internalid < 0)  {
-        uifw_error("ico_uxf_process_execute: Leave(ENOSYS), Launch App Error(%d)",
-                   proc->attr.internalid);
+        uifw_error("ico_uxf_process_execute: Leave(%s ENOSYS), Launch App Error(%d)",
+                   name, proc->attr.internalid);
         proc->attr.status = ICO_UXF_PROCSTATUS_STOP;
         return ICO_UXF_ENOSYS;
     }
