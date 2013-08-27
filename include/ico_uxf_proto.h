@@ -71,6 +71,8 @@ int ico_uxf_window_visible_raise(const int window,
                                         /* Set window show/hide and raise/lower */
 int ico_uxf_window_resize(const int window, const int w, const int h);
                                         /* Resize window size                   */
+int ico_uxf_window_resize_flag(const int window, const int w, const int h, const int flag);
+                                        /* Resize window size (with option)     */
 int ico_uxf_window_move(const int window, const int x, const int y, const int anima);
                                         /* Move window                          */
 int ico_uxf_window_raise(const int window);
@@ -128,14 +130,6 @@ int ico_uxf_wl_display_fd(void);
                                         /* Get wayland connect file descriptor  */
 struct wl_display *ico_uxf_wl_display(void);
                                         /* Get wayland display                  */
-struct wl_compositor *ico_uxf_wl_compositor(void);
-                                        /* Get wayland compositor               */
-struct wl_egl_window *ico_uxf_wl_egl_window(const int window);
-                                        /* Get EGL window(surface)              */
-struct wl_surface *ico_uxf_wayland_surface(const int window);
-                                        /* Get wayland surface                  */
-int ico_uxf_wl_display_fd(void);
-                                        /* Get wayland connect file descriptor  */
 #ifdef __cplusplus
 }
 #endif

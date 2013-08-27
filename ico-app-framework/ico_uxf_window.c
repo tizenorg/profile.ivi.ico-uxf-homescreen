@@ -64,8 +64,7 @@ ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng, const int show, const
                     (raise == ICO_WINDOW_MGR_RAISE_LOWER))  {
                     ico_window_mgr_set_visible(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
                                                winmng->attr.window,
-                                               ICO_WINDOW_MGR_V_NOCHANGE, raise,
-                                               ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
+                                               ICO_WINDOW_MGR_V_NOCHANGE, raise, 0);
                     if ((show & 0x00010000) == 0)   {
                         wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
                     }
@@ -83,8 +82,7 @@ ico_uxf_window_visible_control(Ico_Uxf_Mng_Window *winmng, const int show, const
     ico_window_mgr_set_visible(gIco_Uxf_Api_Mng.Wayland_WindowMgr,
                                winmng->attr.window, showshow & (~ICO_UXF_WITHANIMA), raise,
                                (showshow & ICO_UXF_WITHANIMA) ?
-                                 ICO_WINDOW_MGR_ANIMATION_ANIMATION :
-                                 ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
+                                 ICO_WINDOW_MGR_FLAGS_ANIMATION : 0);
     if ((show & 0x00010000) == 0)   {
         wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
     }
@@ -194,11 +192,12 @@ ico_uxf_layer_visible(const int display, const int layer, const int visible)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_uxf_window_resize: resize window(surface) size
+ * @brief   ico_uxf_window_resize_flag: resize window(surface) size
  *
  * @param[in]   window          window Id(same as ico_window_mgr surface Id)
  * @param[in]   w               window width
  * @param[in]   h               window height
+ * @param[in]   flag            0=send resize event to client/1=no send
  * @return      result
  * @retval      ICO_UXF_EOK     success
  * @retval      ICO_UXF_ESRCH   error(not initialized)
@@ -206,11 +205,11 @@ ico_uxf_layer_visible(const int display, const int layer, const int visible)
  */
 /*--------------------------------------------------------------------------*/
 ICO_APF_API int
-ico_uxf_window_resize(const int window, const int w, const int h)
+ico_uxf_window_resize_flag(const int window, const int w, const int h, const int flag)
 {
     Ico_Uxf_Mng_Window  *winmng;
 
-    uifw_trace("ico_uxf_window_resize: Enter(%08x,%d,%d)", window, w, h);
+    uifw_trace("ico_uxf_window_resize: Enter(%08x,%d,%d,%d)", window, w, h, flag);
 
     if (gIco_Uxf_Api_Mng.Initialized <= 0) {
         uifw_warn("ico_uxf_window_resize: Leave(ESRCH)");
@@ -236,11 +235,30 @@ ico_uxf_window_resize(const int window, const int w, const int h)
                                     winmng->attr.node,
                                     ICO_WINDOW_MGR_V_NOCHANGE, ICO_WINDOW_MGR_V_NOCHANGE,
                                     winmng->attr.w, winmng->attr.h,
-                                    ICO_WINDOW_MGR_ANIMATION_NOANIMATION);
+                                      (flag ? ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE : 0));
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
 
     uifw_trace("ico_uxf_window_resize: Leave(EOK)");
     return ICO_UXF_EOK;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_uxf_window_resize: resize window(surface) size
+ *
+ * @param[in]   window          window Id(same as ico_window_mgr surface Id)
+ * @param[in]   w               window width
+ * @param[in]   h               window height
+ * @return      result
+ * @retval      ICO_UXF_EOK     success
+ * @retval      ICO_UXF_ESRCH   error(not initialized)
+ * @retval      ICO_UXF_ENOENT  error(layer dose not exist)
+ */
+/*--------------------------------------------------------------------------*/
+ICO_APF_API int
+ico_uxf_window_resize(const int window, const int w, const int h)
+{
+    return ico_uxf_window_resize_flag(window, w, h, 0);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -281,9 +299,8 @@ ico_uxf_window_move(const int window, const int x, const int y, const int animat
     ico_window_mgr_set_positionsize(gIco_Uxf_Api_Mng.Wayland_WindowMgr, window,
                                     winmng->attr.node, winmng->attr.x, winmng->attr.y,
                                     ICO_WINDOW_MGR_V_NOCHANGE, ICO_WINDOW_MGR_V_NOCHANGE,
-                                    (animation == 0) ?
-                                      ICO_WINDOW_MGR_ANIMATION_NOANIMATION :
-                                      ICO_WINDOW_MGR_ANIMATION_ANIMATION);
+                                    ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE |
+                                    ((animation != 0) ? ICO_WINDOW_MGR_FLAGS_ANIMATION : 0));
     wl_display_flush(gIco_Uxf_Api_Mng.Wayland_Display);
 
     uifw_trace("ico_uxf_window_move: Leave(EOK)");
@@ -651,14 +668,18 @@ ico_uxf_window_control(const char *appid, const int winidx,
     else    {
         /* get current application status       */
         if (winidx >= 0)    {
-            nwin = ico_uxf_process_window_get_one(appid, procattr, winidx);
-            if (nwin == 0)  nwin = 1;
+            if (ico_uxf_process_window_get_one(appid, procattr, winidx) == ICO_UXF_EOK) {
+                nwin = 1;
+            }
+            else    {
+                nwin = 0;
+            }
         }
         else    {
             /* all window           */
             nwin = ico_uxf_process_window_get(appid, procattr, MAX_APP_WINDOWS);
         }
-        if (nwin == ICO_UXF_E2BIG)  nwin = MAX_APP_WINDOWS;
+        if ((nwin == ICO_UXF_E2BIG) || (nwin > MAX_APP_WINDOWS))  nwin = MAX_APP_WINDOWS;
         if (nwin < 0)  {
             uifw_trace("ico_uxf_window_control: Leave(Unknown appid(%s))", appid);
             return ICO_UXF_ENOENT;

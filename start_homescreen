@@ -12,7 +12,7 @@
 sleep 0.3
 
 # 3. Start Weston
-/usr/bin/weston-launch -- -i0 --log=/var/log/ico/weston.log &
+/usr/bin/weston-launch --user app -- -i0 --log=/var/log/ico/weston.log &
 sync;sync
 #sleep 0.8
 #if [ -e $XDG_RUNTIME_DIR/wayland-0 ] ; then

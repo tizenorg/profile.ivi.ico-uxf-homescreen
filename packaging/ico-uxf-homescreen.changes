@@ -1,4 +1,12 @@
+* Tue Aug 27 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen/20130823.170014@f9ac279
+- 0.7.03 release.
+-- Correction with the interface change of ico-uxf-weston-plugin.
+-- Change of the application thumbnail indication of the menu screen.
+-- Fix for TIVI-1669 - Homescreen fails to launch webruntime apps.
+-- It became the error to acquire appid from pid(aul_app_get_appid_bypid) before start completion of Web Application.
+
 * Wed Aug 21 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130612.174826@ce96c7c
+- 0.7.02 release
 - Add LICENSE.
 - Fix spec file.
 -- Corrected license field.

@@ -23,4 +23,9 @@ killall -9 dialer 2> /dev/null
 killall -9 calculator 2> /dev/null
 killall -9 memo 2> /dev/null
 killall -9 smartsearch 2> /dev/null
-
+killall -9 WebProcess 2> /dev/null
+kill -9 `ps ax | grep wrt_launchpad_daemon_candidate | grep -v grep | cut -c1-6` 2> /dev/null
+killall -9 WebProcess 2> /dev/null
+kill -9 `ps ax | grep wrt_launchpad_daemon_candidate | grep -v grep | cut -c1-6` 2> /dev/null
+killall -9 WebProcess 2> /dev/null
+kill -9 `ps ax | grep wrt_launchpad_daemon_candidate | grep -v grep | cut -c1-6` 2> /dev/null
