@@ -1,40 +1,44 @@
 Name:       ico-uxf-homescreen
-Summary:    Sample homescreen
-Version:    0.7.03
-Release:    1.1
-Group:      Graphics & UI Framework/Automotive UI
+Summary:    Sample homescreen and system controller
+Version:    0.9.01
+Release:    1.3
+Group:		Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.2
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.7.01
 BuildRequires: pkgconfig(glib-2.0)
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.7.03
+BuildRequires: pkgconfig(ecore)
+BuildRequires: pkgconfig(ecore-wayland)
 BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(evas)
 BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(edje)
 BuildRequires: pkgconfig(elementary)
-BuildRequires: pkgconfig(ecore-wayland)
-BuildRequires: pkgconfig(ecore-x)
 BuildRequires: pkgconfig(dbus-1)
 BuildRequires: pkgconfig(json-glib-1.0)
 BuildRequires: pkgconfig(aul)
-BuildRequires: pkgconfig(bundle)
 BuildRequires: pkgconfig(ail)
+BuildRequires: pkgconfig(bundle)
 BuildRequires: pkgconfig(pkgmgr)
+BuildRequires: pkgconfig(capi-appfw-application)
 BuildRequires: pkgconfig(libwebsockets)
-BuildRequires: capi-base-common-devel
-BuildRequires: edje-tools
-BuildRequires: ico-uxf-utilities-devel
-BuildRequires: fdupes
-BuildRequires: systemd
+BuildRequires: pkgconfig(murphy-common)
+BuildRequires: pkgconfig(murphy-domain-controller)
+BuildRequires: pkgconfig(murphy-ecore)
+BuildRequires: pkgconfig(murphy-resource)
+BuildRequires: boost-devel
+BuildRequires: ico-uxf-utilities-devel >= 0.2.01
 Requires: weston >= 1.2
+Requires: ico-uxf-weston-plugin >= 0.7.01
+Requires: ico-uxf-utilities >= 0.2.01
 
 %description
-Sample homescreen application.
+sample homescreen & system controller.
 
-%package devel
+%package system-controller-devel
 Summary:  Development files for %{name}
 Group:    Graphics & UI Framework/Development
 Requires: %{name} = %{version}-%{release}
@@ -46,129 +50,126 @@ Requires: pkgconfig(edje)
 Requires: pkgconfig(elementary)
 Requires: pkgconfig(ecore-wayland)
 Requires: pkgconfig(ecore-x)
-Requires: ico-uxf-utilities-devel
+Requires: pkgconfig(glib-2.0)
 
-%description devel
+%description system-controller-devel
 Development files for application that communicate homescreen.
 
 %prep
 %setup -q -n %{name}-%{version}
 
-%define PREFIX %{_prefix}/apps/
-
 %build
 %autogen
-
-%configure
 make %{?_smp_mflags}
-
-%define ico_unitdir_user %{_libdir}/systemd/user
 
 %install
 rm -rf %{buildroot}
+
 %make_install
 
-mkdir -p %{buildroot}%{_datadir}/applications/
-mkdir -p %{buildroot}%{_datadir}/packages/
+HOMESCREENDIR="%{buildroot}/usr/apps/org.tizen.ico.homescreen"
+IMGDIR="res/org.tizen.ico.homescreen/res/images"
+mkdir -p ${HOMESCREENDIR}/bin
+mkdir -p ${HOMESCREENDIR}/var
+mkdir -p ${HOMESCREENDIR}/res/images
+mkdir -p ${HOMESCREENDIR}/res/edj
+mkdir -p ${HOMESCREENDIR}/res/config
+mkdir -p %{buildroot}/bin
+mkdir -p %{buildroot}/usr/share/applications
+mkdir -p %{buildroot}/usr/share/packages
+cp -fr res/org.tizen.ico.homescreen/res/config ${HOMESCREENDIR}/res
+cp -fr data/apps/org.tizen.ico.homescreen %{buildroot}/usr/apps/
+cp src/homescreen/HomeScreen ${HOMESCREENDIR}/bin
+cp src/homescreen/home_screen_bg.edj ${HOMESCREENDIR}/res/edj
+cp src/homescreen/home_screen_touch.edj ${HOMESCREENDIR}/res/edj
+chmod 666 ${HOMESCREENDIR}/res/edj/home_screen_*
+cp ${IMGDIR}/bg.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/ctrl.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/applist_off.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/api_all_off.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/api_all_on.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/pagePointer_n.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/pagePointer_p.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/button_really.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/button_no.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/button_yes.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/termIcon.png ${HOMESCREENDIR}/res/images
+cp ${IMGDIR}/tizen_32.png ${HOMESCREENDIR}/res/images
+chmod 666 ${HOMESCREENDIR}/res/images/api_all_*
+cp data/share/packages/org.tizen.ico.homescreen.xml %{buildroot}/usr/share/packages
+cp res/org.tizen.ico.homescreen/res/apps/org.tizen.ico.homescreen/* ${HOMESCREENDIR}/res/config
 
-# include
-mkdir -p %{buildroot}/%{_includedir}/ico-appfw/
-cp -f include/ico_apf.h %{buildroot}/%{_includedir}/ico-appfw/
-cp -f include/ico_apf_error.h %{buildroot}/%{_includedir}/ico-appfw/
-cp -f include/ico_apf_resource_control.h %{buildroot}/%{_includedir}/ico-appfw/
-cp -f include/ico_apf_ecore.h %{buildroot}/%{_includedir}/ico-appfw/
-cp -f include/ico_apf_log.h %{buildroot}/%{_includedir}/ico-appfw/
-cp -f include/ico_uxf_sysdef.h %{buildroot}/%{_includedir}/ico-appfw/
+STATUSBARDIR="%{buildroot}/usr/apps/org.tizen.ico.statusbar"
+mkdir -p ${STATUSBARDIR}/res/images
+mkdir -p ${STATUSBARDIR}/res/edj
+mkdir -p ${STATUSBARDIR}/res/config
+mkdir -p ${STATUSBARDIR}/bin
+cp -rf data/apps/org.tizen.ico.statusbar %{buildroot}/usr/apps/
+cp src/homescreen/StatusBar ${STATUSBARDIR}/bin/
+cp res/org.tizen.ico.homescreen/res/images/time*.png ${STATUSBARDIR}/res/images
+cp res/org.tizen.ico.homescreen/res/images/applist_*.png ${STATUSBARDIR}/res/images
+cp res/org.tizen.ico.homescreen/res/images/home*.png ${STATUSBARDIR}/res/images
+chmod 666 ${STATUSBARDIR}/res/images/time*.png
+cp data/share/packages/org.tizen.ico.statusbar.xml %{buildroot}/usr/share/packages
+cp res/org.tizen.ico.homescreen/res/apps/org.tizen.ico.statusbar/* ${STATUSBARDIR}/res/config
+#make install prefix=%{buildroot}/usr
 
-# homescreen
-%define APP org.tizen.ico.homescreen
-%define APPSDIR %{PREFIX}/%{APP}
-mkdir -p %{buildroot}%{APPSDIR}/bin/
-mkdir -p %{buildroot}%{APPSDIR}/res/edj
-mkdir -p %{buildroot}%{APPSDIR}/res/images
-mkdir -p %{buildroot}%{APPSDIR}/res/config
-cp -rf data/apps/%{APP} %{buildroot}/%{PREFIX}/
-cp -rf res/config %{buildroot}%{APPSDIR}/res/
-cp -rf res/apps/%{APP}/* %{buildroot}%{APPSDIR}/res/config/
-install -m 0755 src/HomeScreen %{buildroot}%{APPSDIR}/bin/
-install -m 0644 src/home_screen_bg.edj %{buildroot}%{APPSDIR}/res/edj
-install -m 0644 src/home_screen_touch.edj %{buildroot}%{APPSDIR}/res/edj
-install -m 0644 res/images/api_all_off.png %{buildroot}%{APPSDIR}/res/images
-install -m 0644 res/images/api_all_on.png %{buildroot}%{APPSDIR}/res/images
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}%{_datadir}/applications/
-install -m 0644 data/share/packages/%{APP}.xml %{buildroot}%{_datadir}/packages/
-
-#statusbar
-%define APP org.tizen.ico.statusbar
-%define APPSDIR %{PREFIX}/%{APP}
-mkdir -p %{buildroot}%{APPSDIR}/bin/
-mkdir -p %{buildroot}%{APPSDIR}/res/edj
-mkdir -p %{buildroot}%{APPSDIR}/res/images
-mkdir -p %{buildroot}%{APPSDIR}/res/config
-cp -rf data/apps/%{APP} %{buildroot}/%{PREFIX}/
-cp -rf res/apps/%{APP}/* %{buildroot}%{APPSDIR}/res/config/
-install -m 0755 src/StatusBar %{buildroot}%{APPSDIR}/bin/
-install -m 0644 res/images/time*.png %{buildroot}%{APPSDIR}/res/images/
-install -m 0644 res/images/applist_*.png %{buildroot}%{APPSDIR}/res/images/
-install -m 0644 res/images/home*.png %{buildroot}%{APPSDIR}/res/images/
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}%{_datadir}/applications/
-install -m 0644 data/share/packages/%{APP}.xml %{buildroot}%{_datadir}/packages/
-
-#onscreen
-%define APP org.tizen.ico.onscreen
-%define APPSDIR %{PREFIX}/%{APP}
-mkdir -p %{buildroot}%{APPSDIR}/bin/
-mkdir -p %{buildroot}%{APPSDIR}/res/edj
-mkdir -p %{buildroot}%{APPSDIR}/res/images
-mkdir -p %{buildroot}%{APPSDIR}/res/config
-cp -rf data/apps/%{APP} %{buildroot}/%{PREFIX}/
-cp -rf res/apps/%{APP}/* %{buildroot}%{APPSDIR}/res/config/
-install -m 0755 src/OnScreen %{buildroot}%{APPSDIR}/bin/
-install -m 0644 src/appli_list.edj %{buildroot}%{APPSDIR}/res/edj/
-install -m 0644 src/appli_kill.edj %{buildroot}%{APPSDIR}/res/edj/
-install -m 0644 data/share/applications/%{APP}.desktop %{buildroot}%{_datadir}/applications/
-install -m 0644 data/share/packages/%{APP}.xml %{buildroot}%{_datadir}/packages/
-
-#settings
-mkdir -p %{buildroot}/opt/etc/ico/
-install -m 0644 settings/mediation_table.txt  %{buildroot}/opt/etc/ico/
-mkdir -p %{buildroot}%{ico_unitdir_user}/weston.target.wants
-install -m 0644 settings/ico_homescreen.service %{buildroot}%{ico_unitdir_user}
-ln -sf ../ico_homescreen.service %{buildroot}%{ico_unitdir_user}/weston.target.wants/
-
-%fdupes -s %buildroot/%{PREFIX}
-
-# Update the package database (post only).
 %post
 /sbin/ldconfig
 mkdir -p %{_localstatedir}/log/ico/
 chmod 0777 %{_localstatedir}/log/ico/
+
+# Update the app database.
 %{_bindir}/pkg_initdb
 %{_bindir}/ail_initdb
 
-%postun -p /sbin/ldconfig
+%preun
+
+%postun
+/sbin/ldconfig
+rm -f /usr/share/applications/org.tizen.ico.homescreen.desktop
+rm -f /usr/share/applications/org.tizen.ico.statusbar.desktop
+rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
+rm -f /home/app/layout.txt
+
+# Update the app database.
+%{_bindir}/pkg_initdb
+%{_bindir}/ail_initdb
 
 %files
 %defattr(-,root,root,-)
-%license LICENSE-2.0
-%{PREFIX}/org.tizen.ico.homescreen
-%{PREFIX}/org.tizen.ico.statusbar
-%{PREFIX}/org.tizen.ico.onscreen
-%{_datadir}/applications/*.desktop
-%{_datadir}/packages/*.xml
-/opt/etc/ico/mediation_table.txt
-%{ico_unitdir_user}/ico_homescreen.service
-%{ico_unitdir_user}/weston.target.wants/ico_homescreen.service
+/usr/apps/org.tizen.ico.homescreen
+/usr/apps/org.tizen.ico.statusbar
+/usr/share/packages/org.tizen.ico.homescreen.xml
+/usr/share/packages/org.tizen.ico.statusbar.xml
+%{_libdir}/libico-appfw.*
+%{_libdir}/libico-state-machine.*
+/usr/apps/org.tizen.ico.system-controller
+/usr/share/packages/org.tizen.ico.system-controller.xml
+/usr/lib/systemd/user/ico-system-controller.service
+/usr/lib/systemd/user/weston.target.wants/ico-system-controller.service
 
-%{_libdir}/*.so.*
-%{_bindir}/ico_*
-
-%files devel
+%files system-controller-devel
 %defattr(-,root,root,-)
-%{_includedir}/ico-appfw/ico_apf.h
-%{_includedir}/ico-appfw/ico_apf_error.h
-%{_includedir}/ico-appfw/ico_apf_resource_control.h
-%{_includedir}/ico-appfw/ico_apf_ecore.h
-%{_includedir}/ico-appfw/ico_apf_log.h
-%{_includedir}/ico-appfw/ico_uxf_sysdef.h
-%{_libdir}/*.so
+%{_includedir}/ico-appfw/ico_syc_application.h
+%{_includedir}/ico-appfw/ico_syc_appresctl.h
+%{_includedir}/ico-appfw/ico_syc_common.h
+%{_includedir}/ico-appfw/ico_syc_error.h
+%{_includedir}/ico-appfw/ico_syc_inputctl.h
+%{_includedir}/ico-appfw/ico_syc_private.h
+%{_includedir}/ico-appfw/ico_syc_privilege.h
+%{_includedir}/ico-appfw/ico_syc_type.h
+%{_includedir}/ico-appfw/ico_syc_userctl.h
+%{_includedir}/ico-appfw/ico_syc_winctl.h
+%{_includedir}/ico-state-machine/CicoBlockParser.h
+%{_includedir}/ico-state-machine/CicoEvent.h
+%{_includedir}/ico-state-machine/CicoEventInfo.h
+%{_includedir}/ico-state-machine/CicoFinalState.h
+%{_includedir}/ico-state-machine/CicoHistoryState.h
+%{_includedir}/ico-state-machine/CicoState.h
+%{_includedir}/ico-state-machine/CicoStateAction.h
+%{_includedir}/ico-state-machine/CicoStateCore.h
+%{_includedir}/ico-state-machine/CicoStateMachine.h
+%{_includedir}/ico-state-machine/CicoStateMachineCreator.h
+%{_libdir}/libico-appfw.*
+%{_libdir}/libico-state-machine.*

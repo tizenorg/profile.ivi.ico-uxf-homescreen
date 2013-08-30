@@ -1,9 +1,8 @@
-[Desktop Entry]
 Name=StatusBar
 Type=menu
-Exec=/usr/apps/org.tizen.ico.statusbar/bin/StatusBar
+Exec=/opt/apps/org.tizen.ico.statusbar/bin/StatusBar
 Icon=org.tizen.ico.statusbar.png
 NoDisplay=false
-Version=0.7.0
+Version=0.1.0
 Comment=status bar app
 Categories=Menu;HomeScreen;run=Center;auto

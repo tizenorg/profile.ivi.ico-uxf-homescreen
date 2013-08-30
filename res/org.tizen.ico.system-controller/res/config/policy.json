@@ -1,0 +1,728 @@
+"stateMachine":{
+  "name":"Policy",
+  "value":1,
+  "initial":[1001,2001,3001,9100,10100,12100,14100,16100,18100,20100,22100,24100,30100,32100],
+  "state":{
+    "name":"Driving",
+    "value":1000,
+    "state":{
+      "name":"Stopping",
+      "value":1001,
+      "event":{ "name":"EV1000","value":1000, "transition":1002, "guardCondition":[{"operator":">","value":0 }]}
+    },
+    "state":{
+      "name":"Running",
+      "value":1002,
+      "event":{ "name":"EV1000","value":1000, "transition":1001, "guardCondition":[{"operator":"=","value":0 }]}
+    }
+  },
+
+  "state":{
+    "name":"ShiftPos",
+    "value":2000,
+    "state":{
+      "name":"Parking",
+      "value":2001,
+      "event":{ "name":"EV2000","value":2000, "transition":2002, "guardCondition":[{"operator":"=","value":2 }]},
+      "event":{ "name":"EV2000","value":2000, "transition":2003, "guardCondition":[{             "operator":"!=","value":1},
+                                                                                   {"join":"and","operator":"!=","value":2}]}
+    },
+    "state":{
+      "name":"Reverse",
+      "value":2002,
+      "event":{ "name":"EV2000","value":2000, "transition":2001, "guardCondition":[{"operator":"=","value":1 }]},
+      "event":{ "name":"EV2000","value":2000, "transition":2003, "guardCondition":[{             "operator":"!=","value":1},
+                                                                                   {"join":"and","operator":"!=","value":2}]}
+    },
+    "state":{
+      "name":"OtherShiftPos",
+      "value":2003,
+      "event":{ "name":"EV2000","value":2000, "transition":2001, "guardCondition":[{"operator":"=","value":1 }]},
+      "event":{ "name":"EV2000","value":2000, "transition":2002, "guardCondition":[{"operator":"=","value":2 }]}
+    }
+  },
+
+  "state":{
+    "name":"Winker",
+    "value":3000,
+    "state":{
+      "name":"WinkerOff",
+      "value":3001,
+      "event":{ "name":"EV3000","value":3000, "transition":3002, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV3000","value":3000, "transition":3003, "guardCondition":[{"operator":"=","value":2}]}
+    },
+    "state":{
+      "name":"RightWinker",
+      "value":3002,
+      "event":{ "name":"EV3000","value":3000, "transition":3001, "guardCondition":[{"operator":"=","value":0}]},
+      "event":{ "name":"EV3000","value":3000, "transition":3003, "guardCondition":[{"operator":"=","value":2}]}
+    },
+    "state":{
+      "name":"LeftWinker",
+      "value":3003,
+      "event":{ "name":"EV3000","value":3000, "transition":3001, "guardCondition":[{"operator":"=","value":0}]},
+      "event":{ "name":"EV3000","value":3000, "transition":3002, "guardCondition":[{"operator":"=","value":1}]}
+    }
+  },
+
+  "state":{
+    "name":"DrivingRegulation",
+    "value":9000,
+    "state":{
+      "name":"NotRegulating",
+      "value":9100,
+      "event":{ "name":"EV9000","value":9000, "transition":9200, "guardCondition":[{"operator":"in","value":"Running"}]}
+    },
+    "state":{
+      "name":"Regulating",
+      "value":9200,
+      "event":{ "name":"EV9000","value":9000, "transition":9100, "guardCondition":[{"operator":"in","value":"Stopping"}]}
+    }
+  },
+
+  "state":{
+    "name":"Zone1",
+    "value":10000,
+    "state":{
+      "name":"Zone1_Invisible",
+      "value":10100,
+      "event":{ "name":"EV10000","value":10000, "transition":10200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"LeftWinker"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"RightWinker"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Zone1_Menu",
+      "value":10200,
+      "event":{ "name":"EV10001","value":10001, "transition":10100},
+      "event":{ "name":"EV10000","value":10000, "transition":10300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"LeftWinker"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"RightWinker"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Zone1_Message",
+      "value":10300,
+      "event":{ "name":"EV10001","value":10001, "transition":10100},
+      "event":{ "name":"EV10000","value":10000, "transition":10200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"LeftWinker"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"RightWinker"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Zone1_Map",
+      "value":10400,
+      "event":{ "name":"EV10001","value":10001, "transition":10100},
+      "event":{ "name":"EV10000","value":10000, "transition":10200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+      "event":{ "name":"EV10860","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"LeftWinker"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"RightWinker"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Zone1_Driving",
+      "value":10500,
+      "event":{ "name":"EV10001","value":10001, "transition":10100},
+      "event":{ "name":"EV10200","value":10000, "transition":10200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV10300","value":10000, "transition":10300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV10400","value":10000, "transition":10400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"LeftWinker"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"RightWinker"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Zone1_Camera",
+      "value":10600,
+      "state":{
+        "name":"Zone1_BackCamera",
+        "value":10601,
+        "event":{ "name":"EV10600","value":10600, "transition":10100, "guardCondition":[{"operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"NoWinker"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"LeftWinker"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"RightWinker"}]}
+      },
+      "state":{
+        "name":"Zone1_LeftCamera",
+        "value":10602,
+        "event":{ "name":"EV10600","value":10600, "transition":10100, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"NoWinker"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"RightWinker"}]}
+      },
+      "state":{
+        "name":"Zone1_RightCamera",
+        "value":10603,
+        "event":{ "name":"EV10600","value":10600, "transition":10100, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"NoWinker"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"LeftWinker"}]}
+      }
+    },
+
+    "state":{
+      "name":"Zone1_Entertainment",
+      "value":10900,
+      "event":{ "name":"EV10001","value":10001, "transition":10100},
+      "event":{ "name":"EV10000","value":10900, "transition":10100, "guardCondition":[{"operator":"in","value":"Regulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV10000","value":10000, "transition":10500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"LeftWinker"}]},
+      "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                      {"join":"and","operator":"in","value":"RightWinker"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV10000","value":10000, "transition":11002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Zone1_Entertainment2",
+      "value":11000,
+      "state":{
+        "name":"Zone1_Entertainment2_Visible",
+        "value":11001,
+        "event":{ "name":"EV10000","value":10001, "transition":10100},
+        "event":{ "name":"EV10000","value":10000, "transition":10200, "guardCondition":[{"operator":"=","value":1}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10300, "guardCondition":[{"operator":"=","value":2}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10400, "guardCondition":[{"operator":"=","value":3}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10500, "guardCondition":[{"operator":"=","value":4}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"LeftWinker"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"RightWinker"}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                        {"join":"and", "operator":"in","value":"NotRegulating"}]},
+        "event":{ "name":"EV10000","value":10000, "transition":11002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                        {"join":"and", "operator":"in","value":"Regulating"}]}
+      },
+      "state":{
+        "name":"Zone1_Entertainment2_GrayScale",
+        "value":11002,
+        "event":{ "name":"EV10000","value":10001, "transition":10100},
+        "event":{ "name":"EV10000","value":10000, "transition":10200, "guardCondition":[{"operator":"=","value":1}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10300, "guardCondition":[{"operator":"=","value":2}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10400, "guardCondition":[{"operator":"=","value":3}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10500, "guardCondition":[{"operator":"=","value":4}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10601, "guardCondition":[{"operator":"in","value":"Reverse"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10602, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"LeftWinker"}]},
+        "event":{ "name":"EV10600","value":10600, "transition":10603, "guardCondition":[{             "operator":"not","value":"Reverse"},
+                                                                                        {"join":"and","operator":"in","value":"RightWinker"}]},
+        "event":{ "name":"EV10000","value":10000, "transition":10900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                        {"join":"and", "operator":"in","value":"NotRegulating"}]},
+        "event":{ "name":"EV10000","value":10000, "transition":11001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                        {"join":"and", "operator":"in","value":"NotRegulating"}]}
+      }
+    }
+  },
+
+  "state":{
+    "name":"Screen2",
+    "value":12000,
+
+    "state":{
+      "name":"Screen2_Invisible",
+      "value":12100,
+      "event":{ "name":"EV12000","value":12000, "transition":12200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Screen2_Menu",
+      "value":12200,
+      "event":{ "name":"EV12001","value":12001, "transition":12100},
+      "event":{ "name":"EV12000","value":12000, "transition":12300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Screen2_Message",
+      "value":12300,
+      "event":{ "name":"EV12001","value":12001, "transition":12100},
+      "event":{ "name":"EV12000","value":12000, "transition":12200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Screen2_Map",
+      "value":12400,
+      "event":{ "name":"EV12001","value":12001, "transition":12100},
+      "event":{ "name":"EV12000","value":12000, "transition":12200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Screen2_Driving",
+      "value":12500,
+      "event":{ "name":"EV12001","value":12001, "transition":12100},
+      "event":{ "name":"EV12200","value":12000, "transition":12200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV12300","value":12000, "transition":12300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV12400","value":12000, "transition":12400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Screen2_Entertainment",
+      "value":12900,
+      "event":{ "name":"EV12001","value":12001, "transition":12100},
+      "event":{ "name":"EV12000","value":12900, "transition":12100, "guardCondition":[{"operator":"in","value":"Regulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV12000","value":12000, "transition":12500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV12000","value":12000, "transition":13002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                      {"join":"and", "operator":"in","value":"Regulating"}]}
+    },
+
+    "state":{
+      "name":"Screen2_Entertainment2",
+      "value":13000,
+      "state":{
+        "name":"Screen2_Entertainment2_Visible",
+        "value":13001,
+        "event":{ "name":"EV12000","value":12001, "transition":12100},
+        "event":{ "name":"EV12000","value":12000, "transition":12200, "guardCondition":[{"operator":"=","value":1}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12300, "guardCondition":[{"operator":"=","value":2}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12400, "guardCondition":[{"operator":"=","value":3}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12500, "guardCondition":[{"operator":"=","value":4}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                        {"join":"and", "operator":"in","value":"NotRegulating"}]},
+        "event":{ "name":"EV12000","value":12000, "transition":13002, "guardCondition":[{              "operator":"=","value":9},
+                                                                                        {"join":"and", "operator":"in","value":"Regulating"}]}
+      },
+      "state":{
+        "name":"Screen2_Entertainment2_GrayScale",
+        "value":13002,
+        "event":{ "name":"EV12000","value":12001, "transition":12100},
+        "event":{ "name":"EV12000","value":12000, "transition":12200, "guardCondition":[{"operator":"=","value":1}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12300, "guardCondition":[{"operator":"=","value":2}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12400, "guardCondition":[{"operator":"=","value":3}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12500, "guardCondition":[{"operator":"=","value":4}]},
+        "event":{ "name":"EV12000","value":12000, "transition":12900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                        {"join":"and", "operator":"in","value":"NotRegulating"}]},
+        "event":{ "name":"EV12000","value":12000, "transition":13001, "guardCondition":[{              "operator":"=","value":9},
+                                                                                        {"join":"and", "operator":"in","value":"NotRegulating"}]}
+      }
+    }
+  },
+
+  "state":{
+    "name":"OnScreen",
+    "value":14000,
+    "state":{
+      "name":"OnScreen_Invisible",
+      "value":14100,
+      "event":{ "name":"EV14000","value":14000, "transition":14200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV14000","value":14000, "transition":14300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV14000","value":14000, "transition":14400, "guardCondition":[{"operator":"=","value":3}]}
+    },
+    "state":{
+      "name":"OnScreen_Warning",
+      "value":14200,
+      "event":{ "name":"EV14001","value":14001, "transition":14100}
+    },
+    "state":{
+      "name":"OnScreen_Attention",
+      "value":14300,
+      "event":{ "name":"EV14001","value":14001, "transition":14100},
+      "event":{ "name":"EV14000","value":14000, "transition":14200, "guardCondition":[{"operator":"=","value":1}]}
+    },
+    "state":{
+      "name":"OnScreen_Message",
+      "value":14400,
+      "event":{ "name":"EV14001","value":14001, "transition":14100},
+      "event":{ "name":"EV14000","value":14000, "transition":14200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV14000","value":14000, "transition":14300, "guardCondition":[{"operator":"=","value":2}]}
+    }
+  },
+
+  "state":{
+    "name":"IntZone1",
+    "value":16000,
+    "state":{
+      "name":"IntZone1_Invisible",
+      "value":16100,
+      "event":{ "name":"EV16000","value":16000, "transition":16200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV16000","value":16000, "transition":16300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV16000","value":16000, "transition":16400, "guardCondition":[{"operator":"=","value":3}]}
+    },
+    "state":{
+      "name":"IntZone1_Priority1",
+      "value":16200,
+      "event":{ "name":"EV16000","value":16001, "transition":16100}
+    },
+    "state":{
+      "name":"IntZone1_Priority2",
+      "value":16300,
+      "event":{ "name":"EV16000","value":16001, "transition":16100},
+      "event":{ "name":"EV16000","value":16000, "transition":16200, "guardCondition":[{"operator":"=","value":1}]}
+    },
+    "state":{
+      "name":"IntZone1_Priority3",
+      "value":16400,
+      "event":{ "name":"EV16000","value":16001, "transition":16100},
+      "event":{ "name":"EV16000","value":16000, "transition":16200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV16000","value":16000, "transition":16300, "guardCondition":[{"operator":"=","value":2}]}
+    }
+  },
+  "state":{
+    "name":"IntScreen2",
+    "value":18000,
+    "state":{
+      "name":"IntScreen2_Invisible",
+      "value":18100,
+      "event":{ "name":"EV18000","value":18000, "transition":18200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV18000","value":18000, "transition":18300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV18000","value":18000, "transition":18400, "guardCondition":[{"operator":"=","value":3}]}
+    },
+    "state":{
+      "name":"IntScreen2_Priority1",
+      "value":18200,
+      "event":{ "name":"EV18000","value":18001, "transition":18100}
+    },
+    "state":{
+      "name":"IntScreen2_Priority2",
+      "value":18300,
+      "event":{ "name":"EV18000","value":18001, "transition":18100},
+      "event":{ "name":"EV18000","value":18000, "transition":18200, "guardCondition":[{"operator":"=","value":1}]}
+    },
+    "state":{
+      "name":"IntScreen2_Priority3",
+      "value":18400,
+      "event":{ "name":"EV18000","value":18001, "transition":18100},
+      "event":{ "name":"EV18000","value":18000, "transition":18200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV18000","value":18000, "transition":18300, "guardCondition":[{"operator":"=","value":2}]}
+    }
+  },
+  "state":{
+    "name":"AllSpeaker",
+    "value":20000,
+    "state":{
+      "name":"AllSpeaker_NoOutput",
+      "value":20100,
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_Menu",
+      "value":20200,
+      "event":{ "name":"EV20001","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_Message",
+      "value":20300,
+      "event":{ "name":"EV20001","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_Map",
+      "value":20400,
+      "event":{ "name":"EV20001","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_Driving",
+      "value":20500,
+      "event":{ "name":"EV20001","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_BackCamera",
+      "value":20600,
+      "event":{ "name":"EV20000","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_LeftCamera",
+      "value":20700,
+      "event":{ "name":"EV20000","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_RightCamera",
+      "value":20800,
+      "event":{ "name":"EV20000","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_Entertainment",
+      "value":20900,
+      "event":{ "name":"EV20001","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":21000, "guardCondition":[{"operator":"=","value":9}]}
+    },
+    "state":{
+      "name":"AllSpeaker_Entertainment2",
+      "value":21000,
+      "event":{ "name":"EV20000","value":20001, "transition":20100},
+      "event":{ "name":"EV20000","value":20000, "transition":20200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20400, "guardCondition":[{"operator":"=","value":3}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20500, "guardCondition":[{"operator":"=","value":4}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20600, "guardCondition":[{"operator":"=","value":5}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20700, "guardCondition":[{"operator":"=","value":6}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20800, "guardCondition":[{"operator":"=","value":7}]},
+      "event":{ "name":"EV20000","value":20000, "transition":20900, "guardCondition":[{              "operator":"=","value":8},
+                                                                                      {"join":"and", "operator":"in","value":"NotRegulating"}]}
+    }
+  },
+  "state":{
+    "name":"IntRightSpeaker",
+    "value":22000,
+    "state":{
+      "name":"IntRightSpeaker_NoOutput",
+      "value":22100,
+      "event":{ "name":"EV22000","value":22000, "transition":22200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV22000","value":22000, "transition":22300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV22000","value":22000, "transition":22400, "guardCondition":[{"operator":"=","value":3}]}
+    },
+    "state":{
+      "name":"IntRightSpeaker_Priority1",
+      "value":22200,
+      "event":{ "name":"EV22001","value":22001, "transition":22100}
+    },
+    "state":{
+      "name":"IntRightSpeaker_Priority2",
+      "value":22300,
+      "event":{ "name":"EV22001","value":22001, "transition":22100},
+      "event":{ "name":"EV22000","value":22000, "transition":22200, "guardCondition":[{"operator":"=","value":1}]}
+    },
+    "state":{
+      "name":"IntRightSpeaker_Priority3",
+      "value":22400,
+      "event":{ "name":"EV22001","value":22001, "transition":22100},
+      "event":{ "name":"EV22000","value":22000, "transition":22200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV22000","value":22000, "transition":22300, "guardCondition":[{"operator":"=","value":2}]}
+    }
+  },
+  "state":{
+    "name":"IntLeftSpeaker",
+    "value":24000,
+    "state":{
+      "name":"IntLeftSpeaker_NoOutput",
+      "value":24100,
+      "event":{ "name":"EV24000","value":24000, "transition":24200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV24000","value":24000, "transition":24300, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV24000","value":24000, "transition":24400, "guardCondition":[{"operator":"=","value":3}]}
+    },
+    "state":{
+      "name":"IntLeftSpeaker_Priority1",
+      "value":24200,
+      "event":{ "name":"EV24001","value":24001, "transition":24100}
+    },
+    "state":{
+      "name":"IntLeftSpeaker_Priority2",
+      "value":24300,
+      "event":{ "name":"EV24001","value":24001, "transition":24100},
+      "event":{ "name":"EV24000","value":24000, "transition":24200, "guardCondition":[{"operator":"=","value":1}]}
+    },
+    "state":{
+      "name":"IntLeftSpeaker_Priority3",
+      "value":24400,
+      "event":{ "name":"EV24001","value":24001, "transition":24100},
+      "event":{ "name":"EV24000","value":24000, "transition":24200, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV24000","value":24000, "transition":24300, "guardCondition":[{"operator":"=","value":2}]}
+    }
+  },
+
+  "state":{
+    "name":"STSW",
+    "value":30000,
+    "state":{
+      "name":"STSW_NotUsing",
+      "value":30100,
+      "event":{ "name":"EV30000","value":30000, "transition":30200}
+    },
+    "state":{
+      "name":"STSW_Using",
+      "value":30200,
+      "event":{ "name":"EV30000","value":30001, "transition":30100}
+    }
+  },
+
+  "state":{
+    "name":"ESW",
+    "value":32000,
+    "state":{
+      "name":"ESW_NotUsing",
+      "value":32100,
+      "event":{ "name":"EV30000","value":32000, "transition":32200}
+    },
+    "state":{
+      "name":"ESW_Using",
+      "value":32200,
+      "event":{ "name":"EV30000","value":32001, "transition":32100}
+    }
+  },
+
+  "finalState":{"name":"TheEnd","value":9999 }
+}

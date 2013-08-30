@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     OpenPF System Configurations 
+    /opt/apps/org.tizen.ico.homescreen/res/config/system.conf
+-->
+
+<systemconfig>
+<nodes>
+    <node id="0" name="Center">
+        <type>Center</type>
+        <ipaddress>127.0.0.1</ipaddress>
+    </node>
+</nodes>
+
+<displays>
+    <display id="0" name="Center">
+        <node>Center</node>
+        <no>0</no>
+        <wayland>waylnad-0</wayland>
+        <type>center</type>
+        <width>1080</width>
+        <height>1920</height>
+        <inch>101</inch>
+        <layers>
+            <layer id="0" name="BackGround">
+                <!-- type 1: background 2:normal 4:cursor 8:input -->
+                <type>1</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="1" name="HomeScreen">
+                <type>2</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="2" name="Application">
+                <type>2</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="3" name="SoftKeyboard">
+                <type>8</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="4" name="InterruptApp">
+                <type>2</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="5" name="Touch">
+                <type>8</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="6" name="OnScreen">
+                <type>2</type>
+                <menuoverlap>true</menuoverlap>
+            </layer>
+            <layer id="7" name="Cursor">
+                <type>4</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+        </layers>
+        <zones>
+            <zone id="0" name="Base">
+                <geometry x="-1" y="-1" w="-1" h="-1"/>
+                <overlap/>
+            </zone>
+            <zone id="1" name="Full">
+                <geometry x="0" y="64" w="dispw" h="disph-64-128"/>
+                <overlap>Upper;Lower;UpperLeft;UpperRight;LowerLeft;LowerRight</overlap>
+            </zone>
+            <zone id="2" name="Upper">
+                <geometry x="0" y="64" w="dispw" h="disph-64-128/2"/>
+                <overlap>Full;UpperLeft;UpperRight</overlap>
+            </zone>
+            <zone id="3" name="Lower">
+                <geometry x="0" y="height-64-128/2+64" w="dispw" h="disph-64-128/2"/>
+                <overlap>Full;LowerLeft;LowerRight</overlap>
+            </zone>
+            <zone id="4" name="UpperLeft">
+                <geometry x="0" y="64" w="dispw/2" h="disph-64-128/2"/>
+                <overlap>Full;Upper</overlap>
+            </zone>
+            <zone id="5" name="UpperRight">
+                <geometry x="dispw/2" y="64" w="dispw/2" h="disph-64-128/2"/>
+                <overlap>Full;Upper</overlap>
+            </zone>
+            <zone id="6" name="LowerLeft">
+                <geometry x="0" y="heigh-64-128/2+64" w="dispw/2" h="disph-64-128/2"/>
+                <overlap>Full;Lower</overlap>
+            </zone>
+            <zone id="7" name="LowerRight">
+                <geometry x="dispw/2" y="heigh-64-128/2+64" w="dispw/2" h="disph-64-128/2"/>
+                <overlap>Full;Lower</overlap>
+            </zone>
+            <zone id="8" name="SysApp">
+                <geometry x="0" y="64" w="dispw" h="disph-64-128"/>
+                <overlap/>
+            </zone>
+            <zone id="9" name="SysApp.Left">
+                <geometry x="0" y="64" w="dispw/2-181" h="disph-64-128"/>
+                <overlap/>
+            </zone>
+            <zone id="10" name="SysApp.Right">
+                <geometry x="dispw/2+181" y="64" w="dispw/2-181" h="disph-64-128"/>
+                <overlap/>
+            </zone>
+        </zones>
+    </display>
+</displays>
+
+<sounds>
+    <sound id="0" name="Center">
+        <node>Center</node>
+        <no>0</no>
+        <zones>
+            <zone id="0" name="Base"/>
+            <zone id="1" name="Full"/>
+            <zone id="2" name="Driver"/>
+        </zones>
+    </sound>
+</sounds>
+
+<ports>
+    <port id="0" name="AppController">18081</port>
+    <port id="1" name="PluseAudio">8088</port>
+</ports>
+
+<!-- Application Category name -->
+<categorys>
+    <category id="0" name="Menu">
+        <type>system</type>
+        <view>always</view>
+        <sound>always</sound>
+        <input>always</input>
+        <priority>4</priority>
+        <r_ctrl>2</r_ctrl>
+    </category>
+    <category id="1" name="Message">
+        <type>message</type>
+        <view>always</view>
+        <sound>always</sound>
+        <input>always</input>
+        <priority>5</priority>
+        <r_ctrl>2</r_ctrl>
+    </category>
+    <category id="2" name="Map">
+        <type>map</type>
+        <view>always</view>
+        <sound>always</sound>
+        <input>always</input>
+        <priority>3</priority>
+        <r_ctrl>0</r_ctrl>
+    </category>
+    <category id="3" name="Driving">
+        <type>maker</type>
+        <view>run</view>
+        <sound>run</sound>
+        <input>run</input>
+        <priority>2</priority>
+        <r_ctrl>0</r_ctrl>
+    </category>
+    <category id="4" name="CarSetting">
+        <type>maker</type>
+        <view>parked</view>
+        <sound>parked</sound>
+        <input>parked</input>
+        <priority>2</priority>
+        <r_ctrl>0</r_ctrl>
+    </category>
+    <category id="5" name="Camera.Back">
+        <type>maker</type>
+        <view>shift_back</view>
+        <sound>shift_back</sound>
+        <input>shift_back</input>
+        <priority>6</priority>
+        <r_ctrl>1</r_ctrl>
+    </category>
+    <category id="6" name="Camera.Left">
+        <type>maker</type>
+        <view>blinker_left</view>
+        <sound>blinker_left</sound>
+        <input>blinker_left</input>
+        <priority>6</priority>
+        <r_ctrl>1</r_ctrl>
+    </category>
+    <category id="7" name="Camera.Right">
+        <type>maker</type>
+        <view>blinker_right</view>
+        <sound>blinker_right</sound>
+        <input>blinker_right</input>
+        <priority>6</priority>
+        <r_ctrl>1</r_ctrl>
+    </category>
+    <category id="8" name="Entertainment">
+        <type>unknown</type>
+        <view>parked</view>
+        <sound>parked</sound>
+        <input>parked</input>
+        <priority>0</priority>
+        <r_ctrl>2</r_ctrl>
+    </category>
+    <category id="9" name="Entertainment.audio">
+        <type>unknown</type>
+        <view>parked</view>
+        <sound>always</sound>
+        <input>always</input>
+        <priority>0</priority>
+        <r_ctrl>1</r_ctrl>
+    </category>
+    <category id="10" name="Entertainment.visiual">
+        <type>unknown</type>
+        <view>always</view>
+        <sound>parked</sound>
+        <input>always</input>
+        <priority>0</priority>
+        <r_ctrl>1</r_ctrl>
+    </category>
+</categorys>
+
+<appkinds>
+    <appkind id="0" name="Almighty">
+        <privilege>almighty</privilege>
+        <priority>5</priority>
+    </appkind>
+    <appkind id="1" name="HomeScreen">
+        <privilege>system</privilege>
+        <priority>4</priority>
+    </appkind>
+    <appkind id="2" name="SysApp">
+        <privilege>system</privilege>
+        <priority>3</priority>
+    </appkind>
+    <appkind id="3" name="SysApp.audio">
+        <privilege>system.audio</privilege>
+        <priority>3</priority>
+    </appkind>
+    <appkind id="4" name="SysApp.visiual">
+        <privilege>system.visible</privilege>
+        <priority>3</priority>
+    </appkind>
+    <appkind id="5" name="Maker">
+        <privilege>maker</privilege>
+        <priority>2</priority>
+    </appkind>
+    <appkind id="6" name="Certificate">
+        <privilege>certificate</privilege>
+        <priority>1</priority>
+    </appkind>
+    <appkind id="7" name="UnKnown">
+        <privilege>none</privilege>
+        <priority>0</priority>
+    </appkind>
+</appkinds>
+
+<inputs>
+    <input id="0" name="DrivingForceGT">
+        <switchs>
+            <switch id="0" name="JS_UpDown" appid=""/>
+            <switch id="1" name="JS_LR" appid=""/>
+            <switch id="2" name="JS_Cross" appid="org.tizen.ico.app-soundsample"/>
+            <switch id="3" name="JS_Square" appid="org.tizen.ico.homescreen"/>
+            <switch id="4" name="JS_Circle" appid="org.tizen.ico.app-soundsample"/>
+            <switch id="5" name="JS_Triangle" appid="org.tizen.ico.homescreen"/>
+        </switchs>
+    </input>
+</inputs>
+
+<resource_cpu_control>
+    <do_it>yes</do_it>
+    <ctrl_dir_path>/sys/fs/cgroup/cpu,cpuacct/SCprivate</ctrl_dir_path>
+    <sampling_wait>300</sampling_wait>
+    <sector id="0" name="groupA">
+        <hight_array>
+            <item>500</item>
+            <item>600</item>
+            <item>700</item>
+        </hight_array>
+        <low_array>
+            <item>1000</item>
+            <item>500</item>
+            <item>600</item>
+        </low_array>
+    </sector>
+    <sector id="1" name="groupB">
+        <hight_array>
+            <item>300</item>
+            <item>250</item>
+            <item>200</item>
+        </hight_array>
+        <low_array>
+            <item>1000</item>
+            <item>300</item>
+            <item>250</item>
+        </low_array>
+    </sector>
+    <sector id="2" name="groupC">
+        <hight_array>
+            <item>200</item>
+            <item>150</item>
+            <item>100</item>
+        </hight_array>
+        <low_array>
+            <item>1000</item>
+            <item>200</item>
+            <item>150</item>
+        </low_array>
+    </sector>
+</resource_cpu_control>
+
+<default>
+    <node>Center</node>
+    <appkind>UnKnown</appkind>
+    <category>Entertainment.audio</category>
+    <display>Center</display>
+    <layer>Application</layer>
+    <displayzone>Full</displayzone>
+    <sound>Center</sound>
+    <soundzone>Full</soundzone>
+    <inputdev>DrivingForceGT</inputdev>
+    <inputsw>JS_UpDown</inputsw>
+</default>
+
+<transition>none</transition>
+
+<log>
+    <!-- loglevel:ERROR=4,CRITICAL=8,WARNING=16,INFO=64,DEBUG=128 -->
+    <loglevel>128</loglevel>
+    <logflush>false</logflush>
+</log>
+</systemconfig>
+<!-- vim:set expandtab ts=4 sw=4: -->

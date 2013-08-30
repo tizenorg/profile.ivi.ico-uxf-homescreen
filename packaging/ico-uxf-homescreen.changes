@@ -1,3 +1,13 @@
+* Fri Aug 30 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen/20130828.211623@0dc3864
+- 0.9.01 release
+-- This main changes is refactoring. (changed from c to c++ development language)
+-- The orientation of the ui screen changed.  horizon → vertical
+-- Add control bar in bottom of screen.
+-- Menu icon move to  the control bar from the status bar.
+-- Removed home icon on status bar.
+-- The homescreen process was split into system-controler and homescreen process.
+-- This version is not implement feature of running regulation.
+
 * Tue Aug 27 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen/20130823.170014@f9ac279
 - 0.7.03 release.
 -- Correction with the interface change of ico-uxf-weston-plugin.

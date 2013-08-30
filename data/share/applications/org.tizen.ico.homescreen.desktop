@@ -1,9 +1,13 @@
 [Desktop Entry]
 Name=HomeScreen
-Type=menu
-Exec=/usr/apps/org.tizen.ico.homescreen/bin/HomeScreen
+Name[en_GB]=HomeScreen
+Name[en_US]=HomeScreen
+Type=Application
+Exec=/opt/apps/org.tizen.ico.homescreen/bin/HomeScreen
 Icon=org.tizen.ico.homescreen.png
 NoDisplay=false
-Version=0.7.0
+Version=0.1.0
 Comment=home screen app
-Categories=Menu;HomeScreen;run=Center;noauto
+Hw-Acceleration=use-system-setting
+X-TIZEN-Removable=False
+X-TIZEN-PkgID=org.tizen.ico.homescreen
