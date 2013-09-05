@@ -6,7 +6,5 @@ Environment=TIZEN_PLATFORMLOGGING_MODE=1
 Environment=TIZEN_DLOG_LEVEL=1
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/dbus/user_bus_socket
 Environment=XDG_RUNTIME_DIR=/run/user/5000
+Type=oneshot
 ExecStart=/usr/bin/launch_app org.tizen.ico.system-controller
-
-[Install]
-WantedBy=weston.target

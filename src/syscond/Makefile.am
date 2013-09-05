@@ -64,8 +64,9 @@ install-exec-hook:
 	install -m 0644 ../../data/share/packages/org.tizen.ico.system-controller.xml $(INSTALL_ROOT)/usr/share/packages
 
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.system-controller/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.system-controller/res/config
+	install -m 0644 $(top_srcdir)/data/lib/systemd/user/ico-uxf-wait-launchpad-ready.path $(INSTALL_ROOT)/usr/lib/systemd/user
 	install -m 0644 $(top_srcdir)/data/lib/systemd/user/ico-system-controller.service $(INSTALL_ROOT)/usr/lib/systemd/user
-	ln -sf ../ico-system-controller.service $(INSTALL_ROOT)/usr/lib/systemd/user/weston.target.wants
+	ln -sf ../ico-uxf-wait-launchpad-ready.path $(INSTALL_ROOT)/usr/lib/systemd/user/weston.target.wants
 
 
 

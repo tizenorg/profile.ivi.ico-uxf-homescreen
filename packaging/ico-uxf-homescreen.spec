@@ -147,7 +147,8 @@ rm -f /home/app/layout.txt
 /usr/apps/org.tizen.ico.system-controller
 /usr/share/packages/org.tizen.ico.system-controller.xml
 /usr/lib/systemd/user/ico-system-controller.service
-/usr/lib/systemd/user/weston.target.wants/ico-system-controller.service
+/usr/lib/systemd/user/ico-uxf-wait-launchpad-ready.path
+/usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
 
 %files system-controller-devel
 %defattr(-,root,root,-)

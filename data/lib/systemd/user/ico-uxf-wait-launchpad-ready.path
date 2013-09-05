@@ -1,0 +1,8 @@
+Description=Path activation for ico-system-controller
+
+[Path]
+PathExists=/tmp/amd_ready
+Unit=ico-system-controller.service
+
+[Install]
+WantedBy=weston.target
