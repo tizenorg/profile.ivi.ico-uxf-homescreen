@@ -1,3 +1,7 @@
+* Fri Sep 06 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen/20130828.211623@2f884d6
+- 0.9.02 release
+-- Fix system controller startup.
+
 * Fri Aug 30 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen/20130828.211623@0dc3864
 - 0.9.01 release
 -- This main changes is refactoring. (changed from c to c++ development language)
