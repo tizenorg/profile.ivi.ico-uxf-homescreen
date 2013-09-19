@@ -46,17 +46,18 @@ CicoSCAulItems::CicoSCAulItems(const char* appid, int pid, int ctgry,
                                const CicoSCWindow* obj)
     :m_appid(appid), m_pid(pid), m_category(ctgry)
 {
-    ICO_TRA("CicoSCAulItems::CicoSCAulItems");
+    ICO_TRA("constructor %s, %d, %x", appid? appid: "(NIL)", pid, obj);
     enterWindow(obj);
     getPidCgroupInfo(pid, m_defCgrpMem, m_defCgrpCpu);
     m_cpucgroup = -1;
     m_memcgroup = -1;
-    if (DINITm_categoryID == m_category) {
+    if (DINITm_categoryID != m_category) {
         CicoSCSystemConfig* conf = CicoSCSystemConfig::getInstance();
-        const CicoSCCategoryConf* obj = 
+        const CicoSCCategoryConf* objX = 
             conf->getCategoryObjbyCaategoryID(m_category);
-        if (NULL != obj) {
-            m_cpucgroup = obj->rctrl;
+        if (NULL != objX) {
+            m_cpucgroup = objX->rctrl;
+            ICO_DBG("categ:%d -> cgroup: %d", m_category, m_cpucgroup);
         }
     }
 }

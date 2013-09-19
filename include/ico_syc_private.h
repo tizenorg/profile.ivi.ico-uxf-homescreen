@@ -9,7 +9,7 @@
 /**
  * @brief   header file of System Controller internal definition
  *
- * @date    Aug-7-2013
+ * @date    Sep-4-2013
  */
 
 #ifndef _ICO_SYC_PRIVATE_H_
@@ -138,7 +138,7 @@ void ico_syc_cb_win_attr(ico_syc_callback_t callback, void *user_data,
 /**
  * @internal
  * @brief   ico_syc_cb_thumb
- *          Execute callback function. (ICO_SYC_EV_THUMB_PREPARE
+ *          Execute callback function. (ICO_SYC_EV_THUMB_ERROR
  *                                      ICO_SYC_EV_THUMB_CHANGE
  *                                      ICO_SYC_EV_THUMB_UNMAP)
  *
@@ -202,6 +202,23 @@ void ico_syc_cb_auth(ico_syc_callback_t callback, void *user_data, int event);
  */
 /*--------------------------------------------------------------------------*/
 void ico_syc_cb_userlist(ico_syc_callback_t callback, void *user_data,
+                         int event, const void *data, size_t len);
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @internal
+ * @brief   ico_syc_cb_lastinfo
+ *          Execute callback function. (ICO_SYC_EV_LASTINFO)
+ *
+ * @param[in]   callback                callback function
+ * @param[in]   user_data               passed data on called callback function
+ * @param[in]   event                   event code
+ * @param[in]   data                    message data
+ * @param[in]   len                     length of data
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void ico_syc_cb_lastinfo(ico_syc_callback_t callback, void *user_data,
                          int event, const void *data, size_t len);
 
 /*============================================================================*/

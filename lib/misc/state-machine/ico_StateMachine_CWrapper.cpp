@@ -1460,9 +1460,9 @@ class CicoCWrapperCallbackAction :public CicoStateAction
 public:
     CicoCWrapperCallbackAction();
     // entry-Action
-    void onEnttry(const CicoEvent& ev, const CicoState* stt, int addval);
-    void onEnttry(const CicoEvent& ev, const CicoFinalState* stt, int addval);
-    void onEnttry(const CicoEvent& ev, const CicoHistoryState* stt,
+    void onEntry(const CicoEvent& ev, const CicoState* stt, int addval);
+    void onEntry(const CicoEvent& ev, const CicoFinalState* stt, int addval);
+    void onEntry(const CicoEvent& ev, const CicoHistoryState* stt,
                   int addval);
     // exit-Action
     void onExit(const CicoEvent& ev, const CicoState* stt, int addval);
@@ -1486,19 +1486,19 @@ CicoCWrapperCallbackAction::CicoCWrapperCallbackAction()
  * @param stt entery state-object
  * @param addval Additional information
  */
-void CicoCWrapperCallbackAction::onEnttry(const CicoEvent& ev,
+void CicoCWrapperCallbackAction::onEntry(const CicoEvent& ev,
                                           const CicoState* stt, int addval)
 {
     callbackActionCPP(ev, (CicoStateCore*)stt, addval);
 }
 
-void CicoCWrapperCallbackAction::onEnttry(const CicoEvent& ev,
+void CicoCWrapperCallbackAction::onEntry(const CicoEvent& ev,
                                           const CicoFinalState* stt, int addval)
 {
     callbackActionCPP(ev, (CicoStateCore*)stt, addval);
 }
 
-void CicoCWrapperCallbackAction::onEnttry(const CicoEvent& ev,
+void CicoCWrapperCallbackAction::onEntry(const CicoEvent& ev,
                                           const CicoHistoryState* stt, int addval)
 {
     callbackActionCPP(ev, (CicoStateCore*)stt, addval);

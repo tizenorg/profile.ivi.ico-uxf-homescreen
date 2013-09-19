@@ -11,9 +11,12 @@
 /**
  *  @file   CicoSCWindow.h
  *
- *  @brief  
+ *  @brief  This file is implementation of CicoSCWindow class
  */
 //==========================================================================
+
+#include <string>
+using namespace std;
 
 #include "CicoSCWindow.h"
 #include "CicoLog.h"
@@ -24,14 +27,13 @@
  */
 //--------------------------------------------------------------------------
 CicoSCWindow::CicoSCWindow()
-    // TODO initialize variables
-    : nodeid(-1), displayid(-1), layerid(-1),
-      zoneid(-1), subwindow(0), eventmask(0), 
-      x(-1), y(-1), width(-1), height(-1),
+    : surfaceid(-1),name(""), appid(""), pid(-1),
+      nodeid(-1), displayid(-1), layerid(-1), zoneid(-1), subwindow(0),
+      eventmask(0), x(-1), y(-1), width(-1), height(-1),
       visible(false), raise(false), active(false)
 
 {
-    ICO_DBG("CicoSCWindow::CicoSCWindow Entry");
+    ICO_DBG("CicoSCWindow::CicoSCWindow Enter");
     ICO_DBG("CicoSCWindow::CicoSCWindow Leave");
 }
 
@@ -42,19 +44,19 @@ CicoSCWindow::CicoSCWindow()
 //--------------------------------------------------------------------------
 CicoSCWindow::~CicoSCWindow()
 {
-    ICO_DBG("CicoSCWindow::~CicoSCWindow Entry");
+    ICO_DBG("CicoSCWindow::~CicoSCWindow Enter");
     ICO_DBG("CicoSCWindow::~CicoSCWindow Leave");
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  dump log CicoSCWindow member variables
+ *  @brief  dump log this class member variables
  */
 //--------------------------------------------------------------------------
 void
 CicoSCWindow::dump(void)
 {
-    ICO_DBG("CicoSCWindow: surfaceid=%d name=%s appid=%s pid=%d "
+    ICO_DBG("CicoSCWindow: surfaceid=0x%08X name=%s appid=%s pid=%d "
             "nodeid=%d displayid=%d layerid=%d zoneid=%d "
             "subwindow=%d eventmask=%d x=%d y=%d width=%d height=%d "
             "visible=%s raise=%s active=%s",

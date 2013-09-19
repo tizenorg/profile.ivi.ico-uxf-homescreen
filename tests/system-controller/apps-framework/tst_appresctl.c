@@ -104,13 +104,21 @@ static void
 _check_input_region(const char *ev_name, ico_syc_input_region_t *region)
 {
     printf("--- %s\n", ev_name);
-    printf("\t(surface[%d], (x,y)[%d, %d], width[%d], height[%d])\n",
-           region->surface, region->pos_x, region->pos_y,
-           region->width, region->height);
+    printf("\t(winname[%s], (x,y)[%d, %d], width[%d], height[%d], hot[%d,%d], "
+           "cursor[%d.%d-%d,%d], attr[%d])\n",
+           region->winname, region->pos_x, region->pos_y,
+           region->width, region->height, region->hotspot_x, region->hotspot_y,
+           region->cursor_x, region->cursor_y, region->cursor_width,
+           region->cursor_height, region->attr);
 
-    if (region->surface == TST_SURFACE
+    if ((strcmp(region->winname, TST_WIN_NAME) == 0)
         && region->pos_x == TST_POS_X && region->pos_y == TST_POS_Y
-        && region->width == TST_REG_WIDTH && region->height == TST_REG_HEIGHT) {
+        && region->width == TST_REG_WIDTH && region->height == TST_REG_HEIGHT
+        && region->hotspot_x == TST_REG_HOT_X && region->hotspot_y == TST_REG_HOT_Y
+        && region->cursor_x == TST_REG_CUR_X && region->cursor_y == TST_REG_CUR_Y
+        && region->cursor_width == TST_REG_CUR_WIDTH
+        && region->cursor_height == TST_REG_CUR_HEIGHT
+        && region->attr == TST_REG_ATTR)    {
         print_ok("callback (%s)", ev_name);
     }
     else {
@@ -257,11 +265,18 @@ Eina_Bool ico_syc_appresctl_test(void *data)
     input.name          = "input C";
     input.event         = 100;
     /* set input region info */
-    region.surface      = 123;
+    strcpy(region.winname, TST_WIN_NAME);
     region.pos_x        = 10;
     region.pos_y        = 10;
     region.width        = 200;
     region.height       = 100;
+    region.hotspot_x    = 28;
+    region.hotspot_y    = 16;
+    region.cursor_x     = 35;
+    region.cursor_y     = 25;
+    region.cursor_width = 150;
+    region.cursor_height= 80;
+    region.attr         = 98765432;
 
     /* acquire window/sound/input */
     tst_acquire_res((const ico_syc_res_window_t *)&window,

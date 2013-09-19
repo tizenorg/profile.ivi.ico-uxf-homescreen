@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCLayer.h
  *
- *  @brief  
+ *  @brief  This file is implementation of CicoSCLayer class
  */
 /*========================================================================*/
 
@@ -24,6 +24,9 @@
  */
 //--------------------------------------------------------------------------
 CicoSCLayer::CicoSCLayer()
+    : layerid(-1), type(-1), width(-1), height(-1),
+      displayid(-1), menuoverlap(false)
+
 {
 }
 
@@ -38,7 +41,7 @@ CicoSCLayer::~CicoSCLayer()
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  dump log CicoSCLayer member variables
+ *  @brief  dump log this class member variables
  */
 //--------------------------------------------------------------------------
 void

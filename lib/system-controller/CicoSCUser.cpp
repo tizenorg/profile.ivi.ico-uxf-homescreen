@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCUser.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCUser class
  */
 /*========================================================================*/
 
@@ -24,6 +24,7 @@
  */
 //--------------------------------------------------------------------------
 CicoSCUser::CicoSCUser()
+    : name(""), passwd(""), homescreen(""), autolaunch(true)
 {
 }
 
@@ -38,13 +39,14 @@ CicoSCUser::~CicoSCUser()
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  dump log CicoSCUser member variables
+ *  @brief  dump log this class member variables
  */
 //--------------------------------------------------------------------------
 void
 CicoSCUser::dump(void)
 {
-    ICO_DBG("user name=%s, pass=%s, homescreen=%s",
-            name.c_str(), passwd.c_str(), homescreen.c_str());
+    ICO_DBG("CicoSCUser: name=%s, pass=%s, homescreen=%s autolaunch=%s",
+            name.c_str(), passwd.c_str(), homescreen.c_str(),
+            autolaunch ? "true" : "false");
 }
 // vim:set expandtab ts=4 sw=4:

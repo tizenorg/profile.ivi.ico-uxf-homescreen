@@ -14,6 +14,7 @@
 #include <glib.h>
 #include <ail.h>
 #include <aul/aul.h>
+#include <bundle.h>
 #include <sys/stat.h>
 
 #include "ico_syc_error.h"
@@ -132,7 +133,7 @@ CicoSCLifeCycleController::getInstance(void)
  * @retval ICO_SYC_EBUSY error(already launch)
  * @retval ICO_SYC_EPERM error(no authority)
  */
-int CicoSCLifeCycleController::launch(const char* appid)
+int CicoSCLifeCycleController::launch(const char* appid, bundle* b)
 {
     ICO_TRA("start %s", appid);
     // appid check AIL table exist
@@ -140,7 +141,7 @@ int CicoSCLifeCycleController::launch(const char* appid)
         ICO_TRA("not find");
         return ICO_SYC_ENOSYS;
     }
-    int r = aul_launch_app(appid, NULL);
+    int r = aul_launch_app(appid, b);
     if (0 > r) {
         ICO_TRA("aul_launch_app NG %d", r);
         return ICO_SYC_ENOSYS;
@@ -158,9 +159,9 @@ int CicoSCLifeCycleController::launch(const char* appid)
  * @retval ICO_SYC_EBUSY error(already launch)
  * @retval ICO_SYC_EPERM error(no authority)
  */
-int CicoSCLifeCycleController::launch(const std::string& appid)
+int CicoSCLifeCycleController::launch(const std::string& appid, bundle* b)
 {
-    return launch((const char*)appid.c_str());
+    return launch((const char*)appid.c_str(), b);
 }
 
 /**
@@ -447,7 +448,7 @@ const CicoSCAulItems* CicoSCLifeCycleController::findAUL(int pid) const
 
 
 /**
- * @brief ail infomation data initialization
+ * @brief ail information data initialization
  */
 void CicoSCLifeCycleController::initAIL()
 {
@@ -635,7 +636,7 @@ ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
 }
 
 /**
- * @brief create infomation ail data
+ * @brief create information ail data
  * @retval true success
  * @retval false fail create
  */
@@ -647,8 +648,8 @@ bool CicoSCLifeCycleController::createAilItems()
         m_gconf = g_key_file_new();
         GString* gsfp = g_string_new("xx");
         CicoSCSystemConfig* CSCSC = CicoSCSystemConfig::getInstance();
-		g_string_printf(gsfp, "%s/%s", CSCSC->getDefaultConf()->confdir.c_str(),
-						ICO_SYC_CONFIG_APPATTR);
+        g_string_printf(gsfp, "%s/%s", CSCSC->getDefaultConf()->confdir.c_str(),
+                        ICO_SYC_CONFIG_APPATTR);
         GError  *gerr = NULL;
         int flg;
         flg = G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS;
@@ -656,8 +657,8 @@ bool CicoSCLifeCycleController::createAilItems()
             ICO_ERR("load error conf:%s %s", (char*)gsfp->str, gerr->message);
             g_key_file_free(m_gconf);
             m_gconf = NULL;
-			g_string_free(gsfp, TRUE);
-			return false;
+            g_string_free(gsfp, TRUE);
+            return false;
         }
         g_string_free(gsfp, TRUE);
     }
@@ -699,7 +700,7 @@ bool CicoSCLifeCycleController::createAilItems()
 }
 
 /**
- * @brief ail infomation data add one item
+ * @brief ail information data add one item
  * @param sPkg string package (appid)
  * @param sIco string icon full path
  * @param sNm string name
@@ -766,8 +767,8 @@ void CicoSCLifeCycleController::getCategory(const char* sPkg, const char* sNm,
     }
     else {
         for (int i = 1;; i++) {
-            strncpy(&addCtgry[addCtgryLen],
-            appCtgry, sizeof(addCtgry)-addCtgryLen-2);
+            strncpy(&addCtgry[addCtgryLen], appCtgry,
+                    sizeof(addCtgry)-addCtgryLen-2);
             addCtgry[sizeof(addCtgry)-2] = 0;
             addCtgryLen = strlen(addCtgry);
             if (addCtgryLen > 0) {
@@ -800,7 +801,7 @@ void CicoSCLifeCycleController::getCategory(const char* sPkg, const char* sNm,
 }
 
 /**
- * @brief aul infomation data initialization
+ * @brief aul information data initialization
  */
 void CicoSCLifeCycleController::initAUL()
 {

@@ -200,7 +200,7 @@ CicoOnScreenAppList::SetAppIcons(Evas_Object* part,const char *partname)
         ICO_DBG("CicoOnScreenAppList::SetAppIcons: idx=%d appidx=%d",
                    idx, appidx);
         if ((appidx < 0) || (appidx > appconf->applicationNum)) {
-	    control_window->EvasObjectDel(img);
+        control_window->EvasObjectDel(img);
             return;
         }
 

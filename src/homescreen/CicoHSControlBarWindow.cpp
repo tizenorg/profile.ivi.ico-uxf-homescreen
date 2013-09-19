@@ -14,6 +14,7 @@
 #include "CicoHSControlBarWindow.h"
 #include "CicoHSControlBarTouch.h"
 #include "CicoHomeScreen.h"
+#include "CicoHSSystemState.h"
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -82,42 +83,28 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x,int pos_y,int width,int
     }
 
     /*control bar back*/
-    /* image file name*/
-    snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,ICO_HS_IMAGE_FILE_CONTROL_BAR_BASE);
- 
-    /* set object*/
-    canvas = evas_object_image_filled_add(evas);
-    int err = evas_object_image_load_error_get(canvas);
-    if (err != EVAS_LOAD_ERROR_NONE) {
-        ICO_DBG("CicoHSControlBarWindow::CreateControlBarWindow: backgound image is not exist");
-
-        evas_object_del(canvas);
-        FreeWindow();
-        return ICO_ERROR;
-    }
-    
-    evas_object_image_file_set(canvas, img_path, NULL);
-    evas_object_move(canvas, 0, 0);
-    evas_object_resize(canvas, width,height);
-    evas_object_show(canvas);
-
+	background = evas_object_rectangle_add(evas);
+    evas_object_color_set(background,128,128,128,255);
+    evas_object_move(background, 0, 0);
+    evas_object_resize(background, width,height);
+    evas_object_show(background);
 
     /*home button*/
     /* image file name*/
-    snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON);
+    snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY);
 
     /* set object*/
-    home_button = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(home_button, img_path, NULL);
-    evas_object_move(home_button, (width/2) - (ICO_HS_CONTROL_BAR_HOME_BUTTON_WIDTH /2),
-                      ICO_HS_CONTROL_BAR_HOME_BUTTON_START_POS_Y);
-    evas_object_resize(home_button, ICO_HS_CONTROL_BAR_HOME_BUTTON_WIDTH, 
-                       ICO_HS_CONTROL_BAR_HOME_BUTTON_HEIGHT);;
-    evas_object_event_callback_add(home_button, EVAS_CALLBACK_MOUSE_DOWN,
+    menu_btn = evas_object_image_filled_add(evas);
+    evas_object_image_file_set(menu_btn, img_path, NULL);
+    evas_object_move(menu_btn, (width/2) - (ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH /2),
+                      ICO_HS_CONTROL_BAR_MENU_BTN_START_POS_Y);
+    evas_object_resize(menu_btn, ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH, 
+                       ICO_HS_CONTROL_BAR_MENU_BTN_HEIGHT);;
+    evas_object_event_callback_add(menu_btn, EVAS_CALLBACK_MOUSE_DOWN,
                                    CicoHSControlBarTouch::TouchDownControlBar,NULL);
-    evas_object_event_callback_add(home_button, EVAS_CALLBACK_MOUSE_UP,
+    evas_object_event_callback_add(menu_btn, EVAS_CALLBACK_MOUSE_UP,
                                    CicoHSControlBarTouch::TouchUpControlBar,NULL);
-    evas_object_show(home_button);    
+    evas_object_show(menu_btn);    
  
     return ICO_OK;
 }
@@ -134,8 +121,8 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x,int pos_y,int width,int
 void
 CicoHSControlBarWindow::FreeControlBarWindow(void)
 {
-    evas_object_del(home_button);
-    evas_object_del(canvas);
+    evas_object_del(background);
+    evas_object_del(menu_btn);
     FreeWindow();
 }
 
@@ -153,3 +140,128 @@ CicoHSControlBarWindow::TouchHome(void)
 {
     CicoHomeScreen::ChangeMode(ICO_HS_SHOW_HIDE_PATTERN_SLIDE);
 }
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSControlBarWindow::SetNightMode
+ *          set night mode color theme chagne
+ *
+ * @param   none
+ * @return  none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSControlBarWindow::SetNightMode(void)
+{
+    ICO_DBG("CicoHSControlBarWindow::SetNightMode Enter");
+
+    bool state = CicoHSSystemState::getInstance()->getNightMode();
+
+    char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
+    if (true == state) {
+        ICO_DBG("ICO_SYC_STATE_ON");
+        evas_object_color_set(background,0,0,0,255);
+        evas_object_show(background);    
+        if (true == CicoHSSystemState::getInstance()->getRegulation()) {
+            ICO_DBG("Regulation=ON");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT2);
+        }
+        else {
+            ICO_DBG("Regulation=OFF");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT);
+        }
+        evas_object_image_file_set(menu_btn, img_path, NULL);
+        evas_object_show(menu_btn);    
+    }
+    else {
+        ICO_DBG("ICO_SYC_STATE_OFF");
+        evas_object_color_set(background,128,128,128,255);
+        evas_object_show(background);    
+        if (true == CicoHSSystemState::getInstance()->getRegulation()) {
+            ICO_DBG("Regulation=ON");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY2);
+        }
+        else {
+            ICO_DBG("Regulation=OFF");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY);
+        }
+        evas_object_image_file_set(menu_btn, img_path, NULL);
+        evas_object_show(menu_btn);    
+    }
+    evas_render(evas);
+    ico_syc_hide(appid, surface, NULL);
+    ico_syc_show(appid, surface, NULL);
+
+    ICO_DBG("CicoHSControlBarWindow::SetNightMode Leave");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSControlBarWindow::SetRegulation
+ *          set regulation color theme chagne
+ *
+ * @param   none
+ * @return  none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSControlBarWindow::SetRegulation(void)
+{
+    ICO_DBG("CicoHSControlBarWindow::SetRegulation Enter");
+
+    char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
+    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
+        ICO_DBG("NightMode=ON");
+        if (true == CicoHSSystemState::getInstance()->getRegulation()) {
+            ICO_DBG("Regulation=ON");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT2);
+        }
+        else {
+            ICO_DBG("Regulation=OFF");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT);
+        }
+    }
+    else {
+        ICO_DBG("NightMode=OFF");
+        if (true == CicoHSSystemState::getInstance()->getRegulation()) {
+            ICO_DBG("Regulation=ON");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY2);
+        }
+        else {
+            ICO_DBG("Regulation=OFF");
+            snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+                     ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY);
+        }
+    }
+    evas_object_image_file_set(menu_btn, img_path, NULL);
+    evas_object_show(menu_btn);    
+    evas_render(evas);
+    ico_syc_hide(appid, surface, NULL);
+    ico_syc_show(appid, surface, NULL);
+
+    ICO_DBG("CicoHSControlBarWindow::SetRegulation Leave");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSControlBarWindow::SetMenuWindowID
+ *          set appid and surface
+ *
+ * @param[in]   none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSControlBarWindow::SetWindowID(const char *appid,int surface)
+{
+    strncpy(this->appid,appid,ICO_HS_MAX_PROCESS_NAME);
+    this->surface = surface;
+}
+// vim: set expandtab ts=4 sw=4:

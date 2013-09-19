@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCSwitch.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCSwitch class
  */
 //==========================================================================
 #ifndef __CICO_SC_SWITCH_H__
@@ -19,11 +19,10 @@
 
 #include <vector>
 #include <string>
-using namespace std;
 
 //==========================================================================
 /**
- *  @brief  input device switch information
+ *  @brief  This class hold input device switch information
  */
 //==========================================================================
 class CicoSCSwitch
@@ -46,14 +45,14 @@ private:
     CicoSCSwitch(const CicoSCSwitch &object);
 
 public:
-    static const int SWITCH_NOFIX = 0;
-    static const int SWITCH_FIX   = 1;
+    static const int          SWITCH_NOFIX    = 0;
+    static const int          SWITCH_FIX      = 1;
     static const unsigned int SWITCH_CODE_MAX = 8;
-    string swname;              //!< input switch name
-    int    input;               //!< input switch number
-    bool   fix;                 //!< fixed application switch
-    vector<int>    code;        //!< input switch code value
-    vector<string> codename;    //!< input switch code name
+    std::string swname; //!< input switch name
+    int         input;  //!< input switch number
+    bool        fix;    //!< fixed application switch
+    std::vector<int>    code;       //!< input switch code value
+    std::vector<string> codename;   //!< input switch code name
 };
-#endif	// __CICO_SC_SWITCH_H__
+#endif  // __CICO_SC_SWITCH_H__
 // vim:set expandtab ts=4 sw=4:

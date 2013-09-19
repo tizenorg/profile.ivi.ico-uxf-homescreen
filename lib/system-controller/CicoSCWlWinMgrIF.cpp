@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCWlWinMgrIF.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCWlInputMgrIF class
  */
 //==========================================================================
 
@@ -28,34 +28,28 @@
 //  static variables
 //==========================================================================
 
-// ico_window_mgr listener
-struct ico_window_mgr_listener CicoSCWlWinMgrIF::ms_listener = {
-    .window_created   = CicoSCWlWinMgrIF::wlCreatedCB,
-    .window_name      = CicoSCWlWinMgrIF::wlNameCB,
-    .window_destroyed = CicoSCWlWinMgrIF::wlDestroyedCB,
-    .window_visible   = CicoSCWlWinMgrIF::wlVisibleCB,
-    .window_configure = CicoSCWlWinMgrIF::wlConfigureCB,
-    .window_active    = CicoSCWlWinMgrIF::wlActiveCB,
-    .layer_visible    = CicoSCWlWinMgrIF::wlLayerVisibleCB,
-    .app_surfaces     = CicoSCWlWinMgrIF::wlAppSurfacesCB,
-    .map_surface      = CicoSCWlWinMgrIF::wlMapSurfaceCB 
-};
-
-// wayland output listener
-struct wl_output_listener CicoSCWlWinMgrIF::ms_wlOutputListener = {
-    .geometry = CicoSCWlWinMgrIF::wlOutputGeometryCB,
-    .mode     = CicoSCWlWinMgrIF::wlOutputModeCB
-};
-
 //--------------------------------------------------------------------------
 /**
  *  @brief  default constructor
  */
 //--------------------------------------------------------------------------
 CicoSCWlWinMgrIF::CicoSCWlWinMgrIF()
-    : m_winmgr(NULL), m_wloutput(NULL), m_wlshm(NULL)
+    : m_winmgr(NULL), m_wloutput(NULL)
 {
-	strcpy(m_shmName, "/tmp/ico/thumbnail-shm-XXXXXX");
+    // ico_window_mgr listener
+    m_listener.window_created   = wlCreatedCB;
+    m_listener.window_name      = wlNameCB;
+    m_listener.window_destroyed = wlDestroyedCB;
+    m_listener.window_visible   = wlVisibleCB;
+    m_listener.window_configure = wlConfigureCB;
+    m_listener.window_active    = wlActiveCB;
+    m_listener.layer_visible    = wlLayerVisibleCB;
+    m_listener.app_surfaces     = wlAppSurfacesCB;
+    m_listener.map_surface      = wlMapSurfaceCB;
+
+    // wayland output listener
+    m_wlOutputListener.geometry = wlOutputGeometryCB;
+    m_wlOutputListener.mode     = wlOutputModeCB;
 }
 
 //--------------------------------------------------------------------------
@@ -71,11 +65,11 @@ CicoSCWlWinMgrIF::~CicoSCWlWinMgrIF()
 /**
  *  @brief  initialize ico_window_mgr interfaces
  *
- *  @param [IN] data        user data
- *  @param [IN] registry    wayland registry
- *  @param [IN] name        wayland display id
- *  @parma [IN] interface   wayland interface name
- *  @parma [IN] version     wayland interface version number
+ *  @param [in] data        user data
+ *  @param [in] registry    wayland registry
+ *  @param [in] name        wayland display id
+ *  @parma [in] interface   wayland interface name
+ *  @parma [in] version     wayland interface version number
  */
 //--------------------------------------------------------------------------
 void
@@ -104,7 +98,7 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
 
         m_winmgr = (struct ico_window_mgr *)wlProxy;
         ico_window_mgr_add_listener(m_winmgr, 
-                                    &ms_listener,
+                                    &m_listener,
                                     this);
 #if 0
         ico_window_mgr_set_user_data(m_winmgr, NULL/*TODO*/);
@@ -130,49 +124,18 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
 
         m_wloutput = (struct wl_output*)wlProxy;
         wl_output_add_listener(m_wloutput, 
-                               &ms_wlOutputListener,
+                               &m_wlOutputListener,
                                this);
 #if 0
         wl_output_set_user_data(m_wloutput, NULL/*TODO*/);
 #endif
-    }
-    else if (0 == strcmp(interface, ICO_WL_SHM_IF)) {
-        // get interface instance
-        void *wlProxy = wl_registry_bind(registry,
-                                         name,
-                                         &wl_shm_interface,
-                                         1);
-		m_wlshm = (struct wl_shm*)wlProxy;
-        if (NULL == wlProxy) {
-            ICO_WRN("initInterface : interface(%s) wl_registry_bind failed.",
-                    interface);
-            ICO_WRN("CicoSCWlWinMgrIF::initInterface : Leave(binding failed)");
-            return;
-        }
-        // TODO mkdir
-        int fd = mkostemp(m_shmName, O_CLOEXEC);
-        if (fd < 0) {
-            ICO_ERR("CicoSCWlWinMgrIF::initInterface : Leave(mkostemp failed)");
-            return;
-        }
-        if (ftruncate(fd, ICO_WL_SHM_SIZE) < 0) {
-            ICO_ERR("CicoSCWlWinMgrIF::initInterface : Leave(ftruncate failed)");
-            close(fd);
-            return;
-        }
-        m_wlshmpool = wl_shm_create_pool(m_wlshm, fd, ICO_WL_SHM_SIZE);
-        close(fd);
-        if (NULL == m_wlshmpool) {
-            ICO_ERR("CicoSCWlWinMgrIF::initInterface : Leave(wl_shm_create_pool failed)");
-            return;
-        }
     }
     else {
         ICO_WRN("initInterface : Leave(unmatch interface)");
         return;
     }
 
-    if((NULL != m_winmgr) && (NULL != m_wloutput) && (NULL != m_wlshm)) {
+    if((NULL != m_winmgr) && (NULL != m_wloutput)) {
         m_initialized = true;
     }
 
@@ -181,14 +144,230 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
 
 //--------------------------------------------------------------------------
 /** 
+ *  @brief   wrapper function of ico_window_mgr_declare_manager
+ *  
+ *  @param [in] manager type of manager
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::declareManager(int32_t manager)
+{
+    // declare manager request to Multi Window Manager
+    ICO_DBG("called: ico_window_mgr_declare_manager(manager=%d)", manager);
+    ico_window_mgr_declare_manager(m_winmgr, manager);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_set_window_layer
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] layer           number of layer
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer)
+{
+    // set window layer request to Multi Window Manager
+    ICO_DBG("called: ico_window_mgr_set_window_layer"
+            "(surfaceid=0x%08X layer=%d)", surfaceid, layer);
+    ico_window_mgr_set_window_layer(m_winmgr, surfaceid, layer);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_set_positionsize
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] layer           number of layer
+ *  @param [in] x
+ *  @param [in] y
+ *  @param [in] width
+ *  @param [in] height
+ *  @param [in] flags
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setPositionsize(uint32_t surfaceid, uint32_t node,
+                                  int32_t x, int32_t y, int32_t width,
+                                  int32_t height, int32_t flags)
+{
+    // set position size request to Multi Window Manager
+    ICO_DBG("called: ico_window_mgr_set_positionsize"
+            "(surfaceid=0x%08X node=%d x=%d y=%d w=%d h=%d flags=%d)",
+            surfaceid, node, x, y, width, height, flags);
+    ico_window_mgr_set_positionsize(m_winmgr, surfaceid, node,
+                                    x, y, width, height, flags);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_set_visible
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] visible         visible state
+ *  @param [in] raise           raise state
+ *  @param [in] flags           option on change visible
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setVisible(uint32_t surfaceid, int32_t visible,
+                             int32_t raise, int32_t flags)
+{
+    // set visible request to Multi Window Manager
+    ICO_DBG("called: ico_window_mgr_set_visible"
+            "(surfaceid=0x%08X visible=%d raise=%d anima=%d)",
+            surfaceid, visible, raise, flags);
+    ico_window_mgr_set_visible(m_winmgr, surfaceid, visible, raise, flags);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_visible_animation
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] visible         visible state
+ *  @param [in] raise           raise state
+ *  @param [in] flags           option on change visible
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::visibleAnimation(uint32_t surfaceid, int32_t visible,
+                                   int32_t x, int32_t y,
+                                   int32_t width, int32_t height)
+{
+    // visible animation request to Multi Window Manager
+    ICO_DBG("called: ico_window_mgr_visible_animation"
+            "(surfaceid=0x%08X visible=%d x=%d y=%d w=%d h=%d)",
+            surfaceid, visible, x, y, width, height);
+    ico_window_mgr_visible_animation(m_winmgr, surfaceid, visible,
+                                     x, y, width, height);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_set_animation
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] type            transition type
+ *  @param [in] animation       name of animation
+ *  @param [in] time            time of animation
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setAnimation(uint32_t surfaceid, int32_t type,
+                               const char *animation, int32_t time)
+{
+    ICO_DBG("called: ico_window_mgr_set_animation"
+            "(surfaceid=0x%08X type=%d anima=%s time=%d)",
+            surfaceid, type, animation, time);
+    ico_window_mgr_set_animation(m_winmgr, surfaceid, type, animation, time);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_set_attributes
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] attributes      attributes of surface
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setAttributes(uint32_t surfaceid, uint32_t attributes)
+{
+    ICO_DBG("called: ico_window_mgr_set_attributes"
+            "(surfaceid=0x%08X attributes=%d)", surfaceid, attributes);
+    ico_window_mgr_set_attributes(m_winmgr, surfaceid, attributes);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_set_active
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] active          flags od active device
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setActive(uint32_t surfaceid, int32_t active)
+{
+    ICO_DBG("called: ico_window_mgr_set_active"
+            "(surfaceid=0x%08X active=%d)", surfaceid, active);
+    ico_window_mgr_set_active(m_winmgr, surfaceid, active);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_set_layer_visible
+ *  
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] layer           id of layer
+ *  @param [in] visible         visible state
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setLayerVisible(uint32_t layer, int32_t visible)
+{
+    ICO_DBG("called: ico_window_mgr_set_layer_visible"
+            "(layer=%d visible=%d)", layer, visible);
+    ico_window_mgr_set_layer_visible(m_winmgr, layer, visible);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_get_surfaces
+ *  
+ *  @param [in] appid           id of application
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::getSurfaces(const char *appid)
+{
+    ICO_DBG("called: ico_window_mgr_get_surfaces(appid=%d)", appid);
+    ico_window_mgr_get_surfaces(m_winmgr, appid);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_map_surface
+ *  
+ *  @param [in] surface     id of wayland surface
+ *  @param [in] framerate   interval of changed notify[frame per second]
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::mapSurface(uint32_t surfaceid, int32_t framerate)
+{
+    ICO_DBG("called: ico_window_mgr_map_surface"
+            "(surfaceid=0x%08X framerate=%d)", surfaceid, framerate);
+    ico_window_mgr_map_surface(m_winmgr, surfaceid, framerate);
+}
+
+//--------------------------------------------------------------------------
+/** 
+ *  @brief   wrapper function of ico_window_mgr_unmap_surface
+ *  
+ *  @param [in] surface     id of wayland surface
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::unmapSurface(uint32_t surfaceid)
+{
+    ICO_DBG("called: ico_window_mgr_unmap_surface"
+            "(surfaceid=0x%08X)", surfaceid);
+    ico_window_mgr_unmap_surface(m_winmgr, surfaceid);
+}
+
+//--------------------------------------------------------------------------
+/** 
  *  @brief   wayland surface create callback
  *  
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] winname         surface window name(title)
- *  @param [IN] pid             wayland client process Id
- *  @param [IN] appid           wayland client application Id
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] winname         surface window name(title)
+ *  @param [in] pid             wayland client process Id
+ *  @param [in] appid           wayland client application Id
  */
 //--------------------------------------------------------------------------
 void
@@ -206,10 +385,10 @@ CicoSCWlWinMgrIF::createdCB(void                  *data,
 /**
  *  @brief  wayland change surface name callback
  *
- * @param [IN] data            user data(unused)
- * @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- * @param [IN] surfaceid       ico_window_mgr surface Id
- * @param [IN] winname         surface window name(title)
+ * @param [in] data            user data(unused)
+ * @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ * @param [in] surfaceid       ico_window_mgr surface Id
+ * @param [in] winname         surface window name(title)
  */
 //--------------------------------------------------------------------------
 void
@@ -225,9 +404,9 @@ CicoSCWlWinMgrIF::nameCB(void                  *data,
 /**
  *  @brief  wayland surface destroy callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
  */
 //--------------------------------------------------------------------------
 void
@@ -240,15 +419,15 @@ CicoSCWlWinMgrIF::destroyedCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wayland surface visible callback(static fu *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] visible         surface visible
- *                              (1=visible/0=unvisible/other=nochange)
- *  @param [IN] raise           surface raise
- *                              (1=raise/0=lower/other=nochange)
- *  @param [IN] hint            client request
+ *  @brief  wayland surface visible callback
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] visible         surface visible
+ *                              (1=visible/0=invisible/other=no change)
+ *  @param [in] raise           surface raise
+ *                              (1=raise/0=lower/other=no change)
+ *  @param [in] hint            client request
  *                              (1=client request(not changed)/0=changed)
  */
 //--------------------------------------------------------------------------
@@ -267,15 +446,15 @@ CicoSCWlWinMgrIF::visibleCB(void                  *data,
 /**
  *  @brief  wayland surface configure callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] node            surface node Id
- *  @param [IN] x               surface upper-left X coodinate
- *  @param [IN] y               surface upper-left Y coodinate
- *  @param [IN] width           surface width
- *  @param [IN] height          surface height
- *  @param [IN] hint            client request
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] node            surface node Id
+ *  @param [in] x               surface upper-left X coordinate
+ *  @param [in] y               surface upper-left Y coordinate
+ *  @param [in] width           surface width
+ *  @param [in] height          surface height
+ *  @param [in] hint            client request
  *                              (1=client request(not changed)/0=changed)
  */
 //--------------------------------------------------------------------------
@@ -296,12 +475,12 @@ CicoSCWlWinMgrIF::configureCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wayland surface active callback(static func
+ *  @brief  wayland surface active callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] active          surface active
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] active          surface active
  *                              (1=active/0=not active)
  */
 //--------------------------------------------------------------------------
@@ -316,13 +495,13 @@ CicoSCWlWinMgrIF::activeCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wayland layer visible callback(stati
+ *  @brief  wayland layer visible callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] layer           layer Id
- *  @param [IN] visible         layer visible
- *                              (1=visible/0=unvisible/other=nochange)
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] layer           layer Id
+ *  @param [in] visible         layer visible
+ *                              (1=visible/0=invisible/other=no change)
  */
 //--------------------------------------------------------------------------
 void
@@ -336,12 +515,12 @@ CicoSCWlWinMgrIF::layerVisibleCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  query applicationsurface callback
+ *  @brief  query application surface callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] appid           application Id
- *  @param [IN] suface          surface Id array
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] appid           application Id
+ *  @param [in] surface         surface Id array
  */
 //--------------------------------------------------------------------------
 void
@@ -357,14 +536,14 @@ CicoSCWlWinMgrIF::appSurfacesCB(void                  *data,
 /**
  *  @brief   surface map event callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] event           event
- *  @param [IN] surfaceid       surface Id
- *  @param [IN] width           surface width
- *  @param [IN] height          surface height
- *  @param [IN] stride          surface buffer(frame buffer) stride
- *  @param [IN] format          surface buffer format
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] event           event
+ *  @param [in] surfaceid       surface Id
+ *  @param [in] width           surface width
+ *  @param [in] height          surface height
+ *  @param [in] stride          surface buffer(frame buffer) stride
+ *  @param [in] format          surface buffer format
  */
 //--------------------------------------------------------------------------
 void
@@ -386,16 +565,16 @@ CicoSCWlWinMgrIF::mapSurfaceCB(void                  *data,
 /**
  *  @brief   wayland display attribute callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] wl_output       wayland wl_output interface
- *  @param [IN] x               display upper-left X coodinate
- *  @param [IN] y               display upper-left Y coodinate
- *  @param [IN] physical_width  display physical width
- *  @param [IN] physical_height display physical height
- *  @param [IN] subpixel        display sub pixcel
- *  @param [IN] make            display maker
- *  @param [IN] model           diaplay model
- *  @param [IN] transform       transform
+ *  @param [in] data            user data(unused)
+ *  @param [in] wl_output       wayland wl_output interface
+ *  @param [in] x               display upper-left X coordinate
+ *  @param [in] y               display upper-left Y coordinate
+ *  @param [in] physical_width  display physical width
+ *  @param [in] physical_height display physical height
+ *  @param [in] subpixel        display sub pixel
+ *  @param [in] make            display maker
+ *  @param [in] model           display model
+ *  @param [in] transform       transform
  */
 //--------------------------------------------------------------------------
 void
@@ -417,12 +596,12 @@ CicoSCWlWinMgrIF::outputGeometryCB(void             *data,
 /**
  *  @brief  wayland display mode callback
  *
- *  @param [IN] data        user data(unused)
- *  @param [IN] wl_output   wayland wl_output interface
- *  @param [IN] flags       flags
- *  @param [IN] width       display width
- *  @param [IN] height      display height
- *  @param [IN] refresh     display refresh rate
+ *  @param [in] data        user data(unused)
+ *  @param [in] wl_output   wayland wl_output interface
+ *  @param [in] flags       flags
+ *  @param [in] width       display width
+ *  @param [in] height      display height
+ *  @param [in] refresh     display refresh rate
  */
 //--------------------------------------------------------------------------
 void
@@ -444,12 +623,12 @@ CicoSCWlWinMgrIF::outputModeCB(void             *data,
 /** 
  *  @brief   wayland surface create callback
  *  
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] winname         surface window name(title)
- *  @param [IN] pid             wayland client process Id
- *  @param [IN] appid           wayland client application Id
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] winname         surface window name(title)
+ *  @param [in] pid             wayland client process Id
+ *  @param [in] appid           wayland client application Id
  */
 //--------------------------------------------------------------------------
 void
@@ -475,10 +654,10 @@ CicoSCWlWinMgrIF::wlCreatedCB(void                  *data,
 /**
  *  @brief  wayland change surface name callback
  *
- * @param [IN] data            user data(unused)
- * @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- * @param [IN] surfaceid       ico_window_mgr surface Id
- * @param [IN] winname         surface window name(title)
+ * @param [in] data            user data(unused)
+ * @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ * @param [in] surfaceid       ico_window_mgr surface Id
+ * @param [in] winname         surface window name(title)
  */
 //--------------------------------------------------------------------------
 void
@@ -502,9 +681,9 @@ CicoSCWlWinMgrIF::wlNameCB(void                  *data,
 /**
  *  @brief  wayland surface destroy callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
  */
 //--------------------------------------------------------------------------
 void
@@ -527,14 +706,14 @@ CicoSCWlWinMgrIF::wlDestroyedCB(void                  *data,
 /**
  *  @brief  wayland surface visible callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] visible         surface visible
- *                              (1=visible/0=unvisible/other=nochange)
- *  @param [IN] raise           surface raise
- *                              (1=raise/0=lower/other=nochange)
- *  @param [IN] hint            client request
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] visible         surface visible
+ *                              (1=visible/0=invisible/other=no change)
+ *  @param [in] raise           surface raise
+ *                              (1=raise/0=lower/other=no change)
+ *  @param [in] hint            client request
  *                              (1=client request(not changed)/0=changed)
  */
 //--------------------------------------------------------------------------
@@ -562,15 +741,15 @@ CicoSCWlWinMgrIF::wlVisibleCB(void                  *data,
 /**
  *  @brief  wayland surface configure callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] node            surface node Id
- *  @param [IN] x               surface upper-left X coodinate
- *  @param [IN] y               surface upper-left Y coodinate
- *  @param [IN] width           surface width
- *  @param [IN] height          surface height
- *  @param [IN] hint            client request
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] node            surface node Id
+ *  @param [in] x               surface upper-left X coordinate
+ *  @param [in] y               surface upper-left Y coordinate
+ *  @param [in] width           surface width
+ *  @param [in] height          surface height
+ *  @param [in] hint            client request
  *                              (1=client request(not changed)/0=changed)
  */
 //--------------------------------------------------------------------------
@@ -600,12 +779,12 @@ CicoSCWlWinMgrIF::wlConfigureCB(void                  *data,
 }
 //--------------------------------------------------------------------------
 /**
- *  @brief  wayland surface active callback(static func
+ *  @brief  wayland surface active callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] surfaceid       ico_window_mgr surface Id
- *  @param [IN] active          surface active
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in] active          surface active
  *                              (1=active/0=not active)
  */
 //--------------------------------------------------------------------------
@@ -628,13 +807,13 @@ CicoSCWlWinMgrIF::wlActiveCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wayland layer visible callback(stati
+ *  @brief  wayland layer visible callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] layer           layer Id
- *  @param [IN] visible         layer visible
- *                              (1=visible/0=unvisible/other=nochange)
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] layer           layer Id
+ *  @param [in] visible         layer visible
+ *                              (1=visible/0=invisible/other=no change)
  */
 //--------------------------------------------------------------------------
 void
@@ -656,12 +835,12 @@ CicoSCWlWinMgrIF::wlLayerVisibleCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  query applicationsurface callback
+ *  @brief  query application surface callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] appid           application Id
- *  @param [IN] suface          surface Id array
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] appid           application Id
+ *  @param [in] surface         surface Id array
  */
 //--------------------------------------------------------------------------
 void
@@ -685,14 +864,16 @@ CicoSCWlWinMgrIF::wlAppSurfacesCB(void                  *data,
 /**
  *  @brief   surface map event callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [IN] event           event
- *  @param [IN] surfaceid       surface Id
- *  @param [IN] width           surface width
- *  @param [IN] height          surface height
- *  @param [IN] stride          surface buffer(frame buffer) stride
- *  @param [IN] format          surface buffer format
+ *  @param [in] data            user data
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] event           event
+ *  @param [in] surfaceid       surface Id
+ *  @param [IN] type            buffer type(fixed ICO_WINDOW_MGR_MAP_TYPE_EGL)
+ *  @param [IN] target          EGL buffer name
+ *  @param [in] width           surface width
+ *  @param [in] height          surface height
+ *  @param [in] stride          surface buffer(frame buffer) stride
+ *  @param [in] format          surface buffer format
  */
 //--------------------------------------------------------------------------
 void
@@ -725,16 +906,16 @@ CicoSCWlWinMgrIF::wlMapSurfaceCB(void                  *data,
 /**
  *  @brief   wayland display attribute callback
  *
- *  @param [IN] data            user data(unused)
- *  @param [IN] wl_output       wayland wl_output interface
- *  @param [IN] x               display upper-left X coodinate
- *  @param [IN] y               display upper-left Y coodinate
- *  @param [IN] physical_width  display physical width
- *  @param [IN] physical_height display physical height
- *  @param [IN] subpixel        display sub pixcel
- *  @param [IN] make            display maker
- *  @param [IN] model           diaplay model
- *  @param [IN] transform       transform
+ *  @param [in] data            user data(unused)
+ *  @param [in] wl_output       wayland wl_output interface
+ *  @param [in] x               display upper-left X coordinate
+ *  @param [in] y               display upper-left Y coordinate
+ *  @param [in] physical_width  display physical width
+ *  @param [in] physical_height display physical height
+ *  @param [in] subpixel        display sub pixel
+ *  @param [in] make            display maker
+ *  @param [in] model           display model
+ *  @param [in] transform       transform
  */
 //--------------------------------------------------------------------------
 void
@@ -770,12 +951,12 @@ CicoSCWlWinMgrIF::wlOutputGeometryCB(void             *data,
 /**
  *  @brief  wayland display mode callback
  *
- *  @param [IN] data        user data(unused)
- *  @param [IN] wl_output   wayland wl_output interface
- *  @param [IN] flags       flags
- *  @param [IN] width       display width
- *  @param [IN] height      display height
- *  @param [IN] refresh     display refresh rate
+ *  @param [in] data        user data(unused)
+ *  @param [in] wl_output   wayland wl_output interface
+ *  @param [in] flags       flags
+ *  @param [in] width       display width
+ *  @param [in] height      display height
+ *  @param [in] refresh     display refresh rate
  */
 //--------------------------------------------------------------------------
 void

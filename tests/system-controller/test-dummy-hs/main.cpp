@@ -21,23 +21,77 @@
 
 #include "CicoUISample.h"
 #include "CicoLog.h"
+#include <Ecore.h>
 #include <Eina.h>
+#include <Ecore_Evas.h>
+
+#include <pthread.h>
+pthread_t thread;
+
+void *
+uiMain(void *args)
+{
+    CicoUISample uiSample;
+    uiSample.start(0, NULL);
+
+    return NULL;
+}
+
+#include <readline/readline.h>
+#include <readline/history.h>
+#define MAX_HISTORY_NO 3
+void
+consoleMain(void)
+{
+    char *prompt = (char*)"ico >";
+    char *line   = NULL;
+    int history_no = 0;
+    HIST_ENTRY *history = NULL;
+
+    printf("consolMain Enter\n");
+    while (1) {
+        line = readline(prompt);
+
+        if (strcmp(line, "exit") == 0) {
+            break;
+        }
+
+        add_history(line);
+        if (++history_no > MAX_HISTORY_NO) {
+            history = remove_history(0);
+            free(history);
+        }
+
+        free(line);
+    }
+
+    clear_history();
+}
 
 int
 main(int argc, char **argv)
 {
-    eina_init();
-    eina_log_level_set(EINA_LOG_LEVEL_DBG);
+    //eina_init();
+    //eina_log_level_set(EINA_LOG_LEVEL_DBG);
 
     try {
         CicoLog::getInstance()->openLog("DummyHomeScreen"/*TOOD*/);
 
-        int ret = 0;
-        CicoUISample uiSample;
+#if 1
+        /* pthread start */
+        int ret = pthread_create(&thread, NULL, uiMain, (void *)NULL);
+        if (-1 == ret) {
+            ICO_ERR("pthread_create failed(%d:%s)",
+                 errno, strerror(errno));
+            return -1;
+        }
+#endif
+        consoleMain();
 
-        ret = uiSample.start(argc, argv);
+        ecore_main_loop_quit();
+        ecore_evas_shutdown();
+        pthread_join(thread, NULL);
 
-        ICO_DBG("ret = %d error=%s\n", ret, uiSample.app_error_to_string(ret));
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

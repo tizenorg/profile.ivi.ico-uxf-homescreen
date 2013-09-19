@@ -25,11 +25,9 @@
 /*============================================================================*/
 #define _CMD_SHOW_WIN           0
 #define _CMD_HIDE_WIN           1
-#define _CMD_MAP_THUMB          10
-#define _CMD_UNMAP_THUMB        11
-#define _CMD_SHOW_LAYER         20
-#define _CMD_HIDE_LAYER         21
-#define _CMD_SET_LAYER_ATTR     22
+#define _CMD_SHOW_LAYER         10
+#define _CMD_HIDE_LAYER         11
+#define _CMD_SET_LAYER_ATTR     12
 
 /*============================================================================*/
 /* define static function prototype                                           */
@@ -43,9 +41,8 @@ static msg_t _create_win_move_msg(const char *appid, int surface,
 static msg_t _create_active_win_msg(const char *appid, int surface);
 static msg_t _create_change_layer_msg(const char *appid, int surface,
                                       int layer);
-static msg_t _create_prepare_thumb_msg(const char *appid, int surface,
-                                       int framerate);
-static msg_t _create_thumb_msg(const char *appid, int surface, int type);
+static msg_t _create_map_thumb_msg(const char *appid, int surface, int framerate);
+static msg_t _create_unmap_thumb_msg(const char *appid, int surface);
 static msg_t _create_layer_msg(const char *appid, int layer, int attr,
                                int type);
 
@@ -284,25 +281,24 @@ _create_change_layer_msg(const char *appid, int surface, int layer)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   _create_prepare_thumb_msg
- *          Create the message to prepare thumbnail.
+ * @brief   _create_map_thumb_msg
+ *          Create the message to map thumbnail.
  *
  * @param[in]   appid                   application id
  * @param[in]   surface                 window's surface id
- * @param[in]   framerate               notify cycle [ms]
+ * @param[in]   framerate               notify cycle [frames par sec]
  * @return      json generator
  * @retval      json generator          success
  * @retval      NULL                    error
  */
 /*--------------------------------------------------------------------------*/
 static msg_t
-_create_prepare_thumb_msg(const char *appid, int surface, int framerate)
+_create_map_thumb_msg(const char *appid, int surface, int framerate)
 {
     JsonObject *obj     = NULL;
     JsonObject *argobj  = NULL;
     JsonGenerator *gen  = NULL;
     JsonNode *root      = NULL;
-    int cmd             = -1;
 
     /* create json object */
     obj = json_object_new();
@@ -313,7 +309,7 @@ _create_prepare_thumb_msg(const char *appid, int surface, int framerate)
     }
 
     /* set message */
-    json_object_set_int_member(obj, MSG_PRMKEY_CMD, cmd);
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_MAP_THUMB);
     json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
     json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
 
@@ -334,25 +330,23 @@ _create_prepare_thumb_msg(const char *appid, int surface, int framerate)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   _create_thumb_msg
- *          Create the message to map/unmap thumbnail.
+ * @brief   _create_unmap_thumb_msg
+ *          Create the message to unmap thumbnail.
  *
  * @param[in]   appid                   application id
  * @param[in]   surface                 window's surface id
- * @param[in]   type                    type of command
  * @return      json generator
  * @retval      json generator          success
  * @retval      NULL                    error
  */
 /*--------------------------------------------------------------------------*/
 static msg_t
-_create_thumb_msg(const char *appid, int surface, int type)
+_create_unmap_thumb_msg(const char *appid, int surface)
 {
     JsonObject *obj     = NULL;
     JsonObject *argobj  = NULL;
     JsonGenerator *gen  = NULL;
     JsonNode *root      = NULL;
-    int cmd             = -1;
 
     /* create json object */
     obj = json_object_new();
@@ -362,16 +356,8 @@ _create_thumb_msg(const char *appid, int surface, int type)
         return NULL;
     }
 
-    /* set command */
-    if (type == _CMD_MAP_THUMB) {
-        cmd = MSG_CMD_MAP_THUMB;
-    }
-    else if (type == _CMD_UNMAP_THUMB) {
-        cmd = MSG_CMD_UNMAP_THUMB;
-    }
-
     /* set message */
-    json_object_set_int_member(obj, MSG_PRMKEY_CMD, cmd);
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_UNMAP_THUMB);
     json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
     json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
 
@@ -485,8 +471,6 @@ ico_syc_cb_win(ico_syc_callback_t callback, void *user_data,
         _ERR("calloc failed");
         return;
     }
-    /* clear memory */
-    memset(win_info, 0, sizeof(ico_syc_win_info_t));
 
     /* start parser */
     parser = json_parser_new();
@@ -569,8 +553,6 @@ ico_syc_cb_win_attr(ico_syc_callback_t callback, void *user_data,
         _ERR("calloc failed");
         return;
     }
-    /* clear memory */
-    memset(win_attr, 0, sizeof(ico_syc_win_attr_t));
 
     /* start parser */
     parser = json_parser_new();
@@ -633,7 +615,7 @@ ico_syc_cb_win_attr(ico_syc_callback_t callback, void *user_data,
 /**
  * @internal
  * @brief   ico_syc_cb_thumb
- *          Execute callback function. (ICO_SYC_EV_THUMB_PREPARE
+ *          Execute callback function. (ICO_SYC_EV_THUMB_ERROR
  *                                      ICO_SYC_EV_THUMB_CHANGE
  *                                      ICO_SYC_EV_THUMB_UNMAP)
  *
@@ -664,8 +646,6 @@ ico_syc_cb_thumb(ico_syc_callback_t callback, void *user_data,
         _ERR("calloc failed");
         return;
     }
-    /* clear memory */
-    memset(thumb_info, 0, sizeof(ico_syc_thumb_info_t));
 
     /* start parser */
     parser = json_parser_new();
@@ -752,8 +732,6 @@ ico_syc_cb_layer(ico_syc_callback_t callback, void *user_data,
         _ERR("calloc failed");
         return;
     }
-    /* clear memory */
-    memset(layer_attr, 0, sizeof(ico_syc_layer_attr_t));
 
     /* start parser */
     parser = json_parser_new();
@@ -987,9 +965,8 @@ ico_syc_change_layer(const char *appid, int surface, int layer)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_syc_prepare_thumb
+ * @brief   ico_syc_map_thumb
  *          Prepare the thumbnail data for mapping to the memory.
- *          User must call this API before calling ico_syc_map_thumb API.
  *
  * @param[in]   surface                 window's surface id
  * @param[in]   framerate               notify cycle [ms]
@@ -999,7 +976,7 @@ ico_syc_change_layer(const char *appid, int surface, int layer)
  */
 /*--------------------------------------------------------------------------*/
 ICO_API int
-ico_syc_prepare_thumb(int surface, int framerate)
+ico_syc_map_thumb(int surface, int framerate)
 {
     int ret = ICO_SYC_ERR_NONE;
     msg_t msg;
@@ -1009,57 +986,13 @@ ico_syc_prepare_thumb(int surface, int framerate)
     appid = ico_syc_get_appid();
 
     /* make message */
-    msg = _create_prepare_thumb_msg(appid, surface, framerate);
+    msg = _create_map_thumb_msg(appid, surface, framerate);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */
     ico_syc_free_msg(msg);
 
     return ret;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ico_syc_map_thumb
- *          Map the thumbnail data.
- *
- * @param[in]   surface                 window's surface id
- * @return      Address of the thumbnail data
- * @retval      address                 success
- * @retval      NULL                    error
- */
-/*--------------------------------------------------------------------------*/
-ICO_API ico_syc_thumb_data_t *
-ico_syc_map_thumb(int surface)
-{
-    ico_syc_thumb_data_t *thumb = NULL;
-    int ret = ICO_SYC_ERR_NONE;
-    msg_t msg;
-    char *appid;
-
-    thumb = (ico_syc_thumb_data_t *)calloc(1, sizeof(ico_syc_thumb_data_t));
-    if (thumb == NULL) {
-        _ERR("calloc failed");
-        return NULL;
-    }
-
-    /* get appid */
-    appid = ico_syc_get_appid();
-
-    /* make message */
-    msg = _create_thumb_msg(appid, surface, _CMD_MAP_THUMB);
-    /* send message */
-    ret = ico_syc_send_msg(msg);
-    /* free send message */
-    ico_syc_free_msg(msg);
-
-    if (ret != ICO_SYC_ERR_NONE) {
-        free(thumb);
-        _ERR("send message failed");
-        return NULL;
-    }
-
-    return thumb;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1086,7 +1019,7 @@ ico_syc_unmap_thumb(int surface)
     appid = ico_syc_get_appid();
 
     /* make message */
-    msg = _create_thumb_msg(appid, surface, _CMD_UNMAP_THUMB);
+    msg = _create_unmap_thumb_msg(appid, surface);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */

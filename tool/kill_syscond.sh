@@ -22,8 +22,10 @@ killall -9 dialer 2> /dev/null
 killall -9 calculator 2> /dev/null
 killall -9 memo 2> /dev/null
 killall -9 smartsearch 2> /dev/null
+killall -9 ico-app-soundsample 2> /dev/null
 killall -9 GV3ySIINq7.GhostCluster 2> /dev/null
 killall -9 t8j6HTRpuz.MediaPlayer 2> /dev/null
+killall -9 WJT8vAfaMa.DemoAudioApp 2> /dev/null
 killall -9 WebProcess 2> /dev/null
 killall -9 WebProcess 2> /dev/null
 killall -9 ico-app-login 2> /dev/null

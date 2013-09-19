@@ -33,17 +33,6 @@ typedef enum _window_show {
     ICO_SYC_WIN_SHOW_ALL = -1
 } ico_syc_win_show_e;
 
-/*
- * thumbnail data
- */
-typedef struct _thumb_data {
-    int   width;    /* window width */
-    int   height;   /* window height */
-    int   stride;   /* bites par line of frame buffer */
-    int   format;   /* format of thumbnail data */
-    void  *data;    /* thumbnail data */
-} ico_syc_thumb_data_t;
-
 /*============================================================================*/
 /* structure                                                                  */
 /*============================================================================*/
@@ -143,32 +132,17 @@ int ico_syc_change_layer(const char *appid, int surface, int layer);
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_syc_prepare_thumb
- *          Prepare the thumbnail data for mapping to the memory.
- *          User must call this API before calling ico_syc_map_thumb API.
+ * @brief   ico_syc_map_thumb
+ *          Map the thumbnail data for mapping to the memory.
  *
  * @param[in]   surface                 window's surface id
- * @param[in]   framerate               notify cycle [ms]
+ * @param[in]   framerate               notify cycle [frames par sec]
  * @return      result
  * @retval      0                       success
  * @retval      not 0                   error
  */
 /*--------------------------------------------------------------------------*/
-int ico_syc_prepare_thumb(int surface, int framerate);
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ico_syc_map_thumb
- *          Map the thumbnail data.
- *          User must call free() when delete thumbnail data.
- *
- * @param[in]   surface                 window's surface id
- * @return      Address of the thumbnail data
- * @retval      address                 success
- * @retval      NULL                    error
- */
-/*--------------------------------------------------------------------------*/
-ico_syc_thumb_data_t *ico_syc_map_thumb(int surface);
+int ico_syc_map_thumb(int surface, int framerate);
 
 /*--------------------------------------------------------------------------*/
 /**

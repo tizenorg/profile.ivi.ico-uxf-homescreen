@@ -1,2 +1,2 @@
 SUBDIRS=\
-   state-machine 
+   state-machine

@@ -9,26 +9,28 @@ noinst_PROGRAMS   = \
 	StatusBar               
 
 HomeScreen_SOURCES = \
-	home_screen_main.cpp        \
-	ico_log.c        \
-	CicoSCAilItems.cpp        \
-	CicoSCAulItems.cpp        \
-	CicoSCSystemConfig.cpp        \
-	CicoSCLifeCycleController.cpp        \
-	CicoHSWindow.cpp        \
-	CicoHSWindowController.cpp        \
-	CicoHSMenuTouch.cpp        \
-	CicoHomeScreen.cpp        \
-    CicoHSMenuTile.cpp  \
-	CicoHSBackWindow.cpp \
-	CicoHSControlBarWindow.cpp \
-	CicoHSControlBarTouch.cpp \
-	CicoHSMenuWindow.cpp \
-	CicoHSAppInfo.cpp \
-	CicoHomeScreenConfig.cpp      \
+	home_screen_main.cpp	\
+	CicoSCAilItems.cpp	\
+	CicoSCAulItems.cpp	\
+	CicoSCSystemConfig.cpp	\
+	CicoSCLifeCycleController.cpp	\
+	CicoHSWindow.cpp	\
+	CicoHSWindowController.cpp	\
+	CicoHSMenuTouch.cpp	\
+	CicoHomeScreen.cpp	\
+	CicoHSMenuTile.cpp	\
+	CicoHSBackWindow.cpp	\
+	CicoHSControlBarWindow.cpp	\
+	CicoHSControlBarTouch.cpp	\
+	CicoHSMenuWindow.cpp	\
+	CicoHSAppInfo.cpp	\
+	CicoHomeScreenConfig.cpp	\
 	CicoHomeScreenResourceConfig.cpp	\
 	CicoHomeScreenSound.cpp \
-    CicoHomeScreenSoundConfig.cpp
+	CicoHomeScreenSoundConfig.cpp	\
+	CicoHSAppHistory.cpp \
+    CicoHSSystemState.cpp
+
 HomeScreen_CFLAGS= \
     $(EFL_CFLAGS) \
     $(OPT_CFLAGS) \
@@ -58,7 +60,7 @@ HomeScreen_LDADD = \
     $(UWS_LIBS) \
     $(AUL_LIBS) \
     $(AIL_LIBS) \
-    -lico-util-com \
+    -lico-util \
     -lico-uxf-weston-plugin \
     /usr/lib/libpkgmgr-client.so \
 	../../lib/apps-framework/.libs/libico-appfw.so
@@ -78,7 +80,6 @@ HomeScreen_LDADD = \
 
 StatusBar_SOURCES = \
     	status_bar.cpp	\
-	    ico_log.c        \
         CicoStatusBarControlWindow.cpp \
         CicoStatusBarTime.cpp \
     	CicoHomeScreenConfig.cpp	\
@@ -117,3 +118,36 @@ BUILT_SOURCES = \
 	edje_cc $< -id ../../res/org.tizen.ico.homescreen/res/images -fd ../../res/org.tizen.ico.homescreen/res/images -sd ../../res/org.tizen.ico.homescreen/res/sounds -o $@
 
 CLEANFILES = $(BUILT_SOURCES)
+
+install-exec-hook:
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/bin
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/var
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/config
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
+	mkdir -p $(INSTALL_ROOT)/usr/share/packages
+	install -m 0755 HomeScreen $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/bin
+	install -m 0644 home_screen_bg.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
+	install -m 0644 home_screen_touch.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/bg.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/ctrl.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_off.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_off_2.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_on.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_on_2.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/api_all_off.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/api_all_on.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_n.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_p.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_really.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_no.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_yes.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/termIcon.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/tizen_32.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/data/share/packages/org.tizen.ico.homescreen.xml $(INSTALL_ROOT)/usr/share/packages
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/config
+	cp -r $(top_srcdir)/data/apps/org.tizen.ico.homescreen $(INSTALL_ROOT)/usr/apps/
+
+uninstall:
+	rm -rf $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen
+	rm -f $(INSTALL_ROOT)/usr/share/packages/org.tizen.ico.homescreen

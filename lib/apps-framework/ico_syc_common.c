@@ -10,7 +10,7 @@
  * @brief   Common API to connect System Controller
  *          for privilege and general applications
  *
- * @date    Aug-19-2013
+ * @date    Sep-4-2013
  */
 
 #include <stdlib.h>
@@ -48,6 +48,9 @@ static void _del_poll_fd(int fd);
 static void *_poll_fd_thread(void *args);
 static int _connect_client(ico_syc_callback_t callback, void *user_data);
 static void _disconnect_client(void);
+static void ico_syc_cb_notify_changed_state(ico_syc_callback_t callback,
+                                            void *user_data, int event,
+                                            const void *data, size_t len);
 
 /*============================================================================*/
 /* variable & table                                                           */
@@ -211,8 +214,9 @@ _add_queue(void *data, size_t len)
             _ERR("g_queue_pop_head failed");
             return;
         }
+        /* clear data */
+        memset(recv_data, 0, sizeof(recv_info_t));
     }
-    memset(recv_data, 0, sizeof(recv_info_t));
 
     /* set data */
     snprintf(recv_data->data, sizeof(recv_data->data), "%s", (char *)data);
@@ -253,9 +257,6 @@ static int _get_event_from_cmd(int command)
     case MSG_CMD_CHANGE_ACTIVE:
         event = ICO_SYC_EV_WIN_ACTIVE;
         break;
-    case MSG_CMD_PREPARE_THUMB:
-        event = ICO_SYC_EV_THUMB_PREPARE;
-        break;
     case MSG_CMD_MAP_THUMB:
         event = ICO_SYC_EV_THUMB_CHANGE;
         break;
@@ -291,6 +292,9 @@ static int _get_event_from_cmd(int command)
         break;
     case MSG_CMD_UNSET_REGION:
         event = ICO_SYC_EV_INPUT_UNSET;
+        break;
+    case MSG_CMD_NOTIFY_CHANGED_STATE:
+        event = ICO_SYC_EV_STATE_CHANGE;
         break;
     default:
         break;
@@ -342,9 +346,9 @@ _exec_callback(void *user_data)
             ico_syc_cb_win_attr(syc_callback, user_data, event,
                                 recv_data->data, recv_data->len);
             break;
-        case ICO_SYC_EV_THUMB_PREPARE:
         case ICO_SYC_EV_THUMB_CHANGE:
         case ICO_SYC_EV_THUMB_UNMAP:
+        case ICO_SYC_EV_THUMB_ERROR:
             ico_syc_cb_thumb(syc_callback, user_data, event,
                              recv_data->data, recv_data->len);
             break;
@@ -354,6 +358,10 @@ _exec_callback(void *user_data)
             break;
         case ICO_SYC_EV_USERLIST:
             ico_syc_cb_userlist(syc_callback, user_data, event,
+                                recv_data->data, recv_data->len);
+            break;
+        case ICO_SYC_EV_LASTINFO:
+            ico_syc_cb_lastinfo(syc_callback, user_data, event,
                                 recv_data->data, recv_data->len);
             break;
         case ICO_SYC_EV_AUTH_FAIL:
@@ -371,6 +379,10 @@ _exec_callback(void *user_data)
         case ICO_SYC_EV_INPUT_UNSET:
             ico_syc_cb_region(syc_callback, user_data, event,
                               recv_data->data, recv_data->len);
+            break;
+        case ICO_SYC_EV_STATE_CHANGE:
+            ico_syc_cb_notify_changed_state(syc_callback, user_data, event,
+                                            recv_data->data, recv_data->len);
             break;
         default:
             break;
@@ -694,6 +706,79 @@ ico_syc_disconnect(void)
         free(info);
     }
     g_queue_free(recv_free_q);
+
+    return;
+}
+
+/*============================================================================*/
+/* internal common function                                                   */
+/*============================================================================*/
+/*--------------------------------------------------------------------------*/
+/**
+ * @internal
+ * @brief   ico_syc_cb_res
+ *          Execute callback function. (ICO_SYC_EV_RES_ACQUIRE
+ *                                      ICO_SYC_EV_RES_DEPRIVE
+ *                                      ICO_SYC_EV_RES_WAITING
+ *                                      ICO_SYC_EV_RES_REVERT
+ *                                      ICO_SYC_EV_RES_RELEASE)
+ *
+ * @param[in]   callback                callback function
+ * @param[in]   user_data               pased data on called callback function
+ * @param[in]   event                   event code
+ * @param[in]   data                    message data
+ * @param[in]   len                     length of data
+ */
+/*--------------------------------------------------------------------------*/
+static void
+ico_syc_cb_notify_changed_state(ico_syc_callback_t callback, void *user_data,
+                                int event, const void *data, size_t len)
+{
+    JsonParser *parser  = NULL;
+    GError *error       = NULL;
+    gboolean gbool      = FALSE;
+    JsonNode *root      = NULL;
+    JsonObject *obj     = NULL;
+    JsonObject *argobj  = NULL;
+
+    ico_syc_state_info_t state_info;
+
+    /* start parser */
+    parser = json_parser_new();
+    gbool = json_parser_load_from_data(parser, data, len, &error);
+    if (gbool == FALSE) {
+        g_object_unref(parser);
+        _ERR("json_parser_load_from_data failed");
+        return;
+    }
+
+    /* get root node */
+    root = json_parser_get_root(parser);
+    if (root == NULL) {
+        g_object_unref(parser);
+        _ERR("json_parser_get_root failed (root is NULL)");
+        return;
+    }
+
+    /* get object from root */
+    obj = json_node_get_object(root);
+    /* check message */
+    if (json_object_has_member(obj, MSG_PRMKEY_ARG) == FALSE) {
+        g_object_unref(parser);
+        _ERR("invalid message" );
+        return;
+    }
+    /* get object from obj */
+    argobj = json_object_get_object_member(obj, MSG_PRMKEY_ARG);
+
+    state_info.id    = ico_syc_get_int_member(argobj, MSG_PRMKEY_STATEID);
+    state_info.state = ico_syc_get_int_member(argobj, MSG_PRMKEY_STATE);
+
+    /* exec callback */
+    callback(event, &state_info, user_data);
+
+    /* free memory */
+    g_object_unref(parser);
 
     return;
 }

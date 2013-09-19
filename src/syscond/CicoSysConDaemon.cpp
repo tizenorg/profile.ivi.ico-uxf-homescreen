@@ -62,8 +62,10 @@ CicoSysConDaemon::onCreate(void *user_data)
             CicoSCLifeCycleController::getInstance();
         CicoSCWindowController *winctrl     = new CicoSCWindowController();
         CicoSCInputController  *inputctrl   = new CicoSCInputController();
-        CicoSCResourceManager  *resourcemgr = new CicoSCResourceManager();
 
+        CicoSCResourceManager  *resourcemgr = new CicoSCResourceManager();
+        resourcemgr->setWindowController(winctrl);
+        resourcemgr->setInputController(inputctrl);
         ret = resourcemgr->initialize();
         if (ICO_SYC_EOK != ret) {
             return false;

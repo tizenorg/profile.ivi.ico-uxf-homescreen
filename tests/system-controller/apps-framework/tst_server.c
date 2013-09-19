@@ -334,6 +334,7 @@ _create_userctl_msg(int cmd)
     json_object_set_array_member(argobj, MSG_PRMKEY_USER_LIST, array);
 
     json_object_set_string_member(argobj, MSG_PRMKEY_USER_LOGIN, TST_USER_A);
+    json_object_set_string_member(argobj, MSG_PRMKEY_LASTINFO, TST_LASTINFO);
 
     json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
 
@@ -431,6 +432,13 @@ _create_resctl_region_msg(int cmd)
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_Y, TST_POS_Y);
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_WIDTH, TST_REG_WIDTH);
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_HEIGHT, TST_REG_HEIGHT);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_HOT_X, TST_REG_HOT_X);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_HOT_Y, TST_REG_HOT_Y);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_X, TST_REG_CUR_X);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_Y, TST_REG_CUR_Y);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_WIDTH, TST_REG_CUR_WIDTH);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_HEIGHT, TST_REG_CUR_HEIGHT);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_ATTR, TST_REG_ATTR);
 
     /* set object */
     json_object_set_object_member(obj, MSG_PRMKEY_REGION, resobj);
@@ -476,7 +484,6 @@ _create_msg(const void *data, size_t len)
     case MSG_CMD_CHANGE_LAYER:
         gen = _create_winctl_attr_msg(MSG_CMD_CHANGE_ATTR, "change layer");
         break;
-    case MSG_CMD_PREPARE_THUMB:
     case MSG_CMD_MAP_THUMB:
     case MSG_CMD_UNMAP_THUMB:
         gen = _create_winctl_msg(cmd);

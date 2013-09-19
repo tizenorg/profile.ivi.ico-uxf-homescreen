@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCServer.h
  *
- *  @brief 
+ *  @brief  This file is definition of CicoSCServer class
  */
 //==========================================================================
 #ifndef __CICO_SC_SERVER_H__
@@ -39,7 +39,7 @@ using namespace std;
 //==========================================================================
 //  forward declaration
 //==========================================================================
-class CicoSCUwsHandle;
+class CicoSCUwsHandler;
 class CicoSCMessage;
 class CicoSCCommand;
 class CicoSCWindowController;
@@ -49,64 +49,102 @@ class CicoSCResourceManager;
 
 //==========================================================================
 /**
- *  @brief  communication server
+ *  @brief  This class has function of interprocess message server
  */
 //==========================================================================
 class CicoSCServer
 {
 public:
+    // get CicoSCServer instance
     static CicoSCServer* getInstance();
 
+    // set window controller instance
     void setWindowCtrl(CicoSCWindowController* windowCtrl);
+
+    // set input controller instance
     void setInputCtrl(CicoSCInputController* inputCtrl);
+
+    // set input controller instance
     void setUserMgr(CicoSCUserManager* userMgr);
+
+    // set resource manager instance
     void setResourceMgr(CicoSCResourceManager* resourceMgr);
 
-	int startup(int port, const char *protocol);
+    // startup server
+    int startup(int port, const char *protocol);
 
-    void addPollFd(CicoSCUwsHandle *handle);
-    void delPollFd(CicoSCUwsHandle *handle);
-    void dispatch(const CicoSCUwsHandle *handle, int flags);
+    // send message to application client
     int sendMessage(const string & appid, CicoSCMessage* msg);
+
+    // send message to homescreen
     int sendMessageToHomeScreen(CicoSCMessage* msg);
 
-    void uwsCallbackImpl(const struct ico_uws_context *context,
-                         const ico_uws_evt_e event,
-                         const void *id,
-                         const ico_uws_detail *detail,
-                         void *user_data);
-
+    // websocket callback function
+    void receiveEventCB(const struct ico_uws_context *context,
+                        const ico_uws_evt_e          event,
+                        const void                   *id,
+                        const ico_uws_detail         *detail,
+                        void                         *user_data);
 
 private:
+    // default constructor
     CicoSCServer();
-    ~CicoSCServer();
-    static void uwsCallback(const struct ico_uws_context *context,
-                            const ico_uws_evt_e event,
-                            const void *id,
-                            const ico_uws_detail *detail,
-                            void *user_data);
 
+    // destructor
+    ~CicoSCServer();
+
+    // assignment operator
+    CicoSCServer& operator=(const CicoSCServer &object);
+
+    // copy constructor
+    CicoSCServer(const CicoSCServer &object);
+
+    // websocket utility callback function
+    static void uwsReceiveEventCB(const struct ico_uws_context *context,
+                                  const ico_uws_evt_e event,
+                                  const void *id,
+                                  const ico_uws_detail *detail,
+                                  void *user_data);
+
+    // ecore file destructor callback fucntion
     static Eina_Bool ecoreFdCallback(void *data,
                                           Ecore_Fd_Handler *handler);
 
-    CicoSCUwsHandle* findUwsHandler(const struct ico_uws_context *context,
-                                    const void *id);
-    CicoSCUwsHandle* findUwsHandler(const Ecore_Fd_Handler *ecoreFdHandler);
-    CicoSCUwsHandle* findUwsHandler(const string & appid);
- 
+    // add poll websocket file destructor
+    void addPollFd(CicoSCUwsHandler *handler);
+
+    // delete poll websocket file destructor
+    void delPollFd(CicoSCUwsHandler *handler);
+
+    // dispatch receive message process and send message process
+    void dispatch(const CicoSCUwsHandler *handler);
+
+    // find websocket handle by context and id
+    CicoSCUwsHandler* findUwsHandler(const struct ico_uws_context *context,
+                                     const void *id);
+
+    // find websocket handle by ecore file destructor handler
+    CicoSCUwsHandler* findUwsHandler(const Ecore_Fd_Handler *ecoreFdHandler);
+
+    // find websocket handle by appid
+    CicoSCUwsHandler* findUwsHandler(const string & appid);
+
+    // query whether the handler exists
+    bool isExistUwsHandler(const CicoSCUwsHandler *handler);
+
 private:
-    static CicoSCServer* ms_myInstance;
+    static CicoSCServer*    ms_myInstance;   ///< this class instance
 
-    struct ico_uws_context *m_uwsContext; // TODO init
+    struct ico_uws_context  *m_uwsContext;   ///< websocket utility context
 
-    CicoSCWindowController *m_windowCtrl;
-    CicoSCInputController  *m_inputCtrl;
-    CicoSCUserManager      *m_userMgr;
-    CicoSCResourceManager  *m_resourceMgr;
+    CicoSCWindowController  *m_windowCtrl;   ///< window controller instance
+    CicoSCInputController   *m_inputCtrl;    ///< input controller instance
+    CicoSCUserManager       *m_userMgr;      ///< user manager instance
+    CicoSCResourceManager   *m_resourceMgr;  ///< resource manager instance
 
-    list<CicoSCUwsHandle*> m_uwsHandlerList;
-    list<CicoSCMessage*>   m_sendMsgQueue;
-    list<CicoSCCommand*>   m_recvCmdQueue;
+    list<CicoSCUwsHandler*> m_uwsHandlerList;///< websocket handler list
+    list<CicoSCMessage*>    m_sendMsgQueue;  ///< send message queue
+    list<CicoSCCommand*>    m_recvCmdQueue;  ///< recieve message queue
 };
 #endif  // __CICO_SC_SERVER_H__
 // vim:set expandtab ts=4 sw=4:

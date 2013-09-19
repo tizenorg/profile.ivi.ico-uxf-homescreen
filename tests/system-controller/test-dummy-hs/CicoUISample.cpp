@@ -19,6 +19,9 @@
 #include <iostream>
 #include <string>
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "CicoUISample.h"
 #include "CicoBaseWin.h"
 #include "CicoGeometry.h"
@@ -31,6 +34,7 @@
 
 CicoBackground* _background = NULL;
 CicoBackground* _controlbar = NULL;
+bool backgroundShow = false;
 extern "C" {
 static void
 _syc_callback(const ico_syc_ev_e event,
@@ -45,25 +49,30 @@ _syc_callback(const ico_syc_ev_e event,
                ((ico_syc_win_info_t *)detail)->name,
                ((ico_syc_win_info_t *)detail)->surface);
 
-		ico_syc_win_info_t *info = (ico_syc_win_info_t *)detail;
-		if (0 == strcmp(info->name, "HSBackground")) {
-			ico_syc_change_layer(info->appid, info->surface, 0);
-			ico_syc_show(info->appid, info->surface, NULL);
-			ico_syc_win_move_t win_move = {NULL, 0, 64, 1080, 1920-64-128};
-        	ico_syc_move(info->appid, info->surface, &win_move, NULL);
+        ico_syc_win_info_t *info = (ico_syc_win_info_t *)detail;
+        if (0 == strcmp(info->name, "HSBackground")) {
+            if (backgroundShow == true) {
+                break;
+            }
+            ico_syc_change_layer(info->appid, info->surface, 0);
+            ico_syc_animation_t animation = {"fade", 500};
+            ico_syc_win_move_t win_move = {NULL, 0, 64, 300, 300};
+            ico_syc_move(info->appid, info->surface, &win_move, &animation);
+            ico_syc_show(info->appid, info->surface, &animation);
 
-            ico_syc_prepare_thumb(info->surface, 0);
-		}
-		if (0 == strcmp(info->name, "HSControllBar")) {
-			ico_syc_change_layer(info->appid, info->surface, 1);
-			ico_syc_show(info->appid, info->surface, NULL);
-			ico_syc_win_move_t win_move = {NULL, 0, 1920-128, 1080, 128};
-        	ico_syc_move(info->appid, info->surface, &win_move, NULL);
+            ico_syc_map_thumb(info->surface, 0);
+            backgroundShow = true;
+        }
+        if (0 == strcmp(info->name, "HSControllBar")) {
+            ico_syc_change_layer(info->appid, info->surface, 1);
+            ico_syc_show(info->appid, info->surface, NULL);
+            ico_syc_win_move_t win_move = {NULL, 0, 1920-128, 1080, 128};
+            ico_syc_move(info->appid, info->surface, &win_move, NULL);
 
-			ico_syc_change_layer(info->appid, info->surface, 0);
-			ico_syc_win_move_t win_move2 = {NULL, 0, 128, 1080, 512};
-        	ico_syc_move(info->appid, info->surface, &win_move2, NULL);
-		}
+            ico_syc_change_layer(info->appid, info->surface, 0);
+            ico_syc_win_move_t win_move2 = {NULL, 0, 128, 1080, 512};
+            ico_syc_move(info->appid, info->surface, &win_move2, NULL);
+        }
 
         break;
     }
@@ -82,6 +91,7 @@ _syc_callback(const ico_syc_ev_e event,
                ((ico_syc_win_info_t *)detail)->surface);
         break;
     case ICO_SYC_EV_WIN_ATTR_CHANGE:
+    {
         ICO_DBG("--- ICO_SYC_EV_WIN_ATTR_CHANGE"
                 "(appid[%s], name[%s], surface[%d], node[%d], layer[%d], "
                 "(x,y)[%d, %d], width[%d], height[%d], raise[%d], visible[%d], active[%d])",
@@ -97,23 +107,37 @@ _syc_callback(const ico_syc_ev_e event,
                ((ico_syc_win_attr_t *)detail)->raise,
                ((ico_syc_win_attr_t *)detail)->visible,
                ((ico_syc_win_attr_t *)detail)->active);
+
+        ico_syc_win_attr_t *info = (ico_syc_win_attr_t *)detail;
+        if (0 == strcmp(info->name, "HSBackground")) {
+            if (backgroundShow == true) {
+                break;
+            }
+            ico_syc_change_layer(info->appid, info->surface, 1);
+            ico_syc_show_layer(1);
+            ico_syc_animation_t animation = {"fade", 500};
+            ico_syc_show(info->appid, info->surface, &animation);
+            ico_syc_win_move_t win_move = {NULL, 100, 64, 300, 300};
+            ico_syc_move(info->appid, info->surface, &win_move, &animation);
+            ico_syc_hide(info->appid, info->surface, &animation);
+            ico_syc_show(info->appid, info->surface, &animation);
+            backgroundShow = true;
+        }
         break;
-    case ICO_SYC_EV_THUMB_PREPARE:
-        printf("--- ICO_SYC_EV_THUMB_PREPARE\n");
-        printf("\t(appid[%s], surface[%d], width[%d], height[%d], ",
+    }
+    case ICO_SYC_EV_THUMB_ERROR:
+        printf("--- ICO_SYC_EV_THUMB_ERROR\n");
+        printf("\t(appid[%s], surface[%d], error[%d]",
                ((ico_syc_thumb_info_t *)detail)->appid,
                ((ico_syc_thumb_info_t *)detail)->surface,
-               ((ico_syc_thumb_info_t *)detail)->width,
-               ((ico_syc_thumb_info_t *)detail)->height);
-        printf("stride[%d], format[%d])\n",
-               ((ico_syc_thumb_info_t *)detail)->stride,
-               ((ico_syc_thumb_info_t *)detail)->format);
+               ((ico_syc_thumb_info_t *)detail)->target);
         break;
     case ICO_SYC_EV_THUMB_CHANGE:
         printf("--- ICO_SYC_EV_THUMB_CHANGE\n");
-        printf("\t(appid[%s], surface[%d], width[%d], height[%d], ",
+        printf("\t(appid[%s], surface[%d], name[%d], width[%d], height[%d], ",
                ((ico_syc_thumb_info_t *)detail)->appid,
                ((ico_syc_thumb_info_t *)detail)->surface,
+               ((ico_syc_thumb_info_t *)detail)->name,
                ((ico_syc_thumb_info_t *)detail)->width,
                ((ico_syc_thumb_info_t *)detail)->height);
         printf("stride[%d], format[%d])\n",
@@ -122,9 +146,10 @@ _syc_callback(const ico_syc_ev_e event,
         break;
     case ICO_SYC_EV_THUMB_UNMAP:
         printf("--- ICO_SYC_EV_THUMB_UNMAP\n");
-        printf("\t(appid[%s], surface[%d], width[%d], height[%d], ",
+        printf("\t(appid[%s], surface[%d], name[%d], width[%d], height[%d], ",
                ((ico_syc_thumb_info_t *)detail)->appid,
                ((ico_syc_thumb_info_t *)detail)->surface,
+               ((ico_syc_thumb_info_t *)detail)->name,
                ((ico_syc_thumb_info_t *)detail)->width,
                ((ico_syc_thumb_info_t *)detail)->height);
         printf("stride[%d], format[%d])\n",
@@ -173,19 +198,17 @@ CicoUISample::onCreate(void *user_data)
         ico_syc_connect(_syc_callback, NULL);
 
         ecore_evas_init();
-        int w = 600;
-        int h = 800;
         CicoBaseWin* _bgwin = new CicoBaseWin("HSBackground",
-										      CicoGeometry(0, 0, 1080, 1920-64-128));
+                                              CicoGeometry(0, 64, 300, 300));
         _background = new CicoBackground(_bgwin->getEvas(),
-                                         CicoGeometry(0, 0, 1080, 1920-64-128),
-                                         CicoColor(0, 0, 128, 255));
+                                         CicoGeometry(0, 0, 300, 300),
+                                         CicoColor(128, 0, 128, 255));
 
-        CicoBaseWin* _ctlwin = new CicoBaseWin("HSControllBar",
-                                               CicoGeometry(0, 0, 1080, 128));
-        _controlbar = new CicoBackground(_ctlwin->getEvas(),
-                                         CicoGeometry(0, 0, 1080, 128),
-                                         CicoColor(128, 128, 128, 255));
+//        CicoBaseWin* _ctlwin = new CicoBaseWin("HSControllBar",
+//                                               CicoGeometry(0, 0, 1080, 128));
+//        _controlbar = new CicoBackground(_ctlwin->getEvas(),
+//                                         CicoGeometry(0, 0, 1080, 128),
+//                                         CicoColor(128, 128, 128, 255));
  
     }
     catch (const std::exception& e) {

@@ -69,7 +69,7 @@ CicoSCSysResourceMonitor::~CicoSCSysResourceMonitor()
 }
 
 /**
- * @breif system usage
+ * @brief system usage
  * @param cpu core cpu position -1:all 0-n:cpu position
  * @return cpu usage(return value/100 = 0.00 - 100.00%)
  *         -1:get fail
@@ -126,7 +126,7 @@ int CicoSCSysResourceMonitor::getCPUtime(E_USAGETYPE e, int cpu) const
 }
 
 /**
- * @brief monitorring
+ * @brief monitoring
  */
 void CicoSCSysResourceMonitor::monitoring()
 {
@@ -197,7 +197,7 @@ int CicoSCSysResourceMonitor::createCurrentCPU()
     memset(tmp, 0, sizeof(tmp));
     cnt = readProcStatCPU(tmp, nDmyCpuCnt-1);
     if (0 == cnt) {
-        ICO_TRA("ret(0) cnt iz zero!");
+        ICO_TRA("ret(0) cnt is zero!");
         return 0;
     }
     size_t sz = cnt + 1;
@@ -216,7 +216,7 @@ void CicoSCSysResourceMonitor::readCurrentCPU()
 }
 
 /**
- * @brief read /proc/stat CPU infomation
+ * @brief read /proc/stat CPU information
  * @param sdtp destination read value
  * @param cpucnt CPU core count
  * @return read CPU count
@@ -303,7 +303,7 @@ bool CicoSCSysResourceMonitor::usageCalcCPU(const stat_data_t& old,
     double dguest_nice = current.guest_nice - old.guest_nice;
     ttl += dguest_nice;
     if (0 == ttl) { // must not be divided by ZERO
-        if (g_RC_LOG) ICO_TRA("end divid zero!?");
+        if (g_RC_LOG) ICO_TRA("end divide zero!?");
         return false;
     }
     calc.user = (int)(duser / ttl * dCarryUp);

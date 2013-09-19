@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCWaylandIF.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCWaylandIF class
  */
 //==========================================================================
 
@@ -24,17 +24,38 @@ const char * CicoSCWaylandIF::ICO_WL_INPUT_MGR_CTRL_IF = "ico_input_mgr_control"
 const char * CicoSCWaylandIF::ICO_WL_EXINPUT_IF        = "ico_exinput";
 const char * CicoSCWaylandIF::ICO_WL_INPUT_MGR_DEV_IF  = "ico_input_mgr_device";
 const char * CicoSCWaylandIF::ICO_WL_OUTPUT_IF         = "wl_output";
-const char * CicoSCWaylandIF::ICO_WL_SHM_IF            = "wl_shm";
 
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  default constructor
+ */
+//--------------------------------------------------------------------------
 CicoSCWaylandIF::CicoSCWaylandIF()
       : m_initialized(false)
 {
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  destructor
+ */
+//--------------------------------------------------------------------------
 CicoSCWaylandIF::~CicoSCWaylandIF()
 {
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  destructor
+ *
+ *  @param [in] date        user data
+ *  @param [in] registry    wayland registry
+ *  @param [in] name        wayland display id
+ *  @parma [in] interface   wayland interface name
+ *  @parma [in] version     wayland interface version number
+ */
+//--------------------------------------------------------------------------
 void
 CicoSCWaylandIF::initInterface(void               *data,
                                struct wl_registry *registry,
@@ -45,6 +66,15 @@ CicoSCWaylandIF::initInterface(void               *data,
     ICO_WRN("CicoSCWaylandIF::initInterface called.");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  inquire whether initialized
+ *
+ *  @return true on initialized, false no not initialized
+ *  @retval true    initialized
+ *  @retval false   not initialized
+ */
+//--------------------------------------------------------------------------
 bool
 CicoSCWaylandIF::isInitialized(void)
 {

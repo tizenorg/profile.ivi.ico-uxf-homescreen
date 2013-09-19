@@ -91,12 +91,20 @@ extern "C" {
 #define MSG_PRMKEY_RES_POS_Y    (char *)"pos_y"
 #define MSG_PRMKEY_RES_WIDTH    (char *)"width"
 #define MSG_PRMKEY_RES_HEIGHT   (char *)"height"
+#define MSG_PRMKEY_RES_HOT_X    (char *)"hotspot_x"
+#define MSG_PRMKEY_RES_HOT_Y    (char *)"hotspot_y"
+#define MSG_PRMKEY_RES_CUR_X    (char *)"cursor_x"
+#define MSG_PRMKEY_RES_CUR_Y    (char *)"cursor_x"
+#define MSG_PRMKEY_RES_CUR_WIDTH  (char *)"cursor_width"
+#define MSG_PRMKEY_RES_CUR_HEIGHT (char *)"cursor_height"
 #define MSG_PRMKEY_RES_ATTR     (char *)"attr"
+/* user controller */
+#define MSG_PRMKEY_LASTINFO     (char *)"lastinfo"
 
+/* notify changed system state */
+#define MSG_PRMKEY_STATEID      (char *)"stateid"
+#define MSG_PRMKEY_STATE        (char *)"state"
 
-/*
- *
- */
 /* commnad type mask */
 #define MSG_CMD_TYPE_WINCTRL            0x00010000
 #define MSG_CMD_TYPE_INPUTCTRL          0x00020000
@@ -119,28 +127,36 @@ extern "C" {
 #define MSG_CMD_CHANGE_ACTIVE       0x00010006
 #define MSG_CMD_CHANGE_LAYER        0x00010007
 #define MSG_CMD_CHANGE_ATTR         0x00010008
-#define MSG_CMD_PREPARE_THUMB       0x00010010
 #define MSG_CMD_MAP_THUMB           0x00010011
 #define MSG_CMD_UNMAP_THUMB         0x00010012
 #define MSG_CMD_SHOW_LAYER          0x00010020
 #define MSG_CMD_HIDE_LAYER          0x00010021
 #define MSG_CMD_CHANGE_LAYER_ATTR   0x00010022
 /* input controller */
-#define MSG_CMD_ADD_INPUT       0x00020001
-#define MSG_CMD_DEL_INPUT       0x00020002
-#define MSG_CMD_SEND_INPUT      0x00020003
+#define MSG_CMD_ADD_INPUT           0x00020001
+#define MSG_CMD_DEL_INPUT           0x00020002
+#define MSG_CMD_SEND_INPUT          0x00020003
 /* user controller */
-#define MSG_CMD_CHANGE_USER     0x00030001
-#define MSG_CMD_GET_USERLIST    0x00030002
+#define MSG_CMD_CHANGE_USER         0x00030001
+#define MSG_CMD_GET_USERLIST        0x00030002
+#define MSG_CMD_GET_LASTINFO        0x00030003
+#define MSG_CMD_SET_LASTINFO        0x00030004
 /* app resource controller */
-#define MSG_CMD_ACQUIRE_RES     0x00040001
-#define MSG_CMD_RELEASE_RES     0x00040002
-#define MSG_CMD_DEPRIVE_RES     0x00040003
-#define MSG_CMD_WAITING_RES     0x00040004
-#define MSG_CMD_REVERT_RES      0x00040005
-#define MSG_CMD_SET_REGION      0x00040010
-#define MSG_CMD_UNSET_REGION    0x00040011
+#define MSG_CMD_ACQUIRE_RES         0x00040001
+#define MSG_CMD_RELEASE_RES         0x00040002
+#define MSG_CMD_DEPRIVE_RES         0x00040003
+#define MSG_CMD_WAITING_RES         0x00040004
+#define MSG_CMD_REVERT_RES          0x00040005
+/* input device setting */
+#define MSG_CMD_SET_REGION          0x00050001
+#define MSG_CMD_UNSET_REGION        0x00050002
 
+/* app resource controller */
+#define MSG_CMD_CREATE_RES          0x00040011
+#define MSG_CMD_DESTORY_RES         0x00040012
+
+/* notify state changed to homescreen */
+#define MSG_CMD_NOTIFY_CHANGED_STATE    0x00060001
 #ifdef __cplusplus
 }
 #endif

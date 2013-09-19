@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCWindowController.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCWindowController class
  */
 //==========================================================================
 
@@ -38,7 +38,7 @@ using namespace std;
 #include "CicoSCLayer.h"
 #include "CicoSCDisplayZone.h"
 #include "ico_syc_error.h"
-#include "CicoSCCommandParser.h"
+#include "CicoSCCommand.h"
 #include "ico_syc_msg_cmd_def.h"
 #include "CicoSCServer.h"
 #include "CicoSCMessage.h"
@@ -56,7 +56,6 @@ CicoSCWindowController::CicoSCWindowController()
     CicoSCWayland* wayland = CicoSCWayland::getInstance();
     wayland->getInstance()->addWaylandIF(ICO_WL_WIN_MGR_IF, this);
     wayland->getInstance()->addWaylandIF(ICO_WL_OUTPUT_IF, this);
-    wayland->getInstance()->addWaylandIF(ICO_WL_SHM_IF, this);
     initDB();
 }
 
@@ -84,44 +83,39 @@ CicoSCWindowController::initDB(void)
     vector<CicoSCDisplayConf*>::const_iterator itr;
     itr = displayList.begin();
     for (; itr != displayList.end(); ++itr) {
-        const CicoSCDisplayConf *dconf = const_cast<CicoSCDisplayConf*>(*itr);
         CicoSCDisplay *display = new CicoSCDisplay();
-
-        display->displayid = dconf->id;
-        display->type      = dconf->type;
-        display->nodeid    = dconf->node;
-        display->displayno = dconf->no;
-        display->width     = dconf->width;
-        display->height    = dconf->height;
-        display->inch      = dconf->inch;
-        display->name      = dconf->name;
+        display->displayid = (*itr)->id;
+        display->type      = (*itr)->type;
+        display->nodeid    = (*itr)->node;
+        display->displayno = (*itr)->no;
+        display->width     = (*itr)->width;
+        display->height    = (*itr)->height;
+        display->inch      = (*itr)->inch;
+        display->name      = (*itr)->name;
 
         vector<CicoSCLayerConf*>::const_iterator itr2;
-        itr2 = dconf->layerConfList.begin();
-        for (; itr2 != dconf->layerConfList.end(); ++itr2) {
-            const CicoSCLayerConf *lconf = const_cast<CicoSCLayerConf*>(*itr2);
-
+        itr2 = (*itr)->layerConfList.begin();
+        for (; itr2 != (*itr)->layerConfList.end(); ++itr2) {
             CicoSCLayer *layer = new CicoSCLayer();
-            layer->layerid     = lconf->id;
-            layer->type        = lconf->type;
+            layer->layerid     = (*itr2)->id;
+            layer->type        = (*itr2)->type;
             layer->width       = display->width;
             layer->height      = display->height;
             layer->displayid   = display->displayid;
-            layer->menuoverlap = lconf->menuoverlap;
+            layer->menuoverlap = (*itr2)->menuoverlap;
             display->layerList.push_back(layer);
         }
 
         vector<CicoSCDisplayZoneConf*>::const_iterator itr3;
-        itr3 = dconf->zoneConfList.begin();
-        for (; itr3 != dconf->zoneConfList.end(); ++itr3) {
-//            const CicoSCDisplayZoneConf *dzconf = const_cast<CicoSCLayerConf*>(*itr2);
-
+        itr3 = (*itr)->zoneConfList.begin();
+        for (; itr3 != (*itr)->zoneConfList.end(); ++itr3) {
             CicoSCDisplayZone *zone = new CicoSCDisplayZone();
-            zone->zoneid = (*itr3)->id;
-            zone->x      = (*itr3)->x;
-            zone->y      = (*itr3)->y;
-            zone->width  = (*itr3)->w;
-            zone->height = (*itr3)->h;
+            zone->zoneid   = (*itr3)->id;
+            zone->x        = (*itr3)->x;
+            zone->y        = (*itr3)->y;
+            zone->width    = (*itr3)->w;
+            zone->height   = (*itr3)->h;
+            zone->fullname = (*itr3)->fullname;
             display->zoneList.push_back(zone);
         }
         display->dump();
@@ -168,10 +162,10 @@ CicoSCWindowController::show(int        surfaceid,
                              int        animationTime)
 {
     ICO_DBG("CicoSCWindowController::show Enter"
-            "(surfaceid=%08X animation=%s animationTime=%d)",
+            "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::show Leave(ENOENT)");
@@ -183,32 +177,26 @@ CicoSCWindowController::show(int        surfaceid,
 
     // set animation request to Multi Window Manager
     int animaFlag = ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE;
-    int raiseFlag = ICO_WINDOW_MGR_RAISE_RAISE;
+    int raiseFlag = ICO_WINDOW_MGR_V_NOCHANGE;
     if ((NULL != animation) && (animation[0] != '\0')) {
-        ICO_DBG("ico_window_mgr_set_animation"
-                "(surface=0x%08X type=%d anima=%s time=%d)",
-                window->surfaceid,
-                ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
-                animation, animationTime);
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
-                                     animation,
-                                     animationTime);
+        // set animation request to Multi Window Manager
+        CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
+                                       animation, animationTime);
         animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
-        raiseFlag = ICO_WINDOW_MGR_V_NOCHANGE;
+    }
+    else {
+        if (false == window->raise) {
+            raiseFlag = ICO_WINDOW_MGR_RAISE_RAISE;
+            // update visible raise
+            window->raise = true;
+        }
     }
 
-    // show request to Multi Window Manager
-    ICO_DBG("ico_window_mgr_set_visible called."
-            "(surfaceid=0x%08X visible=%d raise=%d anima=%d",
-            window->surfaceid, ICO_WINDOW_MGR_VISIBLE_SHOW,
-            raiseFlag, animaFlag);
-    ico_window_mgr_set_visible(m_winmgr,
-                               window->surfaceid,
-                               ICO_WINDOW_MGR_VISIBLE_SHOW,
-                               raiseFlag,
-                               animaFlag);
+    // set visible request to Multi Window Manager
+    CicoSCWlWinMgrIF::setVisible(window->surfaceid,
+                                 ICO_WINDOW_MGR_VISIBLE_SHOW,
+                                 raiseFlag, animaFlag);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -237,10 +225,10 @@ CicoSCWindowController::hide(int        surfaceid,
                              int        animationTime)
 {
     ICO_DBG("CicoSCWindowController::hide Enter"
-            "(surfaceid=%08X animation=%s animationTime=%d)",
+            "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::hide Leave(ENOENT)");
@@ -253,20 +241,16 @@ CicoSCWindowController::hide(int        surfaceid,
     // set animation request to Multi Window Manager
     int animaFlag = ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE;
     if ((NULL != animation) && (animation[0] != '\0')) {
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE,
-                                     animation,
-                                     animationTime);
+        CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE,
+                                       animation, animationTime);
         animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
     }
 
-    // show request to Multi Window Manager
-    ico_window_mgr_set_visible(m_winmgr,
-                               window->surfaceid,
-                               ICO_WINDOW_MGR_VISIBLE_HIDE,
-                               ICO_WINDOW_MGR_V_NOCHANGE,
-                               animaFlag);
+    // set visible request to Multi Window Manager
+    CicoSCWlWinMgrIF::setVisible(window->surfaceid,
+                                    ICO_WINDOW_MGR_VISIBLE_HIDE,
+                                    ICO_WINDOW_MGR_V_NOCHANGE, animaFlag);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -299,10 +283,10 @@ CicoSCWindowController::resize(int        surfaceid,
                                int        animationTime)
 {
     ICO_DBG("CicoSCWindowController::resize Enter"
-            "(surfaceid=%08X h=%d w=%d animation=%s animationTime=%d)",
+            "(surfaceid=0x%08X h=%d w=%d animation=%s animationTime=%d)",
             surfaceid, w, h, animation, animationTime);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::resize Leave(ENOENT)");
@@ -312,23 +296,17 @@ CicoSCWindowController::resize(int        surfaceid,
     // set animation request to Multi Window Manager
     int animaFlag = ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE;
     if ((NULL != animation) && (animation[0] != '\0')) {
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE,
-                                     animation,
-                                     animationTime);
+        CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE,
+                                       animation, animationTime);
         animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
     }
 
     // set visible request to Multi Window Manager
-    ico_window_mgr_set_positionsize(m_winmgr,
-                                    window->surfaceid,
-                                    0, //ICO_WINDOW_MGR_V_NOCHANGE,
-                                    ICO_WINDOW_MGR_V_NOCHANGE,
-                                    ICO_WINDOW_MGR_V_NOCHANGE,
-                                    w,
-                                    h,
-                                    animaFlag);
+    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, window->nodeid,
+                                      ICO_WINDOW_MGR_V_NOCHANGE,
+                                      ICO_WINDOW_MGR_V_NOCHANGE,
+                                      w, h, animaFlag);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -363,11 +341,11 @@ CicoSCWindowController::move(int        surfaceid,
                              int        animationTime)
 {
     ICO_DBG("CicoSCWindowController::move Enter"
-            "(surfaceid=%08X nodeid=%d x=%d y=%d "
+            "(surfaceid=0x%08X nodeid=%d x=%d y=%d "
             "animation=%s animationTime=%d)",
             surfaceid, nodeid, x, y, animation, animationTime);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::move Leave(ENOENT)");
@@ -377,28 +355,23 @@ CicoSCWindowController::move(int        surfaceid,
     // set animation request to Multi Window Manager
     int animaFlag = ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE;
     if ((NULL != animation) && (animation[0] != '\0')) {
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
-                                     animation,
-                                     animationTime);
+        CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
+                                       animation, animationTime);
         animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
     }
 
     int moveNodeId = ICO_WINDOW_MGR_V_NOCHANGE;
-    if (nodeid >= 0) {
+    if ((nodeid >= 0) && (nodeid != INT_MAX)) {
         moveNodeId = nodeid;
     }
 
     // set visible request to Multi Window Manager
-    ico_window_mgr_set_positionsize(m_winmgr,
-                                    window->surfaceid,
-                                    moveNodeId,
-                                    x,
-                                    y,
-                                    ICO_WINDOW_MGR_V_NOCHANGE,
-                                    ICO_WINDOW_MGR_V_NOCHANGE,
-                                    animaFlag);
+    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                      moveNodeId, x, y,
+                                      ICO_WINDOW_MGR_V_NOCHANGE,
+                                      ICO_WINDOW_MGR_V_NOCHANGE,
+                                      animaFlag);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -427,10 +400,10 @@ CicoSCWindowController::raise(int        surfaceid,
                               int        animationTime)
 {
     ICO_DBG("CicoSCWindowController::raise Enter"
-            "(surfaceid=%08X animation=%s animationTime=%d)",
+            "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::raise Leave(ENOENT)");
@@ -443,20 +416,16 @@ CicoSCWindowController::raise(int        surfaceid,
     // set animation request to Multi Window Manager
     int animaFlag = ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE;
     if ((NULL != animation) && (animation[0] != '\0')) {
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
-                                     animation,
-                                     animationTime);
+        CicoSCWindowController::setAnimation(window->surfaceid,
+                                             ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
+                                             animation, animationTime);
         animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
     }
 
     // set visible request to Multi Window Manager
-    ico_window_mgr_set_visible(m_winmgr,
-                               window->surfaceid,
-                               ICO_WINDOW_MGR_V_NOCHANGE,
-                               ICO_WINDOW_MGR_RAISE_RAISE,
-                               animaFlag);
+    CicoSCWlWinMgrIF::setVisible(window->surfaceid,
+                                 ICO_WINDOW_MGR_V_NOCHANGE,
+                                 ICO_WINDOW_MGR_RAISE_RAISE, animaFlag);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -506,7 +475,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
             resizeAnimation, resizeAnimationTime,
             moveAnimation, moveAnimationTime);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::setGeometry Leave(ENOENT)");
@@ -514,27 +483,23 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     }
 
     // set animation request to Multi Window Manager
-    int animaFlag = ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE;
+    const char *animation = "";
     if (NULL != resizeAnimation) {
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE,
-                                     resizeAnimation,
-                                     resizeAnimationTime);
-        animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
+        animation = resizeAnimation;
     }
+    CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                   ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE,
+                                   animation, resizeAnimationTime);
 
     if (NULL != moveAnimation) {
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
-                                     moveAnimation,
-                                     moveAnimationTime);
-        animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
+        animation = moveAnimation;
     }
+    CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                   ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
+                                   animation, moveAnimationTime);
 
     int moveNodeId = ICO_WINDOW_MGR_V_NOCHANGE;
-    if (nodeid >= 0) {
+    if ((nodeid >= 0) && (nodeid != INT_MAX)) {
         moveNodeId = nodeid;
     }
     else {
@@ -542,17 +507,9 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     }
 
     // set visible request to Multi Window Manager
-    ICO_DBG("ico_window_mgr_set_positionsize"
-            "(surfaceid=0x%08X nodeid=%d x=%d y=%d w=%d h=%d anima=%d)",
-            window->surfaceid, moveNodeId, x, y, w, h, animaFlag);
-    ico_window_mgr_set_positionsize(m_winmgr,
-                                    window->surfaceid,
-                                    moveNodeId,
-                                    x,
-                                    y,
-                                    w,
-                                    h,
-                                    animaFlag);
+    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
+                                      x, y, w, h,
+                                      ICO_WINDOW_MGR_FLAGS_ANIMATION);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -560,7 +517,6 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     ICO_DBG("CicoSCWindowController::setGeometry Leave(EOK)");
     return ICO_SYC_EOK;
 }
-
 
 //--------------------------------------------------------------------------
 /**
@@ -582,10 +538,10 @@ CicoSCWindowController::lower(int        surfaceid,
                               int        animationTime)
 {
     ICO_DBG("CicoSCWindowController::lower Enter"
-            "(surfaceid=%08X animation=%s animationTime=%d)",
+            "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::lower Leave(ENOENT)");
@@ -598,20 +554,15 @@ CicoSCWindowController::lower(int        surfaceid,
     // set animation request to Multi Window Manager
     int animaFlag = ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE;
     if ((NULL != animation) && (animation[0] != '\0')) {
-        ico_window_mgr_set_animation(m_winmgr,
-                                     window->surfaceid,
-                                     ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE,
-                                     animation,
-                                     animationTime);
+        CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE,
+                                       animation, animationTime);
         animaFlag = ICO_WINDOW_MGR_FLAGS_ANIMATION;
     }
 
     // set visible request to Multi Window Manager
-    ico_window_mgr_set_visible(m_winmgr,
-                               window->surfaceid,
-                               ICO_WINDOW_MGR_V_NOCHANGE,
-                               ICO_WINDOW_MGR_RAISE_LOWER,
-                               animaFlag);
+    CicoSCWlWinMgrIF::setVisible(window->surfaceid, ICO_WINDOW_MGR_V_NOCHANGE,
+                                 ICO_WINDOW_MGR_RAISE_LOWER, animaFlag);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -637,16 +588,16 @@ int
 CicoSCWindowController::setWindowLayer(int surfaceid, int layerid)
 {
     ICO_DBG("CicoSCWindowController::setWindowLayer Enter"
-            "(surfaceid=%08X layerid=%d)", surfaceid, layerid);
+            "(surfaceid=0x%08X layerid=%d)", surfaceid, layerid);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::setWindowLayer Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
-    // find layer infomation in layer list
+    // find layer information in layer list
     CicoSCLayer* layer = findLayer(window->displayid, layerid);
     if (NULL == layer) {
         ICO_WRN("CicoSCWindowController::setWindowLayer Leave(ENOENT)");
@@ -657,12 +608,7 @@ CicoSCWindowController::setWindowLayer(int surfaceid, int layerid)
     window->layerid = layerid;
 
     // set window layer request to Multi Window Manager
-    ICO_DBG("ico_window_mgr_set_window_layer called."
-            "surfaceid=0x%08X layerid=%d",
-            window->surfaceid, window->layerid);
-    ico_window_mgr_set_window_layer(m_winmgr,
-                                    window->surfaceid,
-                                    window->layerid);
+    CicoSCWlWinMgrIF::setWindowLayer(window->surfaceid, window->layerid);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -688,16 +634,16 @@ int
 CicoSCWindowController::showLayer(int displayid, int layerid)
 {
     ICO_DBG("CicoSCWindowController::showLayer Enter"
-            "displayid=%d layerid=%d)", displayid, layerid);
+            "(displayid=%d layerid=%d)", displayid, layerid);
 
-    // find layer infomation in layer list
+    // find layer information in layer list
     CicoSCLayer* layer = findLayer(displayid, layerid);
     if (NULL == layer) {
         ICO_WRN("CicoSCWindowController::showLayer Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
-    setLayerVisible(layerid, ICO_WINDOW_MGR_VISIBLE_SHOW);
+    CicoSCWlWinMgrIF::setLayerVisible(layerid, ICO_WINDOW_MGR_VISIBLE_SHOW);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
@@ -726,39 +672,20 @@ CicoSCWindowController::hideLayer(int displayid, int layerid)
             "displayid=%d layerid=%d)",
             displayid, layerid);
 
-    // find layer infomation in layer list
+    // find layer information in layer list
     CicoSCLayer* layer = findLayer(displayid, layerid);
     if (NULL == layer) {
         ICO_WRN("CicoSCWindowController::hideLayer Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
-    setLayerVisible(layerid, ICO_WINDOW_MGR_VISIBLE_HIDE);
+    CicoSCWlWinMgrIF::setLayerVisible(layerid, ICO_WINDOW_MGR_VISIBLE_HIDE);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
 
     ICO_DBG("CicoSCWindowController::hideVisible Leave(EOK)");
     return ICO_SYC_EOK;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief   control layer visibility
- *
- *  @param [in] layerid     layer id
- *  @param [in] visible     layer show
- *                          ICO_WINDOW_MGR_VISIBLE_SHOW
- *                          ICO_WINDOW_MGR_VISIBLE_HIDE
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWindowController::setLayerVisible(int layerid, int visible)
-{
-    // set layer visible request to Multi Window Manager
-    ICO_DBG("ico_window_mgr_set_layer_visible(%d,%d) called.",
-            layerid, visible);
-    ico_window_mgr_set_layer_visible(m_winmgr, layerid, visible);
 }
 
 //--------------------------------------------------------------------------
@@ -785,9 +712,9 @@ CicoSCWindowController::active(int surfaceid, int target)
 #endif
 
     ICO_DBG("CicoSCWindowController::active Enter"
-            "(surfaceid=%08X, target=%08X)", surfaceid, target);
+            "(surfaceid=0x%08X, target=%08X)", surfaceid, target);
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::active Leave(ENOENT)");
@@ -800,13 +727,21 @@ CicoSCWindowController::active(int surfaceid, int target)
                  ICO_WINDOW_MGR_ACTIVE_SELECTED;
     }
 
-    ICO_DBG("ico_window_mgr_set_active(0x%08X, %d) called.",
-            surfaceid, target);
     // set active request to Multi Window Manager
-    ico_window_mgr_set_active(m_winmgr, window->surfaceid, target);
+    CicoSCWlWinMgrIF::setActive(window->surfaceid, target);
+
+    // TODO
+    // set visible request to Multi Window Manager
+    CicoSCWlWinMgrIF::setVisible(window->surfaceid,
+                                 ICO_WINDOW_MGR_V_NOCHANGE,
+                                 ICO_WINDOW_MGR_RAISE_RAISE,
+                                 ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE);
 
     // flush display 
     CicoSCWayland::getInstance()->flushDisplay();
+
+    // update visible attr
+    window->raise = true;
 
     // update active window
     map<unsigned int, CicoSCWindow*>::iterator itr;
@@ -859,6 +794,7 @@ CicoSCWindowController::active(int surfaceid, int target)
  *  @brief   map surface
  *
  *  @param [in] surfaceid   wayland surface id
+ *  @param [in] framerate   surface change frame rate(frames par sec)
  *
  *  @return ICO_SYC_EOK on success, other on error
  *  @retval ICO_SYC_EOK     success
@@ -871,20 +807,19 @@ CicoSCWindowController::mapSurface(int surfaceid, int framerate)
 {
     ICO_WRN("CicoSCWindowController::mapSurface Enter");
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::mapSurface Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
-    if (framerate <= 0) {
-        framerate = 15;
+    if (framerate < 0) {
+        framerate = 0;
     }
 
-    ICO_DBG("ico_window_mgr_map_surface(%d, %d) called.",
-            surfaceid, framerate);
-    ico_window_mgr_map_surface(m_winmgr, surfaceid, framerate);
+    CicoSCWlWinMgrIF::mapSurface(surfaceid, framerate);
+
     ICO_DBG("CicoSCWindowController::mapSurface Leave(EOK)");
     return ICO_SYC_EOK;
 }
@@ -906,15 +841,14 @@ CicoSCWindowController::unmapSurface(int surfaceid)
 {
     ICO_DBG("CicoSCWindowController::unmapSurface Enter");
 
-    // find window infomation in window list
+    // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
         ICO_WRN("CicoSCWindowController::unmapSurface Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
-    ICO_DBG("ico_window_mgr_unmap_surface(%d) called.", surfaceid);
-    ico_window_mgr_unmap_surface(m_winmgr, surfaceid);
+    CicoSCWlWinMgrIF::unmapSurface(surfaceid);
 
     ICO_DBG("CicoSCWindowController::unmapSurface Leave(EOK)");
     return ICO_SYC_EOK;
@@ -941,7 +875,7 @@ CicoSCWindowController::createdCB(void                  *data,
                                   const char            *appid)
 {
     ICO_DBG("CicoSCWindowController::createdCB Enter"
-            "(surfaceid=%08X winname=%s pid=%d appid=%s)",
+            "(surfaceid=0x%08X winname=%s pid=%d appid=%s)",
             surfaceid, winname, pid, appid);
 
     CicoSCWindow* window = new CicoSCWindow();
@@ -963,27 +897,22 @@ CicoSCWindowController::createdCB(void                  *data,
             ailItem = appctrl->findAIL(window->appid.c_str());
         }
         else {
-            ICO_DBG("aulitem not found.");
+            ICO_DBG("application information not found.");
         }
     }
 
-    string fullZoneName;
     if (NULL != ailItem) {
         window->layerid = ailItem->m_layer;
         window->zoneid  = ailItem->m_displayZone;
         window->nodeid  = ailItem->m_nodeID;
         if ((window->displayid >= 0) && (window->zoneid >= 0)) {
-            // TODO at errer try catch
+            // TODO at error try catch
             CicoSCDisplay* display = m_displayList.at(window->displayid);
             CicoSCDisplayZone *zone = display->zoneList.at(window->zoneid);
             window->x       = zone->x;
             window->y       = zone->y;
             window->width   = zone->width;
             window->height  = zone->height;
-
-            //TODO
-            //fullZoneName = display->name + "." + zone->name;
-            fullZoneName = "Center.Full";
         }
     }
     else{
@@ -994,7 +923,7 @@ CicoSCWindowController::createdCB(void                  *data,
 
     appctrl->enterAUL(appid, pid, window);
 
-    // dump log window infomartion
+    // dump log window information
     window->dump();
 
     m_windowList[surfaceid] = window;
@@ -1007,25 +936,48 @@ CicoSCWindowController::createdCB(void                  *data,
     message->addArgObject("winname", window->name);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
+#if 1
     if (NULL != m_resMgr) {
         CicoSCCommand cmd;
         CicoSCCmdResCtrlOpt *opt = new CicoSCCmdResCtrlOpt();
 
-        cmd.cmdid = MSG_CMD_ACQUIRE_RES;
+        cmd.cmdid = MSG_CMD_CREATE_RES;
         cmd.appid = window->appid;
         cmd.pid   = window->pid;
         cmd.opt = opt;
         
-        opt->displayres  = true;
-        opt->displayZone = fullZoneName;
-        opt->windowName  = window->name;
-        opt->surfaceid   = window->surfaceid;
+        opt->dispres   = true;
+        opt->winname   = window->name;
+        opt->surfaceid = window->surfaceid;
+
+        string fullname;
+        const CicoSCDisplayZone* zone = findDisplayZone(window->zoneid);
+        if (NULL != zone) {
+            opt->dispzone = zone->fullname;
+        }
+
+#if 1   //TODO
+        opt->soundres  = true;
+        opt->soundname = window->appid;
+        opt->soundid   = 0;
+        CicoSCSystemConfig *sysconf = CicoSCSystemConfig::getInstance();
+        const CicoSCDefaultConf *defconf = sysconf->getDefaultConf();
+        if (NULL != defconf) {
+            const CicoSCSoundZoneConf *zoneconf = 
+                sysconf->findSoundZoneConfbyId(defconf->soundzone);
+            if (NULL != zoneconf) {
+                opt->soundzone = zoneconf->fullname;
+            }
+        }
+#endif
+
 
         m_resMgr->handleCommand((const CicoSCCommand&)cmd, true);
     }
     else {
-        //show(window->surfaceid, NULL, 0);
+        show(window->surfaceid, NULL, 0);
     }
+#endif
 
     ICO_DBG("CicoSCWindowController::createdCB Leave");
 }
@@ -1047,7 +999,7 @@ CicoSCWindowController::nameCB(void                  *data,
                                const char            *winname)
 {
     ICO_DBG("CicoSCWindowController::nameCB Enter"
-            "(surfaceid=%08X winname=%s)", surfaceid, winname);
+            "(surfaceid=0x%08X winname=%s)", surfaceid, winname);
 
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
@@ -1058,6 +1010,23 @@ CicoSCWindowController::nameCB(void                  *data,
     ICO_DBG("nameCB: Update window name %s=>%s",
             window->name.c_str(), winname);
     window->name = winname;
+
+    // send message
+    CicoSCMessage *message = new CicoSCMessage();
+    message->addRootObject("command", MSG_CMD_CHANGE_ATTR);
+    message->addRootObject("appid", window->appid);
+    message->addArgObject("surface", window->surfaceid);
+    message->addArgObject("winname", window->name);
+    message->addArgObject("node", window->nodeid);
+    message->addArgObject("layer", window->layerid);
+    message->addArgObject("pos_x", window->x);
+    message->addArgObject("pos_y", window->y);
+    message->addArgObject("width", window->width);
+    message->addArgObject("height", window->height);
+    message->addArgObject("raise", window->raise ? 1 : 0);
+    message->addArgObject("visible", window->visible ? 1 : 0);
+    message->addArgObject("active", window->active ? 1 : 0);
+    CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
     ICO_DBG("CicoSCWindowController::nameCB Leave");
 }
@@ -1094,6 +1063,41 @@ CicoSCWindowController::destroyedCB(void                  *data,
 
     // TODO delete window in application
 
+    if (NULL != m_resMgr) {
+        CicoSCCommand cmd;
+        CicoSCCmdResCtrlOpt *opt = new CicoSCCmdResCtrlOpt();
+
+        cmd.cmdid = MSG_CMD_DESTORY_RES;
+        cmd.appid = window->appid;
+        cmd.pid   = window->pid;
+        cmd.opt = opt;
+        
+        opt->dispres   = true;
+        opt->winname   = window->name;
+        opt->surfaceid = window->surfaceid;
+
+        string fullname;
+        const CicoSCDisplayZone* zone = findDisplayZone(window->zoneid);
+        if (NULL != zone) {
+            opt->dispzone = zone->fullname;
+        }
+
+        opt->soundres  = true;
+        opt->soundname = window->appid;
+        opt->soundid   = 0;
+        CicoSCSystemConfig *sysconf = CicoSCSystemConfig::getInstance();
+        const CicoSCDefaultConf *defconf = sysconf->getDefaultConf();
+        if (NULL != defconf) {
+            const CicoSCSoundZoneConf *zoneconf = 
+                sysconf->findSoundZoneConfbyId(defconf->soundzone);
+            if (NULL != zoneconf) {
+                opt->soundzone = zoneconf->fullname;
+            }
+        }
+
+        m_resMgr->handleCommand((const CicoSCCommand&)cmd, true);
+    }
+
     // delete window in list
     m_windowList.erase(window->surfaceid);
     delete(window);
@@ -1109,9 +1113,9 @@ CicoSCWindowController::destroyedCB(void                  *data,
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] surfaceid       ico_window_mgr surface Id
  *  @param [in] visible         surface visible
- *                              (1=visible/0=unvisible/other=nochange)
+ *                              (1=visible/0=invisible/other=no-change)
  *  @param [in] raise           surface raise
- *                              (1=raise/0=lower/other=nochange)
+ *                              (1=raise/0=lower/other=no change)
  *  @param [in] hint            client request
  *                              (1=client request(not changed)/0=changed)
  */
@@ -1125,7 +1129,7 @@ CicoSCWindowController::visibleCB(void                  *data,
                                   int32_t               hint)
 {
     ICO_DBG("CicoSCWindowController::visibleCB Enter"
-            "(surfaceid=%08X visible=%d raise=%d hint=%d)",
+            "(surfaceid=0x%08X visible=%d raise=%d hint=%d)",
             surfaceid, visible, raise, hint);
 
     CicoSCWindow *window = findWindow(surfaceid);
@@ -1178,8 +1182,8 @@ CicoSCWindowController::visibleCB(void                  *data,
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] surfaceid       ico_window_mgr surface Id
  *  @param [in] node            surface node Id
- *  @param [in] x               surface upper-left X coodinate
- *  @param [in] y               surface upper-left Y coodinate
+ *  @param [in] x               surface upper-left X coordinate
+ *  @param [in] y               surface upper-left Y coordinate
  *  @param [in] width           surface width
  *  @param [in] height          surface height
  *  @param [in] hint            client request
@@ -1199,7 +1203,7 @@ CicoSCWindowController::configureCB(void                  *data,
                                     int32_t               hint)
 {
     ICO_DBG("CicoSCWindowController::configureCB Enter"
-            "surfaceid=%08X node=%d layer=%d x=%d y=%d "
+            "surfaceid=0x%08X node=%d layer=%d x=%d y=%d "
             "width=%d height=%d hint=%d",
             surfaceid, node, layer, x, y, width, height, hint);
 
@@ -1261,7 +1265,7 @@ CicoSCWindowController::activeCB(void                  *data,
                                  int32_t               active)
 {
     ICO_DBG("CicoSCWindowController::activeCB Enter"
-            "(surfaceid=%08X active=%d)", surfaceid, active);
+            "(surfaceid=0x%08X active=%d)", surfaceid, active);
 
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
@@ -1288,7 +1292,7 @@ CicoSCWindowController::activeCB(void                  *data,
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] layer           layer Id
  *  @param [in] visible         layer visible
- *                              (1=visible/0=unvisible/other=nochange)
+ *                              (1=visible/0=invisible/other=no change)
  */
 //--------------------------------------------------------------------------
 void
@@ -1313,12 +1317,12 @@ CicoSCWindowController::layerVisibleCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  query applicationsurface callback
+ *  @brief  query application surface callback
  *
  *  @param [in] data            user data(unused)
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] appid           application Id
- *  @param [in] suface          surface Id array
+ *  @param [in] surface         surface Id array
  */
 //--------------------------------------------------------------------------
 void
@@ -1397,13 +1401,13 @@ CicoSCWindowController::mapSurfaceCB(void                  *data,
  *
  *  @param [in] data            user data(unused)
  *  @param [in] wl_output       wayland wl_output interface
- *  @param [in] x               display upper-left X coodinate
- *  @param [in] y               display upper-left Y coodinate
+ *  @param [in] x               display upper-left X coordinate
+ *  @param [in] y               display upper-left Y coordinate
  *  @param [in] physical_width  display physical width
  *  @param [in] physical_height display physical height
- *  @param [in] subpixel        display sub pixcel
+ *  @param [in] subpixel        display sub pixel
  *  @param [in] make            display maker
- *  @param [in] model           diaplay model
+ *  @param [in] model           display model
  *  @param [in] transform       transform
  */
 //--------------------------------------------------------------------------
@@ -1517,7 +1521,7 @@ CicoSCWindowController::findWindow(int surfaceid)
     map<unsigned int, CicoSCWindow*>::iterator itr;
     itr = m_windowList.find(surfaceid);
     if (m_windowList.end() == itr) {
-        ICO_WRN("not found window object. surfaceid=%d", surfaceid);
+        ICO_WRN("not found window object. surfaceid=0x%08X", surfaceid);
         return NULL;
     }
 
@@ -1553,9 +1557,33 @@ CicoSCWindowController::findLayer(int displayid, int layerid)
 
 //--------------------------------------------------------------------------
 /**
+ *  @brief  find display zone by id
+ */
+//--------------------------------------------------------------------------
+const CicoSCDisplayZone *
+CicoSCWindowController::findDisplayZone(int zoneid)
+{
+    vector<CicoSCDisplay*>::iterator itr;
+    itr = m_displayList.begin();
+    for (; itr != m_displayList.end(); ++itr) {
+        vector<CicoSCDisplayZone*>::iterator itr2;
+        itr2 = (*itr)->zoneList.begin();
+        for (; itr2 != (*itr)->zoneList.end(); ++itr2) {
+            if ((*itr2)->zoneid == zoneid) {
+                return *itr2;
+            }
+        }
+    }
+    return NULL;
+}
+
+
+
+//--------------------------------------------------------------------------
+/**
  *  @brief  handle command
  *
- *  @param [in] commnad     control commnad
+ *  @param [in] cmd     control command
  */
 //--------------------------------------------------------------------------
 void
@@ -1565,53 +1593,118 @@ CicoSCWindowController::handleCommand(const CicoSCCommand * cmd)
 
     CicoSCCmdWinCtrlOpt *opt = static_cast<CicoSCCmdWinCtrlOpt*>(cmd->opt);
 
-    int ret = 0;
     switch (cmd->cmdid) {
     case MSG_CMD_SHOW:
         ICO_DBG("command: MSG_CMD_SHOW");
-        ret = show(opt->surfaceid, opt->animation.c_str(), opt->animationTime);
+#if 1
+        (void)notifyResourceManager(opt->surfaceid,
+                                    opt->animation.c_str(),
+                                    opt->animationTime);
+#else
+        (void)show(opt->surfaceid, opt->animation.c_str(), opt->animationTime);
+#endif
+ 
         break;
     case MSG_CMD_HIDE:
         ICO_DBG("command: MSG_CMD_HIDE");
-        ret = hide(opt->surfaceid, opt->animation.c_str(), opt->animationTime);
+        (void)hide(opt->surfaceid, opt->animation.c_str(), opt->animationTime);
         break;
     case MSG_CMD_MOVE:
         ICO_DBG("command: MSG_CMD_MOVE");
-        ret = setGeometry(opt->surfaceid, opt->nodeid, opt->x, opt->y, 
+        (void)setGeometry(opt->surfaceid, opt->nodeid, opt->x, opt->y, 
                           opt->width, opt->height, 
                           opt->animation.c_str(), opt->animationTime,
                           opt->animation.c_str(), opt->animationTime);
         break;
     case MSG_CMD_CHANGE_ACTIVE:
         ICO_DBG("command: MSG_CMD_CHANGE_ACTIVE");
-        ret = active(opt->surfaceid, opt->active);
+        (void)active(opt->surfaceid, opt->active);
         break;
     case MSG_CMD_CHANGE_LAYER:
         ICO_DBG("command: MSG_CMD_CHANGE_LAYER");
-        ret = setWindowLayer(opt->surfaceid, opt->layerid);
+        (void)setWindowLayer(opt->surfaceid, opt->layerid);
         break;
-    case MSG_CMD_PREPARE_THUMB:
-        ICO_DBG("command: MSG_CMD_PREPARE_THUMB");
-        ret = mapSurface(opt->surfaceid, opt->framerate);
+    case MSG_CMD_MAP_THUMB:
+        ICO_DBG("command: MSG_CMD_MAP_THUMB");
+        (void)mapSurface(opt->surfaceid, opt->framerate);
         break;
     case MSG_CMD_UNMAP_THUMB:
         ICO_DBG("command: MSG_CMD_UNMAP_THUMB");
-        ret = unmapSurface(opt->surfaceid);
+        (void)unmapSurface(opt->surfaceid);
         break;
     case MSG_CMD_SHOW_LAYER:
         ICO_DBG("command: MSG_CMD_SHOW_LAYER");
-        ret = showLayer(opt->displayid, opt->layerid);
+        (void)showLayer(opt->displayid, opt->layerid);
         break;
     case MSG_CMD_HIDE_LAYER:
         ICO_DBG("command: MSG_CMD_HIDE_LAYER");
-        ret = hideLayer(opt->displayid, opt->layerid);
+        (void)hideLayer(opt->displayid, opt->layerid);
         break;
     default:
-        ICO_WRN("Unknown Commnad(0x%08X)", cmd->cmdid);
+        ICO_WRN("command: Unknown(0x%08X)", cmd->cmdid);
         break;
     }
-    ICO_DBG("commnd result(%d)", ret);
 
     ICO_DBG("CicoSCWindowController::handleCommand Leave");
 }
+
+int 
+CicoSCWindowController::notifyResourceManager(int        surfaceid,
+                                              const char *animation,
+                                              int        animationTime)
+{
+    ICO_DBG("CicoSCWindowController::notifyResourceManager Enter"
+            "(surfaceid=0x%08X animation=%s animationTime=%d)",
+            surfaceid, animation, animationTime);
+
+    // find window information in window list
+    CicoSCWindow *window = findWindow(surfaceid);
+    if (NULL == window) {
+        ICO_WRN("CicoSCWindowController::notifyResourceManager Leave(ENOENT)");
+        return ICO_SYC_ENOENT;
+    }
+
+    CicoSCCommand cmd;
+    CicoSCCmdResCtrlOpt *opt = new CicoSCCmdResCtrlOpt();
+
+    cmd.cmdid = MSG_CMD_ACQUIRE_RES;
+    cmd.appid = window->appid;
+    cmd.pid   = window->pid;
+    cmd.opt   = opt;
+    
+    opt->dispres       = true;
+    opt->winname       = window->name;
+    opt->surfaceid     = window->surfaceid;
+    opt->animation     = animation;
+    opt->animationTime = animationTime;
+    string fullname;
+    const CicoSCDisplayZone* zone = findDisplayZone(window->zoneid);
+    if (NULL != zone) {
+        opt->dispzone = zone->fullname;
+    }
+    else {
+        ICO_WRN("CicoSCWindowController::notifyResourceManager Leave(ENOENT)");
+        return ICO_SYC_ENOENT;
+    }
+#if 1
+    opt->soundres  = true;
+    opt->soundname = window->appid;
+    opt->soundid   = 0;
+    CicoSCSystemConfig *sysconf = CicoSCSystemConfig::getInstance();
+    const CicoSCDefaultConf *defconf = sysconf->getDefaultConf();
+    if (NULL != defconf) {
+        const CicoSCSoundZoneConf *zoneconf = 
+            sysconf->findSoundZoneConfbyId(defconf->soundzone);
+        if (NULL != zoneconf) {
+            opt->soundzone = zoneconf->fullname;
+        }
+    }
+#endif
+
+    m_resMgr->handleCommand((const CicoSCCommand&)cmd, true);
+
+    ICO_DBG("CicoSCWindowController::notifyResourceManager Leave(EOK)");
+    return ICO_SYC_EOK;
+}
+
 // vim:set expandtab ts=4 sw=4:

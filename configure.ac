@@ -73,7 +73,7 @@ AC_SUBST(AUL_CFLAGS)
 AC_SUBST(AUL_LIBS)
 
 UWS_CFLAGS="-I/usr/include/ico-util"
-UWS_LIBS="-lico-util-com"
+UWS_LIBS="-lico-util"
 AC_SUBST(UWS_CFLAGS)
 AC_SUBST(UWS_LIBS)
 
@@ -86,6 +86,11 @@ WL_CFLAGS="$WAYLANDCLIENT_CFLAGS $WAYLANDCURSOR_CFLAGS"
 WL_LIBS="$WAYLANDCLIENT_LIBS $WAYLANDCURSOR_LIBS"
 AC_SUBST(WL_CFLAGS)
 AC_SUBST(WL_LIBS)
+
+WESTONPLUGIN_CFLAGS="-I/usr/include/ico-uxf-weston-plugin"
+WESTONPLUGIN_LIBS="-lico-uxf-weston-plugin"
+AC_SUBST(WESTONPLUGIN_CFLAGS)
+AC_SUBST(WESTONPLUGIN_LIBS)
 
 if test "x$GCC" = "xyes"; then
     my_common_gcc_flags="-Wall -Wextra -Wno-unused-parameter \
@@ -125,7 +130,6 @@ AC_CONFIG_FILES([Makefile
                  src/homescreen/Makefile
 				  tests/Makefile
                  tests/system-controller/Makefile
-                 tests/system-controller/apps-framework/Makefile
-                 tests/system-controller/test-dummy-hs/Makefile])
+                 tests/system-controller/apps-framework/Makefile])
 AC_PROG_RANLIB([ranlib])
 AC_OUTPUT

@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCLayer.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCLayer class
  */
 //==========================================================================
 #ifndef __CICO_SC_LAYER_H__
@@ -19,7 +19,7 @@
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  layer information
+ *  @brief  This class hold layer information
  */
 //--------------------------------------------------------------------------
 class CicoSCLayer
@@ -31,7 +31,7 @@ public:
     // destructor
     virtual ~CicoSCLayer();
 
-    // dump log CicoSCLayer member variables
+    // dump log this class member variables
     void dump(void);
 
 private:
@@ -42,12 +42,12 @@ private:
     CicoSCLayer(const CicoSCLayer &object);
 
 public:
-    int     layerid;      //!< layer ID
+    int     layerid;      //!< layer id
     int     type;         //!< enum ico_window_mgr_layer_attr
     int     width;        //!< The number of the lateral pixels
     int     height;       //!< The number of vertical pixels
     int     displayid;    //!< display ID
     bool    menuoverlap;  //!< overlap menu window flag
 };
-#endif	// __CICO_SC_LAYER_H__
+#endif  // __CICO_SC_LAYER_H__
 // vim:set expandtab ts=4 sw=4:

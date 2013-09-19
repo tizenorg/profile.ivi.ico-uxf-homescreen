@@ -11,25 +11,41 @@
 /**
  *  @file   CicoSCSwitch.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCSwitch class
  */
 //==========================================================================
+
+#include <vector>
+#include <string>
+using namespace std;
 
 #include "CicoSCSwitch.h"
 #include "CicoLog.h"
 
-// default constructor
+//--------------------------------------------------------------------------
+/**
+ *  @brief  default constructor
+ */
+//--------------------------------------------------------------------------
 CicoSCSwitch::CicoSCSwitch()
     : swname(""), input(-1), fix(false)
 {
 }
 
-// destructor
+//--------------------------------------------------------------------------
+/**
+ *  @brief  destructor
+ */
+//--------------------------------------------------------------------------
 CicoSCSwitch::~CicoSCSwitch()
 {
 }
 
-// dump log CicoSCSwitch member variables
+//--------------------------------------------------------------------------
+/**
+ *  @brief  dump log this class member variables
+ */
+//--------------------------------------------------------------------------
 void
 CicoSCSwitch::dump(void)
 {

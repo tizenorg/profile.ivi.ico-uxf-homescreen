@@ -12,6 +12,7 @@
  * @date    Aug-08-2013
  */
 #include "CicoHomeScreen.h"
+#include "CicoHSSystemState.h"
 
 /*============================================================================*/
 /* static members                                                             */
@@ -58,6 +59,7 @@ CicoHomeScreen::CicoHomeScreen(void)
     mode = ICO_HS_MODE_APPLICATION;
     config = NULL;
     hs_instance = NULL;
+
 }
 
 /*--------------------------------------------------------------------------*/
@@ -290,7 +292,7 @@ CicoHomeScreen::ExecuteApp_i(const char *appid)
  *
  * @param[in]   appid    application id
  * @return      none
- *
+ */
 /*--------------------------------------------------------------------------*/
 void
 CicoHomeScreen::TerminateApp_i(const char *appid)
@@ -535,6 +537,11 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
                 hs_instance->menu_window->SetMenuWindowID(win_attr->appid,
                     win_attr->surface);
             }
+            else if(strncmp(win_attr->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
+                            ICO_MAX_TITLE_NAME_LEN) == 0){
+                hs_instance->ctl_bar_window->SetWindowID(win_attr->appid,
+                                                         win_attr->surface);
+            }
             ico_hs_window_info * l_win_info = 
                      hs_instance->GetWindowInfo(hs_instance->hs_app_info,
                                                 win_attr->name);
@@ -592,20 +599,12 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             hs_instance->hs_app_info->SetShowed(l_win_info,true);
         }
     }
-    else if(event == ICO_SYC_EV_THUMB_PREPARE){
-        ico_syc_thumb_info_t *thumb_info = 
-            reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
-        CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
-        if(appinfo == NULL){
-            return;
-        }
-        //show icon
-        hs_instance->menu_window->SetThumbnail(thumb_info->appid,thumb_info->surface);
-    }
     else if(event == ICO_SYC_EV_THUMB_CHANGE){
         ico_syc_thumb_info_t *thumb_info = 
             reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
         CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
+        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_CHANGE %s",
+                thumb_info->appid);
         if(appinfo == NULL){
             return;
         }
@@ -642,6 +641,33 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
     else if(event == ICO_SYC_EV_INPUT_UNSET){
    
     }
+    else if(event == ICO_SYC_EV_STATE_CHANGE) {
+        ico_syc_state_info_t *state_info = 
+            reinterpret_cast<ico_syc_state_info_t*>(const_cast<void*>(detail));
+
+        ICO_DBG("RECV: ICO_SYC_EV_STATE_CHANGE(id=%d state=%d)",
+                state_info->id, state_info->state);
+        if (ICO_SYC_STATE_REGULATION == state_info->id) {
+            // set regulation state
+            CicoHSSystemState::getInstance()->setRegulation(
+                (state_info->state == ICO_SYC_STATE_ON) ? true : false);
+            // regulation action
+            ico_syc_animation_t animation;
+            animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
+            animation.time = ICO_HS_MENU_ANIMATION_DURATION;
+            hs_instance->menu_window->Hide(&animation);
+            hs_instance->ctl_bar_window->SetRegulation();
+        }
+        else if (ICO_SYC_STATE_NIGHTMODE == state_info->id) {
+            // set night mode state
+            CicoHSSystemState::getInstance()->setNightMode(
+                (state_info->state == ICO_SYC_STATE_ON) ? true : false);
+            // night mode action
+            hs_instance->ctl_bar_window->SetNightMode();
+            hs_instance->menu_window->SetNightMode();
+        }
+    }
+
     ICO_DBG("CicoHomeScreen::EventCallBack: end");
 }
 
@@ -1028,9 +1054,9 @@ CicoHomeScreen::ChangeMode(int pattern)
     if(hs_instance->GetMode() == ICO_HS_MODE_MENU){
         ico_syc_animation_t animation;
         if(pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE){
-            animation.name = ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
+            animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
         }else{
-            animation.name = ICO_HS_MENU_HIDE_ANIMATION_FADE;
+            animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Hide(&animation);
@@ -1038,9 +1064,9 @@ CicoHomeScreen::ChangeMode(int pattern)
     }else if(hs_instance->GetMode() ==ICO_HS_MODE_APPLICATION){
         ico_syc_animation_t animation;
         if(pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE){
-            animation.name = ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
+            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
         }else{
-            animation.name = ICO_HS_MENU_SHOW_ANIMATION_FADE;
+            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_FADE;
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Show(&animation);
@@ -1075,5 +1101,4 @@ CicoHomeScreen::TerminateApp(const char*appid)
 {
     hs_instance->TerminateApp_i(appid);
 }
-
-
+// vim: set expandtab ts=4 sw=4:

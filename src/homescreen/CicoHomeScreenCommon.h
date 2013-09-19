@@ -69,7 +69,10 @@
 #define ICO_HS_IMAGE_FILE_MENU_TERMINATE_NO "button_no.png"
 
 #define ICO_HS_IMAGE_FILE_CONTROL_BAR_BASE "ctrl.png"
-#define ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON "applist_off.png"
+#define ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY    "applist_off.png"
+#define ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY2   "applist_off_2.png"
+#define ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT  "applist_on.png"
+#define ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT2 "applist_on_2.png"
 
 #define ICO_HS_LIFECYCLE_CONTROLLER_SETTING_PATH  "/usr/apps/org.tizen.ico.system-controller/res/config/system.xml"
 

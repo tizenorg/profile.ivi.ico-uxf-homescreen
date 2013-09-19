@@ -178,22 +178,27 @@ void CicoSCAilItems::setup(const char* pkg, const char* icon,
 {
     ICO_TRA("start");
     m_appid.assign(pkg);
+    ICO_DBG("package name=%s", pkg? pkg: "(NULL)");
 
     m_noIcon = ndisp;
     if (NULL != icon) {
         m_icon.assign(icon);
+        ICO_DBG("icon path=%s", icon? icon: "(NULL)");
     }
 
     if (NULL != nam) {
         m_name.assign(nam);
+        ICO_DBG("name=%s", nam? nam: "(NULL)");
     }
 
     if (NULL != exe) {
         m_execPath.assign(exe);
+        ICO_DBG("exec path=%s", exe? exe: "(NULL)");
     }
 
     if (NULL != typ) {
         m_type.assign(typ);
+        ICO_DBG("type=%s", typ? typ: "(NULL)");
     }
 
     categoryParse(categorys);
@@ -248,6 +253,8 @@ void CicoSCAilItems::categoryParse(const std::string categorys)
     soundZoneName.clear();
     inputDevName.clear();
     switchName.clear();
+
+    CicoSCSystemConfig* CSCSC = CicoSCSystemConfig::getInstance();
 
     ICO_DBG("category def size = %d", x.size());
     for (it = x.begin(); it != x.end(); it++) {
@@ -391,6 +398,16 @@ void CicoSCAilItems::categoryParse(const std::string categorys)
                 continue;
             }
         }
+
+        int categoryID = CSCSC->getCategoryIdbyName(*it);
+        const char* ttt = it->c_str()? it->c_str(): "(NULL)";
+        ICO_DBG("Category %s->%d", ttt, categoryID);
+        if (-1 != categoryID) {
+            ICO_DBG("Category %d -> %d(%s)", m_categoryID, categoryID, ttt);
+            m_categoryID = categoryID;
+            continue;
+        }
+
         ICO_DBG("Parse UNKOWN %s", it->c_str());
     }
     categoryGetDisplay(displayName, layerName, dispZoneName);

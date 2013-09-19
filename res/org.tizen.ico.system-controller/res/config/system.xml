@@ -113,6 +113,7 @@
             <zone id="0" name="Base"/>
             <zone id="1" name="Full"/>
             <zone id="2" name="Driver"/>
+            <zone id="3" name="Passenger"/>
         </zones>
     </sound>
 </sounds>
@@ -124,7 +125,7 @@
 
 <!-- Application Category name -->
 <categorys>
-    <category id="0" name="Menu">
+    <category id="1" name="Menu">
         <type>system</type>
         <view>always</view>
         <sound>always</sound>
@@ -132,7 +133,7 @@
         <priority>4</priority>
         <r_ctrl>2</r_ctrl>
     </category>
-    <category id="1" name="Message">
+    <category id="2" name="Message">
         <type>message</type>
         <view>always</view>
         <sound>always</sound>
@@ -140,7 +141,7 @@
         <priority>5</priority>
         <r_ctrl>2</r_ctrl>
     </category>
-    <category id="2" name="Map">
+    <category id="3" name="Map">
         <type>map</type>
         <view>always</view>
         <sound>always</sound>
@@ -148,7 +149,7 @@
         <priority>3</priority>
         <r_ctrl>0</r_ctrl>
     </category>
-    <category id="3" name="Driving">
+    <category id="4" name="Driving">
         <type>maker</type>
         <view>run</view>
         <sound>run</sound>
@@ -156,7 +157,7 @@
         <priority>2</priority>
         <r_ctrl>0</r_ctrl>
     </category>
-    <category id="4" name="CarSetting">
+    <category id="5" name="CarSetting">
         <type>maker</type>
         <view>parked</view>
         <sound>parked</sound>
@@ -164,7 +165,7 @@
         <priority>2</priority>
         <r_ctrl>0</r_ctrl>
     </category>
-    <category id="5" name="Camera.Back">
+    <category id="6" name="Camera.Back">
         <type>maker</type>
         <view>shift_back</view>
         <sound>shift_back</sound>
@@ -172,7 +173,7 @@
         <priority>6</priority>
         <r_ctrl>1</r_ctrl>
     </category>
-    <category id="6" name="Camera.Left">
+    <category id="7" name="Camera.Left">
         <type>maker</type>
         <view>blinker_left</view>
         <sound>blinker_left</sound>
@@ -180,7 +181,7 @@
         <priority>6</priority>
         <r_ctrl>1</r_ctrl>
     </category>
-    <category id="7" name="Camera.Right">
+    <category id="8" name="Camera.Right">
         <type>maker</type>
         <view>blinker_right</view>
         <sound>blinker_right</sound>
@@ -188,7 +189,7 @@
         <priority>6</priority>
         <r_ctrl>1</r_ctrl>
     </category>
-    <category id="8" name="Entertainment">
+    <category id="9" name="Entertainment">
         <type>unknown</type>
         <view>parked</view>
         <sound>parked</sound>
@@ -196,7 +197,7 @@
         <priority>0</priority>
         <r_ctrl>2</r_ctrl>
     </category>
-    <category id="9" name="Entertainment.audio">
+    <category id="10" name="Entertainment.audio">
         <type>unknown</type>
         <view>parked</view>
         <sound>always</sound>
@@ -204,7 +205,7 @@
         <priority>0</priority>
         <r_ctrl>1</r_ctrl>
     </category>
-    <category id="10" name="Entertainment.visiual">
+    <category id="11" name="Entertainment.visiual">
         <type>unknown</type>
         <view>always</view>
         <sound>parked</sound>
@@ -266,6 +267,9 @@
     <do_it>yes</do_it>
     <ctrl_dir_path>/sys/fs/cgroup/cpu,cpuacct/SCprivate</ctrl_dir_path>
     <sampling_wait>300</sampling_wait>
+    <retry_cnt>6</retry_cnt>
+    <low_limit_value>30</low_limit_value>
+    <high_limit_value>92</high_limit_value>
     <sector id="0" name="groupA">
         <hight_array>
             <item>500</item>
@@ -307,7 +311,7 @@
 <default>
     <node>Center</node>
     <appkind>UnKnown</appkind>
-    <category>Entertainment.audio</category>
+    <category>Entertainment</category>
     <display>Center</display>
     <layer>Application</layer>
     <displayzone>Full</displayzone>
@@ -324,5 +328,10 @@
     <loglevel>128</loglevel>
     <logflush>false</logflush>
 </log>
+
+<login_user>
+    <parent_dir>/home/app/ico</parent_dir>
+</login_user>
+
 </systemconfig>
 <!-- vim:set expandtab ts=4 sw=4: -->

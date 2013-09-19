@@ -29,9 +29,9 @@
 #include "CicoHomeScreenConfig.h"
 #include "CicoHSWindow.h"
 
-#define ICO_HS_CONTROL_BAR_HOME_BUTTON_START_POS_Y 10
-#define ICO_HS_CONTROL_BAR_HOME_BUTTON_WIDTH 108
-#define ICO_HS_CONTROL_BAR_HOME_BUTTON_HEIGHT 108
+#define ICO_HS_CONTROL_BAR_MENU_BTN_START_POS_Y 10
+#define ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH 108
+#define ICO_HS_CONTROL_BAR_MENU_BTN_HEIGHT 108
 
 class CicoHSControlBarWindow :public CicoHSWindow
 {
@@ -45,15 +45,24 @@ class CicoHSControlBarWindow :public CicoHSWindow
     
     void TouchHome(void);
 
+    void SetWindowID(const char *appid,int surface);
+
+    void SetNightMode(void);
+    void SetRegulation(void);
+
   private:
+    /* for window control */
+    char appid[ICO_HS_MAX_PROCESS_NAME];
+    int surface;
+
     char img_dir_path[ICO_HS_MAX_PATH_BUFF_LEN];
     Evas *evas;         /* evas object */
-    Evas_Object *canvas;
-    Evas_Object *home_button;
+    Evas_Object *background;
+    Evas_Object *menu_btn;
 
   protected:
     CicoHSControlBarWindow operator=(const CicoHSControlBarWindow&);
     CicoHSControlBarWindow(const CicoHSControlBarWindow&);
 };
 #endif
-
+// vim: set expandtab ts=4 sw=4:

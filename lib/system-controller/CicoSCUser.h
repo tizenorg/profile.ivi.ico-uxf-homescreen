@@ -11,15 +11,25 @@
 /**
  *  @file   CicoSCUser.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCUser class
  */
 //==========================================================================
 #ifndef __CICO_SC_USER_H__
 #define __CICO_SC_USER_H__
 
 #include <string>
-using namespace std;
+#include <vector>
 
+//==========================================================================
+//  Forward declaration
+//==========================================================================
+class CicoSCLastInfo;
+
+//==========================================================================
+/**
+ *  @brief  This class hold user information
+ */
+//==========================================================================
 class CicoSCUser
 {
 public:
@@ -29,7 +39,7 @@ public:
     // destructor
     virtual ~CicoSCUser();
 
-    // dump log CicoSCUser member variables
+    // dump log this class member variables
     void dump(void);
 
 private:
@@ -40,9 +50,12 @@ private:
     CicoSCUser(const CicoSCUser &object);
 
 public:
-    string     name;        //!< user name
-    string     passwd;      //!< password
-    string     homescreen;  //!< application ID of user uses homescreen
+    std::string name;        ///< user name
+    std::string passwd;      ///< password
+    std::string homescreen;  ///< application ID of user uses homescreen
+    bool        autolaunch;  ///< homescreen autolaunch flag
+
+    std::vector<CicoSCLastInfo*> lastInfoList;   ///< list of last information
 };
-#endif	// __CICO_SC_USER_H__
+#endif  // __CICO_SC_USER_H__
 // vim:set expandtab ts=4 sw=4:

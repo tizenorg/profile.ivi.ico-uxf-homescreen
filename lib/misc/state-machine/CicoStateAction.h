@@ -46,11 +46,11 @@ public:
     // Constructior
                 CicoStateAction();
 
-    virtual void onEnttry(const CicoEvent& ev, const CicoState* stt,
+    virtual void onEntry(const CicoEvent& ev, const CicoState* stt,
                           int addval);
-    virtual void onEnttry(const CicoEvent& ev, const CicoFinalState* stt,
+    virtual void onEntry(const CicoEvent& ev, const CicoFinalState* stt,
                           int addval);
-    virtual void onEnttry(const CicoEvent& ev, const CicoHistoryState* stt,
+    virtual void onEntry(const CicoEvent& ev, const CicoHistoryState* stt,
                           int addval);
 
     virtual void onExit(const CicoEvent& ev, const CicoState* stt,

@@ -10,7 +10,6 @@ libico_system_controller_la_SOURCES =	\
 	CicoSCAilItems.cpp					\
 	CicoSCAulItems.cpp					\
 	CicoSCLifeCycleController.cpp		\
-	ico_log.c							\
 	CicoSCSystemConfig.cpp				\
 	CicoSCWaylandIF.cpp					\
 	CicoSCWayland.cpp					\
@@ -25,7 +24,7 @@ libico_system_controller_la_SOURCES =	\
 	CicoSCSwitch.cpp					\
 	CicoSCInputController.cpp			\
 	CicoSCServer.cpp					\
-	CicoSCCommandParser.cpp 			\
+	CicoSCCommand.cpp 					\
 	CicoSCMessage.cpp       			\
 	CicoSCUser.cpp						\
 	CicoSCUserManager.cpp				\
@@ -35,7 +34,7 @@ libico_system_controller_la_SOURCES =	\
 	ico_syc_mrp_resource.c				\
 	CicoSCPolicyManager.cpp
 
-libico_system_controller_la_CPPFLAGS = 	\
+libico_system_controller_la_CPPFLAGS =	\
 	$(GCC_CXXFLAGS)						\
 	@ECORE_CFLAGS@						\
 	@EINA_CFLAGS@						\
@@ -51,9 +50,9 @@ libico_system_controller_la_CPPFLAGS = 	\
 	@MURPHYDOMAINCONTROLLER_CFLAGS@		\
 	@MURPHYECORE_CFLAGS@				\
 	@MURPHYRESOURCE_CFLAGS@				\
+	$(UWS_CFLAGS)						\
+	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
-	-I/usr/include/ico-util				\
-	-I/usr/include/ico-uxf-weston-plugin \
 	-I../misc/state-machine
 
 libico_system_controller_la_LIBADD =	\
@@ -71,10 +70,11 @@ libico_system_controller_la_LIBADD =	\
 	@MURPHYDOMAINCONTROLLER_LIBS@		\
 	@MURPHYECORE_LIBS@					\
 	@MURPHYRESOURCE_LIBS@				\
-	-L/usr/lib							\
-	-lico-uxf-weston-plugin 			\
-	-lico-util-com
+	$(UWS_LIBS)							\
+	$(WESTONPLUGIN_LIBS)
 
 AM_LDFLAGS = -module -avoid-version -rpath $(libdir)
 
 .FORCE :
+
+# vim:set ts=4 sw=4:

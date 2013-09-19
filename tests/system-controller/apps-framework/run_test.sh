@@ -23,18 +23,18 @@ app_dir="/opt/usr/apps/test.ico.res.app"
 # Initialize
 #
 ########################
+cd ../../../
+curpath=`pwd`;
+export LD_LIBRARY_PATH=$curpath/lib/apps-framework/.libs:$LD_LIBRARY_PATH
+#/usr/bin/launchpad_preloading_preinitializing_daemon &
+cd ./tests/system-controller/apps-framework/
+
 # set library path & reboot launchpad
 pids=(`ps -ef | grep launchpad | grep -v grep | awk '{ print $2 }'`)
 for pid in ${pids[*]}
 do
 	kill -9 ${pid}
 done
-cd ../../
-curpath=`pwd`;
-export LD_LIBRARY_PATH=$curpath/src/apps-framework/.libs:$LD_LIBRARY_PATH
-/usr/bin/launchpad_preloading_preinitializing_daemon &
-
-cd ./test/apps-framework/
 
 # setting for appresctl test
 cp ./data/* /opt/share/applications

@@ -7,30 +7,59 @@
  *
  */
 
-/*========================================================================*/    
+/*========================================================================*/
 /**
  *  @file   CicoSCUserManager.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCUserManager class
  */
-/*========================================================================*/    
+/*========================================================================*/
+
+#include <sys/stat.h>
+#include <dirent.h>
+
+#include <fstream>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <boost/foreach.hpp>
+#include <cstdio>
+using namespace boost;
+using namespace boost::property_tree;
 
 #include "ico_syc_error.h"
 #include "ico_syc_msg_cmd_def.h"
+#include "ico_syc_public.h"
 
 #include "CicoLog.h"
 
-#include "CicoSCCommandParser.h"
+#include "CicoSCCommand.h"
+#include "CicoSCLastInfo.h"
+#include "CicoSCAulItems.h"
 #include "CicoSCLifeCycleController.h"
 #include "CicoSCMessage.h"
 #include "CicoSCServer.h"
 #include "CicoSCUserManager.h"
+#include "CicoSCUser.h"
+#include "CicoSCConf.h"
+#include "CicoSCSystemConfig.h"
 
-//==========================================================================    
+
+//==========================================================================
+//
+//  definition
+//
+//==========================================================================
+#define ICO_SYC_DEFAULT_PATH    "/home/app/ico"
+#define ICO_SYC_APP_INFO        "runnningApp.info"
+#define ICO_SYC_APP_INFO_DEF    "defaultApps.info"
+#define ICO_SYC_LASTINFO_DIR    (char*)"/lastinfo/"
+#define ICO_SYC_LASTUSER_FILE   (char*)"/home/app/ico/lastuser.txt"
+
+//==========================================================================
 //
 //  private static variable
 //
-//==========================================================================    
+//==========================================================================
 CicoSCUserManager* CicoSCUserManager::ms_myInstance = NULL;
 
 //--------------------------------------------------------------------------
@@ -39,10 +68,20 @@ CicoSCUserManager* CicoSCUserManager::ms_myInstance = NULL;
  */
 //--------------------------------------------------------------------------
 CicoSCUserManager::CicoSCUserManager()
+    : m_login("")
 {
-    m_defaultUser = NULL;
-    m_lastUser = NULL;
-    m_loginUser = NULL;
+    m_uConfig = CicoSCSystemConfig::getInstance()->getUserConf();
+    if ((NULL == m_uConfig) || (true == m_uConfig->m_parent_dir.empty())) {
+        m_parentDir = ICO_SYC_DEFAULT_PATH;
+    }
+    else {
+        m_parentDir = m_uConfig->m_parent_dir;
+    }
+    int sz = m_parentDir.size();
+    const char* p = m_parentDir.c_str();
+    if ('/' != p[sz-1]) {
+        m_parentDir += "/";
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -54,18 +93,27 @@ CicoSCUserManager::~CicoSCUserManager()
 {
     ICO_DBG("CicoSCUserManager::~CicoSCUserManager() Enter");
 
-    delete m_defaultUser;
-
+    // clear homescreen list
     m_homescreenList.clear();
 
+    // clear userlist
     vector<CicoSCUser*>::iterator itr;
     itr = m_userList.begin();
     for (; itr != m_userList.end(); ++itr) {
+        CicoSCUser *user = const_cast<CicoSCUser*>(*itr);
+        // clear list of last information
+        vector<CicoSCLastInfo*>::iterator info_itr;
+        info_itr = user->lastInfoList.begin();
+        for (; info_itr != user->lastInfoList.end(); ++info_itr) {
+            // free memory
+            delete *info_itr;
+        }
+        // free memory
         delete *itr;
     }
     m_userList.clear();
 
-    ICO_DBG("CicoSCUserManager::~CicoSCUserManager() Leave");
+    ICO_DBG("CicoSCUserManager::~CicoSCUserManager() Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
@@ -88,7 +136,7 @@ CicoSCUserManager::getInstance(void)
 /**
  *  @brief  Handle command
  *
- *  @param  [IN] cmd            control command
+ *  @param  [in] cmd            control command
  *  @return none
  */
 //--------------------------------------------------------------------------
@@ -108,19 +156,27 @@ CicoSCUserManager::handleCommand(const CicoSCCommand * cmd)
         // get userlist
         userlistCB(cmd->appid);
         break;
+    case MSG_CMD_GET_LASTINFO:
+        // get last information 
+        lastinfoCB(cmd->appid);
+        break;
+    case MSG_CMD_SET_LASTINFO:
+        // set application's last information
+        setLastInfo(cmd->appid, opt->lastinfo);
+        break;
     default:
-        ICO_WRN("Unknown Command(0x%08x)", cmd->cmdid);
+        ICO_WRN("Unknown Command(0x%08X)", cmd->cmdid);
         break;
     }
 
-    ICO_DBG("CicoSCUserManager::handleCommand Leave");
+    ICO_DBG("CicoSCUserManager::handleCommand Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
  *  @brief  Load configuration file
  *
- *  @param  [IN] confFile       configuration file path
+ *  @param  [in] confFile       configuration file path
  *  @return 0 on success, other on error
  */
 //--------------------------------------------------------------------------
@@ -136,10 +192,10 @@ CicoSCUserManager::load(const string & confFile)
     // create lists
     createUserList(root);
     createHomeScreenList(root);
-    // set default user
-    setDefaultUser(root);
+    // set login user name
+    setLoginUser(root);
 
-    ICO_DBG("CicoSCUserManager::load Leave");
+    ICO_DBG("CicoSCUserManager::load Leave(EOK)");
 
     // always success
     return ICO_SYC_EOK;
@@ -156,59 +212,46 @@ CicoSCUserManager::load(const string & confFile)
 int
 CicoSCUserManager::initialize(void)
 {
-// TODO
     ICO_DBG("CicoSCUserManager::initialize Enter");
 
-    const CicoSCUser *user = NULL;
-
-    if (NULL != m_lastUser) {
-        user = m_lastUser;
-    }
-    else if (NULL != m_defaultUser) {
-        user = m_defaultUser;
-    }
-    else {
-        ICO_ERR("last user and default user are null");
+    // get login user information
+    const CicoSCUser *user = findUserConfbyName(m_login);
+    if (NULL == user) {
+        ICO_ERR("CicoSCUserManager::initialize Leave(ENXIO)");
         return ICO_SYC_ENXIO;
     }
 
-    // update login user information
-    setLoginUser(user);
-
     // launch homescreen
-    ICO_DBG("launch homescreen (user=%s, appid=%s)",
-            (user->name).c_str(), (user->homescreen).c_str());
-    CicoSCLifeCycleController::getInstance()->launch((user->homescreen).c_str());
+    if (true == user->autolaunch) {
+        launchHomescreenReq(user->name, user->homescreen);
+    }
+    else {
+        ICO_DBG("launch homescreen skip");
+    }
 
-    ICO_DBG("CicoSCUserManager::initialize Leave");
+    // load last information
+    loadLastInfo();
+
+    // make root directory
+    string root_dir = m_uConfig->m_parent_dir;
+    struct stat st;
+    int ret = stat(root_dir.c_str(), &st);
+    if (0 != ret) {
+        mkdir(root_dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    }
+    // make user's directory
+    string user_dir = m_parentDir + m_login + "/";
+    ret = stat(user_dir.c_str(), &st);
+    if (0 != ret) {
+        mkdir(user_dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    }
+
+    // save last user
+    saveLastUser();
+
+    ICO_DBG("CicoSCUserManager::initialize Leave(EOK)");
 
     return ICO_SYC_EOK;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  Get default user information
- *
- *  @return pointer of CicoSCUser
- */
-//--------------------------------------------------------------------------
-const CicoSCUser*
-CicoSCUserManager::getDefaultUser(void)
-{
-    return m_defaultUser;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  Get last user information
- *
- *  @return pointer of CicoSCUser
- */
-//--------------------------------------------------------------------------
-const CicoSCUser*
-CicoSCUserManager::getLastUser(void)
-{
-    return m_lastUser;
 }
 
 //--------------------------------------------------------------------------
@@ -221,7 +264,7 @@ CicoSCUserManager::getLastUser(void)
 const CicoSCUser*
 CicoSCUserManager::getLoginUser(void)
 {
-    return m_loginUser;
+    return findUserConfbyName(m_login);
 }
 
 //--------------------------------------------------------------------------
@@ -254,8 +297,8 @@ CicoSCUserManager::getHomeScreenList(void)
 /**
  *  @brief  Change login user
  *
- *  @param  [IN] name           user name
- *  @param  [IN] passwd         password
+ *  @param  [in] name           user name
+ *  @param  [in] passwd         password
  *  @return none
  */
 //--------------------------------------------------------------------------
@@ -265,31 +308,226 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
     ICO_DBG("CicoSCUserManager::changeUser Enter"
             "(user=%s pass=%s)", name.c_str(), passwd.c_str());
 
+    ICO_DBG("change user \"%s\" -> \"%s\"", m_login.c_str(), name.c_str());
+
+    string oldUsr = m_login; /* get before login user */
     const CicoSCUser *conf = NULL;
 
     // get user config
     conf = findUserConfbyName(name);
     if (NULL == conf) {
-        ICO_WRN("user \"%s\" does not exist in the userlist", name.c_str());
+        ICO_ERR("CicoSCUserManager::changeUser Leave(ENXIO)");
         return;
     }
 
     // check password
     if (passwd != conf->passwd) {
-        ICO_ERR("user \"%s\" invalid password", name.c_str());
+        ICO_ERR("CicoSCUserManager::changeUser Leave(EINVAL)");
         return;
     }
 
+    // Imprinting to file, that file is application's running information 
+    string usr_dir_old;
+    getWorkingDir(oldUsr, usr_dir_old);
+    string outfilename = usr_dir_old + ICO_SYC_APP_INFO;
+    impritingLastApps(outfilename);
+
+    // killing running application and homeScreen
+    killingAppsAndHS(oldUsr);
+
+
+    // check wheather directory exists
+    vector<string> mk_dir_info;
+    mk_dir_info.push_back(m_uConfig->m_parent_dir);
+    string usr_dir;
+    getWorkingDir(conf->name, usr_dir);
+    mk_dir_info.push_back(usr_dir);
+    vector<string>::iterator it = mk_dir_info.begin();
+    for (; it != mk_dir_info.end(); it++) {
+        const char* dir = (*it).c_str();
+        struct stat st;
+        if (0 == stat(dir, &st)) {
+            continue; // continue of for
+        }
+        mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO);
+    }
+
     // change homescreen application
-    ICO_DBG("launch homescreen (user=%s, appid=%s)",
-            (conf->name).c_str(), (conf->homescreen).c_str());
-    CicoSCLifeCycleController::getInstance()->launch((conf->homescreen).c_str());
+    launchHomescreenReq(conf->name, conf->homescreen);
 
-    // set lastUser
-    m_lastUser = const_cast<CicoSCUser*>(conf);
-    ICO_DBG("last user changed (user=%s)", name.c_str());
+    // change login user
+    m_login = conf->name;
+    ICO_DBG("login user changed (user=%s)", m_login.c_str());
 
-    ICO_DBG("CicoSCUserManager::changeUser Leave");
+    ICO_DBG("CicoSCUserManager::changeUser Leave(EOK)");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  imprinting to file, that file is application's running information 
+ *  @param  usrnam target user name
+ *  @return bool
+ *  @retval true success
+ *  @retval false fail
+ */
+//--------------------------------------------------------------------------
+bool CicoSCUserManager::impritingLastApps(const string& ofnm)
+{
+    // <TODO></TODO>
+    // <TODO></TODO>
+    // <TODO></TODO>
+    vector<string> vs;
+#if 0
+
+    AAAAAAAAAA
+
+#else
+    CicoSCLifeCycleController* oCSCLCC;
+    oCSCLCC = CicoSCLifeCycleController::getInstance();
+    if ((NULL == oCSCLCC) || (0 == oCSCLCC)) {
+        ICO_ERR("CicoSCUserManager::impritingLastApps Leave(ENXIO)");
+        return false;
+    }
+    const vector<CicoSCAulItems>& aulList = oCSCLCC->getAulList();
+    for (int i=aulList.size() ; i != 1; i--) {
+        const CicoSCAulItems* pO = aulList[i-1].p();
+        if ((NULL == pO) || (0 == pO)) {
+            continue;
+        }
+        if (pO->m_appid == "org.tizen.ico.login") {
+            continue;
+        }
+        if (pO->m_appid == "org.tizen.ico.statusbar") {
+            continue;
+        }
+        if (pO->m_appid == "org.tizen.ico.homescreen") {
+            continue;
+        }
+        vs.push_back(pO->m_appid);
+    }
+#endif
+    if (0 == vs.size()) {
+        remove(ofnm.c_str());
+        ICO_ERR("CicoSCUserManager::impritingLastApps app none");
+        return true;
+    }
+    ofstream ofs;
+    ofs.open(ofnm.c_str(), ios::trunc);
+    vector<string>::iterator it = vs.begin();
+    for (; it != vs.end(); it++) {
+        ofs << *it << endl;
+    }
+    ofs.close();
+    ICO_ERR("CicoSCUserManager::impritingLastApps app = %d", vs.size());
+    return false;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  killing running applications and homeScreen
+ *  @param  usrnam target user name
+ *  @return bool
+ *  @retval true success
+ *  @retval false fail
+ */
+//--------------------------------------------------------------------------
+bool CicoSCUserManager::killingAppsAndHS(const string&)
+{
+/* TODO
+    const CicoSCUser *cnf = findUserConfbyName(usrnm);
+    if (NULL == cnf) {
+        ICO_ERR("CicoSCUserManager::killingAppsAndHS Leave(ENXIO)");
+        return false;
+    }
+*/
+    CicoSCLifeCycleController* oCSCLCC;
+    oCSCLCC = CicoSCLifeCycleController::getInstance();
+    if ((NULL == oCSCLCC) || (0 == oCSCLCC)) {
+        ICO_ERR("CicoSCUserManager::killingAppsAndHS Leave(ENXIO)");
+        return false;
+    }
+    bool r = false;
+    const vector<CicoSCAulItems>& aulList = oCSCLCC->getAulList();
+    vector<int> pids;
+    for (int i=aulList.size() ; i != 0; i--) {
+        const CicoSCAulItems* pObj = aulList[i-1].p();
+        if ((NULL == pObj) || (0 == pObj)) {
+            continue;
+        }
+        ICO_DBG("CicoSCUserManager::killingAppsAndHS Tgt:%d(%s)", pObj->m_pid,
+                pObj->m_appid.c_str());
+        pids.push_back(pObj->m_pid);
+        r = true;
+    }
+    int sz = pids.size();
+    for (int j=0; j < sz; j++) {
+        oCSCLCC->terminate(pids[j]);
+    }
+    ICO_DBG("CicoSCUserManager::killingAppsAndHS ret=%s", r? "true": "false");
+    return r;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  homescreen launch request
+ *  @param  usrnam target user name
+ *  @return bool
+ *  @retval true success
+ *  @retval false fail
+ */
+//--------------------------------------------------------------------------
+void CicoSCUserManager::getWorkingDir(const string& usr, string& dir)
+{
+    dir = m_parentDir;
+    dir += usr + "/";
+    return;
+}
+//--------------------------------------------------------------------------
+/**
+ *  @brief  homescreen launch request
+ *  @param  usrnam target user name
+ *  @return bool
+ *  @retval true success
+ *  @retval false fail
+ */
+//--------------------------------------------------------------------------
+bool CicoSCUserManager::launchHomescreenReq(const string& usr, 
+                                            const string& appid_hs)
+{
+    string usr_dir;
+    getWorkingDir(usr, usr_dir);
+    string prmfn = usr_dir + ICO_SYC_APP_INFO;
+
+    const char* filepath = prmfn.c_str();
+    struct stat st;
+    if (0 != stat(filepath, &st)) {
+        string dir = m_parentDir;
+        dir += string(ICO_SYC_APP_INFO_DEF);
+        prmfn = dir;
+    }
+
+    bundle *b;
+    b = bundle_create();
+    bundle_add(b, ICO_SYC_APP_BUNDLE_KEY1, usr.c_str());
+    bundle_add(b, ICO_SYC_APP_BUNDLE_KEY2, prmfn.c_str());
+
+    ICO_DBG("launch homescreen (user=%s, appid=%s, parm=%s)",
+            usr.c_str(), appid_hs.c_str(), prmfn.c_str());
+
+    CicoSCLifeCycleController* oCSCLCC;
+    oCSCLCC = CicoSCLifeCycleController::getInstance();
+    int r = oCSCLCC->launch(appid_hs.c_str(), b);
+
+// <TODO>
+// ???  bundle_free(b);
+// </TODO>
+
+    if (ICO_SYC_EOK != r) {
+        ICO_DBG("CicoSCUserManager::launchHomescreenReq false(%d)", r);
+        return false;
+    }
+    ICO_DBG("CicoSCUserManager::launchHomescreenReq true(ICO_SYC_EOK)");
+    return true;
 }
 
 //--------------------------------------------------------------------------
@@ -333,7 +571,7 @@ CicoSCUserManager::dumpHomeScreenList(void)
 /**
  *  @brief  Callback of "get userlist"
  *
- *  @param  [IN] appid          application id to send message
+ *  @param  [in] appid          application id to send message
  *
  *  @return none
  */
@@ -341,7 +579,7 @@ CicoSCUserManager::dumpHomeScreenList(void)
 void
 CicoSCUserManager::userlistCB(const string & appid)
 {
-    ICO_DBG("CicoSCUserManager::userlistCB Enter");
+    ICO_DBG("CicoSCUserManager::userlistCB Enter (%s)", appid.c_str());
 
     // send message
     CicoSCMessage *message = new CicoSCMessage();
@@ -359,135 +597,212 @@ CicoSCUserManager::userlistCB(const string & appid)
     message->addArgObject("user_list");
 
     // set login user name
-    if (NULL != m_loginUser) {
-        message->addArgObject("user_login", m_loginUser->name);
-    }
-    else {
-        message->addArgObject("user_login", m_defaultUser->name);
-    }
+    message->addArgObject("user_login", m_login);
 
     CicoSCServer::getInstance()->sendMessage(appid, message);
 
-    ICO_DBG("CicoSCUserManager::userlistCB Leave");
+    ICO_DBG("CicoSCUserManager::userlistCB Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  Set default user information
+ *  @brief  Callback of "get application's last information"
  *
- *  @param  [IN] root           pointer of ptree object
+ *  @param  [in] appid          application id to send message
+ *
  *  @return none
  */
 //--------------------------------------------------------------------------
 void
-CicoSCUserManager::setDefaultUser(const ptree & root)
+CicoSCUserManager::lastinfoCB(const string & appid)
 {
-    ICO_DBG("CicoSCUserManager::setDefaultUser Enter");
+    ICO_DBG("CicoSCUserManager::lastinfoCB Enter (%s)", appid.c_str());
 
-    if (NULL == m_defaultUser) {
-        m_defaultUser = new CicoSCUser();
-    }
+    // send message
+    CicoSCMessage *message = new CicoSCMessage();
+    message->addRootObject("command", MSG_CMD_GET_LASTINFO);
+    message->addRootObject("appid", appid);
 
-    ptree default_user = root.get_child("userconfig.default");
-
-    BOOST_FOREACH (const ptree::value_type& child, default_user) {
-        if (0 != strcmp(child.first.data(), "user")) {
-            ICO_ERR("unknown element (%s)", child.first.data());
-        }
-
-        optional<string> name;
-        name = child.second.get_optional<string>("name");
-        if (false == name.is_initialized()) {
-            ICO_ERR("user.name element not found");
-            continue;
-        }
-        m_defaultUser->name = name.get();
-    }
-
-    /* get homescreen and password info from m_userList */
-    int check_flag = 0;
-    vector<CicoSCUser*>::iterator itr;
-    itr = m_userList.begin();
-    for (; itr != m_userList.end(); ++itr) {
-        const CicoSCUser* conf = const_cast<CicoSCUser*>(*itr);
-        if (conf->name == m_defaultUser->name) {
-            m_defaultUser->passwd = conf->passwd;
-            m_defaultUser->homescreen = conf->homescreen;
-            check_flag++;
+    CicoSCUser* user = const_cast<CicoSCUser*>(findUserConfbyName(m_login));
+    // search application's last information
+    vector<CicoSCLastInfo*>::iterator itr;
+    itr = user->lastInfoList.begin();
+    for (; itr != user->lastInfoList.end(); ++itr) {
+        const CicoSCLastInfo *info = const_cast<CicoSCLastInfo*>(*itr);
+        if (appid == info->appid) {
+            // set last information
+            message->addArgObject("lastinfo", info->lastinfo);
             break;
         }
     }
 
-    /* default user name does not exist in the m_userList */
-    if (check_flag == 0) {
-        itr = m_userList.begin();
-        const CicoSCUser* conf = const_cast<CicoSCUser*>(*itr);
-        m_defaultUser->name = conf->name;
-        m_defaultUser->passwd = conf->passwd;
-        m_defaultUser->homescreen = conf->homescreen;
-    }
+    CicoSCServer::getInstance()->sendMessage(appid, message);
 
-    // dump data
-    m_defaultUser->dump();
-
-    ICO_DBG("CicoSCUserManager::setDefaultUser Leave");
+    ICO_DBG("CicoSCUserManager::lastinfoCB Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  Set last user information
+ *  @brief  Save last user name to last user file
  *
- *  @param  [IN] root           pointer of ptree object
  *  @return none
  */
 //--------------------------------------------------------------------------
 void
-CicoSCUserManager::setLastUser(const ptree & root)
+CicoSCUserManager::saveLastUser(void)
 {
-// TODO
-    ICO_DBG("CicoSCUserManager::setLastUser Enter");
+    ICO_DBG("CicoSCUserManager::saveLastUser Enter (name=%s)", m_login.c_str());
 
-    if (NULL == m_lastUser) {
-        m_lastUser = m_defaultUser;
+    // output last user name to file
+    std::ofstream stream;
+    string file = ICO_SYC_LASTUSER_FILE;
+    stream.open(file.c_str());
+    stream << m_login << std::endl;
+    stream.close();
+
+    ICO_DBG("CicoSCUserManager::saveLastUser Leave(EOK)");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  Load last user name from last user file
+ *
+ *  @return none
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCUserManager::loadLastUser(void)
+{
+    ICO_DBG("CicoSCUserManager::loadLastUser Enter");
+
+    // check weather file exists
+    struct stat st;
+    int ret = stat(ICO_SYC_LASTUSER_FILE, &st);
+    if (0 != ret) {
+        // last user file does not exist
+        ICO_DBG("CicoSCUserManager::loadLastUser Leave(ENXIO)");
+        return;
     }
 
-    // dump data
-    //m_lastUser->dump();
+    // load last user name
+    std::ifstream stream;
+    stream.open(ICO_SYC_LASTUSER_FILE);
+    stream >> m_login;
+    stream.close();
 
-    ICO_DBG("CicoSCUserManager::setLastUser Leave");
+    ICO_DBG("CicoSCUserManager::loadLastUser Leave(EOK)");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  Load application's last information
+ *
+ *  @return none
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCUserManager::loadLastInfo()
+{
+    ICO_DBG("CicoSCUserManager::loadLastInfo Enter (name=%s)", m_login.c_str());
+
+    if (m_login.empty()) {
+        ICO_ERR("CicoSCUserManager::loadLastInfo Leave(EINVAL)");
+        return;
+    }
+
+    // check weather file exists
+    struct stat st;
+    string dir = m_parentDir + m_login + ICO_SYC_LASTINFO_DIR;
+    int ret = stat(dir.c_str(), &st);
+    if (0 != ret) {
+        // lastinfo directory does not exist
+        ICO_DBG("CicoSCUserManager::loadLastInfo Leave(ENXIO)");
+        return;
+    }
+
+    // get file list
+    struct dirent **filelist;
+    int filenum = scandir(dir.c_str(), &filelist, NULL, NULL);
+    for (int i = 0; i < filenum; ++i) {
+        string filename = filelist[i]->d_name;
+        string::size_type index = filename.find(".txt");
+        if (string::npos != index) {
+            // load last information from file
+            string infofile = dir + filename;
+            string info;
+            std::ifstream stream;
+            stream.open(infofile.c_str());
+            stream >> info;
+            stream.close();
+
+            // get appid (erase ".txt" from filename)
+            filename.erase(index, filename.size());
+            // set last information
+            setLastInfo(filename, info);
+        }
+        free(filelist[i]);
+    }
+    free(filelist);
+
+    ICO_DBG("CicoSCUserManager::loadLastInfo Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
  *  @brief  Set login user information
  *
- *  @param  [IN] user           pointer of CicoSCUser
+ *  @param  [in] root           pointer of ptree object
  *  @return none
  */
 //--------------------------------------------------------------------------
 void
-CicoSCUserManager::setLoginUser(const CicoSCUser * user)
+CicoSCUserManager::setLoginUser(const ptree & root)
 {
-// TODO
     ICO_DBG("CicoSCUserManager::setLoginUser Enter");
 
-    if (NULL == user) {
-        m_loginUser = m_defaultUser;
-    }
-    else {
-        m_loginUser = const_cast<CicoSCUser*>(user);
-    }
-    // dump data
-    m_loginUser->dump();
+    // load last user name
+    loadLastUser();
 
-    ICO_DBG("CicoSCUserManager::setLoginUser Leave");
+    if (m_login.empty()) {
+        // get user name from config file
+        ptree default_user = root.get_child("userconfig.default");
+
+        int check_flag = 0;
+        BOOST_FOREACH (const ptree::value_type& child, default_user) {
+            if (0 != strcmp(child.first.data(), "user")) {
+                ICO_ERR("unknown element (%s)", child.first.data());
+            }
+
+            optional<string> name;
+            name = child.second.get_optional<string>("name");
+            if (false == name.is_initialized()) {
+                ICO_ERR("user.name element not found");
+                continue;
+            }
+            m_login = name.get();
+            check_flag++;
+        }
+
+        // default user name does not exist in the m_userList
+        if (check_flag == 0) {
+            vector<CicoSCUser*>::iterator itr;
+            itr = m_userList.begin();
+            const CicoSCUser* conf = const_cast<CicoSCUser*>(*itr);
+            m_login = conf->name;
+        }
+    }
+
+    // dump data
+    ICO_DBG("login user name: %s", m_login.c_str());
+
+    ICO_DBG("CicoSCUserManager::setLoginUser Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
  *  @brief  Create userlist
  *
- *  @param  [IN] root           pointer of ptree object
+ *  @param  [in] root           pointer of ptree object
  *  @return none
  */
 //--------------------------------------------------------------------------
@@ -507,6 +822,7 @@ CicoSCUserManager::createUserList(const ptree & root)
         optional<string> name;
         optional<string> passwd;
         optional<string> homescreen;
+        optional<string> autolaunch;
 
         name = child.second.get_optional<string>("name");
         if (false == name.is_initialized()) {
@@ -518,16 +834,21 @@ CicoSCUserManager::createUserList(const ptree & root)
             ICO_ERR("user.passwd element not found");
             continue;
         }
+        autolaunch = child.second.get_optional<string>("hs.<xmlattr>.autolaunch");
+        if (false == autolaunch.is_initialized()) {
+            autolaunch = optional<string>("true");
+        }
         homescreen = child.second.get_optional<string>("hs");
         if (false == homescreen.is_initialized()) {
             ICO_ERR("user.hs element not found");
             continue;
         }
 
-        CicoSCUser* userConf    = new CicoSCUser;
-        userConf->name          = name.get();
-        userConf->passwd        = passwd.get();
-        userConf->homescreen    = homescreen.get();
+        CicoSCUser* userConf = new CicoSCUser;
+        userConf->name       = name.get();
+        userConf->passwd     = passwd.get();
+        userConf->homescreen = homescreen.get();
+        userConf->autolaunch = (autolaunch.get().compare("false") == 0) ? false : true;
         // dump data
         userConf->dump();
 
@@ -535,14 +856,14 @@ CicoSCUserManager::createUserList(const ptree & root)
         m_userList.push_back(userConf);
     }
 
-    ICO_DBG("CicoSCUserManager::createUserList Leave");
+    ICO_DBG("CicoSCUserManager::createUserList Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
  *  @brief  Create homescreen list
  *
- *  @param  [IN] root           pointer of ptree object
+ *  @param  [in] root           pointer of ptree object
  *  @return none
  */
 //--------------------------------------------------------------------------
@@ -570,14 +891,89 @@ CicoSCUserManager::createHomeScreenList(const ptree & root)
     // dump data
     dumpHomeScreenList();
 
-    ICO_DBG("CicoSCUserManager::createHomeScreenList Leave");
+    ICO_DBG("CicoSCUserManager::createHomeScreenList Leave(EOK)");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  Set last user information
+ *
+ *  @param  [in] appid          application id
+ *  @param  [in] info           application's last information
+ *  @return none
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCUserManager::setLastInfo(const string & appid, const string & info)
+{
+    ICO_DBG("CicoSCUserManager::setLastInfo Enter(appid: %s, info: %s)",
+            appid.c_str(), info.c_str());
+
+    CicoSCUser* loginUser = NULL;
+    CicoSCLastInfo* lastInfo = NULL;
+
+    // get login user object
+    loginUser = const_cast<CicoSCUser*>(findUserConfbyName(m_login));
+    // check login user
+    if (NULL == loginUser) {
+        // login user does not exist in the user list
+        ICO_DBG("CicoSCUserManager::setLastInfo Leave(ENXIO)");
+        return;
+    }
+
+    // check whether lastinfo object exists
+    vector<CicoSCLastInfo*>::iterator info_itr;
+    info_itr = loginUser->lastInfoList.begin();
+    for (; info_itr != loginUser->lastInfoList.end(); ++info_itr) {
+        CicoSCLastInfo *linfo = const_cast<CicoSCLastInfo*>(*info_itr);
+        if (appid == linfo->appid) {
+            lastInfo = linfo;
+            break;
+        }
+    }
+
+    if (NULL == lastInfo) {
+        // create new object
+        lastInfo = new CicoSCLastInfo;
+        // set application's information
+        lastInfo->appid = appid;
+        lastInfo->lastinfo = info;
+        // add to list
+        loginUser->lastInfoList.push_back(lastInfo);
+    }
+    else {
+        // update application's last information
+        lastInfo->lastinfo = info;
+    }
+
+    // check wheather directory exists
+    string info_dir =  m_parentDir + m_login + ICO_SYC_LASTINFO_DIR;
+    struct stat st;
+    int ret = stat(info_dir.c_str(), &st);
+    if (0 != ret) {
+        // make directory
+        mkdir(info_dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    }
+
+    // output application's last information to file
+    std::ofstream stream;
+    string file = info_dir + lastInfo->appid + ".txt";
+    stream.open(file.c_str());
+    stream << lastInfo->lastinfo << std::endl;
+    stream.close();
+
+    // dump data
+    ICO_DBG("login user=%s", (loginUser->name).c_str());
+    lastInfo->dumpLastInfo();
+
+    ICO_DBG("CicoSCUserManager::setLastInfo Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
  *  @brief  Find user configuration by user name
  *
- *  @param  [IN] name           user name
+ *  @param  [in] name           user name
  *  @return pointer of CicoSCUser data on success, NULL on error
  */
 //--------------------------------------------------------------------------
@@ -586,22 +982,17 @@ CicoSCUserManager::findUserConfbyName(const string & name)
 {
     ICO_DBG("CicoSCUserManager::findUserConfbyName Enter (%s)", name.c_str());
 
-    if (name == m_defaultUser->name) {
-        ICO_DBG("CicoSCUserManager::findUserConfbyName Leave (defaultUser)");
-        return m_defaultUser;
-    }
-
     vector<CicoSCUser*>::iterator itr;
     itr = m_userList.begin();
     for (; itr != m_userList.end(); ++itr) {
         const CicoSCUser* conf = const_cast<CicoSCUser*>(*itr);
         if (name == conf->name) {
-            ICO_DBG("CicoSCUserManager::findUserConfbyName Leave");
+            ICO_DBG("CicoSCUserManager::findUserConfbyName Leave(EOK)");
             return conf;
         }
     }
 
-    ICO_ERR("CicoSCUserManager::findUserConfbyName Leave (NOT find)");
+    ICO_ERR("CicoSCUserManager::findUserConfbyName Leave(ENXIO)");
     return NULL;
 }
 // vim:set expandtab ts=4 sw=4:

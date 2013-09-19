@@ -11,15 +11,17 @@
 /**
  *  @file   CicoSCDisplayZone.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCDisplayZone class
  */
 //==========================================================================
 #ifndef __CICO_SC_DISPLAYZONE_H__
 #define __CICO_SC_DISPLAYZONE_H__
 
+#include <string>
+
 //==========================================================================
 /**
- *  @brief  display zone information
+ *  @brief  This class hold display zone information
  */
 //==========================================================================
 class CicoSCDisplayZone
@@ -42,11 +44,12 @@ private:
     CicoSCDisplayZone(const CicoSCDisplayZone &object);
 
 public:
-    int zoneid;  //!< layer ID
-    int x;       //!< display zone x position
-    int y;       //!< display zone y position
-    int width;   //!< display zone width
-    int height;  //!< display zone height
+    int zoneid;           //!< display zone id
+    int x;                //!< display zone x position
+    int y;                //!< display zone y position
+    int width;            //!< display zone width
+    int height;           //!< display zone height
+    std::string fullname; //!< full name of layer
 };
-#endif	// __CICO_SC_DISPLAYZONE_H__
+#endif  // __CICO_SC_DISPLAYZONE_H__
 // vim:set expandtab ts=4 sw=4:

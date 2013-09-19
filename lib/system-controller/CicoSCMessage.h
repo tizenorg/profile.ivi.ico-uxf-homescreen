@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCMessage.h
  *
- *  @brief  Definition of CicoSCMessage class
+ *  @brief  This file is definition of CicoSCMessage class
  */
 //==========================================================================
 #ifndef __CICO_SC_MESSAGE_H__
@@ -28,7 +28,7 @@ class CicoSCUwsHandle;
 
 //==========================================================================
 /**
- *  @brief  communication message representation
+ *  @brief  This class hold communication message
  */
 //==========================================================================
 class CicoSCMessage
@@ -79,8 +79,10 @@ public:
     // get message data
     const char* getData(void);
 
+    // set application id of destination
     void setSendToAppid(const std::string & appid);
 
+    // get application id of destination
     const std::string & getSendToAppid(void);
 
 private:
@@ -91,9 +93,9 @@ private:
     CicoSCMessage(const CicoSCMessage &object);
 
 private:
-    static unsigned int ms_counter;     //!< meesage id counter
+    static unsigned int ms_counter;     //!< message id counter
     int                 m_id;           //!< message id
-    CicoSCUwsHandle     *m_uwsHandle;   //!< communication handller
+    CicoSCUwsHandle     *m_uwsHandle;   //!< communication handler
     JsonGenerator       *m_generator;   //!< json generator
     JsonNode            *m_root;        //!< json root node
     JsonObject          *m_rootObj;     //!< json root objects

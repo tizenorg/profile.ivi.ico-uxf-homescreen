@@ -11,39 +11,56 @@
 /**
  *  @file   CicoSCWayland.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCWayland class
  */
 //==========================================================================
 #ifndef __CICO_SC_WAYLAND_H__
 #define __CICO_SC_WAYLAND_H__
 
-#include <vector>
+#include <string>
 #include <map>
-using namespace std;
 
 #include <Ecore.h>
 
 #include <wayland-client.h>
-#include <ico_window_mgr-client-protocol.h>
-#include "CicoSCDisplay.h"
 
+//==========================================================================
+//  Forward declaration
+//==========================================================================
 class CicoSCWaylandIF;
 
+//==========================================================================
+/*
+ *  @brief  This class controls wayland
+ */
+//==========================================================================
 class CicoSCWayland {
 public:
+    // get instance of CicoSCWayland
     static CicoSCWayland* getInstance();
 
+    // initialize wayland connection
     int intialize(void);
 
+    // flush display
     void flushDisplay(void);
+
+    // dispatch display
     void dispatchDisplay(void);
+
+    // get wayland file descriptor
     int getWlFd(void);
+
+    // app ecore main wayland file descriptor handler
     int addEcoreMainWlFdHandler(void);
+
+    // add wayland interface
     void addWaylandIF(const char *name, CicoSCWaylandIF* interface);
 
+    // waylnad file descriptor handler
     static Eina_Bool waylandFdHandler(void *data, Ecore_Fd_Handler *handler);
 
-    /* wayland standard callback functions      */
+    // wayland global callback function
     void globalCB(void *data,
                   struct wl_registry *registry,
                   uint32_t name,
@@ -51,6 +68,7 @@ public:
                   uint32_t version);
 
 private:
+    // wayland standard callback function
     static void wlGlobalCB(void       *data,
                            struct     wl_registry *registry,
                            uint32_t   name,
@@ -71,23 +89,26 @@ private:
     CicoSCWayland(const CicoSCWayland &object);
 
 private:
-    /* my instance */
+    /// my instance
     static CicoSCWayland *ms_myInstance;
 
-    /* Wayland's display                */
+    /// wayland's display
     struct wl_display *m_wlDisplay;
 
+    /// wayland's registry
     struct wl_registry *m_wlRegistry;
 
-    /* Wayland's output describes       */
-    struct wl_output *m_wlOutput;
-
-    /* Wayland's file descriptor        */
+    /// wayland's file descriptor
     int m_wlFd;
 
-    Ecore_Fd_Handler         *m_ecoreFdHandler;
+    /// ecore file descriptor handler
+    Ecore_Fd_Handler *m_ecoreFdHandler;
 
-    map<string, CicoSCWaylandIF*> m_wlInterfaceList;
+    /// interface list
+    std::map<std::string, CicoSCWaylandIF*> m_wlInterfaceList;
+
+    // wayland common callbacks
+    struct wl_registry_listener m_wlListener;
 };
-#endif	// __CICO_SC_WAYLAND_H__
+#endif  // __CICO_SC_WAYLAND_H__
 // vim:set expandtab ts=4 sw=4:

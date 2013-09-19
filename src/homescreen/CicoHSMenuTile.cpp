@@ -410,7 +410,7 @@ CicoHSMenuTile::ValidThumbnail(int surface)
         ico_syc_unmap_thumb(thumb_surface);
         thumbnail = NULL;
     }
-    ico_syc_prepare_thumb(surface,0);
+    ico_syc_map_thumb(surface, 5);
     thumb_surface = surface;
 
     ICO_DBG("CicoHSMenuTile::ValidThumbnail: prepare thumbnail 0x%d",surface);
@@ -429,17 +429,12 @@ void
 CicoHSMenuTile::SetThumbnail(int surface)
 {
     if(thumb_surface != surface){
+        ICO_DBG("CicoHSMenuTile::SetThumbnail: unmap thumbnail %d", thumb_surface);
         ico_syc_unmap_thumb(thumb_surface);
         thumbnail = NULL;
     }
-    thumbnail = ico_syc_map_thumb(surface);
-    if(thumbnail == NULL){
-        ICO_ERR("CicoHSMenuTile::SetThumbnail: failed get thumbnail 0x%x",thumbnail);
-        return;
-    }
   
-    ICO_DBG("CicoHSMenuTile::SetThumbnail: get thumbnail 0x%x",thumbnail->data);
-
-    evas_object_image_data_set(tile,thumbnail->data);
-
+    ICO_DBG("CicoHSMenuTile::SetThumbnail: create thumbnail image %d", thumb_surface);
+    // create EFL not support image composit,/ so composit myself.
+    // evas_object_image_data_set(tile,thumbnail->data);
 }

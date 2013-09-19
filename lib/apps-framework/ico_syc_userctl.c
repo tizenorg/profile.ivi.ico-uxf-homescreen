@@ -10,7 +10,7 @@
  * @brief   User Control API
  *          for privilege applications
  *
- * @date    Aug-22-2013
+ * @date    Sep-4-2013
  */
 
 #include <string.h>
@@ -25,7 +25,9 @@
 /*============================================================================*/
 static msg_t _create_change_user_msg(const char *appid, const char *name,
                                      const char *password);
-static msg_t _create_userlist_msg(const char *appid);
+static msg_t _create_get_userlist_msg(const char *appid);
+static msg_t _create_get_lastinfo_msg(const char *appid);
+static msg_t _create_set_lastinfo_msg(const char *appid, const char *lastinfo);
 
 /*============================================================================*/
 /* static function                                                            */
@@ -82,7 +84,7 @@ _create_change_user_msg(const char *appid, const char *name,
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   _create_userlist_msg
+ * @brief   _create_get_userlist_msg
  *          Create the message to get the user list.
  *
  * @param[in]   appid                   application id
@@ -92,7 +94,7 @@ _create_change_user_msg(const char *appid, const char *name,
  */
 /*--------------------------------------------------------------------------*/
 static msg_t
-_create_userlist_msg(const char *appid)
+_create_get_userlist_msg(const char *appid)
 {
     JsonObject *obj     = NULL;
     JsonGenerator *gen  = NULL;
@@ -110,6 +112,95 @@ _create_userlist_msg(const char *appid)
     json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
     json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
     json_object_set_null_member(obj, MSG_PRMKEY_ARG);
+
+    /* create root object */
+    root = json_node_new(JSON_NODE_OBJECT);
+    json_node_take_object(root, obj);
+
+    /* create generator object */
+    gen = json_generator_new();
+    json_generator_set_root(gen, root);
+
+    return gen;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   _create_get_lastinfo_msg
+ *          Create the message to get the application's last information.
+ *
+ * @param[in]   appid                   application id
+ * @return      json generator
+ * @retval      json generator          success
+ * @retval      NULL                    error
+ */
+/*--------------------------------------------------------------------------*/
+static msg_t
+_create_get_lastinfo_msg(const char *appid)
+{
+    JsonObject *obj     = NULL;
+    JsonGenerator *gen  = NULL;
+    JsonNode *root      = NULL;
+
+    /* create json object */
+    obj = json_object_new();
+    if (obj == NULL) {
+        _ERR("json_object_new failed");
+        return NULL;
+    }
+
+    /* set message */
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_GET_LASTINFO);
+    json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
+    json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
+    json_object_set_null_member(obj, MSG_PRMKEY_ARG);
+
+    /* create root object */
+    root = json_node_new(JSON_NODE_OBJECT);
+    json_node_take_object(root, obj);
+
+    /* create generator object */
+    gen = json_generator_new();
+    json_generator_set_root(gen, root);
+
+    return gen;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   _create_set_lastinfo_msg
+ *          Create the message to set the application's last information.
+ *
+ * @param[in]   appid                   application id
+ * @param[in]   lastinfo                application's last information
+ * @return      json generator
+ * @retval      json generator          success
+ * @retval      NULL                    error
+ */
+/*--------------------------------------------------------------------------*/
+static msg_t
+_create_set_lastinfo_msg(const char *appid, const char *lastinfo)
+{
+    JsonObject *obj     = NULL;
+    JsonObject *argobj  = NULL;
+    JsonGenerator *gen  = NULL;
+    JsonNode *root      = NULL;
+
+    /* create json object */
+    obj = json_object_new();
+    argobj = json_object_new();
+    if (obj == NULL || argobj == NULL) {
+        _ERR("json_object_new failed");
+        return NULL;
+    }
+
+    /* set message */
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_GET_LASTINFO);
+    json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
+    json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
+
+    json_object_set_string_member(argobj, MSG_PRMKEY_LASTINFO, lastinfo);
+    json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
 
     /* create root object */
     root = json_node_new(JSON_NODE_OBJECT);
@@ -182,8 +273,6 @@ ico_syc_cb_userlist(ico_syc_callback_t callback, void *user_data,
         _ERR("calloc failed");
         return;
     }
-    /* clear memory */
-    memset(userlist, 0, sizeof(ico_syc_userlist_t));
 
     /* start parser */
     parser = json_parser_new();
@@ -226,11 +315,11 @@ ico_syc_cb_userlist(ico_syc_callback_t callback, void *user_data,
     }
     else {
         /* alloc memory */
-        list = malloc(sizeof(char *) * num);
+        list = calloc(1, sizeof(char *) * num);
         if (list == NULL) {
             g_object_unref(parser);
             free(userlist);
-            _ERR("malloc failed");
+            _ERR("calloc failed");
             return;
         }
         /* set user name */
@@ -258,6 +347,81 @@ ico_syc_cb_userlist(ico_syc_callback_t callback, void *user_data,
     }
     free(userlist->user_login);
     free(userlist);
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @internal
+ * @brief   ico_syc_cb_lastinfo
+ *          Execute callback function. (ICO_SYC_EV_LASTINFO)
+ *
+ * @param[in]   callback                callback function
+ * @param[in]   user_data               passed data on called callback function
+ * @param[in]   event                   event code
+ * @param[in]   data                    message data
+ * @param[in]   len                     length of data
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+ico_syc_cb_lastinfo(ico_syc_callback_t callback, void *user_data, int event,
+                    const void *data, size_t len)
+{
+    JsonParser *parser  = NULL;
+    GError *error       = NULL;
+    gboolean gbool      = FALSE;
+    JsonNode *root      = NULL;
+    JsonObject *obj     = NULL;
+    JsonObject *argobj  = NULL;
+
+    char *lastinfo      = NULL;
+
+    /* start parser */
+    parser = json_parser_new();
+    gbool = json_parser_load_from_data(parser, data, len, &error);
+    if (gbool == FALSE) {
+        g_object_unref(parser);
+        _ERR("json_parser_load_from_data failed");
+        return;
+    }
+
+    /* get root node */
+    root = json_parser_get_root(parser);
+    if (root == NULL) {
+        g_object_unref(parser);
+        _ERR("json_parser_get_root failed (root is NULL)");
+        return;
+    }
+
+    /* get object from root */
+    obj = json_node_get_object(root);
+    /* check message */
+    if (json_object_has_member(obj, MSG_PRMKEY_ARG) == FALSE) {
+        g_object_unref(parser);
+        _INFO("last information does not exist");
+        return;
+    }
+    /* get object from obj */
+    argobj = json_object_get_object_member(obj, MSG_PRMKEY_ARG);
+
+    /* check message */
+    if (json_object_has_member(argobj, MSG_PRMKEY_LASTINFO) == FALSE) {
+        g_object_unref(parser);
+        _INFO("last information does not exist");
+        return;
+    }
+
+    /* set data */
+    lastinfo = strdup(ico_syc_get_str_member(argobj, MSG_PRMKEY_LASTINFO));
+
+    /* exec callback */
+    callback(event, lastinfo, user_data);
+
+    /* free memory */
+    g_object_unref(parser);
+    if (lastinfo != NULL) free(lastinfo);
 
     return;
 }
@@ -316,7 +480,64 @@ ico_syc_get_userlist(void)
     appid = ico_syc_get_appid();
 
     /* make message */
-    msg = _create_userlist_msg(appid);
+    msg = _create_get_userlist_msg(appid);
+    /* send message */
+    (void)ico_syc_send_msg(msg);
+    /* free send message */
+    ico_syc_free_msg(msg);
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_get_lastinfo
+ *          Get the application's last information.
+ *          Callback function notifies the application's last information.
+ *
+ * @param       none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+ICO_API void
+ico_syc_get_lastinfo(void)
+{
+    msg_t msg;
+    char *appid;
+
+    /* get appid */
+    appid = ico_syc_get_appid();
+
+    /* make message */
+    msg = _create_get_lastinfo_msg(appid);
+    /* send message */
+    (void)ico_syc_send_msg(msg);
+    /* free send message */
+    ico_syc_free_msg(msg);
+
+    return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_set_lastinfo
+ *          Set the application's last information.
+ *
+ * @param[in]   lastinfo                application's last information
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+ICO_API void
+ico_syc_set_lastinfo(const char *lastinfo)
+{
+    msg_t msg;
+    char *appid;
+
+    /* get appid */
+    appid = ico_syc_get_appid();
+
+    /* make message */
+    msg = _create_set_lastinfo_msg(appid, lastinfo);
     /* send message */
     (void)ico_syc_send_msg(msg);
     /* free send message */

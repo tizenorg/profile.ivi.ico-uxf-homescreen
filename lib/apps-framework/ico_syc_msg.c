@@ -85,8 +85,9 @@ _store_data(msg_str_t data, size_t len)
             _ERR("g_queue_pop_head failed");
             return;
         }
+        /* clear data */
+        memset(send_data, 0, sizeof(send_info_t));
     }
-    memset(send_data, 0, sizeof(send_info_t));
 
     /* set data */
     snprintf(send_data->data, sizeof(send_data->data), "%s", (char *)data);

@@ -14,6 +14,7 @@
 #include "CicoHSMenuWindow.h"
 #include "CicoHSMenuTouch.h"
 #include "CicoHomeScreen.h"
+#include "CicoHSSystemState.h"
 #include <stdio.h>
 
 /*============================================================================*/
@@ -61,6 +62,8 @@ CicoHSMenuWindow::CicoHSMenuWindow(void)
 
     CicoHomeScreenResourceConfig::GetImagePath(img_dir_path,
                                                ICO_HS_MAX_PATH_BUFF_LEN);
+
+	m_showState = false;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -96,7 +99,12 @@ CicoHSMenuWindow::SetMenuBack(void)
 
     /* set object*/ 
     rectangle = evas_object_rectangle_add(evas);
-    evas_object_color_set(rectangle,0,0,0,178); 
+    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
+		evas_object_color_set(rectangle,0,0,0,178); 
+	}
+	else {
+		evas_object_color_set(rectangle,120,120,120,178); 
+	}
     evas_object_move(rectangle, 0, 0);
     evas_object_resize(rectangle, width,height);
     evas_object_show(rectangle);
@@ -792,6 +800,11 @@ CicoHSMenuWindow::SetMenuWindowID(const char *appid,int surface)
 void
 CicoHSMenuWindow::Show(ico_syc_animation_t *animation)
 {
+	// if regulation == true, forbid show window.
+    if (true == CicoHSSystemState::getInstance()->getRegulation()) {
+		return;
+	}
+	m_showState = true;
     ico_syc_show(appid,surface,animation);
 }
 
@@ -810,6 +823,7 @@ CicoHSMenuWindow::Hide(ico_syc_animation_t *animation)
     if(terminate_mode == true){
         ChangeNormalMode();
     }
+	m_showState = false;
     ico_syc_hide(appid,surface,animation);
 }
 /*--------------------------------------------------------------------------*/
@@ -971,5 +985,30 @@ CicoHSMenuWindow::SetThumbnail(const char *appid,int surface)
     }
 }
 
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::SetNightMode
+ *          set night mode color theme chagne
+ *
+ * @param   none
+ * @return  none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuWindow::SetNightMode(void)
+{
+    ICO_DBG("CicoHSControlBarWindow::SetNightMode Enter");
+    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
+		evas_object_color_set(rectangle,0,0,0,178); 
+	}
+	else {
+		evas_object_color_set(rectangle,120,120,120,178); 
+	}
 
-
+	// redraw
+	if (true == m_showState) {
+		Hide(NULL);
+		Show(NULL);
+	}
+    ICO_DBG("CicoHSControlBarWindow::SetNightMode Leave");
+}

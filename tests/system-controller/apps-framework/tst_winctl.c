@@ -51,8 +51,7 @@ static void tst_move(const char *appid, int surface,
 static void tst_change_active(const char *appid, int surface);
 static void tst_change_layer(const char *appid, int surface, int layer);
 /* thumbnail */
-static void tst_prepare_thumb(int surface, int framerate);
-static void tst_map_thumb(int surface);
+static void tst_map_thumb(int surface, int framerate);
 static void tst_unmap_thumb(int surface);
 /* layer */
 static void tst_show_layer(int layer);
@@ -181,8 +180,8 @@ _syc_callback(const ico_syc_ev_e event,
         _check_win_attr("ICO_SYC_EV_WIN_ATTR_CHANGE",
                         (ico_syc_win_attr_t *)detail);
         break;
-    case ICO_SYC_EV_THUMB_PREPARE:
-        _check_thumb_info("ICO_SYC_EV_THUMB_PREPARE",
+    case ICO_SYC_EV_THUMB_ERROR:
+        _check_thumb_info("ICO_SYC_EV_THUMB_ERROR",
                           (ico_syc_thumb_info_t *)detail);
         break;
     case ICO_SYC_EV_THUMB_CHANGE:
@@ -291,37 +290,19 @@ tst_change_layer(const char *appid, int surface, int layer)
     return;
 }
 
-/* test prepare thumbnail */
+/* test map thumbnail */
 static void
-tst_prepare_thumb(int surface, int framerate)
+tst_map_thumb(int surface, int framerate)
 {
     int ret;
-    char *func = "ico_syc_prepare_thumb";
+    char *func = "ico_syc_map_thumb";
 
-    ret = ico_syc_prepare_thumb(surface, framerate);
+    ret = ico_syc_map_thumb(surface, framerate);
     if (ret != 0) {
         print_ng("%s (ret: %d)", func, ret);
         return;
     } 
     print_ok("%s", func);
-
-    return;
-}
-
-/* test map thumbnail */
-static void
-tst_map_thumb(int surface)
-{
-    ico_syc_thumb_data_t *ret = NULL;
-    char *func = "ico_syc_map_thumb";
-
-    ret = ico_syc_map_thumb(surface);
-    if (ret == NULL) {
-        print_ng("%s (return is NULL)", func);
-        return;
-    } 
-    print_ok("%s", func);
-    free(ret);
 
     return;
 }
@@ -423,9 +404,7 @@ ico_syc_winctl_test(void *data)
     sleep(1);
 
     /* thumbnail */
-    tst_prepare_thumb(surface, 200);
-    usleep(5000);
-    tst_map_thumb(surface);
+    tst_map_thumb(surface, 200);
     usleep(5000);
     tst_unmap_thumb(surface);
 

@@ -31,32 +31,32 @@ CicoStateAction::CicoStateAction()
 }
 
 /**
- * @brief CicoStateAction::onEnttry
+ * @brief CicoStateAction::onEntry
  * @param const CicoEvent& trigger event data
  * @param const CicoState* Object of the caller
  * @param int Added value at the time of registration action
  */
-void CicoStateAction::onEnttry(const CicoEvent&, const CicoState*, int)
+void CicoStateAction::onEntry(const CicoEvent&, const CicoState*, int)
 {
 }
 
 /**
- * @brief CicoStateAction::onEnttry
+ * @brief CicoStateAction::onEntry
  * @param const CicoEvent& trigger event data
  * @param const CicoFinalState* Object of the caller
  * @param int Added value at the time of registration action
  */
-void CicoStateAction::onEnttry(const CicoEvent&, const CicoFinalState*, int)
+void CicoStateAction::onEntry(const CicoEvent&, const CicoFinalState*, int)
 {
 }
 
 /**
- * @brief CicoStateAction::onEnttry
+ * @brief CicoStateAction::onEntry
  * @param const CicoEvent& trigger event data
  * @param const CicoHistoryState* Object of the caller
  * @param int Added value at the time of registration action
  */
-void CicoStateAction::onEnttry(const CicoEvent&, const CicoHistoryState*, int)
+void CicoStateAction::onEntry(const CicoEvent&, const CicoHistoryState*, int)
 {
 }
 

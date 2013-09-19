@@ -132,10 +132,10 @@ CicoSCLifeCycleController::~CicoSCLifeCycleController()
 CicoSCLifeCycleController*
 CicoSCLifeCycleController::getInstance(void)
 {
-	if (NULL == ms_myInstance) {
-		ms_myInstance = new CicoSCLifeCycleController();
-	}
-	return ms_myInstance;
+    if (NULL == ms_myInstance) {
+        ms_myInstance = new CicoSCLifeCycleController();
+    }
+    return ms_myInstance;
 }
 
 /**
@@ -659,8 +659,8 @@ bool CicoSCLifeCycleController::createAilItems()
         m_gconf = g_key_file_new();
         GString* gsfp = g_string_new("xx");
         CicoSCSystemConfig* CSCSC = CicoSCSystemConfig::getInstance();
-		g_string_printf(gsfp, "%s/%s", CSCSC->getDefaultConf()->confdir.c_str(),
-						ICO_SYC_CONFIG_APPATTR);
+        g_string_printf(gsfp, "%s/%s", CSCSC->getDefaultConf()->confdir.c_str(),
+                        ICO_SYC_CONFIG_APPATTR);
         GError  *gerr = NULL;
         int flg;
         flg = G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS;
@@ -668,8 +668,8 @@ bool CicoSCLifeCycleController::createAilItems()
             ICO_ERR("load error conf:%s %s", (char*)gsfp->str, gerr->message);
             g_key_file_free(m_gconf);
             m_gconf = NULL;
-			g_string_free(gsfp, TRUE);
-			return false;
+            g_string_free(gsfp, TRUE);
+            return false;
         }
         g_string_free(gsfp, TRUE);
     }

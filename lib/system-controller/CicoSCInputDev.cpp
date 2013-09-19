@@ -11,28 +11,44 @@
 /**
  *  @file   CicoSCInputDev.cpp
  *
- *  @brief  
+ *  @brief  This file is implementation of CicoSCInputDev class
  */
 //==========================================================================
+
+#include <string>
+#include <vector>
+using namespace std;
 
 #include "CicoSCInputDev.h"
 #include "CicoLog.h"
 
-// default constructor
+//--------------------------------------------------------------------------
+/**
+ *  @brief  default constructor
+ */
+//--------------------------------------------------------------------------
 CicoSCInputDev::CicoSCInputDev()
-    : device("")
+    : device(""), type(-1)
 {
 }
 
-// destructor
+//--------------------------------------------------------------------------
+/**
+ *  @brief  destructor
+ */
+//--------------------------------------------------------------------------
 CicoSCInputDev::~CicoSCInputDev()
 {
 }
 
-// dump log CicoSCInputDev member variables
+//--------------------------------------------------------------------------
+/**
+ *  @brief  dump log this class member variables
+ */
+//--------------------------------------------------------------------------
 void
 CicoSCInputDev::dump(void)
 {
-    ICO_DBG("CicoSCInputDev: device=%d", device.c_str());
+    ICO_DBG("CicoSCInputDev: device=%d type=%d", device.c_str(), type);
 }
 // vim:set expandtab ts=4 sw=4:

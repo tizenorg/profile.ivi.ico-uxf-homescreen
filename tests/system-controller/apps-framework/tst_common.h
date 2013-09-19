@@ -66,10 +66,19 @@ extern "C" {
 #define TST_RES_TYPE    0
 #define TST_REG_WIDTH   200
 #define TST_REG_HEIGHT  100
+#define TST_REG_HOT_X   120
+#define TST_REG_HOT_Y   80
+#define TST_REG_CUR_X   40
+#define TST_REG_CUR_Y   30
+#define TST_REG_CUR_WIDTH  160
+#define TST_REG_CUR_HEIGHT 100
+#define TST_REG_ATTR    12345678
 
 #define TST_USER_A      (char *)"user A"
 #define TST_USER_B      (char *)"User B"
 #define TST_USER_C      (char *)"user c"
+
+#define TST_LASTINFO    (char *)"{\"page\": \"last page\", \"time\": 5}"
 
 #ifdef __cplusplus
 }

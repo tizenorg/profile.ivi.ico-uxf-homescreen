@@ -11,25 +11,29 @@
 /**
  *  @file   CicoSCWaylandIF.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCWaylandIF class
  */
 //==========================================================================
 #ifndef __CICO_SC_WAYLAND_IF_H__
 #define __CICO_SC_WAYLAND_IF_H__
 
-#include <string>
 #include <wayland-client.h>
 
-using namespace std;
-
+//==========================================================================
+/*
+ *  @brief  This class is abstract class of wayland interface
+ */
+//==========================================================================
 class CicoSCWaylandIF {
 public:
-    // intialize interface
+    // initialize interface
     virtual void initInterface(void               *data,
                                struct wl_registry *registry,
                                uint32_t           name,
                                const char         *interface,
                                uint32_t           version);
+
+    // inquire whether initialized
     bool isInitialized(void);
 
 protected:
@@ -46,15 +50,19 @@ protected:
     CicoSCWaylandIF(const CicoSCWaylandIF &object);
 
 protected:
+    /// interface name of wayland multi window manager
     static const char * ICO_WL_WIN_MGR_IF;
+    /// interface name of wayland input manager control
     static const char * ICO_WL_INPUT_MGR_CTRL_IF;
+    /// interface name of wayland exinput 
     static const char * ICO_WL_EXINPUT_IF;
+    /// interface name of wayland input manager device
     static const char * ICO_WL_INPUT_MGR_DEV_IF;
+    /// interface name of wayland output
     static const char * ICO_WL_OUTPUT_IF;
-    static const char * ICO_WL_SHM_IF;
 
     // initialized flag
     bool m_initialized;
 };
-#endif	// __CICO_SC_WAYLAND_IF_H__
+#endif  // __CICO_SC_WAYLAND_IF_H__
 // vim:set expandtab ts=4 sw=4:

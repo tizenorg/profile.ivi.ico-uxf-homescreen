@@ -9,7 +9,7 @@
 /**
  * @brief   test suite for User Control API
  *
- * @date    Aug-6-2013
+ * @date    Sep-5-2013
  */
 
 #include <stdio.h>
@@ -37,6 +37,8 @@ static void _syc_callback(const ico_syc_ev_e event,
                           const void *detail, void *user_data);
 static void tst_change_user(void);
 static void tst_get_userlist(void);
+static void tst_get_lastinfo(void);
+static void tst_set_lastinfo(void);
 static Eina_Bool  ico_syc_userctl_test(void *data);
 
 /* ----------------------------------------------- */
@@ -94,6 +96,15 @@ _syc_callback(const ico_syc_ev_e event,
             print_ng("callback (ICO_SYC_EV_AUTH_FAIL)");
         }
         break;
+    case ICO_SYC_EV_LASTINFO:
+        printf("--- lastinfo: %s\n", (char *)detail);
+        if (strcmp((char *)detail, TST_LASTINFO) == 0) {
+            print_ok("callback (ICO_SYC_EV_LASTINFO)");
+        }
+        else {
+            print_ng("callback (ICO_SYC_EV_LASTINFO)");
+        }
+        break;
     default:
         break;
     }
@@ -121,20 +132,45 @@ tst_get_userlist(void)
     return;
 }
 
+/* test get lastinfo */
+static void
+tst_get_lastinfo(void)
+{
+    (void)ico_syc_get_lastinfo();
+    print_ok("(void)ico_syc_get_lastinfo");
+
+    return;
+}
+
+/* test set lastinfo */
+static void
+tst_set_lastinfo(void)
+{
+    (void)ico_syc_set_lastinfo(TST_LASTINFO);
+    print_ok("(void)ico_syc_set_lastinfo");
+
+    return;
+}
+
 /* test main */
 static Eina_Bool 
 ico_syc_userctl_test(void *data)
 {
-    printf("##### ico_syc_userctl API Test Start #####\n");
     printf("\n");
+    printf("##### ico_syc_userctl API Test Start #####\n");
 
     tst_change_user();
+    usleep(5000);
     tst_get_userlist();
+    usleep(5000);
+    tst_set_lastinfo();
+    usleep(5000);
+    tst_get_lastinfo();
 
     printf("##### ico_syc_userctl API Test End #####\n");
     printf("\n");
 
-    return 1;
+    return ECORE_CALLBACK_CANCEL;
 }
 
 /* ------------------------ */

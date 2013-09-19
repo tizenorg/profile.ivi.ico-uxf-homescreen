@@ -47,7 +47,22 @@ DummyHomeScreen_LDADD =		\
 	@CAPIAPPFWAPPLICATION_LIBS@ \
 	-L/usr/lib				\
     -lico-uxf-weston-plugin \
-	-lico-util-com			\
-	../../../lib/apps-framework/libico-appfw.la
+	-lico-util				\
+	../../../lib/apps-framework/.libs/libico-appfw.so \
+	-lreadline
+
 
 CLEANFILES = $(BUILT_SOURCES)
+
+#install-exec-hook:
+#	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.dummy-homescreen/bin
+#	mkdir -p $(INSTALL_ROOT)/usr/share/packages
+#	install -m 0755 DummyHomeScreen $(INSTALL_ROOT)/usr/apps/org.tizen.ico.dummy-homescreen/bin
+#	install -m 0644 org.tizen.ico.dummy-homescreen.xml $(INSTALL_ROOT)/usr/share/packages
+#
+#uninstall:
+#	rm -rf $(INSTALL_ROOT)/usr/apps/org.tizen.ico.dummy-homescreen
+#	rm -f $(INSTALL_ROOT)/usr/share/packages/org.tizen.ico.dummy-homescreen.xml
+#	rm -f $(INSTALL_ROOT)/usr/share/applications/org.tizen.ico.dummy-homescreen.desktop
+
+# vim:set ts=4 sw=4:

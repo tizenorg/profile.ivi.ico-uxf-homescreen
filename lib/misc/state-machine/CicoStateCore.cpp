@@ -521,13 +521,13 @@ void CicoStateCore::onEntryRun(CicoStateAction* run, const CicoEvent& ev,
 {
     if (run) {
         if (true == isState()) {
-            run->onEnttry(ev, (CicoState*)this, val);
+            run->onEntry(ev, (CicoState*)this, val);
         }
         else if (true == isFinalState()) {
-            run->onEnttry(ev, (CicoFinalState*)this, val);
+            run->onEntry(ev, (CicoFinalState*)this, val);
         }
         else if (true == isHistoryState()) {
-            run->onEnttry(ev, (CicoHistoryState*)this, val);
+            run->onEntry(ev, (CicoHistoryState*)this, val);
         }
     }
 }
@@ -960,7 +960,8 @@ bool CicoStateCore::onDoExec(const CicoEvent& ev)
             getLogPartF(this, sl);
             std::string el;
             getLogPartF(ev, el);
-            _INFO("%s.onDoExec(%s).onDo", sl.c_str(), el.c_str());
+            //_INFO("%s.onDoExec(%s).onDo", sl.c_str(), el.c_str());
+            _INFO("TRANSITION:%s-%s(onDo)", sl.c_str(), el.c_str());
         }
     }
     else if (EPUnused != m_entry.suk) {
@@ -971,7 +972,18 @@ bool CicoStateCore::onDoExec(const CicoEvent& ev)
             getLogPartF(this, sl);
             std::string el;
             getLogPartF(ev, el);
-            _INFO("%s.onDoExec(%s).onEntry", sl.c_str(), el.c_str());
+           // _INFO("%s.onDoExec(%s).onEntry", sl.c_str(), el.c_str());
+            _INFO("TRANSITION:%s-%s(onEntry)", sl.c_str(), el.c_str(), sl.c_str());
+        }
+    }
+    else {
+        bR = false;
+        {
+            std::string sl;
+            getLogPartF(this, sl);
+            std::string el;
+            getLogPartF(ev, el);
+            _INFO("TRANSITION:%s-%s->%s(no tran.)", sl.c_str(), el.c_str(), sl.c_str());
         }
     }
     return bR;

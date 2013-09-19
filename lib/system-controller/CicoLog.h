@@ -7,17 +7,17 @@
  *
  */
 
-/*========================================================================*/    
+//==========================================================================
 /**
- *  @file   ico_log.h
+ *  @file   CicoLog.h
  *
- *  @brief  debug log function
+ *  @brief  This file is definition of dubug log functions
  */
-/*========================================================================*/    
+//==========================================================================
 #ifndef __CICO_LOG_H__
 #define __CICO_LOG_H__
 
-#include "ico_log.h"
+#include <ico_log.h>
 
 #endif  // __CICO__LOG_H__
-/* vim:set expandtab ts=4 sw=4: */
+// vim:set expandtab ts=4 sw=4:

@@ -39,6 +39,7 @@ class CicoSCAppKindConf;
 class CicoSCSwitchConf;
 class CicoSCInputDevConf;
 class CicoSCDefaultConf;
+class CicoSCUserConf;
 
 class CicoSCSystemConfig 
 {
@@ -88,6 +89,10 @@ public:
     int getAppKindIdbyName(const string & name);
     int getCategoryIdbyName(const string & name);
 
+    const CicoSCUserConf* getUserConf() const 
+    {
+        return m_userConf;
+    };
 
 private:
     // default constructor
@@ -123,6 +128,8 @@ private:
 
     int calcGeometryExpr(const string & expr, CicoSCDisplayConf* conf);
 
+    void createUserConf(const ptree & root);
+
 private:
     static CicoSCSystemConfig* ms_myInstance;
     string m_confFile;
@@ -141,6 +148,7 @@ private:
     int m_loglevel;
     bool  m_logflush;
     CicoSCDefaultConf *m_defaultConf;
+    CicoSCUserConf *m_userConf;
 };
 #endif  // __CICO_SC_SYSTEM_CONFIG_H__
 // vim:set expandtab ts=4 sw=4:

@@ -11,9 +11,11 @@
 /**
  *  @file   CicoSCMessage.cpp
  *
- *  @brief  Implementation of CicoSCMessage class
+ *  @brief  This file implementation of CicoSCMessage class
  */
 //==========================================================================
+
+#include <string>
 #include <limits.h>
 
 #include "CicoSCMessage.h"
@@ -49,13 +51,13 @@ CicoSCMessage::CicoSCMessage()
 //--------------------------------------------------------------------------
 CicoSCMessage::~CicoSCMessage()
 {
-    ICO_DBG("CicoSCMessage::~CicoSCMessage Entry");
+    //ICO_DBG("CicoSCMessage::~CicoSCMessage Enter");
     json_array_unref(m_array);
     json_object_unref(m_rootObj);
     json_object_unref(m_argObj);
     json_node_free(m_root);
     g_object_unref(m_generator);
-    ICO_DBG("CicoSCMessage::~CicoSCMessage Leave");
+    //ICO_DBG("CicoSCMessage::~CicoSCMessage Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -82,7 +84,7 @@ CicoSCMessage::getId(void)
 void
 CicoSCMessage::addRootObject(const char * key, const char * value)
 {
-    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value);
+//    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value);
     json_object_set_string_member(m_rootObj, key, value);
 }
 
@@ -97,7 +99,7 @@ CicoSCMessage::addRootObject(const char * key, const char * value)
 void
 CicoSCMessage::addRootObject(const char * key, const std::string & value)
 {
-    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value.c_str());
+//    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value.c_str());
     json_object_set_string_member(m_rootObj, key, value.c_str());
 }
 
@@ -112,7 +114,7 @@ CicoSCMessage::addRootObject(const char * key, const std::string & value)
 void
 CicoSCMessage::addRootObject(const char * key, int value)
 {
-    ICO_DBG("json_object_set_int_member(%s, %d) called.", key, value);
+//    ICO_DBG("json_object_set_int_member(%s, %d) called.", key, value);
     json_object_set_int_member(m_rootObj, key, value);
 }
 
@@ -127,7 +129,7 @@ CicoSCMessage::addRootObject(const char * key, int value)
 void
 CicoSCMessage::addArgObject(const char * key, const char * value)
 {
-    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value);
+//    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value);
     json_object_set_string_member(m_argObj, key, value);
 }
 
@@ -142,7 +144,7 @@ CicoSCMessage::addArgObject(const char * key, const char * value)
 void
 CicoSCMessage::addArgObject(const char * key, const std::string & value)
 {
-    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value.c_str());
+//    ICO_DBG("json_object_set_string_member(%s, %s) called.", key, value.c_str());
     json_object_set_string_member(m_argObj, key, value.c_str());
 }
 
@@ -157,7 +159,7 @@ CicoSCMessage::addArgObject(const char * key, const std::string & value)
 void
 CicoSCMessage::addArgObject(const char * key, int value)
 {
-    ICO_DBG("json_object_set_int_member(%s, %d) called.", key, value);
+//    ICO_DBG("json_object_set_int_member(%s, %d) called.", key, value);
     json_object_set_int_member(m_argObj, key, value);
 }
 
@@ -174,7 +176,7 @@ CicoSCMessage::addArgObject(const char * key)
     // count up reference
     json_array_ref(m_array);
 
-    ICO_DBG("json_object_set_array_member(%s) called.", key);
+//    ICO_DBG("json_object_set_array_member(%s) called.", key);
     json_object_set_array_member(m_argObj, key, m_array);
 }
 
@@ -188,7 +190,7 @@ CicoSCMessage::addArgObject(const char * key)
 void
 CicoSCMessage::addElmArray(const char * value)
 {
-    ICO_DBG("json_array_add_string_element(%s) called.", value);
+//    ICO_DBG("json_array_add_string_element(%s) called.", value);
     json_array_add_string_element(m_array, value);
 }
 
@@ -202,7 +204,7 @@ CicoSCMessage::addElmArray(const char * value)
 void
 CicoSCMessage::addElmArray(const std::string & value)
 {
-    ICO_DBG("json_array_add_string_element(%s) called.", value.c_str());
+//    ICO_DBG("json_array_add_string_element(%s) called.", value.c_str());
     json_array_add_string_element(m_array, value.c_str());
 }
 
@@ -253,12 +255,24 @@ CicoSCMessage::getData(void)
     return json_generator_to_data(m_generator, &len);
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get application id of destination
+ *
+ *  @return application id
+ */
+//--------------------------------------------------------------------------
 const std::string &
 CicoSCMessage::getSendToAppid(void)
 {
     return m_toAppid;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  set application id of destination
+ */
+//--------------------------------------------------------------------------
 void
 CicoSCMessage::setSendToAppid(const std::string & appid)
 {

@@ -10,7 +10,7 @@
  * @brief   header file of User Control API
  *          for privilege applications
  *
- * @date    July-31-2013
+ * @date    Sep-4-2013
  */
 
 #ifndef _ICO_SYC_USERCTL_H_
@@ -48,6 +48,29 @@ void ico_syc_change_user(const char *name, const char *password);
  */
 /*--------------------------------------------------------------------------*/
 void ico_syc_get_userlist(void);
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_get_lastinfo
+ *          Get the application's last information.
+ *          Callback function notifies the application's last information.
+ *
+ * @param       none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void ico_syc_get_lastinfo(void);
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_set_lastinfo
+ *          Set the application's last information.
+ *
+ * @param[in]   lastinfo                application's last information
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void ico_syc_set_lastinfo(const char *lastinfo);
 
 
 #ifdef __cplusplus

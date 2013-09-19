@@ -11,9 +11,13 @@
 /**
  *  @file   CicoSCInputController.cpp
  *
- *  @brief  
+ *  @brief  This file is implementation of CicoSCInputController class
  */
 //==========================================================================
+
+#include <string>
+#include <vector>
+using namespace std;
 
 #include "CicoSCInputController.h"
 #include "CicoSCWayland.h"
@@ -22,10 +26,16 @@
 #include "CicoSCInputDev.h"
 #include "ico_syc_error.h"
 #include "ico_syc_msg_cmd_def.h"
+#include "ico_syc_private.h"
 #include "CicoSCSystemConfig.h"
 #include "CicoSCConf.h"
-#include "CicoSCCommandParser.h"
+#include "CicoSCCommand.h"
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  default constructor
+ */
+//--------------------------------------------------------------------------
 CicoSCInputController::CicoSCInputController()
 {
     CicoSCWayland* wayland = CicoSCWayland::getInstance();
@@ -35,11 +45,16 @@ CicoSCInputController::CicoSCInputController()
 
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  destructor
+ */
+//--------------------------------------------------------------------------
 CicoSCInputController::~CicoSCInputController()
 {
 }
 
-#if 0
+#if 0 //TODO
 int
 initDB(void)
 {
@@ -72,11 +87,18 @@ initDB(void)
 }
 #endif
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief@executes an input control process corresponding to the command
+ *
+ *  @param  cmd     command
+ */
+//--------------------------------------------------------------------------
 void
 CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
 {
     ICO_DBG("CicoSCInputController::handleCommand Enter"
-            "(cmdid=%08X)", cmd->cmdid);
+            "(cmdid=0x%08X)", cmd->cmdid);
 
     CicoSCCmdInputDevCtrlOpt *opt;
     CicoSCCmdInputDevSettingOpt *set_opt; 
@@ -84,36 +106,50 @@ CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
     switch (cmd->cmdid) {
     case MSG_CMD_ADD_INPUT:
         opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
-        addInputApp(cmd->appid, opt->device, opt->inputNum, opt->fix,
-                    opt->keyCode);
+        addInputApp(cmd->appid, opt->device, opt->input, opt->fix,
+                    opt->keycode);
         break;
     case MSG_CMD_DEL_INPUT:
         opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
-        delInputApp(cmd->appid, opt->device, opt->inputNum);
+        delInputApp(cmd->appid, opt->device, opt->input);
         break;
     case MSG_CMD_SEND_INPUT:
         opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
-        sendInputEvent(cmd->appid, opt->surfaceid, opt->eventType,
-                       opt->deviceno, opt->eventCode, opt->eventValue);
+        sendInputEvent(cmd->appid, opt->surfaceid, opt->evtype,
+                       opt->deviceno, opt->evcode, opt->evvalue);
         break;
     case MSG_CMD_SET_REGION:
         set_opt = static_cast<CicoSCCmdInputDevSettingOpt*>(cmd->opt);
-        setInputRegion(set_opt->surfaceid, set_opt->x, set_opt->y,
-                       set_opt->width, set_opt->height, set_opt->attr);
+        setInputRegion(cmd->appid, set_opt->winname, set_opt->x, set_opt->y,
+                       set_opt->width, set_opt->height,
+                       set_opt->hotspot_x, set_opt->hotspot_y,
+                       set_opt->cursor_x, set_opt->cursor_y,
+                       set_opt->cursor_width, set_opt->cursor_height, set_opt->attr);
         break;
     case MSG_CMD_UNSET_REGION:
         set_opt = static_cast<CicoSCCmdInputDevSettingOpt*>(cmd->opt);
-        resetInputRegion(set_opt->surfaceid, set_opt->x, set_opt->y,
+        unsetInputRegion(cmd->appid, set_opt->winname, set_opt->x, set_opt->y,
                          set_opt->width, set_opt->height);
         break;
     default:
-        ICO_WRN("Unknown Command(0x%08x)", cmd->cmdid);
+        ICO_WRN("Unknown Command(0x%08X)", cmd->cmdid);
         break;
     }
 
     ICO_DBG("CicoSCInputController::handleCommand Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  register input device control application
+ *
+ *  @param [in] appid   application id
+ *  @param [in] device  input device name
+ *  @param [in] input   input number
+ *  @parma [in] fix     fixed assign flag
+ *  @parma [in] keycode assigned keycode value
+ */
+//--------------------------------------------------------------------------
 int
 CicoSCInputController::addInputApp(const string &appid,
                                    const string &device,
@@ -125,15 +161,22 @@ CicoSCInputController::addInputApp(const string &appid,
             "(appid=%s device=%s input=%d fix=%d keycode=%d)",
             appid.c_str(), device.c_str(), input, fix, keycode);
 
-    ICO_DBG("ico_input_mgr_control_del_input_app(%s,%s,%d,%d,%d) called.",
-            appid.c_str(), device.c_str(), input, fix, keycode);
-    ico_input_mgr_control_add_input_app(m_inputmgr, appid.c_str(),
-                                        device.c_str(), input, fix, keycode);
+    CicoSCWlInputMgrIF::addInputApp(appid.c_str(), device.c_str(),
+                                    input, fix, keycode);
 
-    ICO_DBG("CicoSCInputController::addInputApp Leave");
+    ICO_DBG("CicoSCInputController::addInputApp Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  unregister input device control application
+ *
+ *  @param [in] appid   application id
+ *  @param [in] device  input device name
+ *  @param [in] input   input number
+ */
+//--------------------------------------------------------------------------
 int
 CicoSCInputController::delInputApp(const string &appid,
                                    const string &device,
@@ -143,15 +186,24 @@ CicoSCInputController::delInputApp(const string &appid,
             "(appid=%s device=%s input=%d)",
             appid.c_str(), device.c_str(), input);
 
-    ICO_DBG("ico_input_mgr_control_del_input_app(%s,%s,%d) called.",
-            appid.c_str(), device.c_str(), input);
-    ico_input_mgr_control_del_input_app(m_inputmgr, appid.c_str(),
-                                        device.c_str(), input);
+    CicoSCWlInputMgrIF::delInputApp(appid.c_str(), device.c_str(), input);
 
-    ICO_DBG("CicoSCInputController::delInputApp Leave");
+    ICO_DBG("CicoSCInputController::delInputApp Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  send input device event
+ *
+ *  @param [in] appid     application id
+ *  @param [in] surfaceid surface id
+ *  @param [in] type      //TODO
+ *  @param [in] deviceno  input device number
+ *  @param [in] code      //TODO
+ *  @param [in] value     //TODO
+ */
+//--------------------------------------------------------------------------
 int
 CicoSCInputController::sendInputEvent(const string &appid,
                                       int          surfaceid,
@@ -161,52 +213,98 @@ CicoSCInputController::sendInputEvent(const string &appid,
                                       int          value)
 {
     ICO_DBG("CicoSCInputController::sendInputEvent Enter"
-            "(appid=%s surfaceid=%08X type=%d dev_no=%d code=%d value=%d)",
+            "(appid=%s surfaceid=0x%08X type=%d dev_no=%d code=%d value=%d)",
             appid.c_str(), surfaceid, type, deviceno, code, value);
 
-    ICO_DBG("ico_input_mgr_control_send_input_event"
-            "(%s,%08X,%d,%d,%d,%d) called.",
-            appid.c_str(), surfaceid, type, deviceno, code, value);
-    ico_input_mgr_control_send_input_event(m_inputmgr, appid.c_str(), surfaceid,
-                                           type, deviceno, code, value);
-    ICO_DBG("CicoSCInputController::sendInputEvent Leave");
+    CicoSCWlInputMgrIF::sendInputEvent(appid.c_str(), surfaceid,
+                                       type, deviceno, code, value);
+
+    ICO_DBG("CicoSCInputController::sendInputEvent Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  set input region informantion
+ *
+ *  @param [in] appid     application id
+ *  @param [in] winname   window name
+ *  @param [in] x         region x positon
+ *  @param [in] y         region y positon
+ *  @param [in] width     region width
+ *  @param [in] height    region height
+ *  @param [in] hotspot_x hotspot x position
+ *  @param [in] hotspot_y hotspot y position
+ *  @param [in] cursor_x  cursor x position
+ *  @param [in] cursor_y  cursor y position
+ *  @param [in] cursor_width  cursor width
+ *  @param [in] cursor_height cursor height
+ *  @param [in] attr      region attribute
+ */
+//--------------------------------------------------------------------------
 int
-CicoSCInputController::setInputRegion(int surfaceid,
+CicoSCInputController::setInputRegion(const string &appid,
+                                      const string &winname,
                                       int x,
                                       int y,
                                       int width,
                                       int height,
+                                      int hotspot_x,
+                                      int hotspot_y,
+                                      int cursor_x,
+                                      int cursor_y,
+                                      int cursor_width,
+                                      int cursor_height,
                                       int attr)
 {
-    ICO_DBG("CicoSCInputController::setInputRegion Enter"
-            "(surfaceid=%08X x=%d y=%d width=%d height=%d attr=%d)",
-            surfaceid, x, y, width, height, attr);
+    char    target[ICO_SYC_MAX_LEN];
 
-    ICO_DBG("ico_exinput_set_input_region(%08X,%d,%d,%d,%d,%d) called.",
-            surfaceid, x, y, width, height, attr);
-    ico_exinput_set_input_region(m_exinput, surfaceid, x, y,
-                                 width, height, attr);
-    ICO_DBG("CicoSCInputController::setInputRegion Leave");
+    snprintf(target, ICO_SYC_MAX_LEN-1, "%s@%s", winname.c_str(), appid.c_str());
+
+    ICO_DBG("CicoSCInputController::setInputRegion Enter"
+            "(target=%s x=%d y=%d width=%d height=%d "
+            "hotspot=%d/%d cursor=%d/%d-%d/%d attr=%d)",
+            target, x, y, width, height, hotspot_x, hotspot_y,
+            cursor_x, cursor_y, cursor_width, cursor_height, attr);
+
+    CicoSCWlInputMgrIF::setInputRegion(target, x, y, width, height,
+                                       hotspot_x, hotspot_y, cursor_x, cursor_y,
+                                       cursor_width, cursor_height, attr);
+
+    ICO_DBG("CicoSCInputController::setInputRegion Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  unset input region informantion
+ *
+ *  @param [in] appid     application id
+ *  @param [in] winname   window name
+ *  @param [in] x         region x positon
+ *  @param [in] y         region y positon
+ *  @param [in] width     region width
+ *  @param [in] height    region height
+ */
+//--------------------------------------------------------------------------
 int
-CicoSCInputController::resetInputRegion(int surfaceid,
+CicoSCInputController::unsetInputRegion(const string &appid,
+                                        const string &winname,
                                         int x,
                                         int y,
                                         int width,
                                         int height)
 {
-    ICO_DBG("CicoSCInputController::resetInputRegion Enter"
-            "(surfaceid=%08X x=%d y=%d width=%d height=%d",
-            surfaceid, x, y, width, height);
-    ICO_DBG("ico_exinput_reset_input_region(%08X,%d,%d,%d,%d) called.",
-            surfaceid, x, y, width, height);
-    ico_exinput_reset_input_region(m_exinput, surfaceid, x, y, width, height);
-    ICO_DBG("CicoSCInputController::resetInputRegion Leave");
+    char    target[ICO_SYC_MAX_LEN];
+
+    snprintf(target, ICO_SYC_MAX_LEN-1, "%s@%s", winname.c_str(), appid.c_str());
+
+    ICO_DBG("CicoSCInputController::unsetInputRegion Enter"
+            "(target=%s x=%d y=%d width=%d height=%d", target, x, y, width, height);
+
+    CicoSCWlInputMgrIF::unsetInputRegion(target, x, y, width, height);
+
+    ICO_DBG("CicoSCInputController::unsetInputRegion Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -214,14 +312,14 @@ CicoSCInputController::resetInputRegion(int surfaceid,
 /**
  *  @brief  callback to application for input switch information
  *
- *  @param [IN] data        user data
- *  @param [IN] ico_exinput wayland ico_exinput interface
- *  @param [IN] device      input device name
- *  @param [IN] type        input device type (as enum type)
- *  @param [IN] swname      input switch name
- *  @param [IN] input       input switch number
- *  @param [IN] codename    input code name
- *  @param [IN] code        input code number
+ *  @param [in] data        user data
+ *  @param [in] ico_exinput wayland ico_exinput interface
+ *  @param [in] device      input device name
+ *  @param [in] type        input device type (as enum type)
+ *  @param [in] swname      input switch name
+ *  @param [in] input       input switch number
+ *  @param [in] codename    input code name
+ *  @param [in] code        input code number
  */
 //--------------------------------------------------------------------------
 void
@@ -275,12 +373,12 @@ CicoSCInputController::capabilitiesCB(void               *data,
 /**
  *  @brief  callback to application for input code information
  *  
- *  @param [IN] data        user data
- *  @param [IN] ico_exinput wayland ico_exinput interface
- *  @param [IN] device      input device name
- *  @param [IN] input       input switch number
- *  @param [IN] codename    input code name
- *  @param [IN] code        input code number
+ *  @param [in] data        user data
+ *  @param [in] ico_exinput wayland ico_exinput interface
+ *  @param [in] device      input device name
+ *  @param [in] input       input switch number
+ *  @param [in] codename    input code name
+ *  @param [in] code        input code number
  */
 //--------------------------------------------------------------------------
 void
@@ -292,7 +390,7 @@ CicoSCInputController::codeCB(void               *data,
                               int32_t            code)
 {
     ICO_DBG("CicoSCInputController::codeCB Enter"
-            "(device=%s input=%d codename=%s code=%d",
+            "(device=%s input=%d codename=%s code=%d)",
             device, input, codename, code);
 
     CicoSCSwitch *sw = findInputSwitch(device, input);
@@ -323,13 +421,13 @@ CicoSCInputController::codeCB(void               *data,
 /**
  *  @brief  callback to application for switch input 
  *
- *  @param [IN] data        user data
- *  @param [IN] ico_exinput wayland ico_exinput interface
- *  @param [IN] time        input time of miri-sec
- *  @param [IN] device      input device name
- *  @param [IN] input       input switch number
- *  @param [IN] code        input switch code
- *  @param [IN] state       Of/Off status
+ *  @param [in] data        user data
+ *  @param [in] ico_exinput wayland ico_exinput interface
+ *  @param [in] time        input time of millisecond
+ *  @param [in] device      input device name
+ *  @param [in] input       input switch number
+ *  @param [in] code        input switch code
+ *  @param [in] state       Of/Off status
  */
 //--------------------------------------------------------------------------
 void
@@ -348,7 +446,7 @@ CicoSCInputController::inputCB(void               *data,
     // TODO send message
 #if 0
     CicoSCMessage message;
-    message.addElement("commnd", ICO_SYC_EV_WIN_CREATE);
+    message.addElement("command", ICO_SYC_EV_WIN_CREATE);
     message.addElement("appid", TODO);
     message.addElement("arg.device", device);
     message.addElement("arg.input", input);
@@ -364,9 +462,9 @@ CicoSCInputController::inputCB(void               *data,
 /**
  *  @brief  callback to application for change input region
  *
- *  @param [IN] data                user data
- *  @param [IN] ico_input_mgr_dev   wayland ico_exinput interface
- *  @param [IN] region              input regions
+ *  @param [in] data                user data
+ *  @param [in] ico_input_mgr_dev   wayland ico_exinput interface
+ *  @param [in] region              input regions
  */
 //--------------------------------------------------------------------------
 void
@@ -378,6 +476,15 @@ CicoSCInputController::regionCB(void                        *data,
     ICO_DBG("CicoSCInputController::regionCB Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  find input device information
+ *
+ *  @param [in] device  input device name
+ *
+ *  @return CicoSCInputDev instance on found, NULL on not found
+ */
+//--------------------------------------------------------------------------
 CicoSCInputDev*
 CicoSCInputController::findInputDev(const char *device)
 {
@@ -392,6 +499,16 @@ CicoSCInputController::findInputDev(const char *device)
     return NULL;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  find input device switch information
+ *
+ *  @param [in] device  input device name
+ *  @param [in] input   input number
+ *
+ *  @return CicoSCSwitch instance on found, NULL on not found
+ */
+//--------------------------------------------------------------------------
 CicoSCSwitch*
 CicoSCInputController::findInputSwitch(const char *device, int input)
 {

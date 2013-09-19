@@ -143,10 +143,10 @@ CicoLog::openLog(const char *prog)
     else if ((m_initialized == false) &&
              (m_sDbgFd != stdout) && (m_sDbgFd != stderr))  {
         m_initialized = true;
-        fflush(stdout);
-        fflush(stderr);
-        stdout = m_sDbgFd;
-        stderr = m_sDbgFd;
+        //fflush(stdout);
+        //fflush(stderr);
+        //stdout = m_sDbgFd;
+        //stderr = m_sDbgFd;
     }
 #endif /*ICO_LOG_STDOUT*/
 }

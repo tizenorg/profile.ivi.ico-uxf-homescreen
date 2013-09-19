@@ -16,9 +16,18 @@
 /usr/bin/ico_ictl-touch_egalax
 sleep 0.3
 
+# 4 start some daemons
+## if pulseaudio dose not start ... kick pulseaudio
+/bin/ps ax | /bin/grep pulseaudio | /bin/grep -v grep > /dev/null
+if [ "$?" = "1" ] ; then
+	/usr/bin/pulseaudio --log-level=4 --log-target=file:/var/log/ico/pulse.log --system -D
+	sleep 0.5
+fi
+
 # 3. Start Weston
 /bin/ps ax | /bin/grep weston | /bin/grep -v grep > /dev/null
 if [ "$?" = "1" ] ; then
+	#/usr/bin/weston-launch --user app -- -i0 --backend=fbdev-backend.so --log=/var/log/ico/weston.log &
 	/usr/bin/weston-launch --user app -- -i0 --log=/var/log/ico/weston.log &
 	sync;sync
 fi

@@ -89,6 +89,8 @@ class CicoHSMenuWindow :public CicoHSWindow
     static Eina_Bool MoveDownAnimation(void *data,double pos);
     static Eina_Bool MoveUpAnimation(void *data,double pos);
     
+	void SetNightMode(void);
+
   private:
     int SetMenuBack(void);
     void FreeMenuBack(void);
@@ -129,6 +131,7 @@ class CicoHSMenuWindow :public CicoHSWindow
     CicoSCLifeCycleController *life_cycle_controller;
     /* my instance (for callback) */
     static CicoHSMenuWindow *menu_window_instance;
+	bool m_showState;
 
   protected:
     CicoHSMenuWindow operator=(const CicoHSMenuWindow&);

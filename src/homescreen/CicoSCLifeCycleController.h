@@ -28,7 +28,7 @@ public:
     CicoSCLifeCycleController();
     ~CicoSCLifeCycleController();
 
-	static CicoSCLifeCycleController* getInstance(void);
+    static CicoSCLifeCycleController* getInstance(void);
 
     // Starting application
     int launch(const char* appid);
@@ -86,7 +86,7 @@ protected:
                 bool bndsp);
     bool removeAUL(int pid);
 private:
-	static CicoSCLifeCycleController* ms_myInstance;
+    static CicoSCLifeCycleController* ms_myInstance;
 
 protected:
     std::vector<CicoSCAilItems> m_ail;

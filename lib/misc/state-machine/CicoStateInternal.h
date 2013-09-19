@@ -30,7 +30,7 @@
 #define LOG_TAG "STT_MCN"
 
 #ifdef LOG_CICO
-#   include "ico_log.h"
+#   include <ico_log.h>
 #   define _ERR(fmt, ...)  ICO_ERR(fmt, ##__VA_ARGS__)
 #   define _INFO(fmt, ...) ICO_INF(fmt, ##__VA_ARGS__)
 #   define _DBG(fmt, ...)  ICO_DBG(fmt, ##__VA_ARGS__)

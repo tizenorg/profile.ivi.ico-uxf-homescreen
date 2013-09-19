@@ -61,7 +61,7 @@ static msg_t _create_unset_region_msg(const char *appid,
  *          Allocate memory for window resource information.
  *
  * @param[in]   zone                    window zone
- * @param[in]   name                    windo name 
+ * @param[in]   name                    windo name
  * @param[in]   id                      window id
  * @return      resource info
  * @retval      address                 success
@@ -84,8 +84,6 @@ _create_res_window(char *zone, char *name, char *id)
         _ERR("calloc failed");
         return NULL;
     }
-    /* clear memory */
-    memset(info, 0, sizeof(ico_syc_res_window_t));
 
     /* set element */
     info->zone = strdup(zone);
@@ -103,7 +101,7 @@ _create_res_window(char *zone, char *name, char *id)
  *          Allocate memory for sound resource information.
  *
  * @param[in]   zone                    sound zone
- * @param[in]   name                    sound name 
+ * @param[in]   name                    sound name
  * @param[in]   id                      sound id
  * @param[in]   adjust                  adjust type
  * @return      resource info
@@ -127,8 +125,6 @@ _create_res_sound(char *zone, char *name, char *id, int adjust)
         _ERR("calloc failed");
         return NULL;
     }
-    /* clear memory */
-    memset(info, 0, sizeof(ico_syc_res_sound_t));
 
     /* set element */
     info->zone = strdup(zone);
@@ -169,8 +165,6 @@ _create_res_input(char *name, int event)
         _ERR("calloc failed");
         return NULL;
     }
-    /* clear memory */
-    memset(info, 0, sizeof(ico_syc_res_input_t));
 
     /* set element */
     info->name = strdup(name);
@@ -280,12 +274,11 @@ _create_context(char *appid, const ico_syc_res_window_t *window,
     struct ico_syc_res_context *context = NULL;
 
     context = (struct ico_syc_res_context *)
-                              malloc(sizeof(struct ico_syc_res_context));
+                              calloc(1, sizeof(struct ico_syc_res_context));
     if (context == NULL) {
-        _ERR("malloc failed");
+        _ERR("calloc failed");
         return NULL;
     }
-    memset(context, 0, sizeof(struct ico_syc_res_context));
 
     /* set appid */
     strcpy(context->appid, appid);
@@ -600,11 +593,17 @@ _create_set_region_msg(const char *appid, const ico_syc_input_region_t *input,
     json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
     json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
 
-    json_object_set_int_member(resobj, MSG_PRMKEY_RES_SURFACE, input->surface);
+    json_object_set_string_member(resobj, MSG_PRMKEY_WINNAME, input->winname);
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_X, input->pos_x);
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_Y, input->pos_y);
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_WIDTH, input->width);
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_HEIGHT, input->height);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_HOT_X, input->hotspot_x);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_HOT_Y, input->hotspot_y);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_X, input->cursor_x);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_Y, input->cursor_y);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_WIDTH, input->cursor_width);
+    json_object_set_int_member(resobj, MSG_PRMKEY_RES_CUR_HEIGHT, input->cursor_height);
     json_object_set_int_member(resobj, MSG_PRMKEY_RES_ATTR, attr);
     json_object_set_object_member(obj, MSG_PRMKEY_REGION, resobj);
 
@@ -652,11 +651,20 @@ _create_unset_region_msg(const char *appid, const ico_syc_input_region_t *input)
     json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
     json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
 
-    json_object_set_int_member(resobj, MSG_PRMKEY_RES_SURFACE, input->surface);
-    json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_X, input->pos_x);
-    json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_Y, input->pos_y);
-    json_object_set_int_member(resobj, MSG_PRMKEY_RES_WIDTH, input->width);
-    json_object_set_int_member(resobj, MSG_PRMKEY_RES_HEIGHT, input->height);
+    if (input)  {
+        json_object_set_string_member(resobj, MSG_PRMKEY_WINNAME, input->winname);
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_X, input->pos_x);
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_Y, input->pos_y);
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_WIDTH, input->width);
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_HEIGHT, input->height);
+    }
+    else    {
+        json_object_set_string_member(resobj, MSG_PRMKEY_WINNAME, " ");
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_X, 0);
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_POS_Y, 0);
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_WIDTH, 0);
+        json_object_set_int_member(resobj, MSG_PRMKEY_RES_HEIGHT, 0);
+    }
     json_object_set_object_member(obj, MSG_PRMKEY_REGION, resobj);
 
     /* create root object */
@@ -713,8 +721,6 @@ ico_syc_cb_res(ico_syc_callback_t callback, void *user_data,
         _ERR("calloc failed");
         return;
     }
-    /* clear memory */
-    memset(res_info, 0, sizeof(ico_syc_res_info_t));
 
     /* start parser */
     parser = json_parser_new();
@@ -821,8 +827,6 @@ ico_syc_cb_region(ico_syc_callback_t callback, void *user_data,
         _ERR("calloc failed");
         return;
     }
-    /* clear memory */
-    memset(region, 0, sizeof(ico_syc_input_region_t));
 
     /* start parser */
     parser = json_parser_new();
@@ -851,13 +855,23 @@ ico_syc_cb_region(ico_syc_callback_t callback, void *user_data,
         return;
     }
     resobj = json_object_get_object_member(obj, MSG_PRMKEY_REGION);
-    
+
     /* get input region information */
-    region->surface = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_SURFACE);
+    char *p = ico_syc_get_str_member(resobj, MSG_PRMKEY_WINNAME);
+    if (p)  {
+        strncpy(region->winname, p, ICO_SYC_MAX_WINNAME_LEN-1);
+    }
     region->pos_x = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_POS_X);
     region->pos_y = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_POS_Y);
     region->width = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_WIDTH);
     region->height = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_HEIGHT);
+    region->hotspot_x = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_HOT_X);
+    region->hotspot_y = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_HOT_Y);
+    region->cursor_x = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_CUR_X);
+    region->cursor_y = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_CUR_Y);
+    region->cursor_width = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_CUR_WIDTH);
+    region->cursor_height = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_CUR_HEIGHT);
+    region->attr = ico_syc_get_int_member(resobj, MSG_PRMKEY_RES_ATTR);
 
     /* exec callback */
     callback(event, region, user_data);

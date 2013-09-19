@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCDisplayZone.h
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCDisplayZone class
  */
 /*========================================================================*/
 

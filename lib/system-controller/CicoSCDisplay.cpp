@@ -9,14 +9,19 @@
 
 /*========================================================================*/
 /**
- *  @file   CicoSCDisplay.h
+ *  @file   CicoSCDisplay.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCDisplay class
  */
 /*========================================================================*/
 
+#include <string>
+#include <vector>
+using namespace std;
+
 #include "CicoSCDisplay.h"
 #include "CicoSCLayer.h"
+#include "CicoSCDisplayZone.h"
 #include "CicoLog.h"
 
 //--------------------------------------------------------------------------
@@ -50,7 +55,7 @@ CicoSCDisplay::~CicoSCDisplay()
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  dump log CicoSCDisplay member variables
+ *  @brief  dump log this class member variables
  */
 //--------------------------------------------------------------------------
 void

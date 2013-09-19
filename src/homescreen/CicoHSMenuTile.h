@@ -116,7 +116,7 @@ class CicoHSMenuTile
     Evas_Object *tile;
     Evas_Object *term_icon;
     int                   thumb_surface;
-    ico_syc_thumb_data_t *thumbnail;
+    ico_syc_thumb_info_t *thumbnail;
 
   protected:
     CicoHSMenuTile operator=(const CicoHSMenuTile&);

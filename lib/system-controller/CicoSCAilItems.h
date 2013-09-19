@@ -27,7 +27,7 @@
 #define DINITm_invisibleCPU 0
 
 /**
- * @brief AIL infomation data class
+ * @brief AIL information data class
  *
  */
 

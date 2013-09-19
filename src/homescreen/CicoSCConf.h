@@ -338,5 +338,29 @@ public:
     int inputdev;
     int inputsw;
 };
+
+//==========================================================================
+/**
+ *  @brief  This class holds user information of system config
+ */
+//==========================================================================
+class CicoSCUserConf
+{
+public:
+    /// default constructor
+    CicoSCUserConf() :m_parent_dir("/home/app/ico") {}
+    /// destructor
+    virtual ~CicoSCUserConf() {}
+
+    /// dump log this class member variables
+    void dumpConf(void)
+    {
+        ICO_DBG("parent dir:%s", m_parent_dir.c_str());
+    }
+
+public:
+    std::string m_parent_dir;  ///< parent dir
+};
+
 #endif  // __CICO_SC_CONF_H__
 // vim:set expandtab ts=4 sw=4:

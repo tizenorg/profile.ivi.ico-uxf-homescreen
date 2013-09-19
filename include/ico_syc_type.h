@@ -42,9 +42,9 @@ typedef enum _event_id {
     ICO_SYC_EV_WIN_DESTROY          = 2,  /* destroy window */
     ICO_SYC_EV_WIN_ACTIVE           = 3,  /* active window */
     ICO_SYC_EV_WIN_ATTR_CHANGE      = 4,  /* change window attribute */
-    ICO_SYC_EV_THUMB_PREPARE        = 5,  /* prepare thumbnail data */
-    ICO_SYC_EV_THUMB_CHANGE         = 6,  /* map thumbnail data */
-    ICO_SYC_EV_THUMB_UNMAP          = 7,  /* unmap thumbnail data */
+    ICO_SYC_EV_THUMB_CHANGE         = 5,  /* map thumbnail data */
+    ICO_SYC_EV_THUMB_UNMAP          = 6,  /* unmap thumbnail data */
+    ICO_SYC_EV_THUMB_ERROR          = 7,  /* error map thumbnail */
     ICO_SYC_EV_LAYER_ATTR_CHANGE    = 8,  /* change layer attribute */
     ICO_SYC_EV_USERLIST             = 9,  /* notify the user list */
     ICO_SYC_EV_AUTH_FAIL            = 10, /* fail in the user authentication */
@@ -54,7 +54,9 @@ typedef enum _event_id {
     ICO_SYC_EV_RES_REVERT           = 14, /* reverted resource */
     ICO_SYC_EV_RES_RELEASE          = 15, /* released resource */
     ICO_SYC_EV_INPUT_SET            = 16, /* set input region */
-    ICO_SYC_EV_INPUT_UNSET          = 17  /* unset input region */
+    ICO_SYC_EV_INPUT_UNSET          = 17, /* unset input region */
+    ICO_SYC_EV_LASTINFO             = 18, /* notify the last information */
+    ICO_SYC_EV_STATE_CHANGE         = 19  /* notify changed state */
 } ico_syc_ev_e;
 
 /*
@@ -124,6 +126,22 @@ typedef enum _layer_visible {
     ICO_SYC_LAYER_VISIBLE_HIDE  = 1
 } ico_syc_layer_visible_e;
 
+/**
+ *  system state
+ */
+typedef enum _system_state {
+    ICO_SYC_STATE_REGULATION = 1,   /**< regulation state */
+    ICO_SYC_STATE_NIGHTMODE  = 2    /**< night mode state */
+} ico_syc_system_state_e;
+
+/**
+ *  state on/off
+ */
+typedef enum _state_onoff {
+    ICO_SYC_STATE_OFF = 0,   /**< state of off */
+    ICO_SYC_STATE_ON  = 1    /**< state of on */
+} ico_syc_state_onoff_e;
+
 /*============================================================================*/
 /* structure                                                                  */
 /*============================================================================*/
@@ -172,10 +190,11 @@ typedef struct _win_attr {
 typedef struct _thumb_info {
     char *appid;    /* application id */
     int  surface;   /* window's surface id */
+    int  name;      /* EGL buffer name */
     int  width;     /* window width */
     int  height;    /* window height */
-    int  stride;    /* bites par line of frame buffer */
-    int  format;    /* format of thumbnail data */
+    int  stride;    /* byte par line of frame buffer */
+    int  format;    /* format of buffer */
 } ico_syc_thumb_info_t;
 
 /*
@@ -225,12 +244,21 @@ typedef struct _res_input {
 /*
  * input region information
  */
+#define ICO_SYC_MAX_WINNAME_LEN 40
 typedef struct _input_region {
-    int  surface;       /* window's surface id */
-    int  pos_x;         /* surface of setting input region display position x */
-    int  pos_y;         /* surface of setting input region display position y */
-    int  width;         /* input region's width */
-    int  height;        /* input region's height */
+    char    winname[ICO_SYC_MAX_WINNAME_LEN];
+                            /* target window name                   */
+    short   pos_x;          /* input region X coordinate of surface */
+    short   pos_y;          /* input region Y coordinate of surface */
+    short   width;          /* input region's width                 */
+    short   height;         /* input region's height                */
+    short   hotspot_x;      /* hotspot of X relative coordinate     */
+    short   hotspot_y;      /* hotspot of Y relative coordinate     */
+    short   cursor_x;       /* cursor region X coordinate           */
+    short   cursor_y;       /* cursor region X coordinate           */
+    short   cursor_width;   /* cursor region width                  */
+    short   cursor_height;  /* cursor region height                 */
+    int     attr;           /* region attributes(currently unused)  */
 } ico_syc_input_region_t;
 
 /*
@@ -241,6 +269,14 @@ typedef struct _res_info {
     ico_syc_res_sound_t  *sound;   /* sound resource information */
     ico_syc_res_input_t  *input;   /* input resource information */
 } ico_syc_res_info_t;
+
+/*
+ * notify changed state information
+ */
+typedef struct _state_info {
+    int id;
+    int state;
+} ico_syc_state_info_t;
 
 /*============================================================================*/
 /* callback function                                                          */

@@ -64,7 +64,7 @@ static Eina_Bool ico_SCResourceWatch(void *data)
 
 
 /**
- * @brief constractor
+ * @brief constructor
  */
 CicoSCSysResourceController::CicoSCSysResourceController()
 {
@@ -79,6 +79,10 @@ CicoSCSysResourceController::CicoSCSysResourceController()
         if (-1 != m_rConf->m_sampling) {
             g_samplingWaitTimer = m_rConf->m_sampling;
         }
+    }
+    if (false == m_rConf->m_bDoIt) {
+        ICO_TRA("end");
+        return ;
     }
     // cpu,cpuacct cgroup init
     init_cgroup();  // cgroup 
@@ -197,9 +201,9 @@ bool CicoSCSysResourceController::watch()
     int cpu = m_monitor->getCPUuser(); // application cpu
     if (-1 != cpu) {
         cpu /= 100;
-        if (g_RC_LOG) ICO_TRA("cpu %d -> %d", m_cpu, cpu);
         CicoEvent ev(gEV1000, cpu);
-        m_stt->eventEntry(ev);
+        bool b = m_stt->eventEntry(ev);
+        if (g_RC_LOG) ICO_TRA("cpu %c, %d->%d", b? 't': 'f', m_cpu, cpu);
         m_cpu = cpu;
         r = true;
     }
@@ -221,8 +225,7 @@ bool CicoSCSysResourceController::watch()
  */
 void CicoSCSysResourceController::resourceControlCPUShares(bool bHight)
 {
-    ICO_TRA("start %s",
-            bHight? "true": "false");
+    ICO_TRA("start %s", bHight? "true": "false");
     if ((NULL == m_rConf) || (false == m_rConf->m_bDoIt)) {
         ICO_TRA("end");
         return;
@@ -322,7 +325,7 @@ void CicoSCSysResourceController::resourceControlMemLimit(bool bHight)
 
 
 /**
- * @breif
+ * @brief
  *
  */
 bool CicoSCSysResourceController::entryCgroupCPU(int pid, int grpNo)
@@ -362,7 +365,7 @@ bool CicoSCSysResourceController::entryCgroupCPU(int pid, int grpNo)
 }
 
 /**
- * @breif initialize cgroup 
+ * @brief initialize cgroup
  */
 void CicoSCSysResourceController::init_cgroup()
 {
@@ -374,12 +377,12 @@ void CicoSCSysResourceController::init_cgroup()
 }
 
 /**
- * @breif initialize cgroup cpu
+ * @brief initialize cgroup cpu
  */
 void CicoSCSysResourceController::init_cgroup_cpu()
 {
     ICO_TRA("start");
-    if (NULL == m_rConf) {
+    if ((NULL == m_rConf) || (false == m_rConf->m_bDoIt)) {
         ICO_TRA("end");
         return;
     }
@@ -423,12 +426,12 @@ void CicoSCSysResourceController::init_cgroup_cpu()
 }
 
 /**
- * @breif initialize cgroup memory
+ * @brief initialize cgroup memory
  */
 void CicoSCSysResourceController::init_cgroup_memory()
 {
     ICO_TRA("start");
-    if (NULL == m_rConf) {
+    if ((NULL == m_rConf) || (false == m_rConf->m_bDoIt)) {
         ICO_TRA("end error config class");
         return;
     }
@@ -438,7 +441,7 @@ void CicoSCSysResourceController::init_cgroup_memory()
 }
 
 /**
- * @breif make directory
+ * @brief make directory
  * @param d create directory target
  */
 void CicoSCSysResourceController::make_directorys(std::vector<std::string> dir)
@@ -471,6 +474,8 @@ CicoSRCCPU_LOW::CicoSRCCPU_LOW(CicoSCSysResourceController* obj):
     ICO_TRA("constructor");
     m_val = -1;      // cpu or memory usage value
     m_baseVal = -1;  // cpu or memory base usage value
+    m_cnt = 0;
+    m_rConf = CicoSCSystemConfig::getInstance()->getResourceConf();
 }
 
 /**
@@ -488,12 +493,15 @@ CicoSRCCPU_LOW::~CicoSRCCPU_LOW()
  * @param ev event data
  * @param stt state object
  */
-void CicoSRCCPU_LOW::onEnttry(const CicoEvent& ev, const CicoState* stt, int)
+void CicoSRCCPU_LOW::onEntry(const CicoEvent& ev, const CicoState* stt, int)
 {
-    ICO_TRA("start %s,%d,%d", stt->getName().c_str(),
-            ev.getEV(),ev.getGCVi());
-    m_baseVal = ev.getGCVi();
+    int v1 = ev.getEV();
+    int v2 = ev.getGCVi();
+    if (g_RC_LOG) ICO_TRA("start %s,%d,%d CicoSRCCPU_LOW::", stt->getName().c_str(), v1, v2);
+    m_baseVal = v2;
     m_val = m_baseVal;
+    m_cnt = m_rConf->m_retryCnt;
+    if (g_RC_LOG) ICO_TRA("end cnt(%d) CicoSRCCPU_LOW::", m_cnt);
 }
 
 /**
@@ -504,21 +512,37 @@ void CicoSRCCPU_LOW::onEnttry(const CicoEvent& ev, const CicoState* stt, int)
 void CicoSRCCPU_LOW::onDo(const CicoEvent& ev, const CicoState* stt, int)
 {
     int valN = ev.getGCVi();
-    ICO_TRA("start o(%d), n(%d)", m_val, valN);
-    if (valN >= m_val) {
+    if (g_RC_LOG) ICO_TRA("start o(%d), n(%d)CicoSRCCPU_LOW::", m_val, valN);
+#if 0
+    if (valN > m_val) {
         // When the value is greater than the previous
-        ICO_TRA("end n(%d) >= o(%d)", m_val, valN);
+        if (g_RC_LOG) ICO_TRA("end n(%d)->o(%d) CicoSRCCPU_LOW::", m_val, valN);
         return;
     }
     // When the value is less than the previous
     int t = ((double)valN / (double)m_baseVal)*100;
     if (50 <= t) {
         m_cntlr->resourceControlCPUShares(false);
-        ICO_DBG("BASE CHG %d->%d",m_baseVal, valN);
+        if (g_RC_LOG) ICO_DBG("CHG %d->%d CicoSRCCPU_LOW::",m_baseVal, valN);
         m_baseVal = valN;
     }
+#else
+    if (valN < m_rConf->m_lowLimitVal) {
+        m_cnt--;
+        if (0 >= m_cnt) {
+            m_cntlr->resourceControlCPUShares(false);
+            if (g_RC_LOG) ICO_DBG("CHG %d->%d CicoSRCCPU_LOW::",m_baseVal, valN);
+            m_cnt = m_rConf->m_retryCnt;
+            m_baseVal = valN;
+        }
+    }
+    else {
+        if (g_RC_LOG) ICO_DBG("cnt rst V(%d) CicoSRCCPU_LOW::", valN);
+        m_cnt = m_rConf->m_retryCnt;
+    }
+#endif
     m_val = valN;
-    ICO_TRA("end");
+    if (g_RC_LOG) ICO_TRA("end CicoSRCCPU_LOW::");
 }
 
 
@@ -529,10 +553,10 @@ void CicoSRCCPU_LOW::onDo(const CicoEvent& ev, const CicoState* stt, int)
  */
 void CicoSRCCPU_LOW::onExit(const CicoEvent&, const CicoState*, int)
 {
-    ICO_TRA("start");
+    if (g_RC_LOG) ICO_TRA("start CicoSRCCPU_LOW::");
     m_baseVal = -1;
     m_val = -1;
-    ICO_TRA("end");
+    if (g_RC_LOG) ICO_TRA("end CicoSRCCPU_LOW::");
 }
 
 /**
@@ -562,21 +586,38 @@ CicoSRCCPU_HIGH::~CicoSRCCPU_HIGH()
 void CicoSRCCPU_HIGH::onDo(const CicoEvent& ev, const CicoState* stt, int)
 {
     int valN = ev.getGCVi();
-    ICO_TRA("start o(%d), n(%d)", m_val, valN);
+    if (g_RC_LOG) ICO_TRA("start o(%d), n(%d) CicoSRCCPU_HIGH::", m_val, valN);
+#if 0
     if (valN <= m_val) {
         // When the value is less than the previous
-        ICO_TRA("end n(%d)<=o(%d)", valN, m_val);
+        if (g_RC_LOG) ICO_TRA("n(%d)<=o(%d) CicoSRCCPU_HIGH::", valN, m_val);
         return;
     }
     // When the value is greater than the previous
     int t = ((double)(100-valN) / (double)(100-m_baseVal))*100;
     if (50 <= t) {
         m_cntlr->resourceControlCPUShares(true);
-        ICO_DBG("BASE CHG %d -> %d", m_baseVal, valN);
+        if (g_RC_LOG) ICO_DBG("%d->%d CicoSRCCPU_HIGH::", m_baseVal, valN);
         m_baseVal = valN;
     }
+#else
+    if (valN > m_rConf->m_highLimitVal) {
+        m_cnt--;
+        if (g_RC_LOG) ICO_DBG("cnt(%d) CicoSRCCPU_HIGH::", m_cnt);
+        if (0 >= m_cnt) {
+            m_cntlr->resourceControlCPUShares(true);
+            if (g_RC_LOG) ICO_DBG("CicoSRCCPU_HIGH:: %d->%d",m_baseVal, valN);
+            m_cnt = m_rConf->m_retryCnt;
+            m_baseVal = valN;
+        }
+    }
+    else {
+        if (g_RC_LOG) ICO_DBG("CicoSRCCPU_HIGH:: (%d)", valN);
+        m_cnt = m_rConf->m_retryCnt;
+    }
+#endif
     m_val = valN;
-    ICO_TRA("end");
+    if (g_RC_LOG) ICO_TRA("end CicoSRCCPU_HIGH::");
 }
 
 /**
@@ -586,7 +627,7 @@ void CicoSRCCPU_HIGH::onDo(const CicoEvent& ev, const CicoState* stt, int)
 CicoSRCMEM_LOW::CicoSRCMEM_LOW(CicoSCSysResourceController* obj):
         CicoSRCCPU_LOW(obj)
 {
-    ICO_TRA("constructor");
+    ICO_TRA("constructor CicoSRCMEM_LOW::");
 }
 
 /**
@@ -595,7 +636,7 @@ CicoSRCMEM_LOW::CicoSRCMEM_LOW(CicoSCSysResourceController* obj):
  */
 CicoSRCMEM_LOW::~CicoSRCMEM_LOW()
 {
-    ICO_TRA("destructor");
+    ICO_TRA("destructor CicoSRCMEM_LOW::");
 }
 
 /**
@@ -606,21 +647,21 @@ CicoSRCMEM_LOW::~CicoSRCMEM_LOW()
 void CicoSRCMEM_LOW::onDo(const CicoEvent& ev, const CicoState* stt, int)
 {
     int valN = ev.getGCVi();
-    ICO_TRA("start o(%d), n(%d)", m_val, valN);
+    if (g_RC_LOG) ICO_TRA("start o(%d), n(%d)", m_val, valN);
     if (valN >= m_val) {
         // When the value is greater than the previous
-        ICO_TRA("n(%d)>=o(%d)", valN, m_val);
+        if (g_RC_LOG) ICO_TRA("n(%d)>=o(%d)", valN, m_val);
         return;
     }
     // When the value is less than the previous
     int t = ((double)valN / (double)m_baseVal)*100;
     if (50 <= t) {
         m_cntlr->resourceControlMemLimit(false);
-        ICO_TRA("BASE CHG %d->%d",m_baseVal, valN);
+        if (g_RC_LOG) ICO_TRA("BASE CHG %d->%d",m_baseVal, valN);
         m_baseVal = valN;
     }
     m_val = valN;
-    ICO_TRA("end");
+    if (g_RC_LOG) ICO_TRA("end");
 
 }
 
@@ -651,7 +692,7 @@ CicoSRCMEM_HIGH::~CicoSRCMEM_HIGH()
 void CicoSRCMEM_HIGH::onDo(const CicoEvent& ev, const CicoState* stt, int)
 {
     int valN = ev.getGCVi();
-    ICO_TRA("start o(%d), n(%d)", m_val, valN);
+    if (g_RC_LOG) ICO_TRA("start o(%d), n(%d)", m_val, valN);
     if (valN <= m_val) {
         // When the value is less than the previous
         ICO_TRA("end");
@@ -661,9 +702,9 @@ void CicoSRCMEM_HIGH::onDo(const CicoEvent& ev, const CicoState* stt, int)
     int t = ((double)(100-valN) / (double)(100-m_baseVal))*100;
     if (50 <= t) {
         m_cntlr->resourceControlMemLimit(true);
-        ICO_TRA("BASE CHG %d -> %d", m_baseVal, valN);
+        if (g_RC_LOG) ICO_TRA("BASE CHG %d -> %d", m_baseVal, valN);
         m_baseVal = valN;
     }
     m_val = valN;
-    ICO_TRA("end");
+    if (g_RC_LOG) ICO_TRA("end");
 }

@@ -43,15 +43,16 @@ public: // member method
     CicoSRCCPU_LOW(CicoSCSysResourceController* obj);
     virtual ~CicoSRCCPU_LOW();
 
-    virtual void onEnttry(const CicoEvent& ev, const CicoState* stt,
-                          int addval);
+    virtual void onEntry(const CicoEvent& ev, const CicoState* stt, int addval);
     virtual void onDo(const CicoEvent& ev, const CicoState* stt, int addval);
     virtual void onExit(const CicoEvent& ev, const CicoState* stt,
                         int addval);
 protected: // member Variable
     int m_val;      // cpu or memory usage value
     int m_baseVal;  // cpu or memory base usage value
+    int m_cnt;
     CicoSCSysResourceController* m_cntlr;
+    const CicoSCResourceConf* m_rConf;
 };
 
 /**

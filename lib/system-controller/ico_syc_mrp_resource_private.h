@@ -11,7 +11,7 @@
 /**
  *  @file   ico_syc_mrp_resource_private.h
  *
- *  @brief 
+ *  @brief  This file is definition of murpy ressource control
  */
 //==========================================================================
 
@@ -25,7 +25,7 @@ extern "C" {
 
 
 #define ICO_APC_REQTYPE_REQUEST 0               /* Request from application         */
-#define ICO_APC_REQTYPE_CREATE  1               /* Request automaticaly             */
+#define ICO_APC_REQTYPE_CREATE  1               /* Request automatically             */
 
 // TODO 
 #define REQTYPE_APP             0
@@ -44,48 +44,10 @@ extern "C" {
 #define RESID_CMD_ACQUIRE       0x00001000
 #define RESID_CMD_RELEASE       0x00002000
 
-/*
- *  id of resource
- */
-typedef enum _resid {
-    ICO_APF_RESID_BASIC_SCREEN  = 1, /* basic screen */
-    ICO_APF_RESID_INT_SCREEN    = 2, /* interrupt screen */
-    ICO_APF_RESID_ON_SCREEN     = 3, /* onscreeen */
-    ICO_APF_RESID_BASIC_SOUND   = 4, /* basic sound */
-    ICO_APF_RESID_INT_SOUND     = 5, /* interrupt sound */
-    ICO_APF_RESID_INPUT_DEV     = 6, /* input device */
-} ico_apf_resid_e;
-#define ICO_APF_RESOURCE_RESID_MIN      ((int)(ICO_APF_RESID_BASIC_SCREEN))
-#define ICO_APF_RESOURCE_RESID_MAX      ((int)(ICO_APF_RESID_INPUT_DEV))
-
-/*
- *  state of resource
- */
-typedef enum _resource_state {
-    ICO_APF_RESOURCE_STATE_ACQUIRED     = 1,    /* acquired         */
-    ICO_APF_RESOURCE_STATE_DEPRIVED     = 2,    /* deprived         */
-    ICO_APF_RESOURCE_STATE_WAITTING     = 3,    /* waitting         */
-    ICO_APF_RESOURCE_STATE_RELEASED     = 4,    /* released         */
-
-    ICO_APF_RESOURCE_COMMAND_GET        = 5,    /* get command      */
-    ICO_APF_RESOURCE_COMMAND_RELEASE    = 6,    /* release command  */
-    ICO_APF_RESOURCE_COMMAND_ADD        = 7,    /* add command      */
-    ICO_APF_RESOURCE_COMMAND_CHANGE     = 8,    /* change command   */
-    ICO_APF_RESOURCE_COMMAND_DELETE     = 9,    /* delete command   */
-
-    ICO_APF_RESOURCE_REPLY_OK           = 10,   /* OK reply         */
-    ICO_APF_RESOURCE_REPLY_NG           = 11,   /* NG reply         */
-    ICO_APF_RESOURCE_STATE_CONNECTED    = 12,   /* connected        */
-    ICO_APF_RESOURCE_STATE_DISCONNECTED = 13,   /* disconnected     */
-} ico_apf_resource_state_e;
-
-/* Priority of resource                             */
-#define ICO_UXF_PRIO_INTSCREEN   0x00000080 /* interrupt screen on basic screen     */
-#define ICO_UXF_PRIO_CATEGORY    0x00000100 /* application category                 */
-#define ICO_UXF_PRIO_ACTIVEAPP   0x0fff0000 /* active application count             */
-#define ICO_UXF_PRIO_ACTIVECOUNT 0x00010000 /* active application                   */
-#define ICO_UXF_PRIO_ONSCREEN    0x10000000 /* interrupt screen/sound               */
-#define ICO_UXF_PRIO_REGULATION  0x40000000 /* no regulation controlled             */
+#define RES_STATE_ACQUIRED      1
+#define RES_STATE_DEPRIVED      2
+#define RES_STATE_WAITING       3
+#define RES_STATE_RELEASED      4
 
 #define MURPHY_APPID_MAXIMUM_LENGTH 128
 
@@ -98,38 +60,19 @@ typedef struct {
     mrp_list_hook_t hook;
 } mrp_res_queue_item_t;
 
-
-
 #define ICO_UXF_MAX_PROCESS_NAME 255
 #define ICO_UXF_MAX_DEVICE_NAME  255
 
 /* request information                          */
 typedef struct  _resource_request    {
-//    struct _ico_apc_request     *next;          /* requestt list link               */
-//    char                        appid[ICO_UXF_MAX_PROCESS_NAME+1];
-                                                /* application id                   */
-    //ico_apf_resid_e             resid;          /* resource id                      */
-//    int resid;          /* resource id                      */
-//    char                        device[ICO_UXF_MAX_DEVICE_NAME+1];
-                                                /* request device                   */
     int                         id;             /* request object                   */
-//    int                         bid;            /* request base object              */
-//    int                         pid;            /* request client pid               */
     int                         prio;           /* request priority                 */
-//    unsigned short              zoneidx;        /* request target zone index        */
-//    unsigned short              timer;          /* Reply wait timer                 */
-//    unsigned short              state;          /* status                           */
     unsigned short              reqtype;        /* Request type                     */
     unsigned short              category;        /* Request category */
-#ifndef NO_MURPHY
-//    mrp_res_resource_set_t      *rset;          /* Murphy resource set              */
-//    mrp_res_queue_item_t        *res_data;      /* identifier for the request       */
-//    mrp_list_hook_t             hook;           /* keep track of requests           */
-#endif
-    //int                         released;       /* Did the application release?     */
 
     int  resid;           /* resource id      */
     char *appid;          /* application id */
+    int  appkind;         /* id of application kind */
     int  pid;             /* process id     */
     int  state;           /* request state */
 
@@ -137,10 +80,12 @@ typedef struct  _resource_request    {
     int  dispzoneid;      /* area of showing application window */
     char *winname;        /* window's surface name */
     int  surfaceid;       /* window id */
+    char *animation;      /* name of animation */
+    int  animationTime;   /* time of animation[ms] */
 
     char *soundzone;      /* area of playing sound */
     int  soundzoneid;     /* area of playing sound */
-    char *sooudname;      /* sound stream name */
+    char *soundname;      /* sound stream name */
     int  soundid;         /* sound id */
     int  soundadjust;     /* adjust action */
 
@@ -154,34 +99,17 @@ typedef struct  _resource_request    {
 
 } resource_request_t;
 
-typedef void (*ico_syc_mrp_enforce_display_t)(unsigned short state,
-                                              const char *appid,
-                                              unsigned int id,
-                                              void *user_data);
-
 typedef void (*ico_syc_mrp_enforce_sound_t)(unsigned short state,
-                                            pid_t pid,
+                                            resource_request_t *req,
                                             void *user_data);
 
-typedef void (*ico_syc_mrp_enforce_input_t)(unsigned short state,
-                                            const char *appid,
-                                            const char *device,
-                                            void *user_data);
 
-int ico_syc_mrp_init(ico_syc_mrp_enforce_display_t dispcb,
-                     ico_syc_mrp_enforce_sound_t   soundcb,
-                     ico_syc_mrp_enforce_input_t   inputcb,
-                     void                          *user_data);
- 
+int ico_syc_mrp_init(ico_syc_mrp_enforce_sound_t soundcb,
+                     void *user_data);
 
-bool ico_syc_mrp_acquire_display_resource(resource_request_t *req, int addprio);
-bool ico_syc_mrp_release_display_resource(resource_request_t *req);
-
-bool ico_syc_mrp_acquire_sound_resource(resource_request_t *req, int addprio);
+bool ico_syc_mrp_acquire_sound_resource(resource_request_t *req);
 bool ico_syc_mrp_release_sound_resource(resource_request_t *req);
-
-bool ico_syc_mrp_acquire_input_resource(resource_request_t *req, int addprio);
-bool ico_syc_mrp_release_input_resource(resource_request_t *req);
+void ico_syc_mrp_active_app(const char *appid);
 
 #ifdef __cplusplus
 }

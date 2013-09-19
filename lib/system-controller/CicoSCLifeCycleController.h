@@ -12,6 +12,7 @@
 #include <vector>
 #include <map>
 #include <ail.h>
+#include <aul/aul.h>
 #include <package-manager.h>
 
 #include "CicoSCAilItems.h"
@@ -31,11 +32,11 @@ public:
     CicoSCLifeCycleController();
     ~CicoSCLifeCycleController();
 
-	static CicoSCLifeCycleController* getInstance(void);
+    static CicoSCLifeCycleController* getInstance(void);
 
     // Starting application
-    int launch(const char* appid);
-    int launch(const std::string& appid);
+    int launch(const char* appid, bundle* b = NULL);
+    int launch(const std::string& appid, bundle* b = NULL);
     // Stopping application
     int terminate(const char* appid);
     int terminate(const std::string& appid);
@@ -89,7 +90,7 @@ protected:
                 bool bndsp);
     bool removeAUL(int pid);
 private:
-	static CicoSCLifeCycleController* ms_myInstance;
+    static CicoSCLifeCycleController* ms_myInstance;
 
 protected:
     std::vector<CicoSCAilItems> m_ail;
@@ -101,7 +102,7 @@ protected:
 
 /**
  * @brief AIL infomaton list
- * @return AIL infomation item list Container
+ * @return AIL information item list Container
  */
 inline
 const std::vector<CicoSCAilItems>& CicoSCLifeCycleController::getAilList() const
@@ -112,7 +113,7 @@ const std::vector<CicoSCAilItems>& CicoSCLifeCycleController::getAilList() const
 
 /**
  * @brief AUL infomaton list
- * @return AUL infomation item list Container
+ * @return AUL information item list Container
  */
 inline
 const std::vector<CicoSCAulItems>& CicoSCLifeCycleController::getAulList() const

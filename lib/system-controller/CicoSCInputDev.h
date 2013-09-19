@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCInputDev.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCInputDev class
  */
 //==========================================================================
 #ifndef __CICO_SC_INPUT_DEV_H__
@@ -19,7 +19,6 @@
 
 #include <string>
 #include <vector>
-using namespace std;
 
 //==========================================================================
 //  Forward declaration
@@ -28,7 +27,7 @@ class CicoSCSwitch;
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  input device information
+ *  @brief  This class hold input device information
  */
 //--------------------------------------------------------------------------
 class CicoSCInputDev
@@ -40,7 +39,7 @@ public:
     // destructor
     virtual ~CicoSCInputDev();
 
-    // dump log CicoSCInputDev member variables
+    // dump log this class member variables
     void dump(void);
 
 private:
@@ -51,10 +50,10 @@ private:
     CicoSCInputDev(const CicoSCInputDev &object);
 
 public:
-    string device;  //!< input device name
-    int    type;    //!< type
+    std::string device;  //!< input device name
+    int         type;    //!< type
 
-    vector<CicoSCSwitch*> switchList;   //!< switch list
+    std::vector<CicoSCSwitch*> switchList;   //!< switch list
 };
-#endif	// __CICO_SC_INPUT_DEV_H__
+#endif  // __CICO_SC_INPUT_DEV_H__
 // vim:set expandtab ts=4 sw=4:

@@ -7,28 +7,31 @@
  *
  */
 
+//==========================================================================
 /**
- * @brief   CicoSCUserManager.h
+ *  @file   CicoSCUserManager.h
  *
- * @date    Aug-21-2013
+ *  @brief  This file is definition of CicoSCUserManager class
  */
-
+//==========================================================================
 #ifndef __CICO_SC_USER_MANAGER_H__
 #define __CICO_SC_USER_MANAGER_H__
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-
 #include <string.h>
 #include <vector>
-using namespace std;
-using namespace boost;
-using namespace boost::property_tree;
 
-#include    "CicoSCCommandParser.h"
-#include    "CicoSCUser.h"
+//==========================================================================
+//  Forward declaration
+//==========================================================================
+class CicoSCCommand;
+class CicoSCUser;
+class CicoSCUserConf;
 
+//==========================================================================
+/*
+ *  @brief  This class manages control of user and access to user information
+ */
+//==========================================================================
 class CicoSCUserManager
 {
 public:
@@ -39,19 +42,17 @@ public:
     void handleCommand(const CicoSCCommand * cmd);
 
     // load configuration file
-    int load(const string & confFile);
+    int load(const std::string & confFile);
     // initialize
     int initialize(void);
 
     // get information
-    const CicoSCUser* getDefaultUser(void);
-    const CicoSCUser* getLastUser(void);
     const CicoSCUser* getLoginUser(void);
     const vector<CicoSCUser*>& getUserList(void);
-    const vector<string>& getHomeScreenList(void);
+    const vector<std::string>& getHomeScreenList(void);
 
     // change user
-    void changeUser(const string & name, const string & passwd);
+    void changeUser(const std::string & name, const std::string & passwd);
 
     // dump log
     void dumpUserList(void);
@@ -67,31 +68,53 @@ private:
     // assignment operator
     CicoSCUserManager& operator=(const CicoSCUserManager &object);
 
-    // copy constoructor
+    // copy constructor
     CicoSCUserManager(const CicoSCUserManager &object);
 
     // callback
-    void userlistCB(const string & appid);
+    void userlistCB(const std::string & appid);
+    void lastinfoCB(const std::string & appid);
 
-    // set default user info from config file
-    void setDefaultUser(const ptree & root);
-    void setLastUser(const ptree & root);
-    void setLoginUser(const CicoSCUser * user);
+    // save last user name to file
+    void saveLastUser(void);
+    // load last user name from file
+    void loadLastUser(void);
+    // load last information from file
+    void loadLastInfo(void);
+
+    // set login user info from config file
+    void setLoginUser(const boost::property_tree::ptree & root);
     // create list from config file
-    void createUserList(const ptree & root);
-    void createHomeScreenList(const ptree & root);
+    void createUserList(const boost::property_tree::ptree & root);
+    void createHomeScreenList(const boost::property_tree::ptree & root);
+
+    // set application's last information
+    void setLastInfo(const std::string & appid, const std::string & info);
 
     // find user config by user name
-    const CicoSCUser* findUserConfbyName(const string & name);
+    const CicoSCUser* findUserConfbyName(const std::string & name);
+
+    // Imprinting to file, that file is application's running information 
+    bool impritingLastApps(const std::string& ofnm);
+
+    // Killing running application and homeScreen
+    bool killingAppsAndHS(const std::string& usrnm);
+
+    // working user directory make
+    void getWorkingDir(const std::string& usr, string& dir);
+
+    // launch homescreen request
+    bool launchHomescreenReq(const std::string& usr,
+                             const std::string& appid_hs);
 
 private:
-    static CicoSCUserManager*   ms_myInstance;  //!< CicoSCUserManager Object
+    static CicoSCUserManager*   ms_myInstance;  ///< CicoSCUserManager Object
 
-    CicoSCUser*                 m_defaultUser;      //!< Default User Info
-    CicoSCUser*                 m_lastUser;         //!< Last User Info
-    CicoSCUser*                 m_loginUser;        //!< Login User Info
-    vector<CicoSCUser*>         m_userList;         //!< User List
-    vector<string>              m_homescreenList;   //!< HomeScreen List
+    std::string                 m_login;           ///< Login User Name
+    std::vector<CicoSCUser*>    m_userList;        ///< User List
+    std::vector<std::string>    m_homescreenList;  ///< HomeScreen List
+    std::string                 m_parentDir;
+    const CicoSCUserConf*       m_uConfig;
 };
 #endif  // __CICO_SC_USER_MANAGER_H__
 // vim:set expandtab ts=4 sw=4:

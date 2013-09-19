@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCWlWinMgrIF.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCWlWinMgrIF class
  */
 //==========================================================================
 #ifndef __CICO_SC_WL_WINMGR_IF_H__
@@ -22,6 +22,11 @@
 
 #include "CicoSCWaylandIF.h"
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  This class is wayland interface of multi window manager
+ */
+//--------------------------------------------------------------------------
 class CicoSCWlWinMgrIF : public CicoSCWaylandIF {
 public:
     virtual void initInterface(void               *data,
@@ -29,7 +34,6 @@ public:
                                uint32_t           name,
                                const char         *interface,
                                uint32_t           version);
-
 
     virtual void createdCB(void *data,
                            struct ico_window_mgr *ico_window_mgr,
@@ -123,6 +127,48 @@ protected:
     // copy constructor
     CicoSCWlWinMgrIF(const CicoSCWlWinMgrIF &object);
 
+    // wrapper function ico_window_mgr_declare_manager
+    void declareManager(int32_t manager);
+
+    // wrapper function ico_window_mgr_set_window_layer
+    void setWindowLayer(uint32_t surfaceid, uint32_t layer);
+
+    // wrapper function ico_window_mgr_set_positionsize
+    void setPositionsize(uint32_t surfaceid, uint32_t node,
+                         int32_t x, int32_t y, int32_t width,
+                         int32_t height, int32_t flags);
+
+    // wrapper function ico_window_mgr_set_visible
+    void setVisible(uint32_t surfaceid, int32_t  visible,
+                    int32_t  raise, int32_t  flags);
+
+    // wrapper function ico_window_mgr_visible_animation
+    void visibleAnimation(uint32_t surfaceid, int32_t visible,
+                          int32_t x, int32_t y,
+                          int32_t width, int32_t height);
+
+    // wrapper function of ico_window_mgr_set_animation
+    void setAnimation(uint32_t surfaceid, int32_t type,
+                      const char *animation, int32_t time);
+
+    // wrapper function of ico_window_mgr_set_attributes
+    void setAttributes(uint32_t surfaceid, uint32_t attributes);
+
+    // wrapper function of ico_window_mgr_set_active
+    void setActive(uint32_t surfaceid, int32_t active);
+
+    // wrapper function of ico_window_mgr_set_layer_visible
+    void setLayerVisible(uint32_t layer, int32_t visible);
+
+    // wrapper function of ico_window_mgr_get_surfaces
+    void getSurfaces(const char *appid);
+
+    // wrapper function of ico_window_mgr_map_surface
+    void mapSurface(uint32_t surfaceid, int32_t framerate);
+
+    // wrapper function of ico_window_mgr_unmap_surface
+    void unmapSurface(uint32_t surfaceid);
+
 private:
     // ico_window_mgr(Multi Window Manager) callback functions
     static void wlCreatedCB(void                  *data,
@@ -206,10 +252,10 @@ private:
 
 protected:
     // ico_window_mgr listener 
-    static struct ico_window_mgr_listener ms_listener;
+    struct ico_window_mgr_listener m_listener;
 
     // wayland output listener
-    static struct wl_output_listener ms_wlOutputListener;
+    struct wl_output_listener m_wlOutputListener;
 
     // Wayland's Window Manager PlugIn instance
     struct ico_window_mgr *m_winmgr;
@@ -217,18 +263,6 @@ protected:
     // wayland output instance
     struct wl_output *m_wloutput;
 
-    // wayland shm instance
-    struct wl_shm *m_wlshm;
-
-    // shared memory temp file name
-    char m_shmName[256];
-
-    // shared memory temp file name
-    static const int ICO_WL_SHM_SIZE = 16 * 1024 * 1024;
-    
-    // wayland shared memory  pool
-    struct wl_shm_pool *m_wlshmpool;
-
 };
-#endif	// __CICO_SC_WL_WINMGR_IF_H__
+#endif  // __CICO_SC_WL_WINMGR_IF_H__
 // vim:set expandtab ts=4 sw=4:

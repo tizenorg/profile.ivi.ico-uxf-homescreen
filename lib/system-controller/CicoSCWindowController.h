@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCWindowController.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCWindowController class
  */
 //==========================================================================
 #ifndef __CICO_SC_WINDOW_CONTROLLER_H__
@@ -30,12 +30,13 @@ using namespace std;
 class CicoSCCommand;
 class CicoSCDisplay;
 class CicoSCLayer;
+class CicoSCDisplayZone;
 class CicoSCWindow;
 class CicoSCResourceManager;
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  window controller
+ *  @brief  This class is controller of window
  */
 //--------------------------------------------------------------------------
 class CicoSCWindowController : public CicoSCWlWinMgrIF
@@ -97,8 +98,6 @@ public:
     int showLayer(int displayid, int layerid);
 
     int hideLayer(int displayid, int layerid);
-
-    void setLayerVisible(int layerid, int visible);
 
     int active(int surfaceid, int target);
 
@@ -190,21 +189,28 @@ private:
     // copy constructor
     CicoSCWindowController(const CicoSCWindowController &object);
 
-    // find window obeject by surface id
+    // find window object by surface id
     CicoSCWindow* findWindow(int surfaceid);
 
-    // find layer obeject by display id and layer id
+    // find layer object by display id and layer id
     CicoSCLayer* findLayer(int displayid, int layerid);
+
+    // fine display zone by id
+    const CicoSCDisplayZone * findDisplayZone(int zoneid);
+
+    int notifyResourceManager(int        surfaceid,
+                              const char *animation,
+                              int        animationTime);
 
 private:
     CicoSCResourceManager *m_resMgr;
 
-    // window obejct list
+    // window object list
     map<unsigned int, CicoSCWindow*> m_windowList;
 
-    // display objet list
+    // display object list
     vector<CicoSCDisplay*>   m_displayList;
 
 };
-#endif	// __CICO_SC_WINDOW_CONTROLLER_H__
+#endif  // __CICO_SC_WINDOW_CONTROLLER_H__
 // vim:set expandtab ts=4 sw=4:

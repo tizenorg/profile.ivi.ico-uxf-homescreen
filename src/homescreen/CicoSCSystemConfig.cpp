@@ -68,6 +68,9 @@ CicoSCSystemConfig::CicoSCSystemConfig()
     m_privilegeTable["certificate"]    = ICO_PRIVILEGE_CERTIFICATE;
     m_privilegeTable["none"]           = ICO_PRIVILEGE_NONE;
     m_privilegeTable[""]               = ICO_PRIVILEGE_NONE;
+
+    m_userConf = NULL;
+
 }
 
 //--------------------------------------------------------------------------
@@ -119,6 +122,8 @@ CicoSCSystemConfig::load(const string & confFile)
     createInputDevList(root);
     createDefaultConf(root);
     createLogConf(root);
+
+    createUserConf(root);
 
     return 0;   //TODO
 }
@@ -1490,4 +1495,28 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 #endif
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  user config class object create
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+static const char* g_login_user_conf = "systemconfig.login_user";
+void
+CicoSCSystemConfig::createUserConf(const ptree & root)
+{
+    m_userConf = new CicoSCUserConf;
+    ptree rc = root.get_child(g_login_user_conf);
+    optional<string> opts = rc.get_optional<string>("parent_dir");
+    if (true == opts.is_initialized()) {
+        string v = opts.get();
+        if (v.empty()) {
+            m_userConf->m_parent_dir = v;
+        }
+    }
+    m_userConf->dumpConf();
+}
+
 // vim:set expandtab ts=4 sw=4:

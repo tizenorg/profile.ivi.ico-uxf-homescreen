@@ -11,14 +11,14 @@
 /**
  *  @file   CicoSCInputController.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCInputController class
  */
 //==========================================================================
 #ifndef __CICO_SC_INPUT_CONTROLLER_H__
 #define __CICO_SC_INPUT_CONTROLLER_H__
 
+#include <string>
 #include <vector>
-using namespace std;
 
 #include "CicoSCWlInputMgrIF.h"
 
@@ -31,7 +31,7 @@ class CicoSCSwitch;
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  input device controller
+ *  @brief  This class is controller of input device
  */
 //--------------------------------------------------------------------------
 class CicoSCInputController : public CicoSCWlInputMgrIF
@@ -43,40 +43,56 @@ public:
     // destructor
     ~CicoSCInputController();
 
+    // initialize input device information 
     int initDB(void);
 
+    // executes an input control process corresponding to the command
     void handleCommand(const CicoSCCommand *cmd);
 
-    int addInputApp(const string &appid,
-                    const string &device,
-                    int          input,
-                    int          fix,
-                    int          keycode);
+    // register input device control application
+    int addInputApp(const std::string &appid,
+                    const std::string &device,
+                    int               input,
+                    int               fix,
+                    int               keycode);
 
-    int delInputApp(const string &appid,
-                    const string &device,
-                    int          input);
+    // unregister input device control application
+    int delInputApp(const std::string &appid,
+                    const std::string &device,
+                    int               input);
 
-    int sendInputEvent(const string &appid,
-                       int          surfaceid,
-                       int          type,
-                       int          deviceno,
-                       int          code,
-                       int          value);
+    // send input device event
+    int sendInputEvent(const std::string &appid,
+                       int               surfaceid,
+                       int               type,
+                       int               deviceno,
+                       int               code,
+                       int               value);
 
-    int setInputRegion(int surfaceid,
+    // set input region informantion
+    int setInputRegion(const std::string &appid,
+                       const std::string &winname,
                        int x,
                        int y,
                        int width,
                        int height,
+                       int hotspot_x,
+                       int hotspot_y,
+                       int cursor_x,
+                       int cursor_y,
+                       int cursor_width,
+                       int cursor_height,
                        int attr);
 
-    int resetInputRegion(int surfaceid,
+    // unset input region informantion
+    int unsetInputRegion(const std::string &appid,
+                         const std::string &winname,
                          int x,
                          int y,
                          int width,
                          int height);
 
+    // callback to application for input switch information
     void capabilitiesCB(void               *data,
                         struct ico_exinput *ico_exinput,
                         const char         *device,
@@ -86,6 +102,7 @@ public:
                         const char          *codename,
                         int32_t            code);
 
+    // callback to application for input code information
     void codeCB(void               *data,
                 struct ico_exinput *ico_exinput,
                 const char         *device,
@@ -93,6 +110,7 @@ public:
                 const char         *codename,
                 int32_t            code);
 
+    // callback to application for switch input 
     void inputCB(void               *data,
                  struct ico_exinput *ico_exinput,
                  uint32_t           time,
@@ -101,6 +119,7 @@ public:
                  int32_t            code,
                  int32_t            state);
 
+    // callback to application for change input region
     void regionCB(void                        *data,
                   struct ico_input_mgr_device *ico_input_mgr_device,
                   struct wl_array             *region);
@@ -113,13 +132,15 @@ protected:
     CicoSCInputController(const CicoSCInputController &object);
 
 private:
+    // find input device information
     CicoSCInputDev* findInputDev(const char *device);
 
+    // find input device switch information
     CicoSCSwitch* findInputSwitch(const char *device, int input);
 
 private:
-    //
-    vector<CicoSCInputDev*> m_inputDevList;
+    /// input device information list
+    std::vector<CicoSCInputDev*> m_inputDevList;
 };
-#endif	// __CICO_SC_INPUT_CONTROLLER_H__
+#endif  // __CICO_SC_INPUT_CONTROLLER_H__
 // vim:set expandtab ts=4 sw=4:

@@ -8,23 +8,24 @@ lib_LTLIBRARIES =				\
 libico_state_machine_la_LDFLAGS = -version-info 0:9:0 
 
 libico_state_machine_la_SOURCES =	\
-	CicoStateCore.cpp \
-	CicoEvent.cpp \
-	CicoEventInfo.cpp \
-	CicoStateMachine.cpp \
-	CicoState.cpp \
-	CicoFinalState.cpp \
-	CicoHistoryState.cpp \
-	CicoStateAction.cpp \
-	CicoStateMachineCreator.cpp \
-	CicoBlockParser.cpp \
-	ico_StateMachine_CWrapper.cpp \
-    ico_log.c
+	CicoStateCore.cpp 				\
+	CicoEvent.cpp 					\
+	CicoEventInfo.cpp 				\
+	CicoStateMachine.cpp 			\
+	CicoState.cpp 					\
+	CicoFinalState.cpp 				\
+	CicoHistoryState.cpp 			\
+	CicoStateAction.cpp 			\
+	CicoStateMachineCreator.cpp 	\
+	CicoBlockParser.cpp 			\
+	ico_StateMachine_CWrapper.cpp
 
 libico_state_machine_la_CPPFLAGS = 	\
 	$(GCC_CXXFLAGS)					\
 	-DLOG_CICO						\
-    @DLOG_CFLAGS@
+    @DLOG_CFLAGS@					\
+	-I../../../include				\
+	-I/usr/include/ico-util
 
 libico_state_machine_la_LIBADD =	\
     @DLOG_LIBS@

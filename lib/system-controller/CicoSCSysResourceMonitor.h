@@ -35,16 +35,9 @@ typedef struct t_stat_data {
     int irq;     // 6) Time servicing interrupts.
     int softirq; // 7) Time servicing softirqs.
     int steal;   // 8) Time stolen
-                 // 8) 盗まれた時間 (stolen time)。
-                 // 　仮想化環境での動作時に他のオペレーティングシステム
-                 // により消費された時間である。
+                 // 8) stolen time
     int guest;   // 9) Time guest OS
-                 // 9) Linux カーネルの制御下のゲストオペレーティング
-                 // システムの仮想CPUの実行に消費された時間。
     int guest_nice; // 10) Time guest OS(nice)
-                    // 10) nice が適用されたゲスト
-                    // (Linuxカーネルの制御下のゲストオペレーティング
-                    // システムの仮想CPU)の実行に消費された時間。
 } stat_data_t;
 
 class CicoSCSysResourceMonitorP {
@@ -72,11 +65,6 @@ public: // member Variable
   34)sigcatch, 35)wchan, 36)nswap, 37)cnswap, 38)exit_signal, 39)processor
   40)rt_priority, 41)policy, 42)delayacct_blkio_ticks, 43)guest_time
   44)cguest_time
-
-    CPU使用率は、14)utimeと15)stimeより求めます。
-    実行時間 = utime + stime
-    CPU使用率=(今回の実行時間(tick単位)-前回の実行時間(tick単位))/USER_HZ/(今回の測定時刻(秒単位)-前回の計測時刻(秒単位))
-    メモリの使用サイズは、23)vsizeの仮想メモリのサイズを取得します。
 */
 };
 
