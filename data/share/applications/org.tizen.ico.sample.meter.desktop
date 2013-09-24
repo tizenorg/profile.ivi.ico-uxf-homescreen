@@ -1,7 +1,0 @@
-Name=sampleMeter
-Type=Application
-Exec=/opt/apps/org.tizen.ico.sample.meter/bin/DummyApp -number=17
-Icon=org.tizen.ico.sample.meter.png
-NoDisplay=false
-Version=0.1.0
-Comment=Dummy

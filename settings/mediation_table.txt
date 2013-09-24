@@ -1,6 +1,0 @@
-[sound source]
-HOMESCREEN_BEEP=interrupt;beep;99;mute;non;non
-
-[application name]
-
-[application category]
