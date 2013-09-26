@@ -67,7 +67,7 @@ install-exec-hook:
 	install -m 0755 IcoSysconDaemon $(INSTALL_ROOT)/usr/apps/org.tizen.ico.system-controller/bin
 	install -m 0644 ../../data/share/packages/org.tizen.ico.system-controller.xml $(INSTALL_ROOT)/usr/share/packages
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.system-controller/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.system-controller/res/config
-	install -d -m 0744 app $(INSTALL_ROOT)/home/app/ico
+	install -d -m 0755 app $(INSTALL_ROOT)/home/app/ico
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.system-controller/res/ico/* $(INSTALL_ROOT)/home/app/ico
 	chown -fHR app $(INSTALL_ROOT)/home/app; set $?=0
 	chgrp -fHR app $(INSTALL_ROOT)/home/app; set $?=0

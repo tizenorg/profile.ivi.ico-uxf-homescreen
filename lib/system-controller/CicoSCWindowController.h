@@ -87,6 +87,14 @@ public:
                     const char *moveAnimation,
                     int        moveAnimationTime);
 
+    int setGeometry(int        surfaceid,
+                    int        nodeid,
+                    const char *zone,
+                    const char *resizeAnimation,
+                    int        resizeAnimationTime,
+                    const char *moveAnimation,
+                    int        moveAnimationTime);
+
     int raise(int surfaceid,
              const char  *animation,
              int         animationTime);
@@ -210,6 +218,9 @@ private:
 
     // display object list
     vector<CicoSCDisplay*>   m_displayList;
+
+    //
+    unsigned int m_physicalDisplayTotal;
 
 };
 #endif  // __CICO_SC_WINDOW_CONTROLLER_H__

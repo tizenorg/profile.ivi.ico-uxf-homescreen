@@ -182,10 +182,11 @@ CicoSCWlInputMgrIF::delInputApp(const string &appid,
  *
  *  @param [in] appid     application id
  *  @param [in] surfaceid surface id
- *  @param [in] type      //TODO
+ *  @param [in] type      device type
  *  @param [in] deviceno  input device number
- *  @param [in] code      //TODO
- *  @param [in] value     //TODO
+ *  @param [in] time      event time
+ *  @param [in] code      event code
+ *  @param [in] value     event value
  */
 //--------------------------------------------------------------------------
 void
@@ -193,14 +194,15 @@ CicoSCWlInputMgrIF::sendInputEvent(const string &appid,
                                    int          surfaceid,
                                    int          type,
                                    int          deviceno,
+                                   int          time,
                                    int          code,
                                    int          value)
 {
     ICO_DBG("called: ico_input_mgr_control_send_input_event"
-            "(appid=%s surfaceid=0x%08X type=%d deviceno=%d code=%d value=%d)",
-            appid.c_str(), surfaceid, type, deviceno, code, value);
+            "(appid=%s surfaceid=0x%08X type=%d deviceno=%d time=%d code=%d value=%d)",
+            appid.c_str(), surfaceid, type, deviceno, time, code, value);
     ico_input_mgr_control_send_input_event(m_inputmgr, appid.c_str(), surfaceid,
-                                           type, deviceno, code, value);
+                                           type, deviceno, time, code, value);
 }
 
 //--------------------------------------------------------------------------

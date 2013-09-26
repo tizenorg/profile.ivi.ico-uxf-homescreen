@@ -13,6 +13,7 @@
  */
 #include "CicoHSMenuWindow.h"
 #include "CicoHSMenuTouch.h"
+#include "CicoHomeScreenResourceConfig.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
 #include <stdio.h>
@@ -40,6 +41,15 @@ CicoHSMenuWindow::CicoHSMenuWindow(void)
     terminate_mode = false;
 
     current_page = 0;
+    subcurrent_page = 0;
+
+    for (int ii = 0; ii < ICO_HS_MENU_MAX_MENU_CATEGORY_NUM; ii++){
+        category_info[ii].id= 0;
+        category_info[ii].page = 0;
+        category_info[ii].subpage_max = 0;
+        category_info[ii].tile_num = 0;
+    }
+
     all_tile_num = 0;
     all_page_num = 0;
 
@@ -63,7 +73,7 @@ CicoHSMenuWindow::CicoHSMenuWindow(void)
     CicoHomeScreenResourceConfig::GetImagePath(img_dir_path,
                                                ICO_HS_MAX_PATH_BUFF_LEN);
 
-	m_showState = false;
+    m_showState = false;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -100,11 +110,11 @@ CicoHSMenuWindow::SetMenuBack(void)
     /* set object*/ 
     rectangle = evas_object_rectangle_add(evas);
     if (true == CicoHSSystemState::getInstance()->getNightMode()) {
-		evas_object_color_set(rectangle,0,0,0,178); 
-	}
-	else {
-		evas_object_color_set(rectangle,120,120,120,178); 
-	}
+        evas_object_color_set(rectangle,0,0,0,178); 
+    }
+    else {
+        evas_object_color_set(rectangle,120,120,120,178); 
+    }
     evas_object_move(rectangle, 0, 0);
     evas_object_resize(rectangle, width,height);
     evas_object_show(rectangle);
@@ -179,6 +189,36 @@ CicoHSMenuWindow::GetLayout(const char *filename,CicoLayoutInfo *layout,int *num
 
 /*--------------------------------------------------------------------------*/
 /**
+ * @brief   CicoHSMenuWindow::GetCategory
+ *          read category file
+ *
+ * @param[in]   filename   category file name
+ * @param[out]  category   category data
+ * @param[out]  num        num of category
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void 
+CicoHSMenuWindow::GetCategory(const char *filename, int *category, int *num)
+{
+    int ret;
+    FILE *fp;
+    *num = 0;
+    fp = fopen(filename,"r");
+    if(fp == NULL){
+        return;
+    }
+    int idx =0;
+    while( ( ret = fscanf( fp, "%d", &category[idx] 
+        ) ) != EOF ){
+        idx++;
+    }
+    *num = idx;
+    fclose(fp);
+} 
+
+/*--------------------------------------------------------------------------*/
+/**
  * @brief   CicoHSMenuWindow::SetLayout
  *          write layout file
  *
@@ -222,70 +262,81 @@ int
 CicoHSMenuWindow::SetAppTiles(void)
 {
     int tile_num = 0;
+    int category_num = 0;
+    int category[ICO_HS_MENU_MAX_TILE_NUM];
+    int ctg_idx = 0;
+    int position = 0;
+    int page = 0;
+    int subpage = 0;
+    int page_num = 0;
     current_page = 0;
-    CicoLayoutInfo layout[ICO_HS_MENU_MAX_TILE_NUM];
    
-    /* get APP information*/
+    /* get APP information */
     std::vector<CicoSCAilItems> aillist = 
         life_cycle_controller->getAilList();
 
-    GetLayout(ICO_HS_MENU_LAYOUT_FILE_PATH,layout,&tile_num);
-    if(tile_num != 0){
-        /*layout file exist*/
-        all_page_num = 0;
-        for(int ii =0;ii < tile_num;ii++){
-            
-            /*put tile*/
-            menu_tile[ii] = 
-                new CicoHSMenuTile(aillist[layout[ii].appidx].m_appid.c_str(),
-                aillist[layout[ii].appidx].m_icon.c_str(),
-                layout[ii].page,layout[ii].position,
-                layout[ii].tile_width,layout[ii].tile_height);
-            /*update manu num*/
-            if(layout[ii].page >= all_page_num){
-                all_page_num = layout[ii].page + 1;
+    /* get category infomation */
+    GetCategory(ICO_HS_MENU_CATEGORY_FILE_PATH, category, &category_num);
+    all_category_num = category_num;
+
+    ICO_DBG("CicoHSMenuWindow::SetAppTiles :category_num %d", category_num);
+    for (unsigned int ii = 0; ii < category_num ; ii++) {
+       ICO_DBG("CicoHSMenuWindow::SetAppTiles :category[%d] %d", ii, category[ii]);
+    }
+
+    /*first time layout*/
+    for(unsigned int ii = 0; ii < aillist.size(); ii++) {
+
+        /*all application num*/
+        if((aillist[ii].m_noIcon) ||
+                (strcmp(aillist[ii].m_group.c_str(), 
+                ICO_HS_GROUP_SPECIAL) == 0)) {
+            ICO_DBG("CicoHSMenuWindow::SetAppTiles :ignore app %s %d",
+                    aillist[ii].m_appid.c_str(),aillist[ii].m_noIcon);
+            continue;
+        }         
+        ICO_DBG("CicoHSMenuWindow::SetAppTiles :SetApp %s %d",
+                aillist[ii].m_appid.c_str(),aillist[ii].m_noIcon);
+        ICO_DBG("CicoHSMenuWindow::SetAppTile :aillist[%d].m_categoryID %d",
+                ii, aillist[ii].m_categoryID);
+
+        /* Categories */
+        for (ctg_idx = 0; ctg_idx < category_num ; ctg_idx++ ) {
+            if (aillist[ii].m_categoryID == category[ctg_idx]) {
+                SetCategoryInfo(ctg_idx, &page_num, category[ctg_idx]);
+                GetTileInfo(ctg_idx, &page, &subpage, &position);
+                break;
             }
         }
-        /*menu num*/
-        all_tile_num = tile_num;  
-    }
-    else{
-        /*first time layout*/
-        for(unsigned int ii = 0; ii < aillist.size(); ii++) {
-            /*all application num*/
-            if((aillist[ii].m_noIcon) ||
-                    (strcmp(aillist[ii].m_group.c_str(), 
-                     ICO_HS_GROUP_SPECIAL) == 0)) {
-                ICO_DBG("CicoHSMenuWindow::SetAppTiles :ignore app %s %d",
-                        aillist[ii].m_appid.c_str(),aillist[ii].m_noIcon);
-                continue;
-            }         
-            ICO_DBG("CicoHSMenuWindow::SetAppTiles :SetApp %s %d",
-                    aillist[ii].m_appid.c_str(),aillist[ii].m_noIcon);
-            /* put tile */
-            menu_tile[tile_num] = 
-                new CicoHSMenuTile(aillist[ii].m_appid.c_str(),
-                aillist[ii].m_icon.c_str(),
-                tile_num / ICO_HS_MENUTILE_NUM,tile_num % ICO_HS_MENUTILE_NUM,
-                ICO_HS_MENUTILE_WIDTH,ICO_HS_MENUTILE_HEIGHT);
-            /* layout data */
-            layout[tile_num].appidx = ii;
-            layout[tile_num].page = tile_num / ICO_HS_MENUTILE_NUM;
-            layout[tile_num].position = tile_num % ICO_HS_MENUTILE_NUM;
-            layout[tile_num].tile_width = ICO_HS_MENUTILE_WIDTH;
-            layout[tile_num].tile_height = ICO_HS_MENUTILE_HEIGHT;
-             
-            tile_num++;
-        }
-        /*write layout data*/
-        SetLayout(ICO_HS_MENU_LAYOUT_FILE_PATH,layout,tile_num);
 
-        /*menu num*/
-        all_tile_num = tile_num;    
-        all_page_num = all_tile_num / ICO_HS_MENUTILE_NUM;
-        if(all_tile_num % ICO_HS_MENUTILE_NUM){
-           ++all_page_num;
+        /* Other categories */
+        if (ctg_idx == category_num) {
+            SetCategoryInfo(ctg_idx, &page_num, ICO_HS_MENU_OTHER_CATEGORY_ID);
+            GetTileInfo(ctg_idx, &page, &subpage, &position);
         }
+
+        /* put tile */
+        menu_tile[tile_num] = 
+            new CicoHSMenuTile(aillist[ii].m_appid.c_str(),
+            aillist[ii].m_icon.c_str(),page, subpage, position,
+            ICO_HS_MENUTILE_WIDTH,ICO_HS_MENUTILE_HEIGHT);
+
+        tile_num++;
+
+    }
+    /*menu num*/
+    all_tile_num = tile_num;    
+    all_page_num = page_num;
+
+    for(unsigned int ii = 0; ii < all_category_num ; ii++){
+        ICO_DBG("CicoHSMenuWindow::SetAppTile :category_info[%d].id %d",
+                ii, category_info[ii].id);
+        ICO_DBG("CicoHSMenuWindow::SetAppTile :category_info[%d].subpage_max %d",
+                ii, category_info[ii].subpage_max);
+        ICO_DBG("CicoHSMenuWindow::SetAppTile :category_info[%d].page %d",
+                ii, category_info[ii].page);
+        ICO_DBG("CicoHSMenuWindow::SetAppTile :category_info[%d].tile_num %d",
+                ii , category_info[ii].tile_num);
     }
    
     /*in case of over max num*/
@@ -302,6 +353,10 @@ CicoHSMenuWindow::SetAppTiles(void)
         if(menu_tile[ii]->GetPage() != 0){
             /*out of window*/
             menu_tile[ii]->OffsetMove(width,0);
+        }
+        if(menu_tile[ii]->GetSubPage() != 0){
+            /*out of window*/
+            menu_tile[ii]->OffsetMove(height,0);
         }
     }
     return ICO_OK;
@@ -531,6 +586,80 @@ CicoHSMenuWindow::HideTerminateButton(void)
    evas_object_hide(terminate_button_no);
 }
 
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::SetPageCursor
+ *          create object and show (page cursor)
+ *
+ * @param[in]   none
+ * @return      ERROR or OK
+ */
+/*--------------------------------------------------------------------------*/
+int
+CicoHSMenuWindow::SetPageCursor(void)
+{
+    char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
+
+    /* up cursor */
+    snprintf(img_path,sizeof(img_path),"%s%s",
+                 img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGE_UP_CURSOR);
+
+    /* set object*/
+    page_up_cursor = evas_object_image_filled_add(evas);
+    evas_object_image_file_set(page_up_cursor, img_path, NULL);
+    int err = evas_object_image_load_error_get(page_up_cursor);
+    if (err != EVAS_LOAD_ERROR_NONE) {
+        ICO_ERR("CicoHSMenuWindow::SetPagePointer: page up cursor image is not exist");
+        evas_object_del(page_up_cursor);
+        return ICO_ERROR;
+    }
+
+    evas_object_move(page_up_cursor, ICO_HS_MENU_PAGE_UP_CURSOR_START_POS_X,
+                     ICO_HS_MENU_PAGE_UP_CURSOR_START_POS_Y);
+    evas_object_resize(page_up_cursor,
+                     ICO_HS_MENU_PAGE_UP_CURSOR_WIDTH,
+                     ICO_HS_MENU_PAGE_UP_CURSOR_HEIGHT);
+
+    /* down cursor */
+    snprintf(img_path,sizeof(img_path),"%s%s",
+                 img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGE_DOWN_CURSOR);
+
+    /* set object*/
+    page_down_cursor = evas_object_image_filled_add(evas);
+    evas_object_image_file_set(page_down_cursor, img_path, NULL);
+    err = evas_object_image_load_error_get(page_down_cursor);
+    if (err != EVAS_LOAD_ERROR_NONE) {
+        ICO_ERR("CicoHSMenuWindow::SetPagePointer: page down cursor image is not exist");
+        evas_object_del(page_down_cursor);
+        return ICO_ERROR;
+    }
+
+    evas_object_move(page_down_cursor, ICO_HS_MENU_PAGE_DOWN_CURSOR_START_POS_X,
+                     ICO_HS_MENU_PAGE_DOWN_CURSOR_START_POS_Y);
+    evas_object_resize(page_down_cursor,
+                     ICO_HS_MENU_PAGE_DOWN_CURSOR_WIDTH,
+                     ICO_HS_MENU_PAGE_DOWN_CURSOR_HEIGHT);
+
+    DspCtrlPageCursor();
+     
+    return ICO_OK;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::FreePageCursor
+ *          free object (page cursor)
+ *
+ * @param[in]   none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuWindow::FreePageCursor(void)
+{
+    evas_object_del(page_up_cursor);
+    evas_object_del(page_down_cursor);
+}
 
 /*--------------------------------------------------------------------------*/
 /**
@@ -589,16 +718,29 @@ CicoHSMenuWindow::CreateMenuWindow(int pos_x,int pos_y,int width,int height)
         return ICO_ERROR;
     }
 
-    /* Page Pointer */
-    ret = SetTerminateButton();
+    /* Page Cursor */
+    ret = SetPageCursor();
     if(ret != ICO_OK){
-        ICO_ERR("CicoHSMenuWindow::CreateMenuWindow: could not make teminate button.");
+        ICO_ERR("CicoHSMenuWindow::CreateMenuWindow: could not make page cursor.");
         FreePagePointer();
         FreeAppTiles();
         FreeMenuBack();
         FreeWindow();
         return ICO_ERROR;
     }
+
+    /* Terminate Button */
+    ret = SetTerminateButton();
+    if(ret != ICO_OK){
+        ICO_ERR("CicoHSMenuWindow::CreateMenuWindow: could not make teminate button.");
+        FreePageCursor();
+        FreePagePointer();
+        FreeAppTiles();
+        FreeMenuBack();
+        FreeWindow();
+        return ICO_ERROR;
+    }
+
     /* Initialize Action*/ 
     CicoHSMenuTouch::Initialize(this);
 
@@ -618,6 +760,7 @@ void
 CicoHSMenuWindow::FreeMenuWindow(void)
 {
     FreeTerminateButton();
+    FreePageCursor();
     FreePagePointer();
     FreeAppTiles();
     FreeMenuBack();
@@ -645,10 +788,11 @@ CicoHSMenuWindow::MoveToNextAnimation(void *data,double pos)
         if(menu_window_instance->menu_tile[ii] == NULL){
             continue;
         }
-        if(menu_window_instance->menu_tile[ii]->GetPage() != current_page -1){
+        if((menu_window_instance->menu_tile[ii]->GetPage() != current_page -1) || 
+           (menu_window_instance->menu_tile[ii]->GetSubPage() != 0)) {
             continue;
         }
-        
+
         menu_window_instance->menu_tile[ii]->OffsetMove(-1 * 
                               (menu_window_instance->width * frame),0);
     } 
@@ -657,7 +801,8 @@ CicoHSMenuWindow::MoveToNextAnimation(void *data,double pos)
         if(menu_window_instance->menu_tile[ii] == NULL){
             continue;
         }
-        if(menu_window_instance->menu_tile[ii]->GetPage()  != current_page){
+        if((menu_window_instance->menu_tile[ii]->GetPage() != current_page) ||
+          (menu_window_instance->menu_tile[ii]->GetSubPage() != 0)){
             continue;
         }
 
@@ -690,9 +835,11 @@ CicoHSMenuWindow::MoveToBackAnimation(void *data,double pos)
         if(menu_window_instance->menu_tile[ii] == NULL){
             continue;
         }
-        if(menu_window_instance->menu_tile[ii]->GetPage()  != current_page){
+        if((menu_window_instance->menu_tile[ii]->GetPage() != current_page) ||
+          (menu_window_instance->menu_tile[ii]->GetSubPage() != 0)){
             continue;
         }
+
         menu_window_instance->menu_tile[ii]->OffsetMove(-1 * 
                                  menu_window_instance->width + 
                                  (menu_window_instance->width * frame),0);
@@ -701,10 +848,113 @@ CicoHSMenuWindow::MoveToBackAnimation(void *data,double pos)
         if(menu_window_instance->menu_tile[ii] == NULL){
             continue;
         }
-        if(menu_window_instance->menu_tile[ii]->GetPage()  != current_page + 1){
+        if((menu_window_instance->menu_tile[ii]->GetPage()  != current_page + 1) ||
+          (menu_window_instance->menu_tile[ii]->GetSubPage()  != 0)){
             continue;
         }
+
         menu_window_instance->menu_tile[ii]->OffsetMove(menu_window_instance->width * frame,0);
+    }
+
+    return EINA_TRUE;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::MoveToNextSubAnimation
+ *          animation parts (move to next)
+ *
+ * @param[in]   data    
+ * @param[in]   pos
+ * @return      EINA_TRUE
+ */
+/*--------------------------------------------------------------------------*/
+Eina_Bool
+CicoHSMenuWindow::MoveToNextSubAnimation(void *data,double pos)
+{
+    CicoCurrentPage *current_info;
+    double frame = ecore_animator_pos_map(pos, ECORE_POS_MAP_LINEAR, 0.5, 1);
+    current_info = (CicoCurrentPage *)(data);
+    
+    for(int ii = 0;ii < menu_window_instance->all_tile_num;ii++){
+        if(menu_window_instance->menu_tile[ii] == NULL){
+            continue;
+        }
+        if(menu_window_instance->menu_tile[ii]->GetSubPage() != current_info->subcurrent_page -1){
+            continue;
+        }
+        if(menu_window_instance->menu_tile[ii]->GetPage() != current_info->current_page){
+            continue;
+        }
+
+        menu_window_instance->menu_tile[ii]->OffsetMove(0, -1 * 
+                              (menu_window_instance->height * frame));
+    } 
+
+    for(int ii = 0;ii < menu_window_instance->all_tile_num;ii++){
+        if(menu_window_instance->menu_tile[ii] == NULL){
+            continue;
+        }
+        if(menu_window_instance->menu_tile[ii]->GetSubPage() != current_info->subcurrent_page){
+            continue;
+        }
+
+        if(menu_window_instance->menu_tile[ii]->GetPage() != current_info->current_page){
+            continue;
+        }
+
+        menu_window_instance->menu_tile[ii]->OffsetMove(0, menu_window_instance->height -
+                                   (menu_window_instance->height * frame));
+    }
+    
+    return EINA_TRUE;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::MoveToBackAnimation
+ *          animation parts (move to back)
+ *
+ * @param[in]   data    
+ * @param[in]   pos
+ * @return      EINA_TRUE
+ */
+/*--------------------------------------------------------------------------*/
+Eina_Bool
+CicoHSMenuWindow::MoveToBackSubAnimation(void *data,double pos)
+{
+
+    CicoCurrentPage *current_info;
+    double frame = ecore_animator_pos_map(pos, ECORE_POS_MAP_LINEAR, 0.5, 1);
+    current_info = (CicoCurrentPage *)(data);
+
+    for(int ii = 0;ii < menu_window_instance->all_tile_num;ii++){
+        if(menu_window_instance->menu_tile[ii] == NULL){
+            continue;
+        }
+        if(menu_window_instance->menu_tile[ii]->GetSubPage() != current_info->subcurrent_page){
+            continue;
+        }
+        if(menu_window_instance->menu_tile[ii]->GetPage() != current_info->current_page){
+            continue;
+        }
+
+        menu_window_instance->menu_tile[ii]->OffsetMove(0, -1 * 
+                                 menu_window_instance->height + 
+                                 (menu_window_instance->height * frame));
+    }
+    for(int ii = 0;ii < menu_window_instance->all_tile_num;ii++){
+        if(menu_window_instance->menu_tile[ii] == NULL){
+            continue;
+        }
+        if(menu_window_instance->menu_tile[ii]->GetSubPage() != current_info->subcurrent_page + 1){
+            continue;
+        }
+        if(menu_window_instance->menu_tile[ii]->GetPage() != current_info->current_page){
+            continue;
+        }
+
+        menu_window_instance->menu_tile[ii]->OffsetMove(0, menu_window_instance->height * frame);
     }
 
     return EINA_TRUE;
@@ -723,17 +973,25 @@ void
 CicoHSMenuWindow::GoNextMenu(void)
 {
     char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
-    if(current_page >= all_page_num -1){
+
+    if((current_page >= all_page_num -1) || (subcurrent_page > 0)){
         return;
     }
+
     /*page pointer*/
     snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_N);
     evas_object_image_file_set(page_pointer[current_page], img_path, NULL);
+
     /* increment*/
     ++current_page;
+
+    /* display cursor */
+    DspCtrlPageCursor();
+
     /*page pointer*/
     snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_P);
     evas_object_image_file_set(page_pointer[current_page], img_path, NULL);
+
     /*tile*/    
     ecore_animator_frametime_set(1.0f / 30);
     ecore_animator_timeline_add(0.4, MoveToNextAnimation,
@@ -755,21 +1013,199 @@ CicoHSMenuWindow::GoBackMenu(void)
 {
     char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
 
-    if(current_page <= 0){
+    if((current_page <= 0) || (subcurrent_page > 0)){
         return;
     }
+
     /*page pointer*/
     snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_N);
     evas_object_image_file_set(page_pointer[current_page], img_path, NULL);
+
     /*decrement*/
     --current_page; 
+
+    /* display cursor */
+    DspCtrlPageCursor();
+
     /*page pointer*/
     snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_P);
     evas_object_image_file_set(page_pointer[current_page], img_path, NULL);
+
     /*tile*/    
     ecore_animator_frametime_set(1.0f / 30);
     ecore_animator_timeline_add(0.4, MoveToBackAnimation,
                                 reinterpret_cast<void*>(current_page));
+
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::DownNextMenu
+ *          menu change to next
+ *
+ * @param[in]   none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuWindow::DownNextMenu(void)
+{
+    for (int i = 0; i < all_category_num; i++) {
+        if (category_info[i].tile_num > 0) {
+            if (current_page == category_info[i].page) {
+                if (subcurrent_page >= category_info[i].subpage_max){
+                    return;
+                }
+            }
+        }
+    }
+
+    /* increment*/
+    ++subcurrent_page;
+
+    /* display cursor */
+    DspCtrlPageCursor();
+
+    /* current page set */
+    current_info.current_page = current_page;
+    current_info.subcurrent_page = subcurrent_page;
+
+    /*tile*/    
+    ecore_animator_frametime_set(1.0f / 30);
+    ecore_animator_timeline_add(0.4, MoveToNextSubAnimation,
+                                (void*)(&current_info));
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::UpBackMenu
+ *          menu change to back
+ *
+ * @param[in]   none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuWindow::UpBackMenu(void)
+{
+    if(subcurrent_page <= 0){
+        return;
+    }
+
+    /*decrement*/
+    --subcurrent_page;
+
+    /* display cursor */
+    DspCtrlPageCursor();
+
+    /* current page set */
+    current_info.current_page = current_page;
+    current_info.subcurrent_page = subcurrent_page;
+
+    /*tile*/
+    ecore_animator_frametime_set(1.0f / 30);
+    ecore_animator_timeline_add(0.4, MoveToBackSubAnimation,
+                                (void*)(&current_info));
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::DspCtrlPageCursor
+ *          display control page cursor
+ *
+ * @param[in]   none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuWindow::DspCtrlPageCursor(void)
+{
+    int subpage_max = 0;
+    for (int i = 0; i < all_category_num ; i++) {
+        if (category_info[i].tile_num > 0) {
+            if (current_page == category_info[i].page) {
+                subpage_max = category_info[i].subpage_max;
+                break;
+            }
+        }
+    }
+    
+    if (subcurrent_page > 0) {
+        evas_object_show(page_up_cursor);
+    }
+    else {
+        evas_object_hide(page_up_cursor);
+    }
+
+    if (subcurrent_page < subpage_max) {
+        evas_object_show(page_down_cursor);
+    }
+    else {
+        evas_object_hide(page_down_cursor);
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::SetCategoryInfo
+ *          get tile info
+ *
+ * @param[in]         idx        category index
+ * @param[ini/out]    page_num   page number
+ * @param[in]         id         menu category id
+ * @return            none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuWindow::SetCategoryInfo(int idx, int *page_num, int id)
+{
+    int page = *page_num;
+
+    /* id , page */
+    if (category_info[idx].tile_num == 0) {
+        category_info[idx].id = id;
+        category_info[idx].page = page;
+        page++;
+        *page_num = page;
+
+        /* add other category */
+        if (id == ICO_HS_MENU_OTHER_CATEGORY_ID) {
+            all_category_num++;
+        }
+    }
+    /* sub page max */
+     category_info[idx].subpage_max = 
+       category_info[idx].tile_num / ICO_HS_MENUTILE_NUM;
+
+    /* tile num */
+    category_info[idx].tile_num++;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuWindow::GetTileInfo
+ *          get tile info
+ *
+ * @param[in]       idx        category index
+ * @param[out]      page       menu page
+ * @param[out]      subpage    menu sub page
+ * @param[out]      position   menu tile position
+ * @return          none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuWindow::GetTileInfo(int idx, int *page, int *subpage, int *position)
+{
+    if (category_info[idx].tile_num == 0) {
+        ICO_ERR("CicoHSMenuWindow::GetTileInfo: number of tiles is 0.");
+        return;
+    }
+    /* page */
+    *page = category_info[idx].page;
+    /* sub page */      
+    *subpage = (category_info[idx].tile_num -1) / ICO_HS_MENUTILE_NUM; 
+    /* pasition */
+    *position = (category_info[idx].tile_num -1) % ICO_HS_MENUTILE_NUM;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -800,11 +1236,11 @@ CicoHSMenuWindow::SetMenuWindowID(const char *appid,int surface)
 void
 CicoHSMenuWindow::Show(ico_syc_animation_t *animation)
 {
-	// if regulation == true, forbid show window.
+    // if regulation == true, forbid show window.
     if (true == CicoHSSystemState::getInstance()->getRegulation()) {
-		return;
-	}
-	m_showState = true;
+        return;
+    }
+    m_showState = true;
     ico_syc_show(appid,surface,animation);
 }
 
@@ -823,7 +1259,7 @@ CicoHSMenuWindow::Hide(ico_syc_animation_t *animation)
     if(terminate_mode == true){
         ChangeNormalMode();
     }
-	m_showState = false;
+    m_showState = false;
     ico_syc_hide(appid,surface,animation);
 }
 /*--------------------------------------------------------------------------*/
@@ -997,18 +1433,12 @@ CicoHSMenuWindow::SetThumbnail(const char *appid,int surface)
 void
 CicoHSMenuWindow::SetNightMode(void)
 {
-    ICO_DBG("CicoHSControlBarWindow::SetNightMode Enter");
+    ICO_DBG("CicoHSMenuWindow::SetNightMode Enter");
     if (true == CicoHSSystemState::getInstance()->getNightMode()) {
-		evas_object_color_set(rectangle,0,0,0,178); 
-	}
-	else {
-		evas_object_color_set(rectangle,120,120,120,178); 
-	}
-
-	// redraw
-	if (true == m_showState) {
-		Hide(NULL);
-		Show(NULL);
-	}
-    ICO_DBG("CicoHSControlBarWindow::SetNightMode Leave");
+        evas_object_color_set(rectangle,0,0,0,178); 
+    }
+    else {
+        evas_object_color_set(rectangle,120,120,120,178); 
+    }
+    ICO_DBG("CicoHSMenuWindow::SetNightMode Leave");
 }

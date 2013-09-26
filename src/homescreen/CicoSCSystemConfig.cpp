@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCSystemConfig.cpp
  *
- *  @brief  
+ *  @brief  This file implementation of CicoSCSystemConfig class
  */
 /*========================================================================*/    
 
@@ -50,7 +50,7 @@ CicoSCSystemConfig::CicoSCSystemConfig()
 
     // 
     m_categoryTalbe[""]              = ICO_POLICY_ALWAYS;
-    m_categoryTalbe["alway"]         = ICO_POLICY_ALWAYS;
+    m_categoryTalbe["always"]        = ICO_POLICY_ALWAYS;
     m_categoryTalbe["run"]           = ICO_POLICY_RUNNING;
     m_categoryTalbe["park"]          = ICO_POLICY_PARKED;
     m_categoryTalbe["shift_park"]    = ICO_POLICY_SHIFT_PARKING;
@@ -68,9 +68,8 @@ CicoSCSystemConfig::CicoSCSystemConfig()
     m_privilegeTable["certificate"]    = ICO_PRIVILEGE_CERTIFICATE;
     m_privilegeTable["none"]           = ICO_PRIVILEGE_NONE;
     m_privilegeTable[""]               = ICO_PRIVILEGE_NONE;
-
+    m_resourceConf = NULL;
     m_userConf = NULL;
-
 }
 
 //--------------------------------------------------------------------------
@@ -103,7 +102,7 @@ CicoSCSystemConfig::getInstance(void)
 /**
  *  @brief  Get instance of CicoSCSystemConfig
  *
- *  @param  [IN]    confFile    config file name
+ *  @param  [in]    confFile    config file name
  *  @return 0 on success, other on error
  */
 //--------------------------------------------------------------------------
@@ -122,7 +121,7 @@ CicoSCSystemConfig::load(const string & confFile)
     createInputDevList(root);
     createDefaultConf(root);
     createLogConf(root);
-
+    createResourceConf(root);
     createUserConf(root);
 
     return 0;   //TODO
@@ -132,7 +131,20 @@ CicoSCSystemConfig::load(const string & confFile)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const vector<CicoSCNodeConf*>&
+CicoSCSystemConfig::getNodeConfList(void) const
+{
+    return m_nodeConfList;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const vector<CicoSCDisplayConf*>&
@@ -145,7 +157,59 @@ CicoSCSystemConfig::getDisplayConfList(void) const
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const vector<CicoSCSoundConf*>&
+CicoSCSystemConfig::getSoundConfList(void) const
+{
+    return m_soundConfList;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const vector<CicoSCInputDevConf*> &
+CicoSCSystemConfig::getInputDevConfList(void) const
+{
+    return m_inputDevConfList;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const vector<CicoSCCategoryConf*> &
+CicoSCSystemConfig::getCategoryConfList(void) const
+{
+    return m_categoryConfList;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const vector<CicoSCAppKindConf*> &
+CicoSCSystemConfig::getAppKindConfList(void) const
+{
+    return m_appKindConfList;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -203,7 +267,7 @@ CicoSCSystemConfig::createNodeConfList(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -302,7 +366,7 @@ CicoSCSystemConfig::createDisplayConfList(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -353,12 +417,12 @@ CicoSCSystemConfig::createLayerConf(const ptree::value_type & child,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
 CicoSCSystemConfig::createDisplayZoneConf(const ptree::value_type & child,
-                                   CicoSCDisplayConf* displayConf)
+                                          CicoSCDisplayConf* displayConf)
 {
     ptree zones = child.second.get_child("zones");
     BOOST_FOREACH (const ptree::value_type& zone, zones) {
@@ -407,12 +471,13 @@ CicoSCSystemConfig::createDisplayZoneConf(const ptree::value_type & child,
         }
 
         CicoSCDisplayZoneConf* zoneConf = new CicoSCDisplayZoneConf();
-        zoneConf->id   = id.get();
-        zoneConf->name = name.get();
-        zoneConf->x    = calcGeometryExpr(x.get(), displayConf);
-        zoneConf->y    = calcGeometryExpr(y.get(), displayConf);
-        zoneConf->w    = calcGeometryExpr(w.get(), displayConf);
-        zoneConf->h    = calcGeometryExpr(h.get(), displayConf);
+        zoneConf->id         = id.get();
+        zoneConf->name       = name.get();
+        zoneConf->fullname   = displayConf->name + "." + name.get();
+        zoneConf->x          = calcGeometryExpr(x.get(), displayConf);
+        zoneConf->y          = calcGeometryExpr(y.get(), displayConf);
+        zoneConf->w          = calcGeometryExpr(w.get(), displayConf);
+        zoneConf->h          = calcGeometryExpr(h.get(), displayConf);
         zoneConf->overlapStr = overlap.get();
         displayConf->zoneConfList.push_back(zoneConf);
 
@@ -424,7 +489,7 @@ CicoSCSystemConfig::createDisplayZoneConf(const ptree::value_type & child,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -469,7 +534,7 @@ CicoSCSystemConfig::createSoundConfList(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -492,14 +557,11 @@ CicoSCSystemConfig::createSoundZoneConf(const ptree::value_type & child,
         if (false == name.is_initialized()) {
             continue;
         }
-#if 0
-        cout << "id=" << id.get() << endl;
-        cout << "name=" << name.get() << endl;
-#endif
 
         CicoSCSoundZoneConf* zoneConf = new CicoSCSoundZoneConf();
-        zoneConf->id   = id.get();
-        zoneConf->name = name.get();
+        zoneConf->id       = id.get();
+        zoneConf->name     = name.get();
+        zoneConf->fullname = soundConf->name + "." + name.get();
         soundConf->zoneConfList.push_back(zoneConf);
 
         zoneConf->dumpConf();
@@ -510,7 +572,7 @@ CicoSCSystemConfig::createSoundZoneConf(const ptree::value_type & child,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -531,12 +593,6 @@ CicoSCSystemConfig::createPortConf(const ptree & root)
             continue;
         }
 
-#if 0
-        cout << "id=" << id.get() << endl;
-        cout << "name=" << name.get() << endl;
-        cout << "port=" << child.second.data() << endl;
-#endif
-
         switch (id.get()) {
         case 0:
             // TODO
@@ -555,7 +611,7 @@ CicoSCSystemConfig::createPortConf(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -571,6 +627,7 @@ CicoSCSystemConfig::createCategoryConf(const ptree & root)
         optional<string> sound;
         optional<string> input;
         optional<int> priority = optional<int>(-1);
+        optional<int> r_ctrl = optional<int>(-1);
         
         id = child.second.get_optional<int>("<xmlattr>.id");
         if (false == id.is_initialized()) {
@@ -600,15 +657,10 @@ CicoSCSystemConfig::createCategoryConf(const ptree & root)
         if (false == priority.is_initialized()) {
             continue;
         }
-#if 0
-        cout << "id=" << id.get() << endl;
-        cout << "name=" << name.get() << endl;
-        cout << "type=" << type.get() << endl;
-        cout << "view=" << view.get() << endl;
-        cout << "sound=" << sound.get() << endl;
-        cout << "input=" << input.get() << endl;
-        cout << "priority=" << priority.get() << endl;
-#endif
+        r_ctrl = child.second.get_optional<int>("r_ctrl");
+        if (false == r_ctrl.is_initialized()) {
+            continue;
+        }
 
         CicoSCCategoryConf* categoryConf = new CicoSCCategoryConf();
         categoryConf->id       = id.get();
@@ -618,6 +670,7 @@ CicoSCSystemConfig::createCategoryConf(const ptree & root)
         categoryConf->sound    = m_categoryTalbe[sound.get()];
         categoryConf->input    = m_categoryTalbe[input.get()];
         categoryConf->priority = priority.get();
+        categoryConf->rctrl    = r_ctrl.get();
         m_categoryConfList.push_back(categoryConf);
         categoryConf->dumpConf();
     }
@@ -627,7 +680,7 @@ CicoSCSystemConfig::createCategoryConf(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -661,13 +714,6 @@ CicoSCSystemConfig::createAppKindConf(const ptree & root)
             continue;
         }
 
-#if 0
-        cout << "id=" << id.get() << endl;
-        cout << "name=" << name.get() << endl;
-        cout << "privilege=" << privilege.get() << endl;
-        cout << "priority=" << priority.get() << endl;
-#endif
-
         CicoSCAppKindConf* appKindConf = new CicoSCAppKindConf();
         appKindConf->id        = id.get();
         appKindConf->name      = name.get();
@@ -682,7 +728,7 @@ CicoSCSystemConfig::createAppKindConf(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -703,10 +749,6 @@ CicoSCSystemConfig::createInputDevList(const ptree & root)
         if (false == name.is_initialized()) {
             continue;
         }
-#if 0
-        cout << "id=" << id.get() << endl;
-        cout << "name=" << name.get() << endl;
-#endif
                                                 
         CicoSCInputDevConf* inputDevConf = new CicoSCInputDevConf();
         inputDevConf->id   = id.get();
@@ -722,7 +764,7 @@ CicoSCSystemConfig::createInputDevList(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -750,12 +792,6 @@ CicoSCSystemConfig::createSwitchList(const ptree::value_type & child,
             continue;
         }
 
-#if 0
-        cout << "id=" << id.get() << endl;
-        cout << "name=" << name.get() << endl;
-        cout << "appid=" << appid.get() << endl;
-#endif
-
         CicoSCSwitchConf* switchConf = new CicoSCSwitchConf();
         switchConf->id    = id.get();
         switchConf->name  = name.get();
@@ -769,7 +805,7 @@ CicoSCSystemConfig::createSwitchList(const ptree::value_type & child,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -839,19 +875,6 @@ CicoSCSystemConfig::createDefaultConf(const ptree & root)
         ICO_WRN("default.inputdsw element not found");
     }
 
-#if 0
-    cout << "node=" << node.get() << endl;
-    cout << "appkind=" << appkind.get() << endl;
-    cout << "category=" << category.get() << endl;
-    cout << "display=" << display.get() << endl;
-    cout << "layer=" << layer.get() << endl;
-    cout << "displayzone=" << displayzone.get() << endl;
-    cout << "sound=" << sound.get() << endl;
-    cout << "soundzone=" << soundzone.get() << endl;
-    cout << "inputdev=" << inputdev.get() << endl;
-    cout << "inputsw=" << inputsw.get() << endl;
-#endif
-
     m_defaultConf = new CicoSCDefaultConf();
 
     m_defaultConf->node        = getNodeIdbyName(node.get());
@@ -899,7 +922,7 @@ CicoSCSystemConfig::createDefaultConf(const ptree & root)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 void
@@ -911,20 +934,128 @@ CicoSCSystemConfig::createLogConf(const ptree & root)
     int loglevel  = logNode.get<int>("loglevel");
     bool logflush = logNode.get<bool>("logflush");
 
-#if 0
-    cout << "loglevel=" << loglevel << endl;
-    cout << "logflush=" << logflush << endl;
-#endif
-
     m_loglevel = loglevel;
     m_logflush = logflush;
 }
 
 //--------------------------------------------------------------------------
 /**
+ *  @brief  resource config class object create
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+void getArray(ptree& t, vector<int>& vec);
+static const char* g_resource_cpu = "systemconfig.resource_cpu_control";
+void
+CicoSCSystemConfig::createResourceConf(const ptree & root)
+{
+    m_resourceConf = new CicoSCResourceConf;
+    ptree rc = root.get_child(g_resource_cpu);
+    bool b = false;
+    optional<string> opts = rc.get_optional<string>("do_it");
+    if (true == opts.is_initialized()) {
+        string v = opts.get();
+        if (0 == v.compare("yes")) {
+            b = true;
+        }
+    }
+    m_resourceConf->m_bDoIt = b;
+    if (false == b) {
+        return;
+    }
+
+    string dirnm;
+    optional<string> opts2 = rc.get_optional<string>("ctrl_dir_path");
+    if (true == opts2.is_initialized()) {
+        dirnm = opts2.get();
+    }
+    else {
+        dirnm = "/sys/fs/cgroup/cpu,cpuacct/SCprivate";
+    }
+    m_resourceConf->m_cpuCGRPPath = dirnm;
+
+    opts = rc.get_optional<string>("sampling_wait");
+    if (true == opts.is_initialized()) {
+        m_resourceConf->m_sampling = atoi(opts.get().c_str());
+    }
+
+    opts = rc.get_optional<string>("log");
+    if (true == opts.is_initialized()) {
+        string v = opts.get();
+        if (0 == v.compare("true")) {
+            m_resourceConf->m_bLog = true;
+        }
+    }
+
+    opts = rc.get_optional<string>("retry_cnt");
+    if (true == opts.is_initialized()) {
+        m_resourceConf->m_retryCnt = atoi(opts.get().c_str());
+    }
+
+    opts = rc.get_optional<string>("low_limit_value");
+    if (true == opts.is_initialized()) {
+        m_resourceConf->m_lowLimitVal = atoi(opts.get().c_str());
+    }
+
+    opts = rc.get_optional<string>("high_limit_value");
+    if (true == opts.is_initialized()) {
+        m_resourceConf->m_highLimitVal = atoi(opts.get().c_str());
+    }
+
+    BOOST_FOREACH(ptree::value_type& child, rc) {
+        optional<int> id = optional<int>(-1);
+        optional<string> name;
+        id = child.second.get_optional<int>("<xmlattr>.id");
+        if (false == id.is_initialized()) {
+            continue;
+        }
+        name = child.second.get_optional<string>("<xmlattr>.name");
+        if (false == name.is_initialized()) {
+            continue;
+        }
+        ptree pth = child.second.get_child("hight_array");
+        ptree ptl = child.second.get_child("low_array");
+
+        CicoSCCpuResourceGrp* obj = new CicoSCCpuResourceGrp;
+        obj->m_id    = id.get();
+        obj->m_bDoIt = b;
+        obj->m_grpNm = name.get();
+        getArray(pth, obj->m_hight);
+        getArray(ptl, obj->m_low);
+        m_resourceConf->m_cpuCtrl.push_back(obj);
+    }
+    m_resourceConf->dumpConf();
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  user config class object create
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+static const char* g_login_user_conf = "systemconfig.login_user";
+void
+CicoSCSystemConfig::createUserConf(const ptree & root)
+{
+    m_userConf = new CicoSCUserConf;
+    ptree rc = root.get_child(g_login_user_conf);
+    optional<string> opts = rc.get_optional<string>("parent_dir");
+    if (true == opts.is_initialized()) {
+        string v = opts.get();
+        if (v.empty()) {
+            m_userConf->m_parent_dir = v;
+        }
+    }
+    m_userConf->dumpConf();
+}
+
+//--------------------------------------------------------------------------
+/**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1012,7 +1143,7 @@ CicoSCSystemConfig::calcGeometryExpr(const string & expr,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCNodeConf*
@@ -1034,7 +1165,7 @@ CicoSCSystemConfig::findNodeConfbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCDisplayConf*
@@ -1057,7 +1188,7 @@ CicoSCSystemConfig::findDisplayConfbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCLayerConf*
@@ -1087,16 +1218,21 @@ CicoSCSystemConfig::findLayerConfbyName(const string & displayName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCDisplayZoneConf*
 CicoSCSystemConfig::findDisplayZoneConfbyName(const string & displayName,
                                               const string & zoneName)
 {
+    ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Enter"
+            "(displayName=%s zoneNmae=%s)",
+            displayName.c_str(), zoneName.c_str());
+
     const CicoSCDisplayConf* displayConf = NULL;
     displayConf = findDisplayConfbyName(displayName);
     if (NULL == displayConf) {
+        ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave(NULL)");
         return NULL;
     }
 
@@ -1106,10 +1242,13 @@ CicoSCSystemConfig::findDisplayZoneConfbyName(const string & displayName,
         const CicoSCDisplayZoneConf* conf = NULL;
         conf = const_cast<CicoSCDisplayZoneConf*>(*itr);
         if (zoneName == conf->name) {
+            ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave"
+                    "(0x%08x)", conf);
             return conf;
         }
     }
 
+    ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave(NULL)");
     return NULL;
 }
 
@@ -1117,7 +1256,7 @@ CicoSCSystemConfig::findDisplayZoneConfbyName(const string & displayName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCSoundConf*
@@ -1140,13 +1279,17 @@ CicoSCSystemConfig::findSoundConfbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCSoundZoneConf*
 CicoSCSystemConfig::findSoundZoneConfbyName(const string & soundName,
                                             const string & zoneName)
 {
+    ICO_DBG("CicoSCSystemConfig::findSoundZoneConfbyName Enter"
+            "(soundName=%s zoneNmae=%s)",
+            soundName.c_str(), zoneName.c_str());
+
     const CicoSCSoundConf* soundConf = NULL;
     soundConf = findSoundConfbyName(soundName);
     if (NULL == soundConf) {
@@ -1170,7 +1313,7 @@ CicoSCSystemConfig::findSoundZoneConfbyName(const string & soundName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCInputDevConf*
@@ -1193,7 +1336,7 @@ CicoSCSystemConfig::findInputDevConfbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCSwitchConf*
@@ -1226,7 +1369,7 @@ CicoSCSystemConfig::findSwitchConfbyName(const string & inputDevName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCAppKindConf*
@@ -1249,7 +1392,57 @@ CicoSCSystemConfig::findAppKindConfbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const CicoSCDisplayZoneConf*
+CicoSCSystemConfig::findDisplayZoneConfbyId(int id)
+{
+    vector<CicoSCDisplayConf*>::iterator itr;
+    itr = m_displayConfList.begin();
+    for (; itr != m_displayConfList.end(); ++itr) {
+        vector<CicoSCDisplayZoneConf*>::iterator itr2;
+        itr2 = (*itr)->zoneConfList.begin();
+        for (; itr2 != (*itr)->zoneConfList.end(); ++itr2) {
+            if (id == (*itr2)->id) {
+                return *itr2;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const CicoSCSoundZoneConf*
+CicoSCSystemConfig::findSoundZoneConfbyId(int id)
+{
+    vector<CicoSCSoundConf*>::iterator itr;
+    itr = m_soundConfList.begin();
+    for (; itr != m_soundConfList.end(); ++itr) {
+        vector<CicoSCSoundZoneConf*>::iterator itr2;
+        itr2 = (*itr)->zoneConfList.begin();
+        for (; itr2 != (*itr)->zoneConfList.end(); ++itr2) {
+            if (id == (*itr2)->id) {
+                return *itr2;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCCategoryConf*
@@ -1273,7 +1466,51 @@ CicoSCSystemConfig::findCategoryConfbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const CicoSCCategoryConf*
+CicoSCSystemConfig::findCategoryConfbyId(int id)
+{
+    vector<CicoSCCategoryConf*>::iterator itr;
+    itr = m_categoryConfList.begin();
+    for (; itr != m_categoryConfList.end(); ++itr) {
+        const CicoSCCategoryConf* conf = NULL;
+        conf = const_cast<CicoSCCategoryConf*>(*itr);
+        if (id == conf->id) {
+            return conf;
+        }
+    }
+
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const CicoSCAppKindConf *
+CicoSCSystemConfig::findAppKindConfbyId(int id)
+{
+    vector<CicoSCAppKindConf*>::iterator itr;
+    itr = m_appKindConfList.begin();
+    for (; itr != m_appKindConfList.end(); ++itr) {
+        if (id == (*itr)->id) {
+            return *itr;
+        }
+    }
+
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 const CicoSCDefaultConf*
@@ -1286,7 +1523,7 @@ CicoSCSystemConfig::getDefaultConf(void)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1305,7 +1542,7 @@ CicoSCSystemConfig::getNodeIdbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1324,7 +1561,7 @@ CicoSCSystemConfig::getDisplayIdbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1344,7 +1581,7 @@ CicoSCSystemConfig::getLayerIdfbyName(const string & displayName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1364,7 +1601,33 @@ CicoSCSystemConfig::getDizplayZoneIdbyName(const string & displayName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+int
+CicoSCSystemConfig::getDizplayZoneIdbyFullName(const string & zoneFullName)
+{
+    string::size_type index = zoneFullName.find(".", 0);
+    if (string::npos == index) {
+        return -1;
+    }
+    string displayName = zoneFullName.substr(0, index);
+    string zoneName    = zoneFullName.substr(index+1);
+
+    const CicoSCDisplayZoneConf* conf = NULL;
+    conf = findDisplayZoneConfbyName(displayName, zoneName);
+    if (NULL == conf) {
+        return -1;
+    }
+
+    return conf->id;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1383,7 +1646,7 @@ CicoSCSystemConfig::getSoundIdbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1403,7 +1666,33 @@ CicoSCSystemConfig::getSoundZoneIdbyName(const string & soundName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+int
+CicoSCSystemConfig::getSoundZoneIdbyFullName(const string & zoneFullName)
+{
+    string::size_type index = zoneFullName.find(".", 0);
+    if (string::npos == index) {
+        return -1;
+    }
+    string soundName = zoneFullName.substr(0, index);
+    string zoneName  = zoneFullName.substr(index+1);
+
+    const CicoSCSoundZoneConf* conf = NULL;
+    conf = findSoundZoneConfbyName(soundName, zoneName);
+    if (NULL == conf) {
+        return -1;
+    }
+
+    return conf->id;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1422,7 +1711,7 @@ CicoSCSystemConfig::getInputDevIdbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1442,7 +1731,7 @@ CicoSCSystemConfig::getSwitchIdbyName(const string & inputDevName,
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1461,7 +1750,7 @@ CicoSCSystemConfig::getAppKindIdbyName(const string & name)
 /**
  *  @brief  
  *
- *  @param  [IN]
+ *  @param  [in]
  */
 //--------------------------------------------------------------------------
 int
@@ -1476,47 +1765,45 @@ CicoSCSystemConfig::getCategoryIdbyName(const string & name)
     return conf->id;
 }
 
-#if 0
 //--------------------------------------------------------------------------
 /**
- *  @brief  
- *
- *  @param  [IN]
- */
-//--------------------------------------------------------------------------
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        cerr << "ptree_format filename" << endl;
-        exit(-1);
-    }
-    
-    CicoSCSystemConfig::getInstance()->load(argv[1]);
-
-    return 0;
-}
-#endif
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  user config class object create
+ *  @brief  get category config object class
  *
  *  @param  [in]
  */
 //--------------------------------------------------------------------------
-static const char* g_login_user_conf = "systemconfig.login_user";
-void
-CicoSCSystemConfig::createUserConf(const ptree & root)
+const CicoSCCategoryConf*
+CicoSCSystemConfig::getCategoryObjbyCaategoryID(int id)
 {
-    m_userConf = new CicoSCUserConf;
-    ptree rc = root.get_child(g_login_user_conf);
-    optional<string> opts = rc.get_optional<string>("parent_dir");
-    if (true == opts.is_initialized()) {
-        string v = opts.get();
-        if (v.empty()) {
-            m_userConf->m_parent_dir = v;
+    if (-1 == id) {
+        return NULL;
+    }
+    vector<CicoSCCategoryConf*>::iterator itr;
+    itr = m_categoryConfList.begin();
+    for (; itr != m_categoryConfList.end(); ++itr) {
+        const CicoSCCategoryConf* conf = NULL;
+        conf = const_cast<CicoSCCategoryConf*>(*itr);
+        if (id == conf->id) {
+            //return const_cast<CicoSCCategoryConf*>(itr->pointer);
+            return conf;
         }
     }
-    m_userConf->dumpConf();
+    return NULL;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  array xml tree to vector<int>
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+void getArray(ptree& t, vector<int>& vec)
+{
+    vec.clear();
+    BOOST_FOREACH (const ptree::value_type& child, t) {
+        const int value = lexical_cast<int>(child.second.data());
+        vec.push_back(value);
+    }
+}
 // vim:set expandtab ts=4 sw=4:

@@ -11,7 +11,7 @@
 /**
  *  @file   CicoSCSystemConfig.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSCSystemConfig class
  */
 //==========================================================================
 #ifndef __CICO_SC_SYSTEM_CONFIG_H__
@@ -20,6 +20,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <string>
 #include <map>
@@ -28,6 +29,10 @@ using namespace std;
 using namespace boost;
 using namespace boost::property_tree;
     
+//==========================================================================
+//  Forward declaration
+//==========================================================================
+#ifndef __CICO_SC_CONF_H__
 class CicoSCNodeConf;
 class CicoSCLayerConf;
 class CicoSCDisplayZoneConf;
@@ -39,8 +44,15 @@ class CicoSCAppKindConf;
 class CicoSCSwitchConf;
 class CicoSCInputDevConf;
 class CicoSCDefaultConf;
+class CicoSCResourceConf;
 class CicoSCUserConf;
+#endif
 
+//==========================================================================
+/**
+ *  @brief  This class has function of access to system config information
+ */
+//==========================================================================
 class CicoSCSystemConfig 
 {
 public:
@@ -48,12 +60,12 @@ public:
 
     int load(const string & confFile);
 
-    //vector<CicoSCNodeConf*> m_nodeConfList;
-    const vector<CicoSCDisplayConf*>& getDisplayConfList(void) const;
-    //vector<CicoSCSoundConf*> m_soundConfList;
-    //vector<CicoSCInputDevConf*> m_inputDevConfList;
-    //vector<CicoSCCategoryConf*> m_categoryConfList;
-    //vector<CicoSCAppKindConf*> m_appKindConfList;
+    const vector<CicoSCNodeConf*> &    getNodeConfList(void) const;
+    const vector<CicoSCDisplayConf*> & getDisplayConfList(void) const;
+    const vector<CicoSCSoundConf*> &   getSoundConfList(void) const;
+    const vector<CicoSCInputDevConf*> &  getInputDevConfList(void) const;
+    const vector<CicoSCCategoryConf*> & getCategoryConfList(void) const;
+    const vector<CicoSCAppKindConf*> &  getAppKindConfList(void) const;
 
     const CicoSCNodeConf* findNodeConfbyName(const string & name);
     const CicoSCDisplayConf* findDisplayConfbyName(const string & name);
@@ -71,7 +83,14 @@ public:
     const CicoSCAppKindConf* findAppKindConfbyName(const string & name);
     const CicoSCCategoryConf* findCategoryConfbyName(const string & name);
 
+    const CicoSCDisplayZoneConf* findDisplayZoneConfbyId(int id);
+
+    const CicoSCSoundZoneConf* findSoundZoneConfbyId(int id);
+    const CicoSCCategoryConf* findCategoryConfbyId(int id);
+    const CicoSCAppKindConf* findAppKindConfbyId(int id);
+
     const CicoSCDefaultConf* getDefaultConf(void);
+
 
     int getNodeIdbyName(const string & name);
     int getDisplayIdbyName(const string & name);
@@ -79,15 +98,22 @@ public:
                           const string & layerName);
     int getDizplayZoneIdbyName(const string & displayName,
                                const string & zoneName);
+    int getDizplayZoneIdbyFullName(const string & zoneFullName);
     int getSoundIdbyName(const string & name);
-    
+
     int getSoundZoneIdbyName(const string & soundName,
                              const string & zoneName);
+    int getSoundZoneIdbyFullName(const string & zoneFullName);
     int getInputDevIdbyName(const string & name);
     int getSwitchIdbyName(const string & inputDevName,
                           const string & switchName);
     int getAppKindIdbyName(const string & name);
     int getCategoryIdbyName(const string & name);
+    const CicoSCResourceConf* getResourceConf() const
+    {
+        return m_resourceConf;
+    };
+    const CicoSCCategoryConf* getCategoryObjbyCaategoryID(int id);
 
     const CicoSCUserConf* getUserConf() const 
     {
@@ -125,10 +151,10 @@ private:
                           CicoSCInputDevConf* inputDevConf);
     void createDefaultConf(const ptree & root);
     void createLogConf(const ptree & root);
+    void createResourceConf(const ptree & root);
+    void createUserConf(const ptree & root);
 
     int calcGeometryExpr(const string & expr, CicoSCDisplayConf* conf);
-
-    void createUserConf(const ptree & root);
 
 private:
     static CicoSCSystemConfig* ms_myInstance;
@@ -148,6 +174,7 @@ private:
     int m_loglevel;
     bool  m_logflush;
     CicoSCDefaultConf *m_defaultConf;
+    CicoSCResourceConf *m_resourceConf;
     CicoSCUserConf *m_userConf;
 };
 #endif  // __CICO_SC_SYSTEM_CONFIG_H__

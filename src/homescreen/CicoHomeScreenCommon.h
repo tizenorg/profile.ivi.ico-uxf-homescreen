@@ -14,7 +14,7 @@
 #ifndef __CICO_HOMESCREEN_COMMON_H__
 #define __CICO_HOMESCREEN_COMMON_H__
 
-#include "CicoLog.h"
+#include <ico_log.h>
 
 #define ICO_OK 0
 #define ICO_ERROR -1
@@ -53,9 +53,16 @@
 #define ICO_HS_MENU_WINDOW_TITLE "ico_hs_menuwindow"
 #define ICO_HS_BACK_WINDOW_TITLE "ico_hs_backwindow"
 #define ICO_HS_CONTROL_BAR_WINDOW_TITLE "ico_hs_controlbarwindow"
+#define ICO_HS_FLICK_INPUT_WINDOW_TITLE "ico_hs_flickinputwindow"
 
 /*path of layaout file*/
 #define ICO_HS_MENU_LAYOUT_FILE_PATH "/home/app/layout.txt"
+
+/* max number of category in menu*/
+#define ICO_HS_MENU_MAX_MENU_CATEGORY_NUM 64
+
+/*path of category file*/
+#define ICO_HS_MENU_CATEGORY_FILE_PATH "/usr/apps/org.tizen.ico.homescreen/res/config/menu_categoryid.conf"
 
 /*path of back window*/
 #define ICO_HS_BACK_WINDOW_IMAGE_FILE_PATH "/opt/usr/media/Images/Home_default.jpg"
@@ -64,6 +71,10 @@
 #define ICO_HS_IMAGE_FILE_MENU_BACK_GROUND "bg.png"
 #define ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_P "pagePointer_p.png"
 #define ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_N "pagePointer_n.png"
+
+#define ICO_HS_IMAGE_FILE_MENU_PAGE_UP_CURSOR "pageUpCursor.png"
+#define ICO_HS_IMAGE_FILE_MENU_PAGE_DOWN_CURSOR "pageDownCursor.png"
+
 #define ICO_HS_IMAGE_FILE_MENU_TERMINATE_REALLY "button_really.png"
 #define ICO_HS_IMAGE_FILE_MENU_TERMINATE_YES "button_yes.png"
 #define ICO_HS_IMAGE_FILE_MENU_TERMINATE_NO "button_no.png"
@@ -81,6 +92,7 @@
 #define ICO_HS_CONFIG_ONSCREEN      "onscreen"
 #define ICO_HS_CONFIG_STATUBAR      "statusbar"
 #define ICO_HS_CONFIG_SOUND         "sound"
+#define ICO_HS_CONFIG_HISTORY       "app_history"
 
 /*misc*/
 #define HS_DISPLAY_HOMESCREEN   0           /* HomeScreen target display Id     */
@@ -95,6 +107,14 @@
 #define HS_LAYER_ONSCREEN       6         /* layer of OnScreen   */
 #define HS_LAYER_CURSOR         7         /* layer of Cursor   */
 
+/* config history name */
+#define ICO_HS_CONFIG_HSTRY_KEY1      "timer"
+#define ICO_HS_CONFIG_HSTRY_DEF1      "1"
+#define ICO_HS_CONFIG_HSTRY_KEY2      "manage_off_app"
+#define ICO_HS_CONFIG_HSTRY_DEF2      "org.tizen.ico.homescreen;org.tizen.ico.statusbar"
+#define ICO_HS_CONFIG_HSTRY_KEY3      "write_off_app"
+#define ICO_HS_CONFIG_HSTRY_DEF3      "org.tizen.ico.login"
+#define ICO_HS_CONFIG_HSTRY_SPL       ';'
 
 
 #endif

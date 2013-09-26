@@ -23,6 +23,7 @@
 #include "CicoSCLifeCycleController.h"
 #include "CicoSCConf.h"
 #include "CicoSCSystemConfig.h"
+#include "Cico_aul_listen_app.h"
 
 using namespace std;
 
@@ -117,6 +118,7 @@ CicoSCLifeCycleController::CicoSCLifeCycleController()
 {
     m_gconf = (GKeyFile*)NULL;
     m_pc = (pkgmgr_client*)NULL;
+    ailRenewFlagOff();
     initAIL();
     initAUL();
 }
@@ -321,28 +323,31 @@ int CicoSCLifeCycleController::suspend(int pid)
 }
 
 /**
- * @brief appid is runnning check
+ * @brief appid is running check
  * @param appid package
  * @return running status
- * @retval true is runnning
- * @retval false not runnning
+ * @retval true is running
+ * @retval false not running
  */
 bool CicoSCLifeCycleController::isRunning(const char* appid) const
 {
     ICO_TRA("start %s", appid);
     bool r = false;
 #if 0 // TODO mk_k
-    vector<CicoSCAulItems>::iterator it;
-    for (it = m_aul.begin(); it != m_aul.end(); ++it) {
-        if (0 == strcasecmp(it->m_appid.c_str(), appid)) {
+    vector<CicoSCAulItems>::iterator it = m_aul.begin();
+    while (it != m_aul.end()) {
+        ICO_DBG("%s == %s", it->m_appid.c_str(), appid);
+        if (it->m_appid == appid) {
             r = true;
-            break;
+            break;  // break of while it
         }
+        ++it;
     }
 #else
     int sz = m_aul.size();
     for (int i = 0; i < sz; i++) {
-        if (0 == strcasecmp(m_aul[i].m_appid.c_str(), appid)) {
+        ICO_DBG("%s == %s", m_aul[i].m_appid.c_str(), appid);
+        if (m_aul[i].m_appid == appid) {
             r = true;
             break;
         }
@@ -353,11 +358,11 @@ bool CicoSCLifeCycleController::isRunning(const char* appid) const
 }
 
 /**
- * @brief appid is runnning check
+ * @brief appid is running check
  * @param appid package
  * @return running status
- * @retval true is runnning
- * @retval false not runnning
+ * @retval true is running
+ * @retval false not running
  */
 bool CicoSCLifeCycleController::isRunning(const std::string& appid) const
 {
@@ -462,22 +467,27 @@ const CicoSCAulItems* CicoSCLifeCycleController::findAUL(int pid) const
 
 
 /**
- * @brief ail infomation data initialization
+ * @brief ail information data initialization
  */
 void CicoSCLifeCycleController::initAIL()
 {
-    ICO_TRA("start");
+    ICO_TRA("start %x", m_pc);
     createAilItems();
     if ((pkgmgr_client*)NULL == m_pc) {
         m_pc = pkgmgr_client_new(PC_LISTENING);
         int r = pkgmgr_client_listen_status(m_pc, CSCLCCpkgmgr_handler,
                                             (void*)this);
-        if (PKGMGR_R_OK != r) {
+        ICO_TRA("pkgmgr_xxxx %x, %d", m_pc, r);
+//        if (PKGMGR_R_OK != r)
+        // pkgmgr_client_listen_status return is
+        // request_id (>0) if success, error code(<0) if fail
+        // PKGMGR_R_OK success (PKGMGR_R_OK is 0)
+        if (0 > r) {
             pkgmgr_client_free(m_pc);
             m_pc = NULL;
         }
     }
-    ICO_TRA("end");
+    ICO_TRA("end %x", m_pc);
 }
 
 /**
@@ -512,7 +522,7 @@ void CicoSCLifeCycleController::renewAIL()
     vector<CicoSCAilItems> old = m_ail;
     m_ail.clear();
     int cnt =0;
-    while (true == createAilItems()) {
+    while (false == createAilItems()) {
         if (cnt > 500) {
             m_ail.clear();
             m_ail = old;
@@ -562,6 +572,7 @@ void CicoSCLifeCycleController::renewAIL()
     }
 #endif
     old.clear();
+    ailRenewFlagOn();
     return;
 }
 
@@ -647,7 +658,7 @@ ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
 }
 
 /**
- * @brief create infomation ail data
+ * @brief create information ail data
  * @retval true success
  * @retval false fail create
  */
@@ -712,7 +723,7 @@ bool CicoSCLifeCycleController::createAilItems()
 }
 
 /**
- * @brief ail infomation data add one item
+ * @brief ail information data add one item
  * @param sPkg string package (appid)
  * @param sIco string icon full path
  * @param sNm string name
@@ -808,13 +819,13 @@ void CicoSCLifeCycleController::getCategory(const char* sPkg, const char* sNm,
 }
 
 /**
- * @brief aul infomation data initialization
+ * @brief aul information data initialization
  */
 void CicoSCLifeCycleController::initAUL()
 {
     ICO_TRA("start");
-    aul_listen_app_launch_signal(CSCLCCapp_launch_handler, (void*)this);
-    aul_listen_app_dead_signal(CSCLCCapp_dead_handler, (void*)this);
+    aul_listen_app_launch_signal_add(CSCLCCapp_launch_handler, (void*)this);
+    aul_listen_app_dead_signal_add(CSCLCCapp_dead_handler, (void*)this);
     ICO_TRA("end");
 }
 

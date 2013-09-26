@@ -1395,6 +1395,31 @@ CicoSCSystemConfig::findAppKindConfbyName(const string & name)
  *  @param  [in]
  */
 //--------------------------------------------------------------------------
+const CicoSCDisplayZoneConf*
+CicoSCSystemConfig::findDisplayZoneConfbyId(int id)
+{
+    vector<CicoSCDisplayConf*>::iterator itr;
+    itr = m_displayConfList.begin();
+    for (; itr != m_displayConfList.end(); ++itr) {
+        vector<CicoSCDisplayZoneConf*>::iterator itr2;
+        itr2 = (*itr)->zoneConfList.begin();
+        for (; itr2 != (*itr)->zoneConfList.end(); ++itr2) {
+            if (id == (*itr2)->id) {
+                return *itr2;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
 const CicoSCSoundZoneConf*
 CicoSCSystemConfig::findSoundZoneConfbyId(int id)
 {

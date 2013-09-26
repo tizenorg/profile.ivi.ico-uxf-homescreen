@@ -175,23 +175,23 @@
     "state":{
       "name":"Display1Zone1",
       "value":11001,
-      "event":{ "name":"EV10000","value":11000, "transition":11001, "guardCondition":[{"operator":"=","value":1}]},
-      "event":{ "name":"EV10000","value":11000, "transition":11002, "guardCondition":[{"operator":"=","value":2}]},
-      "event":{ "name":"EV10000","value":11000, "transition":11003, "guardCondition":[{"operator":"=","value":3}]}
+      "event":{ "name":"EV11000","value":11000, "transition":11001, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV11000","value":11000, "transition":11002, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV11000","value":11000, "transition":11003, "guardCondition":[{"operator":"=","value":3}]}
     },
     "state":{
       "name":"Display1Zone2",
       "value":11002,
-      "event":{ "name":"EV10000","value":11000, "transition":11001, "guardCondition":[{"operator":"=","value":1}]},
-      "event":{ "name":"EV10000","value":11000, "transition":11002, "guardCondition":[{"operator":"=","value":2}]},
-      "event":{ "name":"EV10000","value":11000, "transition":11003, "guardCondition":[{"operator":"=","value":3}]}
+      "event":{ "name":"EV11000","value":11000, "transition":11001, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV11000","value":11000, "transition":11002, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV11000","value":11000, "transition":11003, "guardCondition":[{"operator":"=","value":3}]}
     },
     "state":{
       "name":"Display1Zone3",
       "value":11003,
-      "event":{ "name":"EV10000","value":11000, "transition":11001, "guardCondition":[{"operator":"=","value":1}]},
-      "event":{ "name":"EV10000","value":11000, "transition":11002, "guardCondition":[{"operator":"=","value":2}]},
-      "event":{ "name":"EV10000","value":11000, "transition":11003, "guardCondition":[{"operator":"=","value":3}]}
+      "event":{ "name":"EV11000","value":11000, "transition":11001, "guardCondition":[{"operator":"=","value":1}]},
+      "event":{ "name":"EV11000","value":11000, "transition":11002, "guardCondition":[{"operator":"=","value":2}]},
+      "event":{ "name":"EV11000","value":11000, "transition":11003, "guardCondition":[{"operator":"=","value":3}]}
     }
   },
 

@@ -113,7 +113,7 @@ void CicoSCAulItems::enterWindow(const CicoSCWindow* obj)
 }
 
 /**
- * @breif removw CicoSCWindow pointer
+ * @brief removw CicoSCWindow pointer
  * @param obj remove target
  */
 void CicoSCAulItems::rmWindow(const CicoSCWindow* obj)
@@ -133,7 +133,7 @@ void CicoSCAulItems::rmWindow(const CicoSCWindow* obj)
 }
 
 /**
- * @breif get cgroup data by /proc/[pid]/cgroup file
+ * @brief get cgroup data by /proc/[pid]/cgroup file
  * @parm pid target pid number
  * @param m store cgroup memory directory data
  * @param c store cgroup cpu,cpuacct directory data

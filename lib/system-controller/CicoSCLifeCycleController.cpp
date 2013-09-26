@@ -103,6 +103,7 @@ CicoSCLifeCycleController::CicoSCLifeCycleController()
     m_gconf = (GKeyFile*)NULL;
     m_pc = (pkgmgr_client*)NULL;
     m_RC = new CicoSCSysResourceController;
+    ailRenewFlagOff();
     initAIL();
     initAUL();
 }
@@ -307,11 +308,11 @@ int CicoSCLifeCycleController::suspend(int pid)
 }
 
 /**
- * @brief appid is runnning check
+ * @brief appid is running check
  * @param appid package
  * @return running status
- * @retval true is runnning
- * @retval false not runnning
+ * @retval true is running
+ * @retval false not running
  */
 bool CicoSCLifeCycleController::isRunning(const char* appid) const
 {
@@ -339,11 +340,11 @@ bool CicoSCLifeCycleController::isRunning(const char* appid) const
 }
 
 /**
- * @brief appid is runnning check
+ * @brief appid is running check
  * @param appid package
  * @return running status
- * @retval true is runnning
- * @retval false not runnning
+ * @retval true is running
+ * @retval false not running
  */
 bool CicoSCLifeCycleController::isRunning(const std::string& appid) const
 {
@@ -452,18 +453,24 @@ const CicoSCAulItems* CicoSCLifeCycleController::findAUL(int pid) const
  */
 void CicoSCLifeCycleController::initAIL()
 {
-    ICO_TRA("start");
+    ICO_TRA("start %x", m_pc);
     createAilItems();
     if ((pkgmgr_client*)NULL == m_pc) {
         m_pc = pkgmgr_client_new(PC_LISTENING);
+        ICO_TRA("pkgmgr client new %x", m_pc);
         int r = pkgmgr_client_listen_status(m_pc, CSCLCCpkgmgr_handler,
                                             (void*)this);
-        if (PKGMGR_R_OK != r) {
+        ICO_TRA("pkgmgr_client_listen_status %d", r);
+//        if (PKGMGR_R_OK != r)
+        // pkgmgr_client_listen_status return is
+        // request_id (>0) if success, error code(<0) if fail
+        // PKGMGR_R_OK success (PKGMGR_R_OK is 0)
+        if (0 > r) {
             pkgmgr_client_free(m_pc);
             m_pc = NULL;
         }
     }
-    ICO_TRA("end");
+    ICO_TRA("end %x", m_pc);
 }
 
 /**
@@ -500,7 +507,7 @@ void CicoSCLifeCycleController::renewAIL()
     vector<CicoSCAilItems> old = m_ail;
     m_ail.clear();
     int cnt =0;
-    while (true == createAilItems()) {
+    while (false == createAilItems()) {
         if (cnt > 500) {
             m_ail.clear();
             m_ail = old;
@@ -550,6 +557,7 @@ void CicoSCLifeCycleController::renewAIL()
     }
 #endif
     old.clear();
+    ailRenewFlagOn();
     ICO_TRA("end");
     return;
 }

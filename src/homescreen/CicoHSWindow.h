@@ -38,7 +38,7 @@ class CicoHSWindow
 {
   public:
     CicoHSWindow(void);
-    ~CicoHSWindow(void);
+    virtual ~CicoHSWindow(void);
     int CreateWindow(const char *title,int pos_x,int pos_y,int width,int height,int alpha);
     void FreeWindow(void);
     void WindowSetting(int pos_x,int pos_y,int width,int height,int alpha);

@@ -1,6 +1,6 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
-Version:    0.9.03
+Version:    0.9.04
 Release:    1.1
 Group:		Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
@@ -8,7 +8,7 @@ URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.2
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.04
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.05
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(ecore)
 BuildRequires: pkgconfig(ecore-wayland)
@@ -32,7 +32,7 @@ BuildRequires: pkgconfig(murphy-resource)
 BuildRequires: boost-devel
 BuildRequires: ico-uxf-utilities-devel >= 0.2.04
 Requires: weston >= 1.2
-Requires: ico-uxf-weston-plugin >= 0.9.04
+Requires: ico-uxf-weston-plugin >= 0.9.05
 Requires: ico-uxf-utilities >= 0.2.04
 
 %description
@@ -109,8 +109,8 @@ rm -f /home/app/layout.txt
 /usr/lib/systemd/user/ico-system-controller.service
 /usr/lib/systemd/user/ico-uxf-wait-launchpad-ready.path
 /usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
-%attr(755,app,app) /home/app/ico
 %attr(644,app,app) /home/app/ico/defaultApps.info
+%attr(755,app,app) /home/app/ico
 /home/app/ico/defaultApps.info
 
 %files system-controller-devel

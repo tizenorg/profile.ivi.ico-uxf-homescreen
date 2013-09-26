@@ -56,7 +56,8 @@ typedef enum _event_id {
     ICO_SYC_EV_INPUT_SET            = 16, /* set input region */
     ICO_SYC_EV_INPUT_UNSET          = 17, /* unset input region */
     ICO_SYC_EV_LASTINFO             = 18, /* notify the last information */
-    ICO_SYC_EV_STATE_CHANGE         = 19  /* notify changed state */
+    ICO_SYC_EV_STATE_CHANGE         = 19, /* notify changed state */
+    ICO_SYC_EV_WIN_NAME             = 20  /* notify window name */
 } ico_syc_ev_e;
 
 /*
@@ -171,6 +172,7 @@ typedef struct _win_info {
 typedef struct _win_attr {
     char *appid;    /* application id */
     char *name;     /* window's surface name */
+    char *zone;     /* window's current zone name */
     int  surface;   /* window's surface id */
     int  nodeid;    /* ecu number and display number in the ecu */
     int  layer;     /* id of layer that the application's window is on */

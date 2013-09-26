@@ -296,6 +296,9 @@ static int _get_event_from_cmd(int command)
     case MSG_CMD_NOTIFY_CHANGED_STATE:
         event = ICO_SYC_EV_STATE_CHANGE;
         break;
+    case MSG_CMD_NAME:
+        event = ICO_SYC_EV_WIN_NAME;
+        break;
     default:
         break;
     }
@@ -339,6 +342,7 @@ _exec_callback(void *user_data)
         case ICO_SYC_EV_WIN_CREATE:
         case ICO_SYC_EV_WIN_DESTROY:
         case ICO_SYC_EV_WIN_ACTIVE:
+        case ICO_SYC_EV_WIN_NAME:
             ico_syc_cb_win(syc_callback, user_data, event,
                            recv_data->data, recv_data->len);
             break;

@@ -19,7 +19,7 @@ class CicoSCWindow;
 
 /**
  * @brief System controller unit
- *        application life cycle infomation data
+ *        application life cycle information data
  *
  */
 

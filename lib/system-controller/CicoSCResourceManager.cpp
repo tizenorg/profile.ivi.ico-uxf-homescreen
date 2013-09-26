@@ -402,6 +402,9 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
         }
         req = curreq;
         curreq->dispzoneid = newreq->dispzoneid;
+        if (NULL != curreq->animation) free(curreq->animation);
+        curreq->animation = strdup(newreq->animation);
+        curreq->animationTime = newreq->animationTime;
         delResourceRequest(newreq);
     }
     else {
@@ -409,6 +412,13 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
         req = popDispResReq(newreq);
         if (NULL == req) {
             req = newreq;
+        }
+        else {
+            req->dispzoneid = newreq->dispzoneid;
+            if (NULL != req->animation) free(req->animation);
+            req->animation = strdup(newreq->animation);
+            req->animationTime = newreq->animationTime;
+            delResourceRequest(newreq);
         }
     }
 

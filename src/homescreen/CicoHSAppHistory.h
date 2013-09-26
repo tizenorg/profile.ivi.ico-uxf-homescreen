@@ -16,13 +16,17 @@
 
 #include <string>
 #include <list>
+#include <vector>
+#include <utility>
 
 class CicoHSAppHistory
 {
 public:
     CicoHSAppHistory();
-    CicoHSAppHistory(const char* user, const char* path);
-    ~CicoHSAppHistory();
+    CicoHSAppHistory(const char* user, const char* path, const char* flagpath);
+    CicoHSAppHistory(const std::string& user, const std::string& path,
+                     const std::string& flagpath);
+    virtual ~CicoHSAppHistory();
 
     // get
     const std::string& getUser() const;
@@ -30,14 +34,33 @@ public:
     const std::list<std::string>& getAppHistory() const;
 
     // operate
-    void addAppHistory(const std::string& app);
-    void delAppHistory(const std::string& app);
-    void moveHistoryHead(const std::string& app);
+    virtual bool addAppHistory(const std::string& app);
+    virtual bool delAppHistory(const std::string& app);
+    virtual bool moveHistoryHead(const std::string& app);
+
+    // swipe operate
+    const std::string& prevSwipe();
+    const std::string& nextSwipe();
+    const std::string& getSwipeCurrentAppid() const;
+    const std::string& homeSwipe();
+
+    bool isFlag();
+    bool force_flagoff();
+    void setFilterManage(std::vector<std::string>& filter);
+    void setFilterWrite(std::vector<std::string>& filter);
+protected:
+    bool writeAppHistory();
+    bool filterChk(std::vector<std::string>& filter, const char* tgt) const;
 
 protected:
-    std::string         m_user;
-    std::string         m_path;
-    std::list<std::string>   m_appHistoryList;
+    std::string         m_user;     // login-user name
+    std::string         m_path;     // history application file path
+    std::string         m_flagPath; // flag file path
+    std::list<std::string>   m_appHistoryList;  // history application list
+    std::vector<std::string> m_filterM;   // history manage filter string
+    std::vector<std::string> m_filterW;   // history write filter string
+    std::list<std::string>::iterator m_swipeCurr;
+    std::string         m_swipeStr;
 };
 
 /**
@@ -50,7 +73,7 @@ inline const std::string& CicoHSAppHistory::getUser() const
 }
 
 /**
- * @breif get file path
+ * @brief get file path
  * @ret file path
  */
 inline const std::string& CicoHSAppHistory::getPath() const
@@ -67,5 +90,31 @@ inline const std::list<std::string>& CicoHSAppHistory::getAppHistory() const
 {
     return m_appHistoryList;
 }
-#endif // CICOHSAPPHISTORY_H
 
+/**
+ * @brief set filter manage off
+ * @param filter filter keywords
+ */
+inline void CicoHSAppHistory::setFilterManage(std::vector<std::string>& filter)
+{
+    m_filterM = filter;   // history manage filter string
+}
+
+/**
+ * @brief set filter write off
+ * @param filter filter keywords
+ */
+inline void CicoHSAppHistory::setFilterWrite(std::vector<std::string>& filter)
+{
+    m_filterW = filter;   // history write filter string
+}
+
+/**
+ * @param get current swipe appid
+ */
+inline const std::string& CicoHSAppHistory::getSwipeCurrentAppid() const
+{
+    return m_swipeStr;
+}
+
+#endif // CICOHSAPPHISTORY_H

@@ -63,20 +63,23 @@ CicoHSWindowController::Finalize(void)
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSWindowController::GetFullScreenSize(int orientation,int *width,int *height)
+CicoHSWindowController::GetFullScreenSize(int orientation,
+                                          int *width, int *height)
 {
-    int display_width, display_height;
-    Ecore_Evas *window;
-    ICO_DBG("CicoHSWindowController::GetFullScreenSize:ecore_evas_new start");
-    window = ecore_evas_new(NULL,0,0,1,1,"frame=0");
-    ICO_DBG("CicoHSWindowController::GetFullScreenSize: ecore_evas_new return 0x%x",window);
-    /* processing one cycle */
-//    ecore_main_loop_iterate();
+    ICO_DBG("CicoHSWindowController::GetFullScreenSize Enter");
+
+    int display_width  = 0;
+    int display_height = 0;
+
+    Ecore_Evas *window = ecore_evas_new(NULL, 0, 0, 1, 1, "frame=0");
 
     /* getting size of screen */
     /* home screen size is full of display*/
-    
     ecore_wl_screen_size_get(&display_width, &display_height);
+
+    ICO_DBG("ecore_wl_screen_size_get => w/h=%d/%d",
+            display_width, display_height);
+
     if (orientation == ICO_ORIENTATION_VERTICAL) {
         *width = display_width > display_height ?
                                  display_height : display_width;
@@ -89,6 +92,8 @@ CicoHSWindowController::GetFullScreenSize(int orientation,int *width,int *height
         *height = (display_width < display_height ?
                                    display_width : display_height);
     }
+    ICO_DBG("CicoHSWindowController::GetFullScreenSize Leave(w/h=%d/%d)",
+            *width, *height);
 }
 
 /*--------------------------------------------------------------------------*/

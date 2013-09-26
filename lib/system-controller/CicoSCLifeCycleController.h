@@ -52,6 +52,8 @@ public:
     const std::vector<CicoSCAilItems>& getAilList() const;
     const CicoSCAilItems* findAIL(const char* appid) const;
     const CicoSCAilItems* findAIL(const std::string& appid) const;
+    bool isAilRenew() const;
+    void ailRenewFlagOff();
 
     const std::vector<CicoSCAulItems>& getAulList() const;
 // TODO mk_k Should I think about the multiple return values start
@@ -77,6 +79,7 @@ protected:
                                  const char *val, const void *pmsg,
                                  CicoSCLifeCycleController *x);
     void renewAIL();
+    void ailRenewFlagOn();
     void initAUL();
     friend int CSCLCCapp_launch_handlerX(int pid,
                                          CicoSCLifeCycleController *x);
@@ -98,6 +101,7 @@ protected:
     GKeyFile* m_gconf;
     pkgmgr_client* m_pc;
     CicoSCSysResourceController* m_RC;
+    bool m_ailRenew;
 };
 
 /**
@@ -121,6 +125,31 @@ const std::vector<CicoSCAulItems>& CicoSCLifeCycleController::getAulList() const
     return m_aul;
 }
 
+/**
+ * @brief AIL change flag is on?
+ * @ret bool
+ * @retval true change flag on
+ * @retval false change flag off
+ */
+inline bool CicoSCLifeCycleController::isAilRenew() const
+{
+    return m_ailRenew;
+}
 
+/**
+ * @brief AIL change flag off set
+ */
+inline void CicoSCLifeCycleController::ailRenewFlagOff()
+{
+    m_ailRenew = false;
+}
+
+/**
+ * @brief AIL change flag on set
+ */
+inline void CicoSCLifeCycleController::ailRenewFlagOn()
+{
+    m_ailRenew = true;
+}
 
 #endif // CICOSCLIFECYCLECONTROLLER_H

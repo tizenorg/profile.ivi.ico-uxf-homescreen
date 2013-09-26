@@ -126,7 +126,8 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
 {
     Evas_Event_Mouse_Up *info;
     char *appid = reinterpret_cast<char*>(data);
-    int sub = 0;
+    int sub_x = 0;
+    int sub_y = 0;
 
     if(timer != NULL){
         ecore_timer_del(timer);
@@ -141,19 +142,35 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
     info = reinterpret_cast<Evas_Event_Mouse_Up*>(event_info);
     touch_state_a_x = info->output.x;
     touch_state_a_y = info->output.y;
-    sub = touch_state_a_x - touch_state_b_x;
+    sub_x = touch_state_a_x - touch_state_b_x;
+    sub_y = touch_state_a_y - touch_state_b_y;
+    if (abs(sub_x) > abs(sub_y)) {
 
-    /* menu slide*/
-    if( sub > ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE){
-        menu_window->GoBackMenu();
-        touch_state_b_x = 0;
-        touch_state_b_y = 0;
-        return;
-    }else if(sub < (-1 * ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE)){
-        menu_window->GoNextMenu();
-        touch_state_b_x = 0;
-        touch_state_b_y = 0;
-        return;
+        /* menu slide*/
+        if( sub_x > ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE){
+            menu_window->GoBackMenu();
+            touch_state_b_x = 0;
+            touch_state_b_y = 0;
+            return;
+        }else if(sub_x < (-1 * ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE)){
+            menu_window->GoNextMenu();
+            touch_state_b_x = 0;
+            touch_state_b_y = 0;
+            return;
+        }
+    }
+    else {
+        if( sub_y > ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE){
+            menu_window->UpBackMenu();
+            touch_state_b_x = 0;
+            touch_state_b_y = 0;
+            return;
+        }else if(sub_y < (-1 * ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE)){
+            menu_window->DownNextMenu();
+            touch_state_b_x = 0;
+            touch_state_b_y = 0;
+            return;
+        }
     }
 
     /*execute application*/

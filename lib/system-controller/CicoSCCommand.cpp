@@ -286,6 +286,7 @@ CicoSCCommand::parseWinCtrlOpt(const ptree & root)
  *      "alloc_type": (int) allocation type
  *      "keycode":    (int) key code
  *      "ev_type":    (int) event type
+ *      "ev_time":    (int) event time
  *      "ev_code":    (int) event cord
  *      "ev_value":   (int) event value
  *    }
@@ -306,6 +307,7 @@ CicoSCCommand::parseInputDevCtrlOpt(const ptree & root)
     options->fix       = getIntValue(root, "arg.alloc_type");
     options->keycode   = getIntValue(root, "arg.keycode");
     options->evtype    = getIntValue(root, "arg.ev_type");
+    options->evtime    = getIntValue(root, "arg.ev_time");
     options->evcode    = getIntValue(root, "arg.ev_code");
     options->evvalue   = getIntValue(root, "arg.ev_value");
 }
@@ -323,7 +325,7 @@ CicoSCCommand::parseInputDevCtrlOpt(const ptree & root)
  *    "arg": {
  *      "user":     (string) user name
  *      "password": (string) user password
- *      "lastinof": (string) infomation of application last state
+ *      "lastinof": (string) information of application last state
  *    }
  *  }
  *  </pre>

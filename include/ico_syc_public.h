@@ -22,8 +22,17 @@ extern "C" {
 /*============================================================================*/
 /* definition                                                                 */
 /*============================================================================*/
+/* login user name bundle key name */
 #define ICO_SYC_APP_BUNDLE_KEY1 "HS_PARAM_U"
+
+/* Individual history file of the logged-in user. parameter key */
 #define ICO_SYC_APP_BUNDLE_KEY2 "HS_PARAM_D"
+
+/* History file of common. parameter key */
+#define ICO_SYC_APP_BUNDLE_KEY3 "HS_PARAM_DD"
+
+/* change user status flag file. parameter key */
+#define ICO_SYC_APP_BUNDLE_KEY4 "HS_PARAM_FLG"
 
 #ifdef __cplusplus
 }

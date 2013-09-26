@@ -12,6 +12,7 @@
  * @date    Aug-08-2013
  */
 #include "CicoHSBackWindow.h"
+#include "CicoHomeScreenResourceConfig.h"
 
 /*============================================================================*/
 /* functions                                                                  */

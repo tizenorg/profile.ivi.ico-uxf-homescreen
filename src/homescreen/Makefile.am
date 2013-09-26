@@ -28,8 +28,12 @@ HomeScreen_SOURCES = \
 	CicoHomeScreenResourceConfig.cpp	\
 	CicoHomeScreenSound.cpp \
 	CicoHomeScreenSoundConfig.cpp	\
-	CicoHSAppHistory.cpp \
-    CicoHSSystemState.cpp
+	CicoHSSystemState.cpp	\
+	CicoHSFlickTouch.cpp	\
+	CicoHSFlickInputWindow.cpp \
+	CicoHSAppHistory.cpp	\
+	CicoHSAppHistoryExt.cpp	\
+	Cico_aul_listen_app.cpp
 
 HomeScreen_CFLAGS= \
     $(EFL_CFLAGS) \
@@ -139,6 +143,8 @@ install-exec-hook:
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/api_all_on.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_n.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_p.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pageDownCursor.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pageUpCursor.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_really.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_no.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_yes.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images

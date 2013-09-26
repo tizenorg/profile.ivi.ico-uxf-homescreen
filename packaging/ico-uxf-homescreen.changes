@@ -1,3 +1,9 @@
+* Thu Sep 26 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20130919.204217@93c93da
+- 0.9.04 release
+-- addition of the application operation history.
+-- change of the interface of the ico-uxf-weston-plugin.
+-- BugFix: TIVI-1843,1820,1786
+
 * Thu Sep 19 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20130911.211140@65dbd1c
 - 0.9.03 release.
 -- Additional functions of policy and resource management.

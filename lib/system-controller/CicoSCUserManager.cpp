@@ -43,6 +43,7 @@ using namespace boost::property_tree;
 #include "CicoSCConf.h"
 #include "CicoSCSystemConfig.h"
 
+using namespace std;
 
 //==========================================================================
 //
@@ -50,10 +51,15 @@ using namespace boost::property_tree;
 //
 //==========================================================================
 #define ICO_SYC_DEFAULT_PATH    "/home/app/ico"
-#define ICO_SYC_APP_INFO        "runnningApp.info"
+#define ICO_SYC_APP_INFO        "runningApp.info"
 #define ICO_SYC_APP_INFO_DEF    "defaultApps.info"
 #define ICO_SYC_LASTINFO_DIR    (char*)"/lastinfo/"
 #define ICO_SYC_LASTUSER_FILE   (char*)"/home/app/ico/lastuser.txt"
+#define ICO_SYC_CHGUSR_FLAG_DIR "/tmp/ico"
+#define ICO_SYC_CHGUSR_FLAG_FIL "changeUser.flag"
+
+void chkAndAddSlash(string& s);
+
 
 //==========================================================================
 //
@@ -70,6 +76,7 @@ CicoSCUserManager* CicoSCUserManager::ms_myInstance = NULL;
 CicoSCUserManager::CicoSCUserManager()
     : m_login("")
 {
+    // login-user application information file
     m_uConfig = CicoSCSystemConfig::getInstance()->getUserConf();
     if ((NULL == m_uConfig) || (true == m_uConfig->m_parent_dir.empty())) {
         m_parentDir = ICO_SYC_DEFAULT_PATH;
@@ -77,11 +84,18 @@ CicoSCUserManager::CicoSCUserManager()
     else {
         m_parentDir = m_uConfig->m_parent_dir;
     }
-    int sz = m_parentDir.size();
-    const char* p = m_parentDir.c_str();
-    if ('/' != p[sz-1]) {
-        m_parentDir += "/";
+    chkAndAddSlash(m_parentDir);
+
+    // flag file
+    m_flagPath = ICO_SYC_CHGUSR_FLAG_DIR;
+    struct stat st;
+    int ret = stat(m_flagPath.c_str(), &st);
+    if (0 != ret) {
+        mkdir(m_flagPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     }
+    chkAndAddSlash(m_flagPath);
+    m_flagPath += ICO_SYC_CHGUSR_FLAG_FIL;
+
 }
 
 //--------------------------------------------------------------------------
@@ -240,7 +254,8 @@ CicoSCUserManager::initialize(void)
         mkdir(root_dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     }
     // make user's directory
-    string user_dir = m_parentDir + m_login + "/";
+    string user_dir = m_parentDir + m_login;
+    chkAndAddSlash(user_dir);
     ret = stat(user_dir.c_str(), &st);
     if (0 != ret) {
         mkdir(user_dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -308,7 +323,8 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
     ICO_DBG("CicoSCUserManager::changeUser Enter"
             "(user=%s pass=%s)", name.c_str(), passwd.c_str());
 
-    ICO_DBG("change user \"%s\" -> \"%s\"", m_login.c_str(), name.c_str());
+    char tmpText[128];
+    sprintf(tmpText, "CHG USER[%s]->[%s]", m_login.c_str(), name.c_str());
 
     string oldUsr = m_login; /* get before login user */
     const CicoSCUser *conf = NULL;
@@ -326,15 +342,18 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
         return;
     }
 
+    flagFileOn();
+
+#if 0
     // Imprinting to file, that file is application's running information 
     string usr_dir_old;
     getWorkingDir(oldUsr, usr_dir_old);
     string outfilename = usr_dir_old + ICO_SYC_APP_INFO;
     impritingLastApps(outfilename);
+#endif
 
     // killing running application and homeScreen
     killingAppsAndHS(oldUsr);
-
 
     // check wheather directory exists
     vector<string> mk_dir_info;
@@ -358,7 +377,8 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
     // change login user
     m_login = conf->name;
     ICO_DBG("login user changed (user=%s)", m_login.c_str());
-
+    ICO_INF("%s", tmpText);
+    flagFileOff();
     ICO_DBG("CicoSCUserManager::changeUser Leave(EOK)");
 }
 
@@ -479,7 +499,8 @@ bool CicoSCUserManager::killingAppsAndHS(const string&)
 void CicoSCUserManager::getWorkingDir(const string& usr, string& dir)
 {
     dir = m_parentDir;
-    dir += usr + "/";
+    dir += usr;
+    chkAndAddSlash(dir);
     return;
 }
 //--------------------------------------------------------------------------
@@ -496,23 +517,24 @@ bool CicoSCUserManager::launchHomescreenReq(const string& usr,
 {
     string usr_dir;
     getWorkingDir(usr, usr_dir);
-    string prmfn = usr_dir + ICO_SYC_APP_INFO;
-
-    const char* filepath = prmfn.c_str();
-    struct stat st;
-    if (0 != stat(filepath, &st)) {
-        string dir = m_parentDir;
-        dir += string(ICO_SYC_APP_INFO_DEF);
-        prmfn = dir;
-    }
+    // set login-user history file path
+    string a_prmfn = usr_dir + ICO_SYC_APP_INFO;
+    // set default history file path
+    string d_prmfn = m_parentDir + string(ICO_SYC_APP_INFO_DEF);
 
     bundle *b;
     b = bundle_create();
+    // bundle add login-user name
     bundle_add(b, ICO_SYC_APP_BUNDLE_KEY1, usr.c_str());
-    bundle_add(b, ICO_SYC_APP_BUNDLE_KEY2, prmfn.c_str());
+    // bundle add login-user history file path
+    bundle_add(b, ICO_SYC_APP_BUNDLE_KEY2, a_prmfn.c_str());
+    // bundle add default history file path
+    bundle_add(b, ICO_SYC_APP_BUNDLE_KEY3, d_prmfn.c_str());
+    // bundle add flag file path
+    bundle_add(b, ICO_SYC_APP_BUNDLE_KEY4, m_flagPath.c_str());
 
-    ICO_DBG("launch homescreen (user=%s, appid=%s, parm=%s)",
-            usr.c_str(), appid_hs.c_str(), prmfn.c_str());
+    ICO_DBG("launch homescreen (user=%s, appid=%s, parm=%s, %s)",
+            usr.c_str(), appid_hs.c_str(), a_prmfn.c_str(), d_prmfn.c_str());
 
     CicoSCLifeCycleController* oCSCLCC;
     oCSCLCC = CicoSCLifeCycleController::getInstance();
@@ -995,4 +1017,58 @@ CicoSCUserManager::findUserConfbyName(const string & name)
     ICO_ERR("CicoSCUserManager::findUserConfbyName Leave(ENXIO)");
     return NULL;
 }
+
+/**
+ * @brief flag file on(create)
+ */
+void CicoSCUserManager::flagFileOn(const char* text)
+{
+    if (true == m_flagPath.empty()) {
+        ICO_DBG("FLAG(FILE) empty");
+        return;
+    }
+    const char* f = m_flagPath.c_str();
+    ofstream oFlagFile;
+    oFlagFile.open(f, ios::trunc);
+    if ((NULL != text) && (0 != text) && (0 != strlen(text))) {
+        oFlagFile << text << endl;
+    }
+    oFlagFile.close();
+    ICO_DBG("FILE(%s) create(FLAG ON)", f);
+}
+
+/**
+ * @brief flag file off(remove)
+ */
+void CicoSCUserManager::flagFileOff()
+{
+    if (true == m_flagPath.empty()) {
+        ICO_DBG("FLAG(FILE) empty");
+        return;
+    }
+    const char* f = m_flagPath.c_str();
+    struct stat st;
+    int r = stat(f, &st);
+    if (0 != r) {
+        ICO_DBG("FILE(%s) is Nothing", f);
+        return;
+    }
+    remove(f);
+    ICO_DBG("FILE(%s) FLAG off(remove)", f);
+    return;
+}
+
+/**
+ * @brief directory last slash add
+ * @param s directory path string
+ */
+void chkAndAddSlash(string& s)
+{
+    int sz = s.size();
+    const char* p = s.c_str();
+    if ('/' != p[sz-1]) {
+        s += "/";
+    }
+}
+
 // vim:set expandtab ts=4 sw=4:

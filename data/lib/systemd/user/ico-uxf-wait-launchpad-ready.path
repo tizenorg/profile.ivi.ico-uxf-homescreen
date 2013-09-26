@@ -1,4 +1,4 @@
-Description=Path activation for ico-system-controller
+# Description=Path activation for ico-system-controller
 
 [Path]
 PathExists=/tmp/amd_ready
