@@ -60,6 +60,7 @@ public:
     int               nodeid;       ///< node id
     int               displayid;    ///< display id
     int               layerid;      ///< layer id
+    std::string       zone;         ///< display zone name
     int               zoneid;       ///< display zone id
     int               subwindow;    ///< main window(0) or sub window(!0)
     unsigned int      eventmask;    ///< Event to receive through this window

@@ -6,13 +6,17 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  */
+
+//==========================================================================
 /**
- * @brief   Application info
+ *  @file   CicoHSAppInfo.h
  *
- * @date    Aug-08-2013
+ *  @brief  This file is definition of CicoHSAppInfo class
  */
+//==========================================================================
 #ifndef __CICO_HS_APP_INFO_H__
 #define __CICO_HS_APP_INFO_H__
+
 #include <stdio.h>
 #include <pthread.h>
 #include <libwebsockets.h>
@@ -31,12 +35,13 @@
 #define ICO_HS_APPLICATION_FULL_SCREEN_HEIGHT 1728
 
 #define ICO_HS_MAX_WINDOW_NAME 64
+#define ICO_HS_MAX_ZONE_NAME 64
 
 typedef struct _ico_hs_window_info{
     bool valid;
-    bool showed;
     char appid[ICO_HS_MAX_PROCESS_NAME];
     char name[ICO_HS_MAX_WINDOW_NAME];
+    char zone[ICO_HS_MAX_ZONE_NAME];
     int  surface;
     int  nodeid;
     int  layer;
@@ -49,44 +54,98 @@ typedef struct _ico_hs_window_info{
     int  active;
 }ico_hs_window_info;
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ */
+//--------------------------------------------------------------------------
 class CicoHSAppInfo
 {
-  public:
+public:
+    // constructor
     CicoHSAppInfo(const char *appid);
+
+    // destructor
     ~CicoHSAppInfo(void);
-    char *GetAppId(void);
-    ico_hs_window_info* GetWindowInfo(const char* name);
-    void SetWindowInfo(ico_hs_window_info *hs_window_info,
-                       ico_syc_win_info_t *window_info);
-    void SetWindowAttr(ico_hs_window_info *hs_window_info,
-                       ico_syc_win_attr_t *window_info);
+
+    // add window information
+    int AddWindowInfo(ico_syc_win_info_t *wininfo);
+
+    // add window attribute
+    int AddWindowAttr(ico_syc_win_attr_t *winattr);
+
+    // free window information
     void FreeWindowInfo(const char *name);
-    int AddWindowInfo(ico_syc_win_info_t *window_info);
-    int AddWindowAttr(ico_syc_win_attr_t *window_info);
+
+    // get application id
+    const char * GetAppId(void);
+
+    // get tatal count window information
     int GetWindowNum(void);
-    void SetShowed(ico_hs_window_info *info,bool showed);
-    bool GetShowed(ico_hs_window_info *info);
-    
+
+    // get window information by window name
+    ico_hs_window_info* GetWindowInfo(const char* name);
+
+    // get window iformation by index
+    ico_hs_window_info* GetWindowInfo(int idx);
+
+    // get window information by surface id
+    ico_hs_window_info* GetWindowInfobySurface(int surface);
+
+    // launch application
     int Execute(void);
+
+    // terminate application
     int Terminate(void);
+
+    // get application running status
     bool GetStatus(void);
    
+    // set last surface id
     void SetLastSurface(int last_surface);
+
+    // get last surface id
     int GetLastSurface(void);
-  private:
-    ico_hs_window_info *GetFreeWindowInfoBuffer(void);
 
-    char appid[ICO_HS_MAX_PROCESS_NAME];
-    int category;
-    int window_num;
-    int last_surface;
-    ico_hs_window_info window_info_i[ICO_HS_APP_MAX_WINDOW_NUM];
-    std::vector<ico_hs_window_info *> window_info;
-    CicoSCLifeCycleController *life_cycle_controller;
-   
-  protected:
+    // get default zone name
+    const char * GetDefaultZone(void);
+
+private:
+    // default constructor
+    CicoHSAppInfo();
+
+    // assignment operator
     CicoHSAppInfo operator=(const CicoHSAppInfo&);
-    CicoHSAppInfo(const CicoHSAppInfo&);
-};
-#endif
 
+    // copy constructor
+    CicoHSAppInfo(const CicoHSAppInfo&);
+
+    // set window information
+    void SetWindowInfo(ico_hs_window_info *hs_wininfo,
+                       ico_syc_win_info_t *wininfo);
+
+    // set window attribute
+    void SetWindowAttr(ico_hs_window_info *hs_wininfo,
+                       ico_syc_win_attr_t *winattr);
+
+    // get ico_hs_window_info from freebuffer
+    ico_hs_window_info* GetFreeWindowInfoBuffer(void);
+
+private:
+    /// application id
+    std::string m_appid;
+    /// application category
+    int m_category;
+    /// total window count
+    int m_window_num;
+    /// last surface id
+    int m_last_surface;
+    /// window information free list
+    ico_hs_window_info m_window_info_i[ICO_HS_APP_MAX_WINDOW_NUM];
+    /// window information list
+    std::vector<ico_hs_window_info *> m_window_info;
+    /// life cycle controller instance
+    CicoSCLifeCycleController *m_life_cycle_controller;
+};
+#endif  // __CICO_HS_APP_INFO_H__
+// vim: set expandtab ts=4 sw=4:

@@ -66,10 +66,11 @@ public:
                        int               surfaceid,
                        int               type,
                        int               deviceno,
+                       int               time,
                        int               code,
                        int               value);
 
-    // set input region informantion
+    // set input region information
     int setInputRegion(const std::string &appid,
                        const std::string &winname,
                        int x,
@@ -84,7 +85,7 @@ public:
                        int cursor_height,
                        int attr);
 
-    // unset input region informantion
+    // unset input region information
     int unsetInputRegion(const std::string &appid,
                          const std::string &winname,
                          int x,

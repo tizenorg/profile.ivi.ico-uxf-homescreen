@@ -1,3 +1,16 @@
+* Thu Sep 26 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20130919.204217@93c93da
+- 0.9.04 release
+-- addition of the application operation history.
+-- change of the interface of the ico-uxf-weston-plugin.
+-- BugFix: TIVI-1436,1741,1786,1787,1815,1816,1820,1836,1843,1900,1905
+-- Renewal of a menu at the time of installation/uninstallation.
+-- The start method is changed to the Wants target of the service file for ico-uxf-device-input-controller and ico-vic-carsimurator.
+-- Shortcut addition.
+-- bugfix : display history order is not reproduced.
+-- bugfix: when show app in second display, crash homescreen
+-- bugfix: the prev swipe operation, failure occurs to the next swipe
+-- updated homescreen service file.(delete Type=oneshot) 
+
 * Thu Sep 19 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20130911.211140@65dbd1c
 - 0.9.03 release.
 -- Additional functions of policy and resource management.

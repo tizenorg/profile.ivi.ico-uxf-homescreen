@@ -53,7 +53,7 @@ protected: // member method
     bool categoryParseKind(const std::string& s);
     bool categoryParseCategory(const std::string& s);
     bool categoryParseGetValue(const std::string& s, const std::string& k,
-                               std::string val);
+                               std::string & val);
     bool categoryGetDisplay(const std::string& disp, const std::string& layer,
                             const std::string& zone);
     bool categoryGetSound(const std::string& sound, const std::string& zone);

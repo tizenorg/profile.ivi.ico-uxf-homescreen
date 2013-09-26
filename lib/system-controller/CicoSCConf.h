@@ -213,8 +213,12 @@ public:
     int         width;   ///< display width resolution
     int         height;  ///< display height resolution
     int         inch;    ///< display inch size
-    std::vector<CicoSCLayerConf*>        layerConfList;  // layer config list
-    std::vector<CicoSCDisplayZoneConf*>  zoneConfList;   // zone config list
+
+    // layer config list
+    std::vector<CicoSCLayerConf*> layerConfList;
+
+    // zone config list
+    std::vector<CicoSCDisplayZoneConf*> zoneConfList;
 };
 
 //==========================================================================

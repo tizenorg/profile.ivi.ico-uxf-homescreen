@@ -52,7 +52,7 @@ public:
     /// default constructor
     CicoSCCmdWinCtrlOpt()
         : nodeid(0), displayid(0), layerid(0),
-          zone(""), surfaceid(-1), animation(""), animationTime(-1),
+          zone(""), surfaceid(-1), animation(""), animationTime(0),
           x(-1), y(-1), width(-1), height(-1), raise(-1),
           visible(-1), active(-1), framerate(0), stride(-1), format(-1) {}
 
@@ -104,7 +104,7 @@ public:
     /// default constructor
     CicoSCCmdInputDevCtrlOpt()
         : device(""), input(-1), surfaceid(-1), deviceno(-1),
-          fix(-1), keycode(-1), evtype(-1), evcode(-1),
+          fix(-1), keycode(-1), evtype(-1), evtime(0), evcode(-1),
           evvalue(-1) {}
 
     /// destructor
@@ -115,9 +115,9 @@ public:
     {
         ICO_DBG("InputCtrlOpt: "
                 "device=%s input=%d surfaceid=0x%08X deviceno=%d "
-                "fix=%d keycode=%d evtype=%d evcode=%d evvalue=%d",
+                "fix=%d keycode=%d evtype=%d evtime=%d evcode=%d evvalue=%d",
                 device.c_str(), input, surfaceid, deviceno,
-                fix, keycode, evtype, evcode, evvalue);
+                fix, keycode, evtype, evtime, evcode, evvalue);
     }
 
     std::string device;     //!< name of input device
@@ -127,6 +127,7 @@ public:
     int         fix;        //!< status of fix
     int         keycode;    //!< code of key
     int         evtype;     //!< type of event
+    int         evtime;     //!< time of event
     int         evcode;     //!< code of event
     int         evvalue;    //!< value of event
 };
@@ -169,7 +170,7 @@ public:
     /// default constructor
     CicoSCCmdResCtrlOpt()
         : dispres(false), dispzone(""), winname(""), surfaceid(-1),
-          animation(""), animationTime(-1),
+          animation(""), animationTime(0),
           soundres(false), soundzone(""), soundname(""), adjust(0),
           inputres(false), device(""), input(0), type(0) {}
 

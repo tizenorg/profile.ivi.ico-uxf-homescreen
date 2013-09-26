@@ -97,7 +97,7 @@ private:
 
     resource_request_t * popInputResReq(resource_request_t *req);
 
-    void updateDisplayResource(resource_request_t *req);
+    void updateDisplayResource(resource_request_t *req, int chgzoneid=-1);
     void updateSoundResource(resource_request_t *req);
     void updateInputResource(resource_request_t *req);
 
@@ -105,17 +105,25 @@ private:
     void updateSoundResourceRegulation(int state);
     void updateInputResourceRegulation(int state);
 
+    resource_request_t * findCurDispResOwerReq(resource_request_t *req);
+    resource_request_t * popCurDispResOwerReq(resource_request_t *req);
+    void dumpCurDispResOwerReq(void);
+
+    resource_request_t * findWaitingDispResReq(resource_request_t *req);
+    resource_request_t * popWaitingDispResReq(resource_request_t *req);
+    void dumpWaitingDispResReq(void);
+
 private:
     CicoSCPolicyManager       *m_policyMgr;
     CicoSCWindowController    *m_winCtrl;
     CicoSCInputController     *m_inputCtrl;
 
     // pair zoneid and request
-    map<int, resource_request_t*> m_curDispResReq;
-    map<int, resource_request_t*> m_curSoundResReq;
-    map<int, resource_request_t*> m_curInputResReq;
+    std::map<unsigned int, resource_request_t*> m_curDispResOwerReq;
+    std::map<int, resource_request_t*> m_curSoundResReq;
+    std::map<int, resource_request_t*> m_curInputResReq;
 
-    map<int, list<resource_request_t*> > m_dispReqQueue;
+    std::list<resource_request_t*> m_waitingDispResReq;
     map<int, list<resource_request_t*> > m_soundReqQueue;
     map<int, list<resource_request_t*> > m_inputReqQueue;
 };

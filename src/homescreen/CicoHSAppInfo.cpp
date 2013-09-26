@@ -6,114 +6,201 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  */
+
+//==========================================================================
 /**
- * @brief   Application info
+ *  @file   CicoHSAppInfo
  *
- * @date    Aug-08-2013
+ *  @brief  This file is implimention of CicoHSAppInfo class
  */
+//==========================================================================
+
 #include "CicoHSAppInfo.h"
+#include "CicoSCSystemConfig.h"
+#include "CicoSCConf.h"
 
-
-/*============================================================================*/
-/* functions                                                                  */
-/*============================================================================*/
-/*--------------------------------------------------------------------------*/
+//==========================================================================
+//  public functions
+//==========================================================================
+//--------------------------------------------------------------------------
 /**
- * @brief   CicoHSAppInfo::CicoHSAppInfo
- *          Constractor
+ *  @brief  constractor
  *
- * @param[in]   appid    application id
- * @return      none
+ *  @param [in] appid   application id
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 CicoHSAppInfo::CicoHSAppInfo(const char *appid)
+    : m_appid(appid), m_category(0), m_window_num(0), m_last_surface(0)
 {
-    for(int ii = 0;ii < ICO_HS_APP_MAX_WINDOW_NUM;ii++){
-        window_info_i[ii].valid = false;
-    }
-
-    window_num = 0;
-    last_surface = 0;
-    if(appid == NULL){
-        return;
-    } 
-    strncpy(this->appid,appid,ICO_HS_MAX_PROCESS_NAME);
-
-    life_cycle_controller = CicoSCLifeCycleController::getInstance();
+    memset(m_window_info_i, 0, sizeof(m_window_info_i));
+    m_life_cycle_controller = CicoSCLifeCycleController::getInstance();
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
- * @brief   CicoHSAppInfo::~CicoHSAppInfo
- *          Destractor
- *
- * @param[in]   none
- * @return      none
+ *  @brief   destractor
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 CicoHSAppInfo::~CicoHSAppInfo(void)
 {
-
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
- * @brief   CicoHSAppInfo::GetAppId
- *          get application id
+ *  @brief  set window information
  *
- * @param[in]   none
- * @return      application id
+ *  @param [in] wininfo     window information
+ *  @return OK or ERROR
  */
-/*--------------------------------------------------------------------------*/
-char*
+//--------------------------------------------------------------------------
+int
+CicoHSAppInfo::AddWindowInfo(ico_syc_win_info_t *wininfo)
+{
+
+    if (NULL == wininfo) {
+        ICO_ERR("wininfo is null.");
+        return ICO_ERROR;
+    }
+
+    ICO_TRA("CicoHSAppInfo::AddWindowInfo Enter(appid=%s surface=%d",
+            wininfo->appid, wininfo->surface);
+
+    // if exist window information, update current window information
+    std::vector<ico_hs_window_info*>::iterator itr;
+    itr = this->m_window_info.begin();
+    for (; itr != this->m_window_info.end(); ++itr) {
+        if (wininfo->surface == (*itr)->surface) {
+            /*update*/
+            SetWindowInfo(*itr, wininfo);
+            ICO_TRA("CicoHSAppInfo::AddWindowInfo Leave(OK)");
+            return ICO_OK;
+        }
+    }
+
+    // if not exit window information, create window information
+    ico_hs_window_info *tmp_win_info = GetFreeWindowInfoBuffer();
+    if (tmp_win_info == NULL) {
+        ICO_ERR("CicoHSAppInfo::AddWindowInfo Leave(ERR)");
+        return ICO_ERROR;
+    }   
+    SetWindowInfo(tmp_win_info, wininfo);
+    this->m_window_info.push_back(tmp_win_info);
+    ++m_window_num;
+
+    ICO_TRA("CicoHSAppInfo::AddWindowInfo Leave(OK)");
+    return ICO_OK;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   set window attribute
+ *
+ *  @param [in]   winattr   window attribute
+ *  @return OK or ERROR
+ */
+//--------------------------------------------------------------------------
+int
+CicoHSAppInfo::AddWindowAttr(ico_syc_win_attr_t *winattr)
+{
+    if (NULL == winattr) {
+        ICO_ERR("winattr is null.");
+        return ICO_ERROR;
+    }
+
+    ICO_TRA("CicoHSAppInfo::AddWindowAttr Enter(appid=%s surface=%d",
+            winattr->appid, winattr->surface);
+
+    // if exist window information, update current window information
+    std::vector<ico_hs_window_info*>::iterator itr;
+    itr = m_window_info.begin();
+    for (; itr != m_window_info.end(); itr++){
+        if (winattr->surface == (*itr)->surface) {
+            /*update*/
+            SetWindowAttr(*itr, winattr);
+            ICO_TRA("CicoHSAppInfo::AddWindowAttr Leave(OK)");
+            return ICO_OK;
+        }
+    }
+
+    // if not exit window information, create window information
+    ico_hs_window_info *tmp_win_info = GetFreeWindowInfoBuffer();
+    if (tmp_win_info == NULL){
+        ICO_TRA("CicoHSAppInfo::AddWindowAttr Leave(ERR)");
+        return ICO_ERROR;
+    }   
+ 
+    SetWindowAttr(tmp_win_info, winattr);
+    m_window_info.push_back(tmp_win_info);
+    ++m_window_num;
+  
+    ICO_TRA("CicoHSAppInfo::AddWindowAttr Leave(OK)");
+    return ICO_OK;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  free window information
+ *
+ *  @param [in] name    window name
+ */
+//--------------------------------------------------------------------------
+void
+CicoHSAppInfo::FreeWindowInfo(const char *name)
+{
+    std::vector<ico_hs_window_info*>::iterator itr;
+    itr = m_window_info.begin();
+    for (; itr != m_window_info.end(); ++itr) {
+        if (0 == strncmp(name,(*itr)->name, ICO_HS_MAX_WINDOW_NAME)) {
+            (*itr)->valid = false;
+            m_window_info.erase(itr);
+            --m_window_num;
+            break;
+        }
+    }
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get application id
+ *
+ *  @return application id
+ */
+//--------------------------------------------------------------------------
+const char*
 CicoHSAppInfo::GetAppId(void)
 {
-    return appid;
+    return m_appid.c_str();
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
- * @brief   CicoHSAppInfo::SetWindowInfo
- *          set window information
+ *  @brief  get number of window 
  *
- * @param[in]   idx              index
- * @param[in]   window info      window information
- * @return      void
+ *  @return number of window
  */
-/*--------------------------------------------------------------------------*/
-void 
-CicoHSAppInfo::SetWindowInfo(ico_hs_window_info *hs_window_info,ico_syc_win_info_t *window_info)
+//--------------------------------------------------------------------------
+int 
+CicoHSAppInfo::GetWindowNum(void)
 {
-    hs_window_info->showed = false;
-    if(window_info->appid != NULL){
-        strncpy(hs_window_info->appid,window_info->appid,
-                ICO_HS_MAX_PROCESS_NAME);
-    }
-    if(window_info->name != NULL){
-        strncpy(hs_window_info->name,window_info->name,
-                ICO_HS_MAX_WINDOW_NAME);
-    }
-    hs_window_info->surface = window_info->surface;
+    return m_window_num;
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
- * @brief   CicoHSAppInfo::GetFreeWindowInfoBuffer
- *          get internal window info buffer
+ *  @brief  get window information 
  *
- * @param[in]   none
- * @return      buffer
+ *  @param[in]   name   window name
+ *  @return window information
  */
-/*--------------------------------------------------------------------------*/
-ico_hs_window_info *
-CicoHSAppInfo::GetFreeWindowInfoBuffer(void)
+//--------------------------------------------------------------------------
+ico_hs_window_info*
+CicoHSAppInfo::GetWindowInfo(const char* name)
 {
-    ico_hs_window_info *tmp_win_info;
-    for(int ii = 0;ii < ICO_HS_APP_MAX_WINDOW_NUM;ii++){
-        if(window_info_i[ii].valid == false){
-           tmp_win_info = &window_info_i[ii];
-           tmp_win_info->valid = true;
-           return tmp_win_info;
+    std::vector<ico_hs_window_info*>::iterator itr;
+    itr = m_window_info.begin();
+    for (; itr != m_window_info.end(); ++itr) {
+        if(0 == strncmp(name,(*itr)->name, ICO_HS_MAX_WINDOW_NAME)) {
+            return *itr;
         }
     }
     return NULL;
@@ -121,237 +208,82 @@ CicoHSAppInfo::GetFreeWindowInfoBuffer(void)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSAppInfo::FreeWindowInfoBuffer
- *          get internal window info buffer
- *
- * @param[in]   name          window name
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-void
-CicoHSAppInfo::FreeWindowInfo(const char *name)
-{
-    for(std::vector<ico_hs_window_info*>::iterator it_window_info = 
-                 window_info.begin();
-        it_window_info != window_info.end();
-        it_window_info++){
-        if((strncmp(name,(*it_window_info)->name,
-            ICO_HS_MAX_WINDOW_NAME) == 0)){
-            (*it_window_info)->valid = false;
-            window_info.erase(it_window_info);
-            --window_num;
-            break;
-        }
-    }
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSAppInfo::SetWindowAttr
- *          set window attribute
- *
- * @param[in]   idx              index
- * @param[in]   window_attr      window attribute
- * @return      void
- */
-/*--------------------------------------------------------------------------*/
-void 
-CicoHSAppInfo::SetWindowAttr(ico_hs_window_info *hs_window_info,ico_syc_win_attr_t *window_attr)
-{
-    if(window_attr->appid != NULL){
-        strncpy(hs_window_info->appid,window_attr->appid,
-                ICO_HS_MAX_PROCESS_NAME);
-    }
-    if(window_attr->name != NULL){ 
-        strncpy(hs_window_info->name,window_attr->name,
-                ICO_HS_MAX_WINDOW_NAME);
-    }
-    hs_window_info->surface = window_attr->surface;
-    hs_window_info->nodeid = window_attr->nodeid;
-    hs_window_info->layer = window_attr->layer;
-    hs_window_info->pos_x = window_attr->pos_x;
-    hs_window_info->pos_y = window_attr->pos_y;
-    hs_window_info->width = window_attr->width;
-    hs_window_info->height = window_attr->height;
-    hs_window_info->raise = window_attr->raise;
-    hs_window_info->visible = window_attr->visible;
-    hs_window_info->active = window_attr->active;
-
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSAppInfo::SetWindowAttr
- *          set window attribute
- *
- * @param[in]   window_attr      window information
- * @return      OK or ERROR
- */
-/*--------------------------------------------------------------------------*/
-int
-CicoHSAppInfo::AddWindowAttr(ico_syc_win_attr_t *window_attr)
-{
-    for(std::vector<ico_hs_window_info*>::iterator it_window_info = 
-                 window_info.begin();
-        it_window_info != window_info.end();
-        it_window_info++){
-        if((strncmp(window_attr->name,(*it_window_info)->name,
-            ICO_HS_MAX_WINDOW_NAME) == 0)){
-            /*update*/
-            SetWindowAttr(*it_window_info,window_attr);
-            return ICO_OK;
-        }
-    }
-
-    ico_hs_window_info *tmp_win_info = GetFreeWindowInfoBuffer();
-    if(tmp_win_info == NULL){
-        return ICO_ERROR;
-    }   
- 
-    SetWindowAttr(tmp_win_info,window_attr);
-    window_info.push_back(tmp_win_info);
-    ++window_num;
-  
-    return ICO_OK;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSAppInfo::SetWindowInfo
- *          set window information
- *
- * @param[in]   window info      window information
- * @return      OK or ERROR
- */
-/*--------------------------------------------------------------------------*/
-int
-CicoHSAppInfo::AddWindowInfo(ico_syc_win_info_t *window_info)
-{
-    for(std::vector<ico_hs_window_info*>::iterator it_window_info 
-                 = this->window_info.begin();
-        it_window_info != this->window_info.end();
-        it_window_info++){
-        if((strncmp(window_info->name,(*it_window_info)->name,
-            ICO_HS_MAX_WINDOW_NAME) == 0)){
-            /*update*/
-            SetWindowInfo(*it_window_info,window_info);
-            return ICO_OK;
-        }
-    }
-    
-    ico_hs_window_info *tmp_win_info = GetFreeWindowInfoBuffer();
-    if(tmp_win_info == NULL){
-        return ICO_ERROR;
-    }   
-    SetWindowInfo(tmp_win_info,window_info);
-    this->window_info.push_back(tmp_win_info);
-    ++window_num;
-
-    return ICO_OK;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSAppInfo::GetWindowNum
- *          get number of window 
- *
- * @param[in]   none
- * @return      window num
- */
-/*--------------------------------------------------------------------------*/
-int 
-CicoHSAppInfo::GetWindowNum(void)
-{
-    return window_num;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
  * @brief   CicoHSAppInfo::GetWindowInfo
- *          get window information 
+ *          get window information
  *
- * @param[in]   idx index
+ * @param[in]   idx index(0-n)
  * @return      window information
  */
 /*--------------------------------------------------------------------------*/
 ico_hs_window_info*
-CicoHSAppInfo::GetWindowInfo(const char* name)
+CicoHSAppInfo::GetWindowInfo(int idx)
 {
-    for(std::vector<ico_hs_window_info*>::iterator it_window_info 
-                = window_info.begin();
-        it_window_info != window_info.end();
+    int     i = 0;
+
+    for (std::vector<ico_hs_window_info*>::iterator it_window_info
+                = m_window_info.begin();
+        it_window_info != m_window_info.end();
         it_window_info++){
-        if((strncmp(name,(*it_window_info)->name,ICO_HS_MAX_WINDOW_NAME) == 0)){
+        if (i >= idx)   {
             return *it_window_info;
+        }
+        i ++;
+    }
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get window information 
+ *
+ *  @param[in]   surface    surface id
+ *  @return window information
+ */
+//--------------------------------------------------------------------------
+ico_hs_window_info*
+CicoHSAppInfo::GetWindowInfobySurface(int surface)
+{
+    std::vector<ico_hs_window_info*>::iterator itr;
+    itr = m_window_info.begin();
+    for (; itr != m_window_info.end(); ++itr) {
+        if ((*itr)->surface == surface) {
+            return *itr;
         }
     }
     return NULL;  
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
- * @brief   CicoHSAppInfo::SetShowed
- *          set showing status;          
+ *  @brief   launch application 
  *
- * @param[in]   showed     showing status 
- * @return      none
+ *  @return 0 on success, other on error
  */
-/*--------------------------------------------------------------------------*/
-void
-CicoHSAppInfo::SetShowed(ico_hs_window_info *info,bool showed)
-{
-    info->showed = showed;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSAppInfo::GetShowed
- *          get showing status;          
- *
- * @param[in]    none
- * @return      showing status 
- */
-/*--------------------------------------------------------------------------*/
-bool
-CicoHSAppInfo::GetShowed(ico_hs_window_info *info)
-{
-    return info->showed;
-}
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSAppInfo::Execute
- *          execute application 
- *
- * @param[in]   none
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 int
 CicoHSAppInfo::Execute(void)
 {
-    /*call execute api*/
-    int ret = life_cycle_controller->launch(appid);    
+    // call launch api
+    int ret = m_life_cycle_controller->launch(m_appid);    
     if(ret < 0){
         return ret;
     }
-  
+
     return ret;
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /*
- * @brief   CicoHSAppInfo::Terminate
- *          terminate application 
+ *  @brief  terminate application 
  *
- * @param[in]   none
- * @return      none
+ *  @return 0 on success, other on error
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 int
 CicoHSAppInfo::Terminate(void)
 {
-    /*call Terminate api*/
-    int ret = life_cycle_controller->terminate(appid);    
+    // call terminate api
+    int ret = m_life_cycle_controller->terminate(m_appid);    
     if(ret < 0){
         return ret;
     }
@@ -359,31 +291,180 @@ CicoHSAppInfo::Terminate(void)
    return ret;
 }
 
-
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
- * @brief   CicoHSAppInfo::GetStatus
- *          get status 
+ *  @brief  get status 
  *
- * @param[in]   none
- * @return      status
+ *  @return application running status
+ *  @retval true    running
+ *  @retval false   not running
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 bool 
 CicoHSAppInfo::GetStatus(void)
 {
-    return life_cycle_controller->isRunning(appid);
+    return m_life_cycle_controller->isRunning(m_appid);
 }
 
-
+//--------------------------------------------------------------------------
+/**
+ *  @brief  set last surface id
+ *
+ *  @param [in] last surface id
+ */
+//--------------------------------------------------------------------------
 void 
 CicoHSAppInfo::SetLastSurface(int last_surface)
 {
-    this->last_surface = last_surface;
+    m_last_surface = last_surface;
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get last surface id
+ *
+ *  @return surface id
+ */
+//--------------------------------------------------------------------------
 int 
 CicoHSAppInfo::GetLastSurface(void)
 {
-    return last_surface;
+    return m_last_surface;
 }
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get default zone name
+ *
+ *  @return zone name
+ */
+//--------------------------------------------------------------------------
+const char *
+CicoHSAppInfo::GetDefaultZone(void)
+{
+    m_life_cycle_controller = CicoSCLifeCycleController::getInstance();
+    const CicoSCAilItems* ailItem = m_life_cycle_controller->findAIL(m_appid);
+
+    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    const CicoSCDisplayZoneConf *zoneConf = NULL;
+    if (NULL != ailItem) {
+        zoneConf = sysConf->findDisplayZoneConfbyId(ailItem->m_displayZone);
+    }
+    else {
+        const CicoSCDefaultConf* defConf = sysConf->getDefaultConf();
+        zoneConf = sysConf->findDisplayZoneConfbyId(defConf->displayzone);
+    }
+        
+    if (NULL == zoneConf) {
+        return NULL;
+    }
+
+    return zoneConf->fullname.c_str();
+}
+
+//==========================================================================
+//  private method
+//==========================================================================
+//--------------------------------------------------------------------------
+/**
+ *  @brief   set window information
+ *
+ *  @param [in] hs_wininfo  window information
+ *  @param [in] wininfo     window information from system-controller
+ */
+//--------------------------------------------------------------------------
+void 
+CicoHSAppInfo::SetWindowInfo(ico_hs_window_info *hs_wininfo,
+                             ico_syc_win_info_t *wininfo)
+{
+    ICO_TRA("CicoHSAppInfo::SetWindowInfo Enter"
+            "(winifo=%p appid=%s winname=%s surface=%d)",
+            hs_wininfo,
+            wininfo->appid, wininfo->name, wininfo->surface);
+
+    // set application id
+    if(wininfo->appid != NULL){
+        strncpy(hs_wininfo->appid, wininfo->appid, ICO_HS_MAX_PROCESS_NAME);
+    }
+
+    // set window name(window title)
+    if(wininfo->name != NULL){
+        strncpy(hs_wininfo->name, wininfo->name, ICO_HS_MAX_WINDOW_NAME);
+    }
+    // set surface id
+    hs_wininfo->surface = wininfo->surface;
+
+    ICO_TRA("CicoHSAppInfo::SetWindowInfo Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  set window attribute
+ *
+ *  @param [in] hs_wininfo  window information
+ *  @param [in] winattr     window attribute
+ */
+//--------------------------------------------------------------------------
+void 
+CicoHSAppInfo::SetWindowAttr(ico_hs_window_info *hs_wininfo,
+                             ico_syc_win_attr_t *winattr)
+{
+    ICO_TRA("CicoHSAppInfo::SetWindowAttr Enter"
+            "(winifo=%p "
+            "appid=%s winname=%s zone=%s surface=%d nodeid=%d layer=%d "
+            "x/y=%d/%d w/h=%d/%d raise=%d visible=%d active=%d)",
+            hs_wininfo,
+            winattr->appid, winattr->name, winattr->zone,
+            winattr->surface, winattr->nodeid, winattr->layer,
+            winattr->pos_x, winattr->pos_y, winattr->width, winattr->height,
+            winattr->raise, winattr->visible, winattr->active);
+
+    if (winattr->appid != NULL) {
+        strncpy(hs_wininfo->appid, winattr->appid, ICO_HS_MAX_PROCESS_NAME);
+    }
+
+    if (winattr->name != NULL) { 
+        strncpy(hs_wininfo->name, winattr->name, ICO_HS_MAX_WINDOW_NAME);
+    }
+
+    if (winattr->zone != NULL) { 
+        strncpy(hs_wininfo->zone, winattr->zone, ICO_HS_MAX_ZONE_NAME);
+    }
+
+    hs_wininfo->surface = winattr->surface;
+    hs_wininfo->nodeid  = winattr->nodeid;
+    hs_wininfo->layer   = winattr->layer;
+    hs_wininfo->pos_x   = winattr->pos_x;
+    hs_wininfo->pos_y   = winattr->pos_y;
+    hs_wininfo->width   = winattr->width;
+    hs_wininfo->height  = winattr->height;
+    hs_wininfo->raise   = winattr->raise;
+    hs_wininfo->visible = winattr->visible;
+    hs_wininfo->active  = winattr->active;
+
+    ICO_TRA("CicoHSAppInfo::SetWindowAttr Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ * @brief   CicoHSAppInfo::GetFreeWindowInfoBuffer
+ *          get internal window info buffer
+ *
+ * @param[in]   none
+ * @return      buffer
+ */
+//--------------------------------------------------------------------------
+ico_hs_window_info *
+CicoHSAppInfo::GetFreeWindowInfoBuffer(void)
+{
+    ico_hs_window_info *tmp_win_info;
+    for (int ii = 0; ii < ICO_HS_APP_MAX_WINDOW_NUM; ii++) {
+        if (m_window_info_i[ii].valid == false) {
+           tmp_win_info = &m_window_info_i[ii];
+           tmp_win_info->valid = true;
+           return tmp_win_info;
+        }
+    }
+    return NULL;
+}
+// vim: set expandtab ts=4 sw=4:

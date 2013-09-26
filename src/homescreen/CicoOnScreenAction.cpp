@@ -250,7 +250,7 @@ CicoOnScreenAction::EcoreEvent(void *data)
  *
  * @param[in]   data                user data
  * @param[in]   obj                 evas object of the button
- * @param[in]   event_info          evas event infomation
+ * @param[in]   event_info          evas event information
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
@@ -283,7 +283,7 @@ CicoOnScreenAction::TouchUpEdje(void *data, Evas *evas, Evas_Object *obj, void *
  *
  * @param[in]   data                user data
  * @param[in]   obj                 evas object of the button
- * @param[in]   event_info          evas event infomation
+ * @param[in]   event_info          evas event information
  * @return      none
  */
 /*--------------------------------------------------------------------------*/

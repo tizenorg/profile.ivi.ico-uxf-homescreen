@@ -37,14 +37,15 @@ CicoSCAulItems::CicoSCAulItems()
     m_memcgroup = -1;
     m_defCgrpCpu.clear();
     m_defCgrpMem.clear();
+    m_aulstt = AUL_R_OK;
 }
 
 /**
  * @brief AUL Items class constructor
  */
 CicoSCAulItems::CicoSCAulItems(const char* appid, int pid, int ctgry,
-                               const CicoSCWindow* obj)
-    :m_appid(appid), m_pid(pid), m_category(ctgry)
+                               int aulstt, const CicoSCWindow* obj)
+    :m_appid(appid), m_pid(pid), m_category(ctgry), m_aulstt(aulstt)
 {
     ICO_TRA("constructor %s, %d, %x", appid? appid: "(NIL)", pid, obj);
     enterWindow(obj);
@@ -82,6 +83,7 @@ CicoSCAulItems::CicoSCAulItems(const CicoSCAulItems& s)
 #endif
     m_defCgrpCpu = s.m_defCgrpCpu;
     m_defCgrpMem = s.m_defCgrpMem;
+    m_aulstt = s.m_aulstt;
 }
 
 /**
@@ -132,7 +134,7 @@ void CicoSCAulItems::enterWindow(const CicoSCWindow* obj)
 }
 
 /**
- * @breif removw CicoSCWindow pointer
+ * @brief removw CicoSCWindow pointer
  * @param obj remove target
  */
 void CicoSCAulItems::rmWindow(const CicoSCWindow* obj)
@@ -152,7 +154,7 @@ void CicoSCAulItems::rmWindow(const CicoSCWindow* obj)
 }
 
 /**
- * @breif get cgroup data by /proc/[pid]/cgroup file
+ * @brief get cgroup data by /proc/[pid]/cgroup file
  * @parm pid target pid number
  * @param m store cgroup memory directory data
  * @param c store cgroup cpu,cpuacct directory data
@@ -203,3 +205,21 @@ bool CicoSCAulItems::getPidCgroupInfo(int pid, string& m, string& c)
     return bR;
 }
 
+/**
+ * @breif appid update
+ */
+void CicoSCAulItems::update_appid()
+{
+    if (AUL_R_OK == m_aulstt) {
+        return;
+    }
+    ICO_TRA("update start %d, %s", m_aulstt, m_appid.c_str());
+    char buf[255];
+    buf[0] = '\0'; // STOP CODE
+    m_aulstt = aul_app_get_appid_bypid(m_pid, buf, sizeof(buf));
+    if (AUL_R_OK == m_aulstt) {
+        m_appid = buf;
+    }
+    ICO_TRA("update end %d, %s", m_aulstt, m_appid.c_str());
+    return ;
+}

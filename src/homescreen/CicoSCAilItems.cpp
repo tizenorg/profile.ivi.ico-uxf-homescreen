@@ -511,7 +511,7 @@ bool CicoSCAilItems::categoryParseCategory(const string& s)
  */
 bool CicoSCAilItems::categoryParseGetValue(const std::string& s,
                                            const std::string& k,
-                                           std::string val)
+                                           std::string & val)
 {
     ICO_TRA("start, %s, %s", s.c_str(), k.c_str());
     const char* ps = s.c_str();
@@ -539,7 +539,7 @@ bool CicoSCAilItems::categoryParseGetValue(const std::string& s,
         ICO_TRA("end NG");
         return false;
     }
-    val = ps[c2];
+    val = s.substr(c2);
     ICO_TRA("end %s", val.c_str());
     return true;
 }

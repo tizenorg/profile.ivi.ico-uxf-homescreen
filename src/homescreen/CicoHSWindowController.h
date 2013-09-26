@@ -30,16 +30,19 @@
 class CicoHSWindowController
 {
   public:
+    CicoHSWindowController();
+    ~CicoHSWindowController();
     static void Initialize(void);
     static void Finalize(void);
     static void GetFullScreenSize(int orientation,int *width,int *height);
     static void StartEcoreLoop(void);
     static void QuitEcoreLoop(void);
-  private:
- 
+
   protected:
     CicoHSWindowController operator=(const CicoHSWindowController&);
     CicoHSWindowController(const CicoHSWindowController&);
+  private:
+    static Ecore_Evas *ms_ecoreEvas;
 };
 
 #endif

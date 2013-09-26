@@ -54,6 +54,7 @@ extern "C" {
 #define MSG_PRMKEY_KEY          (char *)"keycode"
 #define MSG_PRMKEY_DEVICE       (char *)"deviceno"
 #define MSG_PRMKEY_EV_TYPE      (char *)"ev_type"
+#define MSG_PRMKEY_EV_TIME      (char *)"ev_time"
 #define MSG_PRMKEY_EV_CODE      (char *)"ev_code"
 #define MSG_PRMKEY_EV_VAL       (char *)"ev_value"
 #define MSG_PRMKEY_POS_X        (char *)"pos_x"
@@ -127,6 +128,7 @@ extern "C" {
 #define MSG_CMD_CHANGE_ACTIVE       0x00010006
 #define MSG_CMD_CHANGE_LAYER        0x00010007
 #define MSG_CMD_CHANGE_ATTR         0x00010008
+#define MSG_CMD_NAME                0x00010009
 #define MSG_CMD_MAP_THUMB           0x00010011
 #define MSG_CMD_UNMAP_THUMB         0x00010012
 #define MSG_CMD_SHOW_LAYER          0x00010020

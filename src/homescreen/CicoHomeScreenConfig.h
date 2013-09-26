@@ -1,5 +1,3 @@
-#ifndef __CICOHOMESCREENCONFIG_H__
-#define __CICOHOMESCREENCONFIG_H__
 /*
  * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
  *
@@ -8,47 +6,62 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  */
-/**
- * @brief   load configuratoin file
- *
- * @date    Feb-15-2013
- */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
+//==========================================================================
+/**
+ *  @file   CicoHomeScreenConfig
+ *
+ *  @brief  This file is definition of CicoHomeScreenConfig class
+ */
+//==========================================================================
+#ifndef __CICO_HOMESCREEN_CONFIG_H__
+#define __CICO_HOMESCREEN_CONFIG_H__
+
 #include <glib.h>
 
-#include "CicoHomeScreenCommon.h"
-#include "CicoHomeScreenResourceConfig.h"
-
-/*============================================================================*/
-/* definition                                                                 */
-/*============================================================================*/
+//==========================================================================
+//  definition
+//==========================================================================
 #define ICO_HOMESCREEN_CONFIG_FILE "homescreen.conf"
 #define ICO_ONSCREEN_CONFIG_FILE   "onscreen.conf"
 #define ICO_STATUSBAR_CONFIG_FILE  "statusbar.conf"
 
-/*============================================================================*/
-/* Class Declaration (CicoHomeScreenConfig)                               */
-/*============================================================================*/
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ */
+//--------------------------------------------------------------------------
 class CicoHomeScreenConfig
 {
-  public:
+public:
+    // constructor
     CicoHomeScreenConfig();
+
+    // destructor
+    ~CicoHomeScreenConfig();
+
+    // intialize
     int Initialize(const char *conf);
+
+    // get integer value
     int ConfigGetInteger(const char *group_name, 
-                         const char *key, int default_value);
-    const char* ConfigGetString(const char *group_name, const char *key,
-                   const char *default_value);
-  private:
-    GKeyFile *config_key;
-    gboolean is_open_config;
+                         const char *key,
+                         int        default_value);
 
-  protected:
-    CicoHomeScreenConfig operator = (const CicoHomeScreenConfig&);
+    // get string value
+    const char* ConfigGetString(const char *group_name,
+                                const char *key,
+                                const char *default_value);
+
+private:
+    // assignment operator
+    CicoHomeScreenConfig operator=(const CicoHomeScreenConfig&);
+
+    // copy constructor
     CicoHomeScreenConfig(const CicoHomeScreenConfig&);
-};
 
-#endif
+private:
+    GKeyFile *m_gKeyFile;
+};
+#endif  // __CICO_HOMESCREEN_CONFIG_H__
+// vim: set expandtab ts=4 sw=4:

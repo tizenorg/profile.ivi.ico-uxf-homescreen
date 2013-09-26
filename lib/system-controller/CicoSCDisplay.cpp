@@ -73,4 +73,28 @@ CicoSCDisplay::dump(void)
         const_cast<CicoSCLayer*>(*itr)->dump();
     }
 }
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  find CicoSCDisplayZone instance by fullname
+ */
+//--------------------------------------------------------------------------
+CicoSCDisplayZone*
+CicoSCDisplay::findDisplayZonebyFullName(const string & fullname)
+{
+//    ICO_DBG("CicoSCDisplay:findDisplayZonebyFullName Enter"
+//            "(fullname=%s)", fullname.c_str());
+ 
+    std::map<unsigned int, CicoSCDisplayZone*>::iterator itr;
+    itr = zoneList.begin();
+    for (; itr != zoneList.end(); ++itr) {
+        if (itr->second->fullname == fullname) {
+//            ICO_DBG("CicoSCDisplay:findDisplayZonebyFullName Leave(found)");
+            return itr->second;
+        }
+    }
+
+//    ICO_DBG("CicoSCDisplay:findDisplayZonebyFullName Leave(not found)");
+    return NULL;
+}
 // vim:set expandtab ts=4 sw=4:

@@ -30,6 +30,8 @@ using namespace std;
 #include "CicoSCSystemConfig.h"
 #include "CicoSCConf.h"
 #include "CicoSCCommand.h"
+#include "CicoSCServer.h"
+#include "CicoSCMessage.h"
 
 //--------------------------------------------------------------------------
 /**
@@ -116,7 +118,7 @@ CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
     case MSG_CMD_SEND_INPUT:
         opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
         sendInputEvent(cmd->appid, opt->surfaceid, opt->evtype,
-                       opt->deviceno, opt->evcode, opt->evvalue);
+                       opt->deviceno, opt->evtime, opt->evcode, opt->evvalue);
         break;
     case MSG_CMD_SET_REGION:
         set_opt = static_cast<CicoSCCmdInputDevSettingOpt*>(cmd->opt);
@@ -198,10 +200,11 @@ CicoSCInputController::delInputApp(const string &appid,
  *
  *  @param [in] appid     application id
  *  @param [in] surfaceid surface id
- *  @param [in] type      //TODO
+ *  @param [in] type      device type
  *  @param [in] deviceno  input device number
- *  @param [in] code      //TODO
- *  @param [in] value     //TODO
+ *  @param [in] time      event time
+ *  @param [in] code      event code
+ *  @param [in] value     event value
  */
 //--------------------------------------------------------------------------
 int
@@ -209,15 +212,16 @@ CicoSCInputController::sendInputEvent(const string &appid,
                                       int          surfaceid,
                                       int          type,
                                       int          deviceno,
+                                      int          time,
                                       int          code,
                                       int          value)
 {
     ICO_DBG("CicoSCInputController::sendInputEvent Enter"
-            "(appid=%s surfaceid=0x%08X type=%d dev_no=%d code=%d value=%d)",
-            appid.c_str(), surfaceid, type, deviceno, code, value);
+            "(appid=%s surfaceid=0x%08X type=%d dev_no=%d time=%d code=%d value=%d)",
+            appid.c_str(), surfaceid, type, deviceno, time, code, value);
 
     CicoSCWlInputMgrIF::sendInputEvent(appid.c_str(), surfaceid,
-                                       type, deviceno, code, value);
+                                       type, deviceno, time, code, value);
 
     ICO_DBG("CicoSCInputController::sendInputEvent Leave(EOK)");
     return ICO_SYC_EOK;
@@ -225,7 +229,7 @@ CicoSCInputController::sendInputEvent(const string &appid,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  set input region informantion
+ *  @brief  set input region information
  *
  *  @param [in] appid     application id
  *  @param [in] winname   window name
@@ -277,7 +281,7 @@ CicoSCInputController::setInputRegion(const string &appid,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  unset input region informantion
+ *  @brief  unset input region information
  *
  *  @param [in] appid     application id
  *  @param [in] winname   window name
@@ -443,17 +447,15 @@ CicoSCInputController::inputCB(void               *data,
             "time=%d device=%s input=%d code=%d state=%d",
             time, device, input, code, state);
 
-    // TODO send message
-#if 0
-    CicoSCMessage message;
-    message.addElement("command", ICO_SYC_EV_WIN_CREATE);
-    message.addElement("appid", TODO);
-    message.addElement("arg.device", device);
-    message.addElement("arg.input", input);
-    message.addElement("arg.code", code);
-    message.addElement("arg.state", state);
-    CicoSCServer::getInstance()->sendMessage(message);
-#endif
+    // send message
+    CicoSCMessage *message = new CicoSCMessage();
+    message->addRootObject("command", ICO_SYC_EV_WIN_CREATE);
+    message->addArgObject("device", device);
+    message->addArgObject("time", time);
+    message->addArgObject("input", input);
+    message->addArgObject("code", code);
+    message->addArgObject("state", state);
+    CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
     ICO_DBG("CicoSCInputController::inputCB Leave");
 }

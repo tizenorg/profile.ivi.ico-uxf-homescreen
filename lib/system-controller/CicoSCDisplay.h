@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 //==========================================================================
 //  Forward declaration
@@ -42,6 +43,9 @@ public:
 
     // dump log this class member variables
     void dump(void);
+
+    // find display zone
+    CicoSCDisplayZone* findDisplayZonebyFullName(const string & fullname);
 
 private:
     /// assignment operator
@@ -68,8 +72,11 @@ public:
     int         orientation; ///< screen orientation
     std::string name;        ///< display name
 
-    std::vector<CicoSCLayer*>       layerList; ///< list of display layer
-    std::vector<CicoSCDisplayZone*> zoneList;  ///< list of display zone
+    /// list of display layer
+    std::vector<CicoSCLayer*> layerList;
+
+    /// list of display zone
+    std::map<unsigned int, CicoSCDisplayZone*> zoneList;
 };
 #endif  // __CICO_SC_DISPLAY_H__
 // vim:set expandtab ts=4 sw=4:
