@@ -96,6 +96,7 @@ int ico_syc_delete_input(const char *appid, const char *device, int input);
  * @param[in]   surface                 window's surface id
  * @param[in]   type                    device type of input event
  * @param[in]   deviceno                input device number
+ * @param[in]   time                    input event time(ms), if 0 auto generate
  * @param[in]   code                    input event code
  * @param[in]   value                   input event value
  * @return      result
@@ -105,7 +106,7 @@ int ico_syc_delete_input(const char *appid, const char *device, int input);
  */
 /*--------------------------------------------------------------------------*/
 int ico_syc_send_input(const char *appid, int surface, int type,
-                       int deviceno, int code, int value);
+                       int deviceno, int time, int code, int value);
 
 
 #ifdef __cplusplus

@@ -43,6 +43,9 @@ public:
     // dump log this class member variables
     void dump(void);
 
+    // find display zone
+    CicoSCDisplayZone* findDisplayZonebyFullName(const string & fullname);
+
 private:
     /// assignment operator
     CicoSCDisplay& operator=(const CicoSCDisplay &object);

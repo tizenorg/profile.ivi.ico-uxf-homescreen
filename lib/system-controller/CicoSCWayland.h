@@ -48,6 +48,9 @@ public:
     // dispatch display
     void dispatchDisplay(void);
 
+    // get wayland error
+    int getError(void);
+
     // get wayland file descriptor
     int getWlFd(void);
 
@@ -61,19 +64,19 @@ public:
     static Eina_Bool waylandFdHandler(void *data, Ecore_Fd_Handler *handler);
 
     // wayland global callback function
-    void globalCB(void *data,
+    void globalCB(void               *data,
                   struct wl_registry *registry,
-                  uint32_t name,
-                  const char *interface,
-                  uint32_t version);
+                  uint32_t           name,
+                  const char         *interface,
+                  uint32_t           version);
 
 private:
     // wayland standard callback function
-    static void wlGlobalCB(void       *data,
-                           struct     wl_registry *registry,
-                           uint32_t   name,
-                           const char *interface,
-                           uint32_t   version);
+    static void wlGlobalCB(void               *data,
+                           struct wl_registry *registry,
+                           uint32_t           name,
+                           const char         *interface,
+                           uint32_t           version);
 
 private:
     // default constructor

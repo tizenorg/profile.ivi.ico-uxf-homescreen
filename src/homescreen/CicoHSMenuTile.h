@@ -82,7 +82,7 @@ class CicoHSMenuTile
 {
   public:
     CicoHSMenuTile(const char *appid,const char *icon_image_path
-        ,int page,int position,int width,int height);
+        ,int page,int subpage,int position,int width,int height);
     ~CicoHSMenuTile(void);
     void CreateObject(Evas *evas);
     void FreeObject(void);
@@ -94,6 +94,7 @@ class CicoHSMenuTile
     int GetHeight(void);
     int GetPosition(void);
     int GetPage(void);
+    int GetSubPage(void);
     int GetPositionX(void);
     int GetPositionY(void);
     int GetAppIdx(void);
@@ -108,6 +109,7 @@ class CicoHSMenuTile
     char appid[ICO_HS_MAX_PROCESS_NAME];
     char icon_image_path[ICO_HS_MAX_PATH_BUFF_LEN];
     int page;
+    int subpage;
     int position;
     int width;
     int height;

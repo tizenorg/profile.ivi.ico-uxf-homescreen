@@ -6,32 +6,46 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  */
-/**
- * @brief   load configuratoin file
- *
- * @date    Feb-15-2013
- */
-#include "CicoHomeScreenConfig.h"
 
-/*============================================================================*/
-/* functions                                                                  */
-/*============================================================================*/
-/*--------------------------------------------------------------------------*/
+//==========================================================================
+/**
+ *  @file   CicoHomeScreenConfig
+ *
+ *  @brief  This file is implementation of CicoHomeScreenConfig class
+ */
+//==========================================================================
+
+#include "CicoHomeScreenConfig.h"
+#include "CicoHomeScreenResourceConfig.h"
+
+//==========================================================================
+//  public functions
+//==========================================================================
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoHomeScreenConfig::CicoHomeScreenConfig
  *          Constractor
- *
- * @param[in]   none
- * @return      none
  */
-/*--------------------------------------------------------------------------*/
-CicoHomeScreenConfig::CicoHomeScreenConfig(void)
+//--------------------------------------------------------------------------
+CicoHomeScreenConfig::CicoHomeScreenConfig()
+    : m_gKeyFile(NULL)
 {
-    config_key = NULL;
-    is_open_config = FALSE;
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
+/**
+ * @brief   CicoHomeScreenConfig::CicoHomeScreenConfig
+ *          destructor
+ */
+//--------------------------------------------------------------------------
+CicoHomeScreenConfig::~CicoHomeScreenConfig()
+{
+    if (NULL != m_gKeyFile) {
+        g_key_file_free(m_gKeyFile);
+    }
+}
+
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoHomeScreenConfig::Initialize
  *          read and initialize for homescreen configuration
@@ -41,7 +55,7 @@ CicoHomeScreenConfig::CicoHomeScreenConfig(void)
  * @retval      ICO_HS_OK           success
  * @retval      ICO_HS_ERR          error
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 int
 CicoHomeScreenConfig::Initialize(const char *conf)
 {
@@ -49,12 +63,12 @@ CicoHomeScreenConfig::Initialize(const char *conf)
     char path[ICO_HS_TEMP_BUF_SIZE];
     GString *filepath;
 
-    if(is_open_config == TRUE) {
+    if (NULL != m_gKeyFile) {
         /*if initialize was done*/
-        return ICO_HS_ERR;
+        return ICO_HS_OK;
     }
 
-    config_key = g_key_file_new();
+    m_gKeyFile = g_key_file_new();
     
     filepath = g_string_new("test");
     CicoHomeScreenResourceConfig::GetConfPath(path, sizeof(path));
@@ -63,9 +77,11 @@ CicoHomeScreenConfig::Initialize(const char *conf)
         return ICO_HS_ERR;
     }
 
-    g_key_file_load_from_file(config_key, filepath->str,
-                              static_cast<GKeyFileFlags>(G_KEY_FILE_KEEP_COMMENTS
-                                      | G_KEY_FILE_KEEP_TRANSLATIONS), &error);
+    // load config file
+    g_key_file_load_from_file(m_gKeyFile, filepath->str,
+                              (GKeyFileFlags)(G_KEY_FILE_KEEP_COMMENTS |
+                                              G_KEY_FILE_KEEP_TRANSLATIONS),
+                              &error);
     if (error != NULL) {
         ICO_WRN("%s: %s", filepath->str, error->message);
         g_error_free(error);
@@ -73,12 +89,6 @@ CicoHomeScreenConfig::Initialize(const char *conf)
     }
 
     g_string_free(filepath, TRUE);
-    if (error != NULL) {
-        ICO_WRN("%s: %s", filepath->str, error->message);
-        g_error_free(error);
-        is_open_config = TRUE;
-        return ICO_HS_ERR;
-    }
 
     return ICO_HS_OK;
 }
@@ -100,14 +110,14 @@ CicoHomeScreenConfig::ConfigGetInteger(const char *group_name, const char *key, 
 {
     GError *error = NULL;
 
-    if (config_key == NULL) {
+    if (m_gKeyFile == NULL) {
         /* if initialize is didn't yet */
         if (Initialize(ICO_HOMESCREEN_CONFIG_FILE) != ICO_HS_OK) {
             return default_value;
         }
     }
 
-    int value = g_key_file_get_integer(config_key, group_name, key, &error);
+    int value = g_key_file_get_integer(m_gKeyFile, group_name, key, &error);
     if (error != NULL) {
         ICO_WRN("%s", error->message);
         g_error_free(error);
@@ -134,14 +144,14 @@ CicoHomeScreenConfig::ConfigGetString(const char *group_name, const char *key,
 {
     GError *error = NULL;
 
-     if (config_key == NULL) {
+     if (m_gKeyFile == NULL) {
         /* if initialize is didn't yet */
         if (Initialize(ICO_HOMESCREEN_CONFIG_FILE) != ICO_HS_OK) {
             return default_value;
         }
     }
 
-    const char *value = g_key_file_get_string(config_key, group_name, key,
+    const char *value = g_key_file_get_string(m_gKeyFile, group_name, key,
                                               &error);
     if (error != NULL) {
         ICO_WRN("%s", error->message);
@@ -150,4 +160,4 @@ CicoHomeScreenConfig::ConfigGetString(const char *group_name, const char *key,
     }
     return value;
 }
-
+// vim:set expandtab ts=4 sw=4:

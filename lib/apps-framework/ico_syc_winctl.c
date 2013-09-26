@@ -588,6 +588,7 @@ ico_syc_cb_win_attr(ico_syc_callback_t callback, void *user_data,
     /* set data */
     win_attr->appid = strdup(ico_syc_get_str_member(obj, MSG_PRMKEY_APPID));
     win_attr->name = strdup(ico_syc_get_str_member(argobj, MSG_PRMKEY_WINNAME));
+    win_attr->zone = strdup(ico_syc_get_str_member(argobj, MSG_PRMKEY_ZONE));
     win_attr->surface = ico_syc_get_int_member(argobj, MSG_PRMKEY_SURFACE);
     win_attr->nodeid = ico_syc_get_int_member(argobj, MSG_PRMKEY_NODE);
     win_attr->layer = ico_syc_get_int_member(argobj, MSG_PRMKEY_LAYER);
@@ -606,6 +607,7 @@ ico_syc_cb_win_attr(ico_syc_callback_t callback, void *user_data,
     g_object_unref(parser);
     if (win_attr->appid != NULL) free(win_attr->appid);
     if (win_attr->name != NULL) free(win_attr->name);
+    if (win_attr->zone != NULL) free(win_attr->zone);
     free(win_attr);
 
     return;

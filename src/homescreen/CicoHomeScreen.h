@@ -30,15 +30,17 @@
 #include "CicoHSMenuWindow.h"
 #include "CicoHSBackWindow.h"
 #include "CicoHSControlBarWindow.h"
+#include "CicoHSFlickTouch.h"
 #include "CicoHSWindowController.h"
 #include "CicoHSAppInfo.h"
 
 #include "CicoSCSystemConfig.h"
 #include "CicoSCLifeCycleController.h"
+#include "CicoHSAppHistoryExt.h"
 
 /* display position and size */
 #define ICO_HS_WINDOW_POS_X 0
-#define ICO_HS_WINDOW_POS_Y 0 
+#define ICO_HS_WINDOW_POS_Y 0
 #define ICO_HS_STATUSBAR_WINDOW_HEIGHT 64
 #define ICO_HS_MENU_WINDOW_POS_X ICO_HS_WINDOW_POS_X
 #define ICO_HS_MENU_WINDOW_POS_Y ICO_HS_STATUSBAR_WINDOW_HEIGHT
@@ -66,12 +68,16 @@
 
 #define ICO_HS_APP_STATUS_ERR -1
 
+#define ICO_HS_CHANGE_ZONE_MAX  10
+
 class CicoHomeScreen
 {
   public:
     CicoHomeScreen(void);
     ~CicoHomeScreen(void);
     int Initialize(int orientation,CicoHomeScreenConfig *config);
+    void InitializeAppHistory(const std::string& user, const std::string& path,
+                              const std::string& flagpath);
     void Finalize(void);
     int StartRelations();
     void CreateMenuWindow(void);
@@ -82,23 +88,39 @@ class CicoHomeScreen
     void UpDateBackWindow(void);
     void CreateControlBarWindow(void);
     void DeleteControlBarWindow(void);
+    void CreateFlickInputWindow(void);
+    void DeleteFlickInputWindow(void);
     void StartLoop(void);
     char *GetHsPackageName(void);
     char *GetSbPackageName(void);
     char *GetOsPackageName(void);
     void ShowHomeScreenLayer(void);
-    void ShowHomeScreenWindow(ico_syc_win_attr_t *win_attr);
-    void ShowStatusBarWindow(ico_syc_win_attr_t *win_attr);
-    void ShowApplicationWindow(ico_syc_win_attr_t *win_attr);
+    void ShowHomeScreenWindow(ico_syc_win_info_t *win_info);
+    void ShowStatusBarWindow(ico_syc_win_info_t *win_info);
+    void ShowApplicationWindow(ico_syc_win_info_t *win_info);
     void RaiseApplicationWindow(const char *appid,int surface);
     static void ChangeMode(int pattern);
     static void ExecuteApp(const char *appid);
     static void TerminateApp(const char *appid);
     static bool GetAppStatus(const char *appid);
+    void ChangeActive(const char *appid, int surface);
+    static void ChangeZone(void);
+    const char * GetNextZone(const char* zone);
+    static CicoHSAppInfo *GetAppInfo(const char *appid);
     void SetMode(int mode);
     int GetMode(void);
     void StartHomeScreen();
     void UpdateTile(const char *appid);
+    static void RenewAppInfoList(void);
+
+    void setActiveApp(const char* appid);
+    // update current active application information
+    void SetActiveAppInfo(const char *appid);
+    CicoHSAppInfo* GetActiveAppInfo(void);
+
+    // update current sub displaye applicatin information
+    void SetSubDisplayAppInfo(const char *appid);
+    CicoHSAppInfo* GetSubDisplayAppInfo(void);
 
   private:
     int GetProcessWindow(const char *appid);
@@ -106,12 +128,19 @@ class CicoHomeScreen
     void ExecuteApp_i(const char *appid);
     void TerminateApp_i(const char *appid);
     void CreateAppInfoList(void);
-    CicoHSAppInfo *GetAppInfo(const char *appid);
     ico_hs_window_info *GetWindowInfo(CicoHSAppInfo* appinfo,const char *window);
+    ico_hs_window_info *GetWindowInfo(CicoHSAppInfo* appinfo,int surface);
+
+    static void SetNightMode(void* data);
+    static void SetRegulation(void* data);
+
+    void RenewAppInfoList_i(void);
 
     /*application control(do not use now)*/
     int application_num;
     CicoHSAppInfo *apps_info[ICO_HS_MAX_APP_NUM];
+    // current active application information
+    CicoHSAppInfo *active_appinfo;
     /*application info*/
     CicoHSAppInfo *hs_app_info;
     CicoHSAppInfo *sb_app_info;
@@ -128,7 +157,9 @@ class CicoHomeScreen
     /*Window Instances*/
     CicoHSMenuWindow* menu_window;
     CicoHSBackWindow* back_window;
-    CicoHSControlBarWindow* ctl_bar_window; 
+    CicoHSControlBarWindow* ctl_bar_window;
+    int num_flick_input_windows;
+    CicoHSFlickInputWindow* flick_input_windows[ICO_HS_MAX_FLICKWINDOWS];
     /*mode*/
     int mode;
     /*configuration*/
@@ -137,6 +168,13 @@ class CicoHomeScreen
     static CicoHomeScreen *hs_instance;
 
     CicoSCLifeCycleController* life_cycle_controller;
+    CicoHSAppHistoryExt* m_appHis;
+
+    // swith trigger zone rotation list
+    std::vector<std::string> switchZoneRotationList;
+
+    // current sub display appinfo
+    CicoHSAppInfo *sub_display_appinfo;
 
   protected:
     CicoHomeScreen operator=(const CicoHomeScreen&);

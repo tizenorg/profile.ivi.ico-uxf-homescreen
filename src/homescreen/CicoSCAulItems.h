@@ -19,20 +19,22 @@ class CicoSCWindow;
 
 /**
  * @brief System controller unit
- *        application life cycle infomation data
+ *        application life cycle information data
  *
  */
 
 class CicoSCAulItems {
 public: // member method
     CicoSCAulItems();
-    CicoSCAulItems(const char* appid, int pid, const CicoSCWindow* obj=NULL);
+    CicoSCAulItems(const char* appid, int pid, int aulstt,
+                   const CicoSCWindow* obj=NULL);
     CicoSCAulItems(const CicoSCAulItems& raul);
     ~CicoSCAulItems();
 
     const CicoSCAulItems* p() const;
     void enterWindow(const CicoSCWindow* obj);
     void rmWindow(const CicoSCWindow* obj);
+    void update_appid();
 protected: // member method
     bool getPidCgroupInfo(int pid, std::string& m, std::string& c);
 private: // member method
@@ -45,35 +47,7 @@ public: // member aria
 protected: // member aria
     std::string m_defCgrpCpu;
     std::string m_defCgrpMem;
-
-#if 0 // TODO mk_k
-//    std::string m_icon; // icon file path
-    bool m_active; //
-    bool m_supend; //
-    std::string m_group;
-    int  m_nodeID;
-    std::string m_location;
-    std::string m_animation;
-    int m_animationTime;
-    bool m_autoStart; // auto start flag
-    bool m_memnuOverlap;
-    int  m_invisibleCPU;
-    int  m_kindID;
-    int  m_categoryID;
-    int  m_displayZoneNum; // display zone number
-    int  m_soundZoneNum;  // sound zone number
-    int  m_inputDevNum;   // input device number
-    int  m_display;
-    int  m_sound;
-    int  m_input;
-
-
-
-    std::string m_name;
-    std::string m_execPath;
-    std::string m_type;
-    bool m_resumeShow
-#endif
+    int m_aulstt;
 };
 
 inline const CicoSCAulItems* CicoSCAulItems::p() const

@@ -24,7 +24,7 @@
  */
 //--------------------------------------------------------------------------
 CicoSCDisplayZone::CicoSCDisplayZone()
-    : zoneid(-1), x(-1), y(-1), width(-1), height(-1)
+    : zoneid(-1), x(-1), y(-1), width(-1), height(-1), fullname("")
 {
 }
 
@@ -45,7 +45,8 @@ CicoSCDisplayZone::~CicoSCDisplayZone()
 void
 CicoSCDisplayZone::dump(void)
 {
-    ICO_DBG("CicoSCDisplayZone: zoneid=%d x=%d y=%d width=%d height=%d",
-            zoneid, x, y, width, height);
+    ICO_DBG("CicoSCDisplayZone: zoneid=%d "
+            "x=%d y=%d width=%d height=%d fullname=%s",
+            zoneid, x, y, width, height, fullname.c_str());
 }
 // vim:set expandtab ts=4 sw=4:

@@ -251,7 +251,7 @@ CicoSCServer::delPollFd(CicoSCUwsHandler *handler)
 void
 CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
 {
-    ICO_DBG("CicoSCServer::dispatch Enter(handler=0x%08x)", handler);
+//    ICO_DBG("CicoSCServer::dispatch Enter(handler=0x%08x)", handler);
 
     if (NULL == handler) {
         ICO_WRN("handler is null");
@@ -311,11 +311,11 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
     Eina_Bool flag = ecore_main_fd_handler_active_get(handler->ecoreFdHandler,
                                                       ECORE_FD_WRITE);
     if (EINA_TRUE == flag) {
-        ICO_DBG("start send message");
+//        ICO_DBG("start send message");
         list<CicoSCMessage*>::iterator send_itr;
         send_itr = m_sendMsgQueue.begin();
         while (send_itr != m_sendMsgQueue.end()) {
-            ICO_DBG("m_sendMsgQueue.size=%d", m_sendMsgQueue.size());
+//            ICO_DBG("m_sendMsgQueue.size=%d", m_sendMsgQueue.size());
             CicoSCMessage* msg = *send_itr;
             CicoSCUwsHandler *sendHandler = findUwsHandler(msg->getSendToAppid());
             if (handler != sendHandler) {
@@ -327,8 +327,8 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
             if ((NULL != sendHandler) && (true == sendHandler->serviceFlag)) {
                 ICO_DBG("<<<SEND appid=%s id=0x%08x msg=%s",
                         sendHandler->appid.c_str(), sendHandler->id, msg->getData());
-                ICO_DBG("called: ico_usw_send called(context=0x%08x id=0x%08x)",
-                        sendHandler->uwsContext, sendHandler->id);
+//                ICO_DBG("called: ico_usw_send called(context=0x%08x id=0x%08x)",
+//                        sendHandler->uwsContext, sendHandler->id);
                 ico_uws_send(sendHandler->uwsContext, sendHandler->id,
                              (unsigned char *)msg->getData(),
                              strlen(msg->getData()));
@@ -345,7 +345,7 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
         ecore_main_fd_handler_active_set(handler->ecoreFdHandler, flags);
     }
 
-    ICO_DBG("CicoSCServer::dispatch Leave");
+//    ICO_DBG("CicoSCServer::dispatch Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -444,7 +444,7 @@ CicoSCServer::uwsReceiveEventCB(const struct ico_uws_context *context,
 Eina_Bool
 CicoSCServer::ecoreFdCallback(void *data, Ecore_Fd_Handler *ecoreFdhandler)
 {
-    ICO_DBG("CicoSCServer::ecoreFdCallback Enter");
+//    ICO_DBG("CicoSCServer::ecoreFdCallback Enter");
 
     CicoSCUwsHandler *handler = NULL;
     handler =  static_cast<CicoSCServer*>(data)->findUwsHandler(ecoreFdhandler);
@@ -452,7 +452,7 @@ CicoSCServer::ecoreFdCallback(void *data, Ecore_Fd_Handler *ecoreFdhandler)
         static_cast<CicoSCServer*>(data)->dispatch(handler);
     }
 
-    ICO_DBG("CicoSCServer::ecoreFdCallback Leave");
+//    ICO_DBG("CicoSCServer::ecoreFdCallback Leave");
     return ECORE_CALLBACK_RENEW;
 }
 
@@ -474,7 +474,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
                              const ico_uws_detail         *detail,
                              void                         *user_data)
 {
-    ICO_DBG("CicoSCServer::receiveEventCB Enter");
+//    ICO_DBG("CicoSCServer::receiveEventCB Enter");
 
     // find handler
     CicoSCUwsHandler *handler = findUwsHandler(context, id);
@@ -546,7 +546,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
     default:
         break;
     }
-    ICO_DBG("CicoSCServer::receiveEventCB Leave");
+//    ICO_DBG("CicoSCServer::receiveEventCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -566,8 +566,8 @@ CicoSCServer::findUwsHandler(const struct ico_uws_context *context,
     list<CicoSCUwsHandler*>::iterator itr;
     itr = m_uwsHandlerList.begin();
     for (; itr != m_uwsHandlerList.end(); ++itr) {
-        ICO_DBG("handler->context=%p handler->id=%p context=%p id=%p",
-                (*itr)->uwsContext, (*itr)->id, context, id);
+//        ICO_DBG("handler->context=%p handler->id=%p context=%p id=%p",
+//                (*itr)->uwsContext, (*itr)->id, context, id);
         if (((*itr)->uwsContext == context) &&
             ((*itr)->id == id)) {
             return *itr;
@@ -613,8 +613,8 @@ CicoSCServer::findUwsHandler(const string & appid)
     list<CicoSCUwsHandler*>::iterator itr;
     itr = m_uwsHandlerList.begin();
     for (; itr != m_uwsHandlerList.end(); ++itr) {
-        ICO_DBG("handler->id=%p handler->appid=%s appid=%s",
-                (*itr)->id, (*itr)->appid.c_str(), appid.c_str());
+//        ICO_DBG("handler->id=%p handler->appid=%s appid=%s",
+//                (*itr)->id, (*itr)->appid.c_str(), appid.c_str());
         if ((*itr)->appid == appid) {
             return *itr;
         }

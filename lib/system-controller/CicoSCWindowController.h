@@ -87,6 +87,13 @@ public:
                     const char *moveAnimation,
                     int        moveAnimationTime);
 
+    int setGeometry(int        surfaceid,
+                    const char *zone,
+                    const char *resizeAnimation,
+                    int        resizeAnimationTime,
+                    const char *moveAnimation,
+                    int        moveAnimationTime);
+
     int raise(int surfaceid,
              const char  *animation,
              int         animationTime);
@@ -159,10 +166,12 @@ public:
                               struct ico_window_mgr *ico_window_mgr,
                               int32_t event,
                               uint32_t surfaceid,
+                              uint32_t type,
+                              uint32_t target,
                               int32_t width,
                               int32_t height,
                               int32_t stride,
-                              int32_t format);
+                              uint32_t format);
 
     virtual void outputGeometryCB(void *data,
                                   struct wl_output *wl_output,
@@ -199,6 +208,7 @@ private:
     const CicoSCDisplayZone * findDisplayZone(int zoneid);
 
     int notifyResourceManager(int        surfaceid,
+                              const char *zone,
                               const char *animation,
                               int        animationTime);
 
@@ -210,6 +220,9 @@ private:
 
     // display object list
     vector<CicoSCDisplay*>   m_displayList;
+
+    //
+    unsigned int m_physicalDisplayTotal;
 
 };
 #endif  // __CICO_SC_WINDOW_CONTROLLER_H__

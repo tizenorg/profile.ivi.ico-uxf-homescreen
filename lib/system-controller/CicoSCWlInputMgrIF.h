@@ -73,7 +73,7 @@ protected:
     CicoSCWlInputMgrIF();
 
     // destructor
-    ~CicoSCWlInputMgrIF();
+    virtual ~CicoSCWlInputMgrIF();
 
     // assignment operator
     CicoSCWlInputMgrIF& operator=(const CicoSCWlInputMgrIF &object);
@@ -98,6 +98,7 @@ protected:
                         int               surfaceid,
                         int               type,
                         int               deviceno,
+                        int               time,
                         int               code,
                         int               value);
 

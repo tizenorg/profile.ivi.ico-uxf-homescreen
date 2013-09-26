@@ -107,14 +107,19 @@ private:
     bool launchHomescreenReq(const std::string& usr,
                              const std::string& appid_hs);
 
+    // flag file control
+    void flagFileOn(const char* text = NULL);
+    void flagFileOff();
+
 private:
     static CicoSCUserManager*   ms_myInstance;  ///< CicoSCUserManager Object
 
     std::string                 m_login;           ///< Login User Name
     std::vector<CicoSCUser*>    m_userList;        ///< User List
     std::vector<std::string>    m_homescreenList;  ///< HomeScreen List
-    std::string                 m_parentDir;
+    std::string                 m_parentDir;       ///  login-user use directory
     const CicoSCUserConf*       m_uConfig;
+    std::string                 m_flagPath;        ///  history save control flag file
 };
 #endif  // __CICO_SC_USER_MANAGER_H__
 // vim:set expandtab ts=4 sw=4:

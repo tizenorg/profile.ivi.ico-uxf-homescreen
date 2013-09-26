@@ -45,11 +45,26 @@
 #define ICO_HS_MENU_PAGE_POINTER_WIDTH 64
 #define ICO_HS_MENU_PAGE_POINTER_HEIGHT 64
 
+#define ICO_HS_MENU_PAGE_UP_CURSOR_START_POS_X 50
+#define ICO_HS_MENU_PAGE_UP_CURSOR_START_POS_Y 50
+#define ICO_HS_MENU_PAGE_UP_CURSOR_WIDTH 64
+#define ICO_HS_MENU_PAGE_UP_CURSOR_HEIGHT 64
+
+#define ICO_HS_MENU_PAGE_DOWN_CURSOR_START_POS_X 50
+#define ICO_HS_MENU_PAGE_DOWN_CURSOR_START_POS_Y 1630
+#define ICO_HS_MENU_PAGE_DOWN_CURSOR_WIDTH 64
+#define ICO_HS_MENU_PAGE_DOWN_CURSOR_HEIGHT 64
+
 #define ICO_HS_MENU_HIDE_ANIMATION_SLIDE "Slide"
 #define ICO_HS_MENU_SHOW_ANIMATION_SLIDE "Slide"
 #define ICO_HS_MENU_HIDE_ANIMATION_FADE "Fade"
 #define ICO_HS_MENU_SHOW_ANIMATION_FADE "Fade"
-#define ICO_HS_MENU_ANIMATION_DURATION 200
+#define ICO_HS_MENU_ANIMATION_DURATION 300
+
+#define ICO_HS_MENU_OTHER_CATEGORY_ID -1
+
+/* Layer */
+#define ICO_HS_MENU_TERMINATE_BUTTON_LAYER 5
 
 typedef struct _CicoLayoutInfo{
    int appidx;
@@ -58,6 +73,18 @@ typedef struct _CicoLayoutInfo{
    int tile_width;
    int tile_height;
 }CicoLayoutInfo;
+
+typedef struct _CicoCurrentPage{
+    int current_page;
+    int subcurrent_page;
+}CicoCurrentPage;
+
+typedef struct _CicoCategoryInfo {
+    int id;
+    int page;
+    int subpage_max;
+    int tile_num;
+}CicoCategoryInfo;
 
 class CicoHSMenuWindow :public CicoHSWindow
 {
@@ -89,23 +116,40 @@ class CicoHSMenuWindow :public CicoHSWindow
     static Eina_Bool MoveDownAnimation(void *data,double pos);
     static Eina_Bool MoveUpAnimation(void *data,double pos);
     
-	void SetNightMode(void);
+    void SetNightMode(void);
+
+    void DspCtrlPageCursor(void);
+    void DownNextMenu(void);
+    void UpBackMenu(void);
+    static Eina_Bool MoveToNextSubAnimation(void *data,double pos);
+    static Eina_Bool MoveToBackSubAnimation(void *data,double pos);
 
   private:
     int SetMenuBack(void);
     void FreeMenuBack(void);
+    void InitAppTiles(void);
     int SetAppTiles(void);
     void FreeAppTiles(void);
+    void RenewAppTiles(void);
     int SetPagePointer(void);
     void FreePagePointer(void);
+    int SetPageCursor(void);
+    void FreePageCursor(void);
     int SetTerminateButton(void);
     void FreeTerminateButton(void);
     void GetLayout(const char *filename,CicoLayoutInfo *layout,int *num);
     void SetLayout(const char *filename,CicoLayoutInfo *layout,int num);
+    void GetCategory(const char *filename,int *category,int *num);
+    void SetCategoryInfo(int id);
+    void GetTileInfo(int id, int *page, int *subpage, int *position);
 
     bool terminate_mode;
     /*for menu control*/
     int current_page;
+    int subcurrent_page;
+    CicoCurrentPage current_info;
+    CicoCategoryInfo category_info[ICO_HS_MENU_MAX_MENU_CATEGORY_NUM];
+    int all_category_num;
     int all_tile_num;
     int all_page_num;
     /* image directory path */
@@ -119,6 +163,9 @@ class CicoHSMenuWindow :public CicoHSWindow
     CicoHSMenuTile *menu_tile[ICO_HS_MENU_MAX_TILE_NUM];
     /* Page pointer */
     Evas_Object *page_pointer[ICO_HS_MENU_MAX_MENU_PAGE_NUM]; 
+    /* Page cursor */
+    Evas_Object *page_up_cursor; 
+    Evas_Object *page_down_cursor; 
     /* for window control */
     char appid[ICO_HS_MAX_PROCESS_NAME];
     int surface;
@@ -131,7 +178,7 @@ class CicoHSMenuWindow :public CicoHSWindow
     CicoSCLifeCycleController *life_cycle_controller;
     /* my instance (for callback) */
     static CicoHSMenuWindow *menu_window_instance;
-	bool m_showState;
+    bool m_showState;
 
   protected:
     CicoHSMenuWindow operator=(const CicoHSMenuWindow&);

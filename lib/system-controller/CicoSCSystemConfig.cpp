@@ -1225,14 +1225,14 @@ const CicoSCDisplayZoneConf*
 CicoSCSystemConfig::findDisplayZoneConfbyName(const string & displayName,
                                               const string & zoneName)
 {
-    ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Enter"
-            "(displayName=%s zoneNmae=%s)",
-            displayName.c_str(), zoneName.c_str());
+//    ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Enter"
+//            "(displayName=%s zoneNmae=%s)",
+//            displayName.c_str(), zoneName.c_str());
 
     const CicoSCDisplayConf* displayConf = NULL;
     displayConf = findDisplayConfbyName(displayName);
     if (NULL == displayConf) {
-        ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave(NULL)");
+//        ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave(NULL)");
         return NULL;
     }
 
@@ -1242,13 +1242,13 @@ CicoSCSystemConfig::findDisplayZoneConfbyName(const string & displayName,
         const CicoSCDisplayZoneConf* conf = NULL;
         conf = const_cast<CicoSCDisplayZoneConf*>(*itr);
         if (zoneName == conf->name) {
-            ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave"
-                    "(0x%08x)", conf);
+//            ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave"
+//                    "(0x%08x)", conf);
             return conf;
         }
     }
 
-    ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave(NULL)");
+//    ICO_DBG("CicoSCSystemConfig::findDisplayZoneConfbyName Leave(NULL)");
     return NULL;
 }
 
@@ -1286,9 +1286,9 @@ const CicoSCSoundZoneConf*
 CicoSCSystemConfig::findSoundZoneConfbyName(const string & soundName,
                                             const string & zoneName)
 {
-    ICO_DBG("CicoSCSystemConfig::findSoundZoneConfbyName Enter"
-            "(soundName=%s zoneNmae=%s)",
-            soundName.c_str(), zoneName.c_str());
+//    ICO_DBG("CicoSCSystemConfig::findSoundZoneConfbyName Enter"
+//            "(soundName=%s zoneNmae=%s)",
+//            soundName.c_str(), zoneName.c_str());
 
     const CicoSCSoundConf* soundConf = NULL;
     soundConf = findSoundConfbyName(soundName);
@@ -1382,6 +1382,31 @@ CicoSCSystemConfig::findAppKindConfbyName(const string & name)
         conf = const_cast<CicoSCAppKindConf*>(*itr);
         if (name == conf->name) {
             return conf;
+        }
+    }
+
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const CicoSCDisplayZoneConf*
+CicoSCSystemConfig::findDisplayZoneConfbyId(int id)
+{
+    vector<CicoSCDisplayConf*>::iterator itr;
+    itr = m_displayConfList.begin();
+    for (; itr != m_displayConfList.end(); ++itr) {
+        vector<CicoSCDisplayZoneConf*>::iterator itr2;
+        itr2 = (*itr)->zoneConfList.begin();
+        for (; itr2 != (*itr)->zoneConfList.end(); ++itr2) {
+            if (id == (*itr2)->id) {
+                return *itr2;
+            }
         }
     }
 

@@ -66,8 +66,8 @@ CicoHSControlBarTouch::Finalize(void)
 void
 CicoHSControlBarTouch::TouchDownControlBar(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-   Evas_Event_Mouse_Down *info;
-   int button_id;
+//   Evas_Event_Mouse_Down *info;
+//   int button_id;
 
 }
 
@@ -86,13 +86,14 @@ CicoHSControlBarTouch::TouchDownControlBar(void *data, Evas *evas, Evas_Object *
 void
 CicoHSControlBarTouch::TouchUpControlBar(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-   Evas_Event_Mouse_Up *info;
-   int sub = 0;
+//   Evas_Event_Mouse_Up *info;
+//   int sub = 0;
    ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar start");  
    if(data == NULL){
         ctl_bar_window->TouchHome();
    }else{
-     
+        ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar appid = [%s]",(const char *)data);  
+        ctl_bar_window->TouchShortcut((const char *)data); 
    }
    ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar end");  
 }

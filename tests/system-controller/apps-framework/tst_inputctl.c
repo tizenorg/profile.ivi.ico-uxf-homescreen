@@ -38,7 +38,7 @@ static void tst_add_input(const char *appid, const char *device,
 static void tst_delete_input(const char *appid, const char *device,
                              int input);
 static void tst_send_input(const char *appid, int surface, int ev_type,
-                           int deviceno, int ev_code, int ev_value);
+                           int deviceno, int ev_time, int ev_code, int ev_value);
 static Eina_Bool ico_syc_inputctl_test(void *data);
 
 /* ----------------------------------------------- */
@@ -82,13 +82,13 @@ tst_delete_input(const char *appid, const char *device, int input)
 /* test send input */
 static void
 tst_send_input(const char *appid, int surface, int ev_type,
-               int deviceno, int ev_code, int ev_value)
+               int deviceno, int ev_time, int ev_code, int ev_value)
 {
     int ret;
     char *func = "ico_syc_send_input";
 
     ret = ico_syc_send_input(appid, surface, ev_type, deviceno,
-                             ev_code, ev_value);
+                             ev_time, ev_code, ev_value);
     if (ret != 0) {
         print_ng("%s (ret: %d)", func, ret);
         return;
@@ -110,6 +110,7 @@ ico_syc_inputctl_test(void *data)
     int surface         = 12345;
     int ev_type         = ICO_SYC_INPUT_TYPE_POINTER;
     int deviceno        = 123;
+    int ev_time         = 2345;
     int ev_code         = 1;
     int ev_value        = 1;
 
@@ -120,7 +121,7 @@ ico_syc_inputctl_test(void *data)
     usleep(5000);
     tst_delete_input(appid, device, input);
     usleep(5000);
-    tst_send_input(appid, surface, ev_type, deviceno, ev_code, ev_value);
+    tst_send_input(appid, surface, ev_type, deviceno, ev_time, ev_code, ev_value);
 
     printf("##### ico_syc_inputctl API Test End #####\n");
     printf("\n");

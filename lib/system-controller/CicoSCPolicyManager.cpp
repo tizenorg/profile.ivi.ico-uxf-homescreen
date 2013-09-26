@@ -777,7 +777,7 @@ CicoSCPolicyManager::acquireSoundResource(int type, int zoneid, int priority)
 bool
 CicoSCPolicyManager::releaseSoundResource(int type, int zoneid)
 {
-    ICO_DBG("CicoSCPolicyManager::acquireDisplayResource Enter"
+    ICO_DBG("CicoSCPolicyManager::acquireSoundResource Enter"
             "(type=%d zoneid=%d)", type, zoneid);
 
     bool chg = false;
@@ -797,7 +797,7 @@ CicoSCPolicyManager::releaseSoundResource(int type, int zoneid)
         }
     }
 
-    ICO_DBG("CicoSCPolicyManager::acquireDisplayResource Leave(%s)",
+    ICO_DBG("CicoSCPolicyManager::acquireSoundResource Leave(%s)",
             chg ? "true" : "false");
 
     return true;

@@ -26,7 +26,7 @@ static msg_t _create_add_input_msg(const char *appid, const char *device,
 static msg_t _create_del_input_msg(const char *appid,
                                   const char *device, int input);
 static msg_t _create_send_input_msg(const char *appid, int surface, int type,
-                                   int deviceno, int code, int value);
+                                   int deviceno, int time, int code, int value);
 
 /*============================================================================*/
 /* static function                                                            */
@@ -144,6 +144,7 @@ _create_del_input_msg(const char *appid, const char *device, int input)
  * @param[in]   surface                 window's surface id
  * @param[in]   type                    device type of input event
  * @param[in]   deviceno                input device number
+ * @param[in]   time                    input event time(ms)
  * @param[in]   code                    input event code
  * @param[in]   value                   input event value
  * @return      json generator
@@ -153,7 +154,7 @@ _create_del_input_msg(const char *appid, const char *device, int input)
 /*--------------------------------------------------------------------------*/
 static msg_t
 _create_send_input_msg(const char *appid, int surface, int type,
-                       int deviceno, int code, int value)
+                       int deviceno, int time, int code, int value)
 {
     JsonObject *obj     = NULL;
     JsonObject *argobj  = NULL;
@@ -176,6 +177,7 @@ _create_send_input_msg(const char *appid, int surface, int type,
     json_object_set_int_member(argobj, MSG_PRMKEY_SURFACE, surface);
     json_object_set_int_member(argobj, MSG_PRMKEY_EV_TYPE, type);
     json_object_set_int_member(argobj, MSG_PRMKEY_DEVICE, deviceno);
+    json_object_set_int_member(argobj, MSG_PRMKEY_EV_TIME, time);
     json_object_set_int_member(argobj, MSG_PRMKEY_EV_CODE, code);
     json_object_set_int_member(argobj, MSG_PRMKEY_EV_VAL, value);
     json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
@@ -278,6 +280,7 @@ ico_syc_delete_input(const char *appid, const char *device, int input)
  * @param[in]   surface                 window's surface id
  * @param[in]   type                    device type of input event
  * @param[in]   deviceno                input device number
+ * @param[in]   time                    input event time
  * @param[in]   code                    input event code
  * @param[in]   value                   input event value
  * @return      result
@@ -288,7 +291,7 @@ ico_syc_delete_input(const char *appid, const char *device, int input)
 /*--------------------------------------------------------------------------*/
 ICO_API int
 ico_syc_send_input(const char *appid, int surface, int type,
-                   int deviceno, int code, int value)
+                   int deviceno, int time, int code, int value)
 {
     int ret = ICO_SYC_ERR_NONE;
     msg_t msg;
@@ -300,7 +303,7 @@ ico_syc_send_input(const char *appid, int surface, int type,
     }
 
     /* make message */
-    msg = _create_send_input_msg(appid, surface, type, deviceno, code, value);
+    msg = _create_send_input_msg(appid, surface, type, deviceno, time, code, value);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */

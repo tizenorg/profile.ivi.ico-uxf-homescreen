@@ -83,6 +83,8 @@ public:
     const CicoSCAppKindConf* findAppKindConfbyName(const string & name);
     const CicoSCCategoryConf* findCategoryConfbyName(const string & name);
 
+    const CicoSCDisplayZoneConf* findDisplayZoneConfbyId(int id);
+
     const CicoSCSoundZoneConf* findSoundZoneConfbyId(int id);
     const CicoSCCategoryConf* findCategoryConfbyId(int id);
     const CicoSCAppKindConf* findAppKindConfbyId(int id);

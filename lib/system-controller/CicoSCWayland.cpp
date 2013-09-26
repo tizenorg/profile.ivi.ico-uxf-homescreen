@@ -174,8 +174,12 @@ CicoSCWayland::flushDisplay(void)
         ICO_ERR("wlDisplay == NULL");
         return;
     }
-    ICO_DBG("called: wl_display_flush(0x%08x)", (int)m_wlDisplay);
-    wl_display_flush(m_wlDisplay);
+//    ICO_DBG("called: wl_display_flush(0x%08x)", (int)m_wlDisplay);
+    int wlret = wl_display_flush(m_wlDisplay);
+    if (-1 == wlret) {
+        int error = wl_display_get_error(m_wlDisplay);
+        ICO_ERR("wayland error(%d)", error);
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -190,8 +194,29 @@ CicoSCWayland::dispatchDisplay(void)
         ICO_ERR("wlDisplay == NULL");
         return;
     }
-    ICO_DBG("call wl_display_dispatch(0x%08x)", (int)m_wlDisplay);
-    wl_display_dispatch(m_wlDisplay);
+//    ICO_DBG("call wl_display_dispatch(0x%08x)", (int)m_wlDisplay);
+    int wlret = wl_display_dispatch(m_wlDisplay);
+    if (-1 == wlret) {
+        int error =  wl_display_get_error(m_wlDisplay);
+        ICO_ERR("wl_display_dispatch failed. error(%d)", error);
+    }
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get wayland error
+ */
+//--------------------------------------------------------------------------
+int
+CicoSCWayland::getError(void)
+{
+    if (NULL == m_wlDisplay) {
+        ICO_ERR("wlDisplay == NULL");
+        return -1;
+    }
+
+    ICO_DBG("fd=%d", wl_display_get_fd(m_wlDisplay));
+    return wl_display_get_error(m_wlDisplay);
 }
 
 //--------------------------------------------------------------------------
@@ -231,7 +256,15 @@ CicoSCWayland::addEcoreMainWlFdHandler(void)
         return ICO_SYC_EIO;
     }
     ecore_main_loop_iterate();
-    waylandFdHandler(NULL, m_ecoreFdHandler);
+
+    int arg = 0;
+    if (ioctl(m_wlFd, FIONREAD, &arg) < 0) {
+        ICO_WRN("ioclt(FIONREAD) failed. errno=%d:%s", errno, strerror(errno));
+        arg = 0;
+    }
+    if (arg > 0)   {
+        CicoSCWayland::getInstance()->dispatchDisplay();
+    }
 
     ICO_DBG("CicoSCWayland::addEcoreMainWlFdHandler Leave");
     return ICO_SYC_EOK;
@@ -263,11 +296,11 @@ CicoSCWayland::addWaylandIF(const char *name, CicoSCWaylandIF* interface)
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWayland::globalCB(void *data,
+CicoSCWayland::globalCB(void               *data,
                         struct wl_registry *registry,
-                        uint32_t name,
-                        const char *interface,
-                        uint32_t version)
+                        uint32_t           name,
+                        const char         *interface,
+                        uint32_t           version)
 {
     map<string, CicoSCWaylandIF*>::iterator itr;
     itr = m_wlInterfaceList.find(interface);
@@ -288,7 +321,7 @@ CicoSCWayland::globalCB(void *data,
 /**
  *  @brief   wayland global callback
  *
- *  @param [in] data        user data(unused)
+ *  @param [in] data        user data
  *  @param [in] registry    wayland registry
  *  @param [in] name        wayland display Id(unused)
  *  @param [in] interface   wayland interface name
@@ -296,11 +329,11 @@ CicoSCWayland::globalCB(void *data,
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWayland::wlGlobalCB(void       *data,
-                          struct     wl_registry *registry,
-                          uint32_t   name,
-                          const char *interface,
-                          uint32_t   version)
+CicoSCWayland::wlGlobalCB(void               *data,
+                          struct wl_registry *registry,
+                          uint32_t           name,
+                          const char         *interface,
+                          uint32_t           version)
 {
     if (NULL == data) {
         ICO_ERR("data == NULL");
@@ -324,24 +357,30 @@ CicoSCWayland::wlGlobalCB(void       *data,
 Eina_Bool
 CicoSCWayland::waylandFdHandler(void *data, Ecore_Fd_Handler *handler)
 {
-    ICO_DBG("waylandFdHandler: Enter");
-
-    int arg = 0;
+//    ICO_DBG("waylandFdHandler: Enter");
 
     CicoSCWayland::getInstance()->flushDisplay();
 
+    int arg = 0;
     if (ioctl(CicoSCWayland::getInstance()->getWlFd(), FIONREAD, &arg) < 0) {
-        ICO_WRN("ico_uxf_main_loop_iterate: ioclt(FIONREAD) Error %d", errno);
+        ICO_WRN("ioclt(FIONREAD) failed. errno=%d:%s", errno, strerror(errno));
         arg = 0;
     }
 
-    ICO_DBG("waylandFdHandler: arg(%d))", arg);
-    if (arg > 0)   {
+//    ICO_DBG("waylandFdHandler: arg(%d))", arg);
+    if (arg > 0) {
         CicoSCWayland::getInstance()->dispatchDisplay();
     }
 
+    if (0 == arg) {
+        ICO_ERR("wayland fd read error.");
+        ICO_DBG("called: ecore_main_loop_quit()");
+        ecore_main_loop_quit();
+        return ECORE_CALLBACK_CANCEL;
+    }
+
     CicoSCWayland::getInstance()->flushDisplay();
-    ICO_DBG("waylandFdHandler: Leave");
+//    ICO_DBG("waylandFdHandler: Leave");
     return ECORE_CALLBACK_RENEW ;
 }
 // vim:set expandtab ts=4 sw=4:

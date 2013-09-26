@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     OpenPF System Configurations 
+     OpenPF System Configurations
     /opt/apps/org.tizen.ico.homescreen/res/config/system.conf
 -->
 
@@ -70,7 +70,7 @@
                 <overlap>Full;UpperLeft;UpperRight</overlap>
             </zone>
             <zone id="3" name="Lower">
-                <geometry x="0" y="height-64-128/2+64" w="dispw" h="disph-64-128/2"/>
+                <geometry x="0" y="heigh-64-128/2+64" w="dispw" h="disph-64-128/2"/>
                 <overlap>Full;LowerLeft;LowerRight</overlap>
             </zone>
             <zone id="4" name="UpperLeft">
@@ -100,6 +100,35 @@
             <zone id="10" name="SysApp.Right">
                 <geometry x="dispw/2+181" y="64" w="dispw/2-181" h="disph-64-128"/>
                 <overlap/>
+            </zone>
+        </zones>
+    </display>
+    <display id="1" name="Mid">
+        <node>Center</node>
+        <no>1</no>
+        <wayland>waylnad-0</wayland>
+        <type>center</type>
+        <width>1280</width>
+        <height>480</height>
+        <inch>101</inch>
+        <layers>
+            <layer id="2" name="Application">
+                <type>2</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+        </layers>
+        <zones>
+            <zone id="20" name="Full">
+                <geometry x="0" y="0" w="dispw" h="disph"/>
+                <overlap>Left;Right</overlap>
+            </zone>
+            <zone id="21" name="Left">
+                <geometry x="0" y="0" w="320" h="disph"/>
+                <overlap>Full</overlap>
+            </zone>
+            <zone id="22" name="Right">
+                <geometry x="960" y="0" w="320" h="disph"/>
+                <overlap>Full</overlap>
             </zone>
         </zones>
     </display>

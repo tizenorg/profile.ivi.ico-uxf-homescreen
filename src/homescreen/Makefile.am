@@ -6,7 +6,7 @@ COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin
 
 noinst_PROGRAMS   = \
 	HomeScreen	\
-	StatusBar               
+	StatusBar
 
 HomeScreen_SOURCES = \
 	home_screen_main.cpp	\
@@ -28,8 +28,12 @@ HomeScreen_SOURCES = \
 	CicoHomeScreenResourceConfig.cpp	\
 	CicoHomeScreenSound.cpp \
 	CicoHomeScreenSoundConfig.cpp	\
-	CicoHSAppHistory.cpp \
-    CicoHSSystemState.cpp
+	CicoHSSystemState.cpp	\
+	CicoHSFlickTouch.cpp	\
+	CicoHSFlickInputWindow.cpp \
+	CicoHSAppHistory.cpp	\
+	CicoHSAppHistoryExt.cpp	\
+	Cico_aul_listen_app.cpp
 
 HomeScreen_CFLAGS= \
     $(EFL_CFLAGS) \
@@ -75,7 +79,7 @@ HomeScreen_LDADD = \
 #	CicoHomeScreenResourceConfig.cpp	\
 #	CicoHomeScreenSound.cpp \
 #        CicoHomeScreenSoundConfig.cpp
-#OnScreen_CXXFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS) $(UWS_CFLAGS) -I/usr/include/ico-util
+#OnScreen_CXXFLAGS = -I../include $(EFL_CFLAGS) $(OPT_CFLAGS) $(WL_CFLAGS) $(AUL_CFLAGS) $(UWS_CFLAGS) -I/usr/include/ico-uxf-weston-plugin -I/usr/include/ico-util
 #OnScreen_LDADD = $(EFL_LIBS) $(OPT_LIBS) $(WL_LIBS) $(COMMON_LIBS) $(AUL_LIBS) $(UWS_LIBS) ../apps_controller/libico_syc-apc.a ../ico-app-framework/.libs/libico-app-fw-efl.so ../ico-app-framework/.libs/libico-app-fw.so
 
 StatusBar_SOURCES = \
@@ -91,20 +95,24 @@ StatusBar_CFLAGS = \
             $(OPT_CFLAGS) \
             $(WL_CFLAGS) \
             $(AUL_CFLAGS) \
-            $(UWS_CFLAGS) 
+            $(UWS_CFLAGS) \
+    		-I/usr/include/ico-uxf-weston-plugin \
+    		-I/usr/include/ico-util
 StatusBar_CXXFLAGS = \
             $(EFL_CFLAGS) \
             $(OPT_CFLAGS) \
             $(WL_CFLAGS) \
             $(AUL_CFLAGS) \
-            $(UWS_CFLAGS) 
+            $(UWS_CFLAGS) \
+    		-I/usr/include/ico-uxf-weston-plugin \
+    		-I/usr/include/ico-util
 StatusBar_LDADD = \
             $(EFL_LIBS) \
             $(OPT_LIBS) \
             $(WL_LIBS) \
             $(COMMON_LIBS) \
             $(AUL_LIBS) \
-            $(UWS_LIBS) 
+            $(UWS_LIBS)
 
 SUFFIXES = .edc .edj
 
@@ -114,7 +122,7 @@ BUILT_SOURCES = \
 	appli_list.edj	\
 	appli_kill.edj
 
-.edc.edj:  
+.edc.edj:
 	edje_cc $< -id ../../res/org.tizen.ico.homescreen/res/images -fd ../../res/org.tizen.ico.homescreen/res/images -sd ../../res/org.tizen.ico.homescreen/res/sounds -o $@
 
 CLEANFILES = $(BUILT_SOURCES)
@@ -139,6 +147,8 @@ install-exec-hook:
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/api_all_on.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_n.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_p.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pageDownCursor.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pageUpCursor.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_really.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_no.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_yes.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images

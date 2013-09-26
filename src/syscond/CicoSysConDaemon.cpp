@@ -36,8 +36,8 @@
  */
 CicoSysConDaemon::CicoSysConDaemon()
 {
-    ICO_DBG("CicoSysConDaemon::CicoSysConDaemon Enter");
-    ICO_DBG("CicoSysConDaemon::CicoSysConDaemon Leave");
+//    ICO_DBG("CicoSysConDaemon::CicoSysConDaemon Enter");
+//    ICO_DBG("CicoSysConDaemon::CicoSysConDaemon Leave");
 }
 
 /**
@@ -45,8 +45,8 @@ CicoSysConDaemon::CicoSysConDaemon()
  */
 CicoSysConDaemon::~CicoSysConDaemon()
 {
-    ICO_DBG("CicoSysConDaemon::~CicoSysConDaemon Enter");
-    ICO_DBG("CicoSysConDaemon::~CicoSysConDaemon Leave");
+//    ICO_DBG("CicoSysConDaemon::~CicoSysConDaemon Enter");
+//    ICO_DBG("CicoSysConDaemon::~CicoSysConDaemon Leave");
 }
 
 bool

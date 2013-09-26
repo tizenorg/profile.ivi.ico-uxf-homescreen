@@ -46,24 +46,26 @@ public:
     int suspend(const std::string& appid);
     int suspend(int pid);
     // run application check
-    bool isRunning(const char* appid) const;
-    bool isRunning(const std::string& appid) const;
+    bool isRunning(const char* appid);
+    bool isRunning(const std::string& appid);
 
     const std::vector<CicoSCAilItems>& getAilList() const;
     const CicoSCAilItems* findAIL(const char* appid) const;
     const CicoSCAilItems* findAIL(const std::string& appid) const;
+    bool isAilRenew() const;
+    void ailRenewFlagOff();
 
-    const std::vector<CicoSCAulItems>& getAulList() const;
+    const std::vector<CicoSCAulItems>& getAulList();
 // TODO mk_k Should I think about the multiple return values start
 /*
     const CicoSCAulItems* findAUL(const char* appid) const;
     const CicoSCAulItems* findAUL(const std::string& appid) const;
 */
-    const CicoSCAulItems* findAUL(int pid) const;
+    const CicoSCAulItems* findAUL(int pid);
     bool getPIDs(const char* appid, std::vector<int>& pids) const;
     bool getPIDs(std::string& appid, std::vector<int>& pids) const;
-    void enterAUL(const char* appid, int pid, const CicoSCWindow* obj=NULL);
-
+    void enterAUL(const char* appid, int pid, const CicoSCWindow* obj = NULL,
+                  int aulstt = AUL_R_OK);
 
 protected:
     void initAIL();
@@ -77,6 +79,7 @@ protected:
                                  const char *val, const void *pmsg,
                                  CicoSCLifeCycleController *x);
     void renewAIL();
+    void ailRenewFlagOn();
     void initAUL();
     friend int CSCLCCapp_launch_handlerX(int pid,
                                          CicoSCLifeCycleController *x);
@@ -98,6 +101,7 @@ protected:
     GKeyFile* m_gconf;
     pkgmgr_client* m_pc;
     CicoSCSysResourceController* m_RC;
+    bool m_ailRenew;
 };
 
 /**
@@ -112,15 +116,30 @@ const std::vector<CicoSCAilItems>& CicoSCLifeCycleController::getAilList() const
 
 
 /**
- * @brief AUL infomaton list
- * @return AUL information item list Container
+ * @brief AIL change flag is on?
+ * @ret bool
+ * @retval true change flag on
+ * @retval false change flag off
  */
-inline
-const std::vector<CicoSCAulItems>& CicoSCLifeCycleController::getAulList() const
+inline bool CicoSCLifeCycleController::isAilRenew() const
 {
-    return m_aul;
+    return m_ailRenew;
 }
 
+/**
+ * @brief AIL change flag off set
+ */
+inline void CicoSCLifeCycleController::ailRenewFlagOff()
+{
+    m_ailRenew = false;
+}
 
+/**
+ * @brief AIL change flag on set
+ */
+inline void CicoSCLifeCycleController::ailRenewFlagOn()
+{
+    m_ailRenew = true;
+}
 
 #endif // CICOSCLIFECYCLECONTROLLER_H

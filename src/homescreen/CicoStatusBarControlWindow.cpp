@@ -36,7 +36,7 @@ CicoStatusBarControlWindow::CicoStatusBarControlWindow()
     moveH = 0;
     window = NULL;
     shtct_list = NULL;
-   
+
     /* Initialize a new system of Ecore_Evas */
     ecore_evas_init();
 }
@@ -119,8 +119,8 @@ CicoStatusBarControlWindow::Finalize(void)
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-void 
-CicoStatusBarControlWindow::SetInstanceForClock(CicoStatusBarControlWindow *instance_tmp) 
+void
+CicoStatusBarControlWindow::SetInstanceForClock(CicoStatusBarControlWindow *instance_tmp)
 {
     instance = instance_tmp;
 }
@@ -128,7 +128,7 @@ CicoStatusBarControlWindow::SetInstanceForClock(CicoStatusBarControlWindow *inst
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoStatusBarControlWindow::CreateEcoreEvas
- *          make new ecore_evas 
+ *          make new ecore_evas
  *
  * @param[in]   none
  * @return      0:success -1:failed
@@ -146,8 +146,8 @@ CicoStatusBarControlWindow::CreateEcoreEvas(void)
         return -1;
     }
     ecore_evas_callback_delete_request_set(window,QuitEcoreLoop);
-  
-    return 0; 
+
+    return 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -186,7 +186,7 @@ CicoStatusBarControlWindow::QuitEcoreLoop(Ecore_Evas *ee)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoStatusBarControlWindow::ResizeWindow
- *          resize window 
+ *          resize window
  *
  * @param[in]   orientation     setting ICO_ONS_HORIZONTAL or ICO_ONS_VERTICAL
  *                              (if config is existing,this value is ignored)
@@ -197,7 +197,7 @@ void
 CicoStatusBarControlWindow::ResizeWindow(int orientation)
 {
     int width_tmp, height_tmp;
-  
+
     /* load configuration */
     if (homescreen_config != NULL) {
        orientation = homescreen_config->ConfigGetInteger(ICO_HS_CONFIG_STATUBAR,
@@ -246,13 +246,13 @@ CicoStatusBarControlWindow::ShowWindow(void)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoStatusBarControlWindow::InitEvas
- *          initialize evas 
+ *          initialize evas
  *
  * @param[in]   none
  * @return      0:OK -1:NG
  */
 /*--------------------------------------------------------------------------*/
-int 
+int
 CicoStatusBarControlWindow::InitEvas(void)
 {
     Evas_Object *canvas;
@@ -273,7 +273,7 @@ CicoStatusBarControlWindow::InitEvas(void)
     evas_object_move(canvas, 0, ICO_SB_POS_Y);
     evas_object_resize(canvas, width, ICO_HS_SIZE_SB_HEIGHT);
     evas_object_show(canvas);
-   
+
     return 0;
 
 }
@@ -300,19 +300,19 @@ CicoStatusBarControlWindow::ShowClockHour(struct tm *t_st)
     else {
         ampm_index = ICO_SB_TIME_PM;
     }
-    sprintf(file, "%s%s", respath, 
+    sprintf(file, "%s%s", respath,
                 time_data[ampm_index]->GetFileName());
     evas_object_image_file_set(ampm, file, NULL);
-   
+
     //Hour
     sprintf(file, "%s%s", respath,
             time_data[(t_st->tm_hour % ICO_SB_TIME_AMPM_THRESHOLD) / 10]->GetFileName());
     evas_object_image_file_set(hour1, file, NULL);
-    
+
     sprintf(file, "%s%s", respath,
             time_data[(t_st->tm_hour % ICO_SB_TIME_AMPM_THRESHOLD) % 10]->GetFileName());
     evas_object_image_file_set(hour2, file, NULL);
-  
+
     /*Makes the given Evas object visible*/
     evas_object_show(ampm);
     evas_object_show(hour1);
@@ -382,7 +382,7 @@ CicoStatusBarControlWindow::UpdateTime(void *thread_data)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoStatusBarControlWindow::ShowClock
- *          show the clock's 
+ *          show the clock's
  *
  * @param[in]   none
  * @return      none
@@ -394,7 +394,7 @@ CicoStatusBarControlWindow::ShowClock(void)
     Evas_Object *colon;
     time_t timer;
     struct tm *t_st;
-    char file[ICO_SB_BUF_SIZE]; 
+    char file[ICO_SB_BUF_SIZE];
     /* ... */
     ampm = evas_object_image_filled_add(evas);
     hour1 = evas_object_image_filled_add(evas);
@@ -402,7 +402,7 @@ CicoStatusBarControlWindow::ShowClock(void)
     min1 = evas_object_image_filled_add(evas);
     min2 = evas_object_image_filled_add(evas);
     colon = evas_object_image_filled_add(evas);
- 
+
     /* This function will make layout change */
     evas_object_move(ampm, moveH + ICO_SB_POS_AMPM_X, ICO_SB_POS_AMPM_Y);
     evas_object_move(hour1, moveH + ICO_SB_POS_HOUR1_X, ICO_SB_POS_HOUR1_Y);
@@ -410,7 +410,7 @@ CicoStatusBarControlWindow::ShowClock(void)
     evas_object_move(min1, moveH + ICO_SB_POS_MIN1_X, ICO_SB_POS_MIN1_Y);
     evas_object_move(min2, moveH + ICO_SB_POS_MIN2_X, ICO_SB_POS_MIN2_Y);
     evas_object_move(colon, moveH + ICO_SB_POS_COLON_X, ICO_SB_POS_COLON_Y);
- 
+
     /* This function will make size change of picture */
     evas_object_resize(ampm, ICO_SB_SIZE_AMPM_W, ICO_SB_SIZE_AMPM_H);
     evas_object_resize(hour1, ICO_SB_SIZE_NUM_W, ICO_SB_SIZE_NUM_H);
@@ -418,7 +418,7 @@ CicoStatusBarControlWindow::ShowClock(void)
     evas_object_resize(min1, ICO_SB_SIZE_NUM_W, ICO_SB_SIZE_NUM_H);
     evas_object_resize(min2, ICO_SB_SIZE_NUM_W, ICO_SB_SIZE_NUM_H);
     evas_object_resize(colon, ICO_SB_SIZE_COLON_W, ICO_SB_SIZE_COLON_H);
- 
+
     /* Makes the given Evas object visible */
     evas_object_show(ampm);
     evas_object_show(hour1);
@@ -432,7 +432,7 @@ CicoStatusBarControlWindow::ShowClock(void)
     t_st = localtime(&timer);
     ShowClockHour(t_st);
     ShowClockMinutes(t_st);
-  
+
     /* Set the image file */
     for (int ii = 0; ii < ICO_SB_TIME_IMG_PARTS; ii++) {
         time_data[ii]->SetTimeImg(evas_object_image_filled_add(evas));
@@ -442,18 +442,16 @@ CicoStatusBarControlWindow::ShowClock(void)
     sprintf(file, "%s%s", respath, fname_colon);
     evas_object_image_file_set(colon, file, NULL);
 
-
     ecore_timer_add(ICO_SB_TIMEOUT, UpdateTime, NULL);
-
 }
 
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoStatusBarControlWindow::EvasObjectImageFileSetAndShow
- *          set the evas object image file and show it 
+ *          set the evas object image file and show it
  *
  * @param[in]   obj    evas object
- * @param[in]   img    image 
+ * @param[in]   img    image
  * @return      none
  */
 /*--------------------------------------------------------------------------*/

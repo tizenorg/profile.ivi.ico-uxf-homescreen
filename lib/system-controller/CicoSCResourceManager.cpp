@@ -124,8 +124,7 @@ CicoSCResourceManager::CicoSCResourceManager()
             vector<CicoSCDisplayZoneConf*>::iterator itr2;
             itr2 = (*itr)->zoneConfList.begin();
             for (; itr2 != (*itr)->zoneConfList.end(); ++itr2) {
-                m_curDispResReq[(*itr2)->id] = NULL;
-                m_dispReqQueue[(*itr2)->id]  = l;
+                m_curDispResOwerReq[(*itr2)->id] = NULL;
             }
         }
     }
@@ -280,6 +279,7 @@ CicoSCResourceManager::setInputController(CicoSCInputController *inputCtrl)
     m_inputCtrl = inputCtrl;
 }
 
+#if 0
 resource_request_t * 
 CicoSCResourceManager::popDispResReq(resource_request_t *req)
 {
@@ -304,6 +304,7 @@ CicoSCResourceManager::popDispResReq(resource_request_t *req)
     ICO_DBG("CicoSCResourceManager::popDispResReq Leave(NULL)");
     return NULL;
 }
+#endif
 
 resource_request_t *
 CicoSCResourceManager::popSoundResReq(resource_request_t *req)
@@ -386,36 +387,61 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
         return true;
     }
 
-    resource_request_t *req = NULL;
-    // equal current request?
-    CompDisplayResourceRequest comp(newreq);
-    resource_request_t *curreq = m_curDispResReq[newreq->dispzoneid];
-    if ((NULL != curreq) && (true == comp(curreq))) {
-        ICO_DBG("already acquired appid=%s pid=%d surfaceid=0x%08X",
-                curreq->appid, curreq->pid, curreq->surfaceid);
-        ICO_DBG("CicoSCResourceManager::acquireDisplayResource Leave(true)");
-        // is change zone?
-        if (newreq->dispzoneid == curreq->dispzoneid) {
-            // free new request
-            delResourceRequest(newreq);
+    // if exist current ower request, pop request
+    resource_request_t *req = findCurDispResOwerReq(newreq);
+    int chgzone = -1;
+    if (NULL != req) {
+        ICO_DBG("dispzoneid=%d/%d zone=%s/%s",
+                req->dispzoneid, newreq->dispzoneid,
+                req->dispzone, newreq->dispzone);
+        if (req->dispzoneid != newreq->dispzoneid) {
+            req = popCurDispResOwerReq(req);
+            chgzone = newreq->dispzoneid;
+        }
+        else {
+            ICO_DBG("already ower appid=%s", req->appid);
+            ICO_DBG("CicoSCResourceManager::acquireDisplayResource Leave(true)");
             return true;
         }
-        req = curreq;
-        curreq->dispzoneid = newreq->dispzoneid;
-        delResourceRequest(newreq);
     }
-    else {
-        // watting request?
-        req = popDispResReq(newreq);
-        if (NULL == req) {
+
+    // if exist in wating request list, pop request
+    if (NULL == req) {
+        req = popWaitingDispResReq(newreq);
+        if (NULL != req) {
+            ICO_DBG("dispzoneid=%d/%d zone=%s/%s",
+                    req->dispzoneid, newreq->dispzoneid,
+                    req->dispzone, newreq->dispzone);
+            if (req->dispzoneid != newreq->dispzoneid) {
+                chgzone = newreq->dispzoneid;
+            }
+        }
+        else {
             req = newreq;
         }
     }
 
+    // 
+    if (req != newreq) {
+        // update request data
+        req->dispzoneid = newreq->dispzoneid;
+        if (NULL != req->dispzone) free(req->dispzone);
+        req->dispzone = strdup(newreq->dispzone);
+        if (NULL != req->animation) free(req->animation);
+        req->animation = strdup(newreq->animation);
+        req->animationTime = newreq->animationTime;
+
+        // delete new request
+        delResourceRequest(newreq);
+    }
+    
     if (false == control) {
-        ICO_DBG("Enqueue waiting display request queue zone=%d req=0x%08x",
-                req->dispzoneid, req);
-        m_dispReqQueue[req->dispzoneid].push_front(req);
+        ICO_DBG("Enqueue waiting display resource request"
+                "(req=0x%08x appid=%s)", req, req->appid);
+        m_waitingDispResReq.push_front(req);
+#if 1   //DEBUG
+        dumpWaitingDispResReq();
+#endif  //DEBUG
         return true;
     }
 
@@ -424,12 +450,15 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
                                                      req->dispzoneid,
                                                      req->prio);
     if (true == state) {
-        updateDisplayResource(req);
+        updateDisplayResource(req, chgzone);
     }
     else {
-        ICO_DBG("Enqueue waiting display request queue zone=%d req=0x%08x",
-                req->dispzoneid, req);
-        m_dispReqQueue[req->dispzoneid].push_front(req);
+        ICO_DBG("Enqueue waiting display resource request"
+                "(req=0x%08x appid=%s)", req, req->appid);
+        m_waitingDispResReq.push_front(req);
+#if 1   //DEBUG
+        dumpWaitingDispResReq();
+#endif  //DEBUG
     }
 
 
@@ -440,59 +469,32 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
 void
 CicoSCResourceManager::releaseDisplayResource(resource_request_t *newreq)
 {
-    ICO_DBG("CicoSCResourceManager::releaseDisplayResource Enter");
+    ICO_DBG("CicoSCResourceManager::releaseDisplayResource Enter"
+            "(newreq=0x%08x)", newreq);
 
-    bool curchg = false;
-    CompDisplayResourceRequest comp(newreq);
-    for (int i = 0; i < (int)m_curDispResReq.size(); ++i) {
-         if (NULL == m_curDispResReq[i]) {
-            continue;
-         }
+    // if exist current ower request, pop request
+    resource_request_t *req = popCurDispResOwerReq(newreq);
+    if (NULL == req) {
+        // if exist in wating request list, pop request
+        req = popWaitingDispResReq(newreq);
+    }
 
-         if (true == comp(m_curDispResReq[i])) {
-            if (NULL != m_winCtrl) {
-                // hide current window
-                m_winCtrl->hide(m_curDispResReq[i]->surfaceid, NULL, 0);
-            }
-            delResourceRequest(newreq);
-            delResourceRequest(m_curDispResReq[i]);
-            m_curDispResReq[i] = NULL;
-            curchg = true;
+    if (NULL != req) {
+        delResourceRequest(req);
+    }
+    delResourceRequest(newreq);
+
+    list<resource_request_t*>::iterator itr;
+    itr = m_waitingDispResReq.begin();
+    for (; itr != m_waitingDispResReq.end(); ++itr) {
+        int type = (*itr)->resid & RESID_TYPE_MASK;
+        bool active = m_policyMgr->acquireDisplayResource(type,
+                                                         (*itr)->dispzoneid,
+                                                         (*itr)->prio);
+        if (true == active) {
+            resource_request_t* popreq = popWaitingDispResReq(*itr);
+            updateDisplayResource(popreq);
             break;
-         }
-    }
-
-    // If current request is not changed, 
-    // remove the request from the waiting queue.
-    if (false == curchg) {
-       resource_request_t *req = popDispResReq(newreq);
-        if (NULL != req) {
-            delResourceRequest(req);
-            req = NULL;
-        }
-        delResourceRequest(newreq);
-        ICO_DBG("CicoSCResourceManager::releaseDisplayResource Leave");
-        return;
-    }
-
-    map<int, list<resource_request_t*> >::iterator itr;
-    itr = m_dispReqQueue.begin();
-    for (; itr != m_dispReqQueue.end(); ++itr) {
-        list<resource_request_t*>::iterator itr2;
-        itr2 = itr->second.begin();
-        for (; itr2 !=  itr->second.end(); ++itr2) {
-            int type = (*itr2)->resid & RESID_TYPE_MASK;
-            bool active = m_policyMgr->acquireDisplayResource(type,
-                                                         (*itr2)->dispzoneid,
-                                                         (*itr2)->prio);
-            if (true == active) {
-                resource_request_t* req = *itr2;
-                ICO_DBG("Dequeue waiting display request queue "
-                        "zone=%d req=0x%08x", itr->first, *itr2);
-                itr->second.erase(itr2);
-                updateDisplayResource(req);
-                break;
-            }
         }
     }
 
@@ -776,7 +778,8 @@ CicoSCResourceManager::newResourceRequest(int resid,
         req->id     = opt->input;
     }
 
-    ICO_DBG("CicoSCResourceManager::newResourceRequest Leave");
+    ICO_DBG("CicoSCResourceManager::newResourceRequest Leave"
+            "(req=0x%08x appid=%s)", req, req->appid);
     return req;
 }
 
@@ -819,108 +822,96 @@ CicoSCResourceManager::receiveChangedState(int state)
         updateDisplayResourceRegulation(state);
         updateSoundResourceRegulation(state);
         updateInputResourceRegulation(state);
-#if 0
-        bool curchg = false;
-        for (int i = 0; i < (int)m_curDispResReq.size(); ++i) {
-             if (NULL == m_curDispResReq[i]) {
-                continue;
-             }
-             int type = m_curDispResReq[i]->resid & RESID_TYPE_MASK;
-             bool active = m_policyMgr->acquireDisplayResource(type,
-                                                             m_curDispResReq[i]->dispzoneid,
-                                                             m_curDispResReq[i]->prio);
-            if (false == active) {
-                if (NULL != m_winCtrl) {
-                    // hide current window
-                    m_winCtrl->hide(m_curDispResReq[i]->surfaceid, NULL, 0);
-                }
-                // state change to waiting
-                m_curDispResReq[i]->state = RES_STATE_WAITING;
-                // enqueue request
-                ICO_DBG("Enqueue waiting display request queue "
-                        "zone=%d req=0x%08x", i, m_curDispResReq[i]);
-                m_dispReqQueue[i].push_front(m_curDispResReq[i]);
-                // initialize current zone request
-                m_curDispResReq[i] = NULL;
-                curchg = true;
-             }
-        }
-
-        if ((false == curchg) && (STID_DRVREGULATION_ON == state)) {
-            ICO_DBG("CicoSCResourceManager::receiveChangedState Leave");
-            return;
-        }
-
-        map<int, list<resource_request_t*> >::iterator itr;
-        itr = m_dispReqQueue.begin();
-        for (; itr != m_dispReqQueue.end(); ++itr) {
-            list<resource_request_t*>::iterator itr2;
-            itr2 = itr->second.begin();
-            for (; itr2 !=  itr->second.end(); ++itr2) {
-                if (NULL != m_curDispResReq[itr->first]) {
-                    continue;
-                }
-                int type = (*itr2)->resid & RESID_TYPE_MASK;
-                bool active = m_policyMgr->acquireDisplayResource(type,
-                                                             (*itr2)->dispzoneid,
-                                                             (*itr2)->prio);
-                if (true == active) {
-                    resource_request_t* req = *itr2;
-                    ICO_DBG("Dequeue waiting display request queue "
-                            "zone=%d req=0x%08x", itr->first, *itr2);
-                    itr->second.erase(itr2);
-                    updateDisplayResource(req);
-                    break;
-                }
-            }
-        }
-#endif
     }
 
     ICO_DBG("CicoSCResourceManager::receiveChangedState Leave");
 }
 
 void
-CicoSCResourceManager::updateDisplayResource(resource_request_t *req)
+CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
+                                             int chgzoneid)
 {
     ICO_DBG("CicoSCResourceManager::updateDisplayResource Enter"
             "(req=0x%08x)", req);
-    for (int i = 0; i < (int)m_curDispResReq.size(); ++i) {
-        ICO_DBG("zoneid=%d active=%d current=0x%08x",
-                i, m_policyMgr->getDispZoneState(i), m_curDispResReq[i]);
-
-        if (NULL == m_curDispResReq[i]) {
-            continue;
+    std::map<unsigned int, resource_request_t*>::iterator itr;
+    itr = m_curDispResOwerReq.find(req->dispzoneid);
+    if ((m_curDispResOwerReq.end() != itr) && (NULL != itr->second)) {
+        // already ower
+        if (itr->second == req) {
+            ICO_DBG("already ower appid=%s pid=%d surfaceid=0x%08X",
+                    req->appid, req->pid, req->surfaceid);
+            return;
         }
-
-        if ((i == req->dispzoneid) ||
-            (false == m_policyMgr->getDispZoneState(i))) {
-
+        resource_request_t *popreq = popCurDispResOwerReq(itr->second);
+        if (NULL != popreq) {
             if (NULL != m_winCtrl) {
                 // hide current window
-                m_winCtrl->hide(m_curDispResReq[i]->surfaceid, NULL, 0);
+                m_winCtrl->hide(popreq->surfaceid, NULL, 0);
             }
+
             // state change to waiting
-            m_curDispResReq[i]->state = RES_STATE_WAITING;
+            popreq->state = RES_STATE_WAITING;
             // enqueue request
-            ICO_DBG("Enqueue waiting display request queue "
-                    "zone=%d req=0x%08x", i, m_curDispResReq[i]);
-            m_dispReqQueue[i].push_front(m_curDispResReq[i]);
-            // initialize current zone request
-            m_curDispResReq[i] = NULL;
+            ICO_DBG("Enqueue waiting display resource request"
+                    "(req=0x%08x appid=%s", popreq, popreq->appid);
+            m_waitingDispResReq.push_front(popreq);
+#if 1   //DEBUG
+        dumpWaitingDispResReq();
+#endif  //DEBUG
+        }
+    }
+        
+    if (NULL != m_winCtrl) {
+        if (-1 == chgzoneid) {
+            // show request window
+            m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
+        }
+        else {
+            // move request window
+            m_winCtrl->setGeometry(req->surfaceid, req->dispzone,
+                                   req->animation, req->animationTime,
+                                   req->animation, req->animationTime);
+            m_winCtrl->show(req->surfaceid, NULL, 0);
+        }
+    }
+    // state change to acquired
+    req->state = RES_STATE_ACQUIRED;
+    // update current zone request
+    ICO_DBG("Enqueue current display resource ower request"
+            "(req=0x%08x zoneid=%d appid=%s)",
+            req, req->dispzoneid, req->appid);
+    m_curDispResOwerReq[req->dispzoneid] = req;
+#if 1   //DEBUG
+    dumpCurDispResOwerReq();
+#endif  //DEBUG
+
+    // if current zone ower not exist after zone change
+    if (-1 != chgzoneid) {
+        list<resource_request_t*>::iterator itr;
+        itr = m_waitingDispResReq.begin();
+        for (; itr !=  m_waitingDispResReq.end(); ++itr) {
+            if (m_curDispResOwerReq[(*itr)->dispzoneid] != NULL) {
+                continue;
+            }
+            int type = (*itr)->resid & RESID_TYPE_MASK;
+            bool active = false;
+            active = m_policyMgr->acquireDisplayResource(type,
+                                                         (*itr)->dispzoneid,
+                                                         (*itr)->prio);
+            if (true == active) {
+                resource_request_t* req = *itr;
+                ICO_DBG("Dequeue waiting display resource request"
+                        "(req=0x%08x appid=%s)", *itr, (*itr)->appid);
+                m_waitingDispResReq.erase(itr);
+#if 1   //DEBUG
+                dumpWaitingDispResReq();
+#endif  //DEBUG
+                updateDisplayResource(req);
+                break;
+            }
         }
     }
 
-    if (req != m_curDispResReq[req->dispzoneid]) {
-        if (NULL != m_winCtrl) {
-            // show request window
-            m_winCtrl->show(req->surfaceid, req->animation,req->animationTime);
-        }
-        // state change to acquired
-        req->state = RES_STATE_ACQUIRED;
-        // update current zone request
-        m_curDispResReq[req->dispzoneid] = req;
-    }
     ICO_DBG("CicoSCResourceManager::updateDisplayResource Leave");
 }
 
@@ -1012,62 +1003,75 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
     ICO_DBG("CicoSCResourceManager::updateDisplayResourceRegulation Enter"
             "(state=%d)", state);
 
-    bool curchg = false;
-    for (int i = 0; i < (int)m_curDispResReq.size(); ++i) {
-        resource_request_t *current = m_curDispResReq[i];
-        if (NULL == current) {
-            continue;
+    if (STID_DRVREGULATION_ON == state) {
+        bool curchg = false;
+        std::map<unsigned int, resource_request_t*>::iterator itr;
+        itr = m_curDispResOwerReq.begin();
+        for (; itr != m_curDispResOwerReq.end(); ++itr) {
+            resource_request_t *current = itr->second;
+            if (NULL == current) {
+                continue;
+            }
+
+            int type = current->resid & RESID_TYPE_MASK;
+            bool active = false;
+            active = m_policyMgr->acquireDisplayResource(type,
+                                                         current->dispzoneid,
+                                                         current->prio);
+            if (false == active) {
+                if (NULL != m_winCtrl) {
+                    // hide current window
+                    // TODO animation?
+                    m_winCtrl->hide(current->surfaceid, NULL, 0);
+                }
+                curchg = true;
+            }
         }
 
-        int type = current->resid & RESID_TYPE_MASK;
-        bool active = false;
-        active = m_policyMgr->acquireDisplayResource(type,
-                                                     current->dispzoneid,
-                                                     current->prio);
-        if (false == active) {
-            if (NULL != m_winCtrl) {
-                // hide current window
-                m_winCtrl->hide(current->surfaceid, NULL, 0);
-            }
-            // state change to waiting
-            current->state = RES_STATE_WAITING;
-            // enqueue request
-            ICO_DBG("Enqueue waiting display request queue "
-                    "zone=%d req=0x%08x", i, current);
-            m_dispReqQueue[i].push_front(current);
-            // initialize current zone request
-            m_curDispResReq[i] = NULL;
-            curchg = true;
-         }
-    }
-
-    if ((false == curchg) && (STID_DRVREGULATION_ON == state)) {
-        ICO_DBG("CicoSCResourceManager::updateDisplayResourceRegulation Leave");
-        return;
-    }
-
-    map<int, list<resource_request_t*> >::iterator itr;
-    itr = m_dispReqQueue.begin();
-    for (; itr != m_dispReqQueue.end(); ++itr) {
-        if (NULL != m_curDispResReq[itr->first]) {
-            continue;
+        if (false == curchg) {
+            ICO_DBG("CicoSCResourceManager::updateDisplayResourceRegulation "
+                    "Leave");
+            return;
         }
 
         list<resource_request_t*>::iterator itr2;
-        itr2 = itr->second.begin();
-        for (; itr2 !=  itr->second.end(); ++itr2) {
+        itr2 = m_waitingDispResReq.begin();
+        for (; itr2 !=  m_waitingDispResReq.end(); ++itr2) {
             int type = (*itr2)->resid & RESID_TYPE_MASK;
             bool active = false;
             active = m_policyMgr->acquireDisplayResource(type,
                                                          (*itr2)->dispzoneid,
                                                          (*itr2)->prio);
             if (true == active) {
-                resource_request_t* req = *itr2;
-                ICO_DBG("Dequeue waiting display request queue "
-                        "zone=%d req=0x%08x", itr->first, *itr2);
-                itr->second.erase(itr2);
-                updateDisplayResource(req);
+                if (NULL != m_winCtrl) {
+                    // show current window
+                    // TODO animation?
+                    m_winCtrl->show((*itr2)->surfaceid, NULL, 0);
+                }
                 break;
+            }
+        }
+    }
+    else if (STID_DRVREGULATION_OFF == state) {
+        std::map<unsigned int, resource_request_t*>::iterator itr;
+        itr = m_curDispResOwerReq.begin();
+        for (; itr != m_curDispResOwerReq.end(); ++itr) {
+            resource_request_t *current = itr->second;
+            if (NULL == current) {
+                continue;
+            }
+
+            int type = current->resid & RESID_TYPE_MASK;
+            bool active = false;
+            active = m_policyMgr->acquireDisplayResource(type,
+                                                         current->dispzoneid,
+                                                         current->prio);
+            if (true == active) {
+                if (NULL != m_winCtrl) {
+                    // hide current window
+                    // TODO animation?
+                    m_winCtrl->show(current->surfaceid, NULL, 0);
+                }
             }
         }
     }
@@ -1205,5 +1209,169 @@ CicoSCResourceManager::updateInputResourceRegulation(int state)
     }
 
     ICO_DBG("CicoSCResourceManager::updateDisplayResourceRegulation Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   find currnet dipalay resource ower request
+ *
+ *  @param [in] request  compare requset
+ *  
+ *  @return request object on same requeset found, NULL on not found
+ */
+//--------------------------------------------------------------------------
+resource_request_t *
+CicoSCResourceManager::findCurDispResOwerReq(resource_request_t *req)
+{
+    if (NULL == req) {
+        ICO_WRN("invalid argument. req is null");
+        return NULL;
+    }
+    std::map<unsigned int, resource_request_t*>::iterator itr;
+    itr = m_curDispResOwerReq.begin();
+    for (; itr != m_curDispResOwerReq.end(); ++itr) {
+        CompDisplayResourceRequest comp(req);
+        if (true == comp(itr->second)) {
+            return itr->second;
+        }
+    }
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  pop currnet dipalay resource ower request from list
+ *
+ *  @param [in] request  compare requset
+ *  
+ *  @return request object on same requeset found, NULL on not found
+ */
+//--------------------------------------------------------------------------
+resource_request_t *
+CicoSCResourceManager::popCurDispResOwerReq(resource_request_t *req)
+{
+    if (NULL == req) {
+        ICO_WRN("invalid argument. req is null");
+        return NULL;
+    }
+    std::map<unsigned int, resource_request_t*>::iterator itr;
+    itr = m_curDispResOwerReq.begin();
+    for (; itr != m_curDispResOwerReq.end(); ++itr) {
+        CompDisplayResourceRequest comp(req);
+        if (true == comp(itr->second)) {
+            ICO_DBG("Dequeue current display reoursce ower request"
+                    "(req=0x%08x zoneid=%d appid=%s)",
+                    itr->second, itr->first, itr->second->appid);
+            resource_request_t *findreq = itr->second;
+            itr->second = NULL;
+#if 1   //DEBUG
+            dumpCurDispResOwerReq();
+#endif  //DEBUG
+            return findreq;
+        }
+    }
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   dump currnet dipalay resource ower request
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCResourceManager::dumpCurDispResOwerReq(void)
+{
+    std::map<unsigned int, resource_request_t*>::iterator itr;
+    itr = m_curDispResOwerReq.begin();
+    for (; itr != m_curDispResOwerReq.end(); ++itr) {
+        if (NULL == itr->second) {
+            ICO_DBG("current req=0x%08x zone=%02d:(null) appid=(null)",
+                    itr->second, itr->first);
+        }
+        else {
+            ICO_DBG("current req=0x%08x zone=%02d:%s appid=%s",
+                    itr->second, itr->first, itr->second->dispzone,
+                    itr->second->appid);
+        }
+    }
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  find waiting dipalay resource request
+ *
+ *  @param [in] request  compare requset
+ *  
+ *  @return request object on same requeset found, NULL on not found
+ */
+//--------------------------------------------------------------------------
+resource_request_t *
+CicoSCResourceManager::findWaitingDispResReq(resource_request_t *req)
+{
+    if (NULL == req) {
+        ICO_WRN("invalid argument. req is null");
+        return NULL;
+    }
+    CompDisplayResourceRequest comp(req);
+    std::list<resource_request_t*>::iterator itr;
+    itr = find_if(m_waitingDispResReq.begin(), m_waitingDispResReq.end(), comp);
+    if (m_waitingDispResReq.end() != itr) {
+        return *itr;
+    }
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  pop waiting dipalay resource request from waiting list
+ *
+ *  @param [in] request  compare requset
+ *  
+ *  @return request object on same requeset found, NULL on not found
+ */
+//--------------------------------------------------------------------------
+resource_request_t *
+CicoSCResourceManager::popWaitingDispResReq(resource_request_t *req)
+{
+    if (NULL == req) {
+        ICO_WRN("invalid argument. req is null");
+        return NULL;
+    }
+    CompDisplayResourceRequest comp(req);
+    std::list<resource_request_t*>::iterator itr;
+    itr = find_if(m_waitingDispResReq.begin(), m_waitingDispResReq.end(), comp);
+    if (m_waitingDispResReq.end() != itr) {
+        ICO_DBG("Dequeue waiting display resource request"
+                "(req=0x%08x zone:%02d:%s appid=%s)",
+                *itr, (*itr)->dispzoneid, (*itr)->dispzone, (*itr)->appid);
+        resource_request_t *findreq = *itr;
+        m_waitingDispResReq.erase(itr);
+#if 1   //DEBUG
+        dumpWaitingDispResReq();
+#endif  //DEBUG
+        return findreq;
+    }
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  dump waiting dipalay resource request
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCResourceManager::dumpWaitingDispResReq(void)
+{
+    std::list<resource_request_t*>::iterator itr;
+    itr = m_waitingDispResReq.begin();
+    for (; itr != m_waitingDispResReq.end(); ++itr) {
+        if (NULL == *itr) {
+            ICO_DBG("waiting req=null");
+        }
+        else {
+            ICO_DBG("waiting req=0x%08x zone=%02d:%s appid=%s",
+                    *itr, (*itr)->dispzoneid, (*itr)->dispzone, (*itr)->appid);
+        }
+    }
 }
 // vim:set expandtab ts=4 sw=4:

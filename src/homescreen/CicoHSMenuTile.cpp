@@ -32,7 +32,7 @@
  */
 /*--------------------------------------------------------------------------*/
 CicoHSMenuTile::CicoHSMenuTile(const char *appid,
-      const char *icon_image_path,int page,int position,int width,int height)
+      const char *icon_image_path,int page,int subpage, int position,int width,int height)
 {
     thumbnail = NULL;
     if(appid != NULL){
@@ -46,6 +46,7 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
     }
     ICO_DBG("CicoHSMEnutTile::CicoHSMenuTile:image_path %s:%s",appid,this->icon_image_path);
     this->page = page;
+    this->subpage = subpage;
     this->position = position;
     this->width = width;
     this->height = height;
@@ -300,6 +301,21 @@ int
 CicoHSMenuTile::GetPage(void)
 {
     return page;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuTile::GetSubPage
+ *          get sub page
+ *
+ * @param[in]   none
+ * @return      page
+ */
+/*--------------------------------------------------------------------------*/
+int
+CicoHSMenuTile::GetSubPage(void)
+{
+    return subpage;
 }
 
 /*--------------------------------------------------------------------------*/

@@ -33,6 +33,15 @@
 #define ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH 108
 #define ICO_HS_CONTROL_BAR_MENU_BTN_HEIGHT 108
 
+#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_START_POS_Y 10
+#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_WIDTH 108
+#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_HEIGHT 108
+
+#define ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM 4
+#define ICO_HS_CONTROL_BAR_BTN_MAX_NUM (ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM + 1)
+#define ICO_HS_CONTROL_BAR_CONFIG_SHORTCUT_APP "shortcut_app"
+#define ICO_HS_CONFIG_CONTROL_BAR "controlbar"
+
 class CicoHSControlBarWindow :public CicoHSWindow
 {
   public:
@@ -49,20 +58,34 @@ class CicoHSControlBarWindow :public CicoHSWindow
 
     void SetNightMode(void);
     void SetRegulation(void);
+    char GetChangeZoneKeyName(void);
+    void AddShortcut(Evas *evas, int width);
+    void TouchShortcut(const char *appid);
 
-  private:
+protected:
+    // assignment operator
+    CicoHSControlBarWindow operator=(const CicoHSControlBarWindow&);
+
+    // copy constructor
+    CicoHSControlBarWindow(const CicoHSControlBarWindow&);
+
+private:
+    // key down event callback function
+    static void evasKeyDownCB(void *data, Evas *evas,
+                              Evas_Object *obj, void *info);
+private:
     /* for window control */
     char appid[ICO_HS_MAX_PROCESS_NAME];
     int surface;
 
     char img_dir_path[ICO_HS_MAX_PATH_BUFF_LEN];
-    Evas *evas;         /* evas object */
-    Evas_Object *background;
-    Evas_Object *menu_btn;
+    Evas        *evas;          ///! evas instance
+    Evas_Object *background;    ///! background evas object instance
+    Evas_Object *menu_btn;      ///! menu button evas object instance
+    char changeZoneKeyName;     ///! change zone key name
+    const char *shortcut_appid[ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM];
+    Evas_Object *shortcut[ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM];
 
-  protected:
-    CicoHSControlBarWindow operator=(const CicoHSControlBarWindow&);
-    CicoHSControlBarWindow(const CicoHSControlBarWindow&);
 };
 #endif
 // vim: set expandtab ts=4 sw=4:

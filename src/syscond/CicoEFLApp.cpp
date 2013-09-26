@@ -41,8 +41,8 @@ app_event_callback_s CicoEFLApp::m_appEventCB = {
  */
 CicoEFLApp::CicoEFLApp()
 {
-    ICO_DBG("CicoEFLApp::CicoEFLApp Enter");
-    ICO_DBG("CicoEFLApp::CicoEFLApp Leave");
+//    ICO_DBG("CicoEFLApp::CicoEFLApp Enter");
+//    ICO_DBG("CicoEFLApp::CicoEFLApp Leave");
 }
 
 /**
@@ -50,8 +50,8 @@ CicoEFLApp::CicoEFLApp()
  */
 CicoEFLApp::~CicoEFLApp()
 {
-    ICO_DBG("CicoEFLApp::~CicoEFLApp Enter");
-    ICO_DBG("CicoEFLApp::~CicoEFLApp Leave");
+//    ICO_DBG("CicoEFLApp::~CicoEFLApp Enter");
+//    ICO_DBG("CicoEFLApp::~CicoEFLApp Leave");
 }
 
 /**
