@@ -25,6 +25,8 @@
 #include "CicoHSAppHistory.h"
 #include "CicoHSAppHistoryExt.h"
 #include "Cico_aul_listen_app.h"
+#include "CicoHomeScreenCommon.h"
+#include "CicoHomeScreen.h"
 #include "CicoLog.h"
 
 using namespace std;
@@ -101,6 +103,8 @@ CicoHSAppHistoryExt::CicoHSAppHistoryExt()
     setHandler();
     setWaitTime(DEFAULT_WAIT_TIME);
     m_lastStartupApp.clear();
+    m_subDispApp.clear();
+    m_empty.clear();
 }
 
 /**
@@ -110,13 +114,15 @@ CicoHSAppHistoryExt::CicoHSAppHistoryExt()
  * @param flagpath control flag file path
  */
 CicoHSAppHistoryExt::CicoHSAppHistoryExt(const char* user, const char* path,
-                                         const char* flagpath)
-    :CicoHSAppHistory(user, path, flagpath)
+                                         const char* pathD, const char* flagpath)
+    :CicoHSAppHistory(user, path, pathD, flagpath)
 {
     resetCounter();
     setHandler();
     setWaitTime(DEFAULT_WAIT_TIME);
     m_lastStartupApp.clear();
+    m_subDispApp.clear();
+    m_empty.clear();
 }
 
 /**
@@ -127,13 +133,16 @@ CicoHSAppHistoryExt::CicoHSAppHistoryExt(const char* user, const char* path,
  */
 CicoHSAppHistoryExt::CicoHSAppHistoryExt(const string& user,
                                          const string& path,
+                                         const string& pathD,
                                          const string& flagpath)
-    :CicoHSAppHistory(user, path, flagpath)
+    :CicoHSAppHistory(user, path, pathD, flagpath)
 {
     resetCounter();
     setHandler();
     setWaitTime(DEFAULT_WAIT_TIME);
     m_lastStartupApp.clear();
+    m_subDispApp.clear();
+    m_empty.clear();
 }
 
 /**
@@ -300,7 +309,7 @@ void CicoHSAppHistoryExt::selectApp(const char* appid)
     ICO_DBG("timer set(%x) %s, %d", data, appid, data->id);
     ecore_timer_add(m_waitTimer, ico_CHSAHE_timeout, data);
     m_lCdt.push_back(data);
-    m_currentAppid = appid;
+    m_waitSelApp = appid;
 }
 
 /**
@@ -317,14 +326,18 @@ void CicoHSAppHistoryExt::determined(CHSAHE_data_t* data)
         ICO_DBG("free %x", data);
         delete data;        // area free
     }
-    if (true == m_currentAppid.empty()) {
+    if (true == m_waitSelApp.empty()) {
         ICO_DBG("end appid lost");
         return;
     }
     if (id == getCounter()) {
+        string appid(m_waitSelApp);
         ICO_DBG("Match id");
-        moveHistoryHead(m_currentAppid);
-        m_currentAppid.clear();
+        moveHistoryHead(m_waitSelApp);
+        m_waitSelApp.clear();
+        if (m_hs) {
+            m_hs->requestWaitActivation(appid);
+        }
     }
     ICO_DBG("end");
 }
@@ -361,25 +374,24 @@ void CicoHSAppHistoryExt::activeApp(const string& appid)
 void CicoHSAppHistoryExt::activeApp(const char* appid)
 {
     ICO_DBG("start %s", appid);
-    if (true == m_currentAppid.empty()) {
+    if (true == m_waitSelApp.empty()) {
 #if 1
         moveHistoryHead(appid);
 #endif
         ICO_DBG("end current none");
         return;
     }
-    if (m_currentAppid == appid) { // touch operate app
-        moveHistoryHead(m_currentAppid);
-        m_currentAppid.clear();
+    if (m_waitSelApp == appid) { // touch operate app
+        moveHistoryHead(m_waitSelApp);
+        m_waitSelApp.clear();
         ICO_DBG("end touch operate app");
         return;
     }
-    ICO_DBG("end  no match curr(%s)", m_currentAppid.c_str());
+    ICO_DBG("end  no match select app(%s)", m_waitSelApp.c_str());
 #if 1
-    moveHistoryHead(appid);
-#endif
-#if 1
-    m_currentAppid.clear();
+    if (true == moveHistoryHead(appid)) {
+        m_waitSelApp.clear();
+    }
 #endif
     return;
 }
@@ -389,12 +401,16 @@ bool CicoHSAppHistoryExt::chgChk()
     string tmp(m_bkTmp);
     m_bkTmp.clear();
     int i = 0;
+    const char* pAppidSubD = getAppidSubDispBySystem();
     list<string>::iterator p = m_appHistoryList.begin();
     while (p != m_appHistoryList.end()) {
         if (i != 0) {
             m_bkTmp += ',';
         }
         m_bkTmp += *p;
+        if (0 == (*p).compare(pAppidSubD)) {
+            m_bkTmp += "(S)";
+        }
         i++;
         ++p;
     }
@@ -405,6 +421,7 @@ bool CicoHSAppHistoryExt::chgChk()
     ICO_DBG("true, %d %d", m_bkTmp.size(), tmp.size());
     return true;
 }
+
 bool CicoHSAppHistoryExt::addAppHistory(const string& app)
 {
     bool r;
@@ -414,12 +431,27 @@ bool CicoHSAppHistoryExt::addAppHistory(const string& app)
     }
     return r;
 }
+
 bool CicoHSAppHistoryExt::delAppHistory(const string& app)
 {
     bool r;
     r = CicoHSAppHistory::delAppHistory(app);
     if (true == chgChk()) {
         writeAppHistory();
+    }
+    if (true == isStartupChecking()) {
+        if (0 == m_lastStartupApp.compare(app)) {
+            m_lastStartupApp.clear();
+        }
+        if (0 == m_subDispApp.compare(app)) {
+            m_subDispApp.clear();
+        }
+        startupEntryFinish(app);
+        if (true == isFinish()) {
+            if (NULL != m_hs) {
+                m_hs->finishStartup();
+            }
+        }
     }
     return r;
 }
@@ -469,19 +501,32 @@ void CicoHSAppHistoryExt::update_appid(int pid, string& appid, int& aulstt)
  */
 const string& CicoHSAppHistoryExt::nextSwipe()
 {
-    m_swipeStr.clear();
-    if (false == m_lastStartupApp.empty()) {
+    if (true == isStartupChecking()) {
         ICO_DBG("Next empty! stoped");
-        return m_swipeStr;
+        return m_empty;
     }
     if (m_swipeCurr == m_appHistoryList.begin()) {
         ICO_DBG("Next empty! stoped");
-        return m_swipeStr;
+        return m_empty;
     }
     --m_swipeCurr;
     m_swipeStr = *m_swipeCurr;
     if (true == update_pairPidAppid(m_swipeStr)) {
         *m_swipeCurr = m_swipeStr;
+    }
+    const char* pAppidSubD = getAppidSubDispBySystem();
+    if (0 == m_swipeStr.compare(pAppidSubD)) {
+        if (m_swipeCurr == m_appHistoryList.begin()) {
+            ++m_swipeCurr; // back
+            m_swipeStr = *m_swipeCurr;
+            ICO_DBG("begin is sub display appid");
+            return m_empty;
+        }
+        --m_swipeCurr;  // one more
+        m_swipeStr = *m_swipeCurr;
+        if (true == update_pairPidAppid(m_swipeStr)) {
+            *m_swipeCurr = m_swipeStr;
+        }
     }
     ICO_DBG("Next %s", m_swipeStr.c_str());
     return m_swipeStr;
@@ -494,20 +539,41 @@ const string& CicoHSAppHistoryExt::nextSwipe()
  */
 const string& CicoHSAppHistoryExt::prevSwipe()
 {
-    m_swipeStr.clear();
-    if (false == m_lastStartupApp.empty()) {
+    if (true == isStartupChecking()) {
         ICO_DBG("Next empty! stoped");
-        return m_swipeStr;
+        return m_empty;
+    }
+    if (m_swipeCurr == m_appHistoryList.end()) {
+        ICO_DBG("Next empty! stoped");
+        return m_empty;
     }
     ++m_swipeCurr;
     if (m_swipeCurr == m_appHistoryList.end()) {
         --m_swipeCurr;
         ICO_DBG("Prev empty! stoped");
-        return m_swipeStr;
+        return m_empty;
     }
     m_swipeStr = *m_swipeCurr;
     if (true == update_pairPidAppid(m_swipeStr)) {
         *m_swipeCurr = m_swipeStr;
+    }
+    const char* pAppidSubD = getAppidSubDispBySystem();
+    if (0 == m_swipeStr.compare(pAppidSubD)) {
+        ++m_swipeCurr;
+        if (m_swipeCurr == m_appHistoryList.end()) {
+            --m_swipeCurr;
+            --m_swipeCurr;
+            m_swipeStr = *m_swipeCurr;
+            if (true == update_pairPidAppid(m_swipeStr)) {
+                *m_swipeCurr = m_swipeStr;
+            }
+            ICO_DBG("old history appid is sub display");
+            return m_empty;
+        }
+        m_swipeStr = *m_swipeCurr;
+        if (true == update_pairPidAppid(m_swipeStr)) {
+            *m_swipeCurr = m_swipeStr;
+        }
     }
     ICO_DBG("Prev %s", m_swipeStr.c_str());
     return m_swipeStr;
@@ -527,8 +593,47 @@ const string& CicoHSAppHistoryExt::homeSwipe()
         if (true == update_pairPidAppid(m_swipeStr)) {
             *m_swipeCurr = m_swipeStr;
         }
+        const char* pAppidSubD = getAppidSubDispBySystem();
+        if (0 == m_swipeStr.compare(pAppidSubD)) {
+            if (1 < m_appHistoryList.size()) {
+                prevSwipe();
+            }
+            else {
+                m_swipeStr.clear();
+            }
+        }
     }
+    ICO_DBG("swipe home is %s", m_swipeStr.c_str());
     return m_swipeStr;
+}
+
+/**
+ * @brief get near entry history
+ * @ret appid
+ */
+const string& CicoHSAppHistoryExt::getNearHistory()
+{
+    ICO_TRA("start");
+    list<string>::iterator p = m_appHistoryList.begin();
+    if (p == m_appHistoryList.end()) {
+        // NO history
+        ICO_TRA("end no history");
+        return m_empty;
+    }
+    const char* pAppidSubD = getAppidSubDispBySystem();
+    if (0 != (*p).compare(pAppidSubD)) {
+        // on history
+        ICO_TRA("end near history is %s", (*p).c_str());
+        return *p;
+    }
+    ++p;
+    if (p == m_appHistoryList.end()) {
+        // NO history
+        ICO_TRA("end no history");
+        return m_empty;
+    }
+    ICO_TRA("end near history is %s", (*p).c_str());
+    return *p;
 }
 
 /**
@@ -629,9 +734,12 @@ void CicoHSAppHistoryExt::startupCheckAdd(int pid, const std::string& appid,
 {
     ICO_DBG("add pid=%d, appid=%s", pid, appid.c_str());
     m_vpbpa.push_back(pairBoolPidAppid(false, pairPidAppid(pid, appid)));
-    if (false == d) {
-       m_lastStartupApp = appid;
+    if (true == d) {
+        m_subDispApp = appid;
     } 
+    else {
+        m_lastStartupApp = appid;
+    }
 }
 
 /**
@@ -647,6 +755,19 @@ void CicoHSAppHistoryExt::startupEntryFinish(int pid)
                     (*it).second.second.c_str());
             (*it).first = true;
             break;  // break of while
+        }
+        it++;
+    }
+}
+
+void CicoHSAppHistoryExt::startupEntryFinish(const string& appid)
+{
+    vector<pairBoolPidAppid>::iterator it = m_vpbpa.begin();
+    while (it != m_vpbpa.end()) {
+        if (0 == (*it).second.second.compare(appid)) {
+            ICO_DBG("FINISH!! %d, %s", (*it).second.first,
+                    (*it).second.second.c_str());
+            (*it).first = true;
         }
         it++;
     }

@@ -158,6 +158,19 @@ ico_syc_mrp_del_request(resource_request_t *req)
         return;
     }
 
+    resource_request_t *findreq = ico_syc_mrp_find_request(req->id,
+                                                           req->appid);
+    if (NULL != findreq) {
+        if (req->pid != findreq->pid) {
+            ICO_DBG("ico_syc_mrp_del_request: pid not match");
+            return;
+        }
+    }
+    else {
+        ICO_DBG("ico_syc_mrp_del_request: not found in req list");
+        return;
+    }
+
     ICO_DBG("ico_syc_mrp_del_request: "
             "del request %p to mrp_reqs list", req);
     mrp_list_delete(&req->hook);

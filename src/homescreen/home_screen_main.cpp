@@ -26,6 +26,7 @@
 #include "CicoSCConf.h"
 #include "CicoSCSystemConfig.h"
 #include "Cico_aul_listen_app.h"
+#include "CicoHomeScreen.h"
 
 using namespace std;
 
@@ -139,7 +140,8 @@ main(int argc, char *argv[])
 
     ICO_DBG("main: create homescreen ");
     /* application history class init. before call launchApps */
-    home_screen->InitializeAppHistory(g_login_user_name, x.filePath, flagPath);
+    home_screen->InitializeAppHistory(g_login_user_name, x.filePath,
+                                      x.filePathD, flagPath);
     /* application history launch */
     x.hs = home_screen;
     ecore_timer_add(0.01, launchApps, &x);
@@ -176,35 +178,26 @@ main(int argc, char *argv[])
 /*--------------------------------------------------------------------------*/
 static Eina_Bool launchApps(void* data)
 {
+    ICO_DBG("start");
     launcApps_data_t* x = (launcApps_data_t*) data;
-    ICO_DBG("launcApps start");
-    string fpath(x->filePath);
-    struct stat stat_buf;
-    if (0 != stat(fpath.c_str(), &stat_buf)) {
-        ICO_DBG("launcApps end false(%d, %s)", errno, fpath.c_str());
-        fpath = x->filePathD;
-        if (0 != stat(fpath.c_str(), &stat_buf)) {
-            ICO_DBG("launcApps end false(%d, %s)", errno, fpath.c_str());
-            return ECORE_CALLBACK_CANCEL;
-        }
+    if ((NULL == x) || (NULL == x->hs)) {
+        ICO_DBG("end");
+        return ECORE_CALLBACK_CANCEL;
     }
-    vector<string> apps;
-    string tagApp;
-    ifstream ifs(fpath.c_str());
-    while(ifs >> tagApp) {
-        if (true == tagApp.empty()) {
-            continue;
-        }
-        apps.push_back(tagApp);
-    }
+
+    vector<pairAppidSubd> apps;
+    x->hs->readStartupApp(apps);
+
     int sz = apps.size();
     for (int i =sz; i > 0; i--) {
-        int pid = aul_launch_app(apps[i-1].c_str(), NULL);
-        ICO_DBG("aul_launch_app %d:appid(%s), pid(%d)", i, apps[i-1].c_str(), pid);
+        string appid = apps[i-1].first;
+        bool bFLAG = apps[i-1].second;
+        int pid = aul_launch_app(appid.c_str(), NULL);
+        ICO_DBG("aul_launch_app[%d]%d:%s:%d", i, pid, appid.c_str(), (int)bFLAG);
         if ((0 < pid) && (NULL != x->hs)) {
-            x->hs->startupCheckAdd(pid, apps[i-1]);
+            x->hs->startupCheckAdd(pid, appid, bFLAG);
         }
     }
-    ICO_DBG("launcApps end read is %s", fpath.c_str());
+    ICO_DBG("end");
     return ECORE_CALLBACK_CANCEL;
 }

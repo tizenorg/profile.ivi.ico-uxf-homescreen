@@ -8,7 +8,7 @@ libico_appfw_la_CFLAGS = -I../../include $(OPT_CFLAGS) $(UWS_CFLAGS) \
                           -I/usr/include/ico-util
 
 libico_appfw_la_LIBADD =  $(OPT_LIBS) $(WL_LIBS) $(AUL_LIBS) $(UWS_LIBS) $(COMMON_LIBS) @ECORE_LIBS@
-libico_appfw_la_LDFLAGS = -version-info 0:1:0 
+libico_appfw_la_LDFLAGS = -version-info 0:9:0 
 libico_appfw_la_SOURCES =          \
     ico_syc_appresctl.c \
 	ico_syc_common.c    \

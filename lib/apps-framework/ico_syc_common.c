@@ -41,7 +41,7 @@ static void _syc_ev_callback(const struct ico_uws_context *uws_context,
                              void *user_data);
 static void _add_queue(void *data, size_t len);
 static int _get_event_from_cmd(int command);
-static int _exec_callback(void *user_data);
+static void _exec_callback(void *user_data);
 static Eina_Bool _ecore_fd_cb(void *data, Ecore_Fd_Handler *handler);
 static void _add_poll_fd(int fd);
 static void _del_poll_fd(int fd);
@@ -316,7 +316,7 @@ static int _get_event_from_cmd(int command)
  * @retval      0                       success (always success)
  */
 /*--------------------------------------------------------------------------*/
-static int
+static void
 _exec_callback(void *user_data)
 {
     recv_info_t *recv_data  = NULL;
@@ -325,7 +325,7 @@ _exec_callback(void *user_data)
 
     if (syc_callback == NULL) {
         _DBG("not setting callback function");
-        return ICO_SYC_ERR_NONE;
+        return;
     }
 
     while (g_queue_is_empty(recv_info_q) != TRUE) {
@@ -399,8 +399,6 @@ _exec_callback(void *user_data)
         /* mutex unlock */
         pthread_mutex_unlock(&q_mutex);
     }
-
-    return ICO_SYC_ERR_NONE;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -483,7 +481,7 @@ _poll_fd_thread(void *args)
         }
         /* recive message */
         ico_uws_service(uws_context);
-        _exec_callback(syc_user_data);
+        ecore_main_loop_thread_safe_call_async(_exec_callback, syc_user_data);
     }
     pthread_exit(0);
 
@@ -712,6 +710,24 @@ ico_syc_disconnect(void)
     g_queue_free(recv_free_q);
 
     return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_service
+ *          Service for communication to System Controller.
+ *
+ * @param       none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+ICO_API void
+ico_syc_service(void)
+{
+    /* close the connection */
+    if (uws_context != NULL) {
+        ico_uws_service(uws_context);
+    }
 }
 
 /*============================================================================*/

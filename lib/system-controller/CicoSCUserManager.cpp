@@ -376,6 +376,7 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
 
     // change login user
     m_login = conf->name;
+    saveLastUser();
     ICO_DBG("login user changed (user=%s)", m_login.c_str());
     ICO_INF("%s", tmpText);
     flagFileOff();
@@ -712,6 +713,23 @@ CicoSCUserManager::loadLastUser(void)
     stream >> m_login;
     stream.close();
 
+    // check login name is valid
+    if (false == m_login.empty()) {
+        bool bValid = false;
+        vector<CicoSCUser*>::iterator it = m_userList.begin();
+        while (it != m_userList.end()) {
+            if (0 == (*it)->name.compare(m_login)) {
+                bValid = true;
+                break;
+            }
+            ++it;
+        }
+        if (false == bValid) {
+            ICO_WRN("last user NG!, user name \"%s\" clear", m_login.c_str());
+            m_login.clear();
+        }
+    }
+
     ICO_DBG("CicoSCUserManager::loadLastUser Leave(EOK)");
 }
 
@@ -729,6 +747,16 @@ CicoSCUserManager::loadLastInfo()
 
     if (m_login.empty()) {
         ICO_ERR("CicoSCUserManager::loadLastInfo Leave(EINVAL)");
+        return;
+    }
+
+    // get login user object
+    CicoSCUser* loginUser = NULL;
+    loginUser = const_cast<CicoSCUser*>(findUserConfbyName(m_login));
+    // check login user
+    if (NULL == loginUser) {
+        // login user does not exist in the user list
+        ICO_DBG("CicoSCUserManager::setLastInfo Leave(ENXIO)");
         return;
     }
 
@@ -754,13 +782,18 @@ CicoSCUserManager::loadLastInfo()
             string info;
             std::ifstream stream;
             stream.open(infofile.c_str());
-            stream >> info;
+            std::getline(stream, info);
             stream.close();
 
             // get appid (erase ".txt" from filename)
             filename.erase(index, filename.size());
-            // set last information
-            setLastInfo(filename, info);
+            // create new object
+            CicoSCLastInfo* lastInfo = new CicoSCLastInfo;
+            // set application's information
+            lastInfo->appid = filename;
+            lastInfo->lastinfo = info;
+            // add to list
+            loginUser->lastInfoList.push_back(lastInfo);
         }
         free(filelist[i]);
     }

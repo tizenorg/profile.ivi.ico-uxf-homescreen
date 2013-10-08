@@ -42,9 +42,10 @@ class CicoHSAppHistoryExt :public CicoHSAppHistory
 {
 public:
     CicoHSAppHistoryExt();
-    CicoHSAppHistoryExt(const char* user, const char* path, const char* flagpath);
+    CicoHSAppHistoryExt(const char* user, const char* path, const char* pathD,
+                        const char* flagpath);
     CicoHSAppHistoryExt(const std::string& user, const std::string& path,
-                        const std::string& flagpath);
+                        const std::string& pathD, const std::string& flagpath);
     virtual ~CicoHSAppHistoryExt();
     void setWaitTime(double msec);
 
@@ -52,6 +53,7 @@ public:
     virtual bool addAppHistory(const std::string& app);
     virtual bool delAppHistory(const std::string& app);
     virtual bool moveHistoryHead(const std::string& app);
+    const std::string& getNearHistory();
 
     // AUL I/F
     int appLaunch(int pid, const char* appid, int aulstt);
@@ -64,6 +66,7 @@ public:
     void selectApp(int pid);
     void selectApp(const std::string& appid);
     void selectApp(const char* appid);
+    const std::string& getSelectApp() const;
 
     // time out selected app
     void determined(CHSAHE_data_t* data);
@@ -87,10 +90,13 @@ public:
     void startupCheckAdd(int pid, const std::string& appid, bool d = false);
     bool isStartupChecking() const;
     void startupEntryFinish(int pid);
+    void startupEntryFinish(const std::string& appid);
     bool isFinish();
     void stopStartupCheck();
-    const std::string& lastStartupApp() const;
+    const std::string& getLastStartupAppid() const;
+    const std::string& getSubDispAppid() const;
 
+    bool chgChk();
 protected:
     enum {
         COUNTER_START = 1,
@@ -100,18 +106,19 @@ protected:
     int resetCounter();
     int getCounter();
     int nextCounter();
-    bool chgChk();
 
 protected:
     std::vector<pairPidAppid> m_vppa;
     std::vector<int> m_aulstt;
     int   m_cnt;
-    std::string m_currentAppid;
+    std::string m_waitSelApp;
     std::list<CHSAHE_data_t*> m_lCdt;
     double   m_waitTimer;    // ex.) 1sec = 1.0
     std::string m_bkTmp;
     std::vector<pairBoolPidAppid> m_vpbpa;
     std::string m_lastStartupApp;
+    std::string m_subDispApp;
+    std::string m_empty;
 };
 
 /**
@@ -169,11 +176,35 @@ inline bool CicoHSAppHistoryExt::isStartupChecking() const
     return true;
 }
 
+/**
+ * @brief get last start-up appid
+ * @retuen appid Valid only application startup
+ * @retval empty is application startup finish or no have history
+*/
 
-
-inline const std::string& CicoHSAppHistoryExt::lastStartupApp() const
+inline const std::string& CicoHSAppHistoryExt::getLastStartupAppid() const
 {
     return m_lastStartupApp;
+}
+
+/**
+ * @brief get history sub display appid
+ * @return appid 
+ * @retval empty is no have history sub display
+ */
+inline const std::string& CicoHSAppHistoryExt::getSubDispAppid() const
+{
+    return m_subDispApp;
+}
+
+/**
+ * @brief get select App entry appid
+ * @ret appid
+ * @retval empty is time out or none select
+ */
+inline const std::string& CicoHSAppHistoryExt::getSelectApp() const
+{
+    return m_waitSelApp;
 }
 
 #endif // CICOHSAPPHISTORYEXT_H

@@ -23,10 +23,11 @@
 #include "CicoHSControlBarWindow.h"
 #include "CicoHSAppHistoryExt.h"
 
-#define ICO_HS_FLICK_TOUCH_FLICK_WIDTH 60
-#define ICO_HS_FLICK_TOUCH_FLICK_HEIGHT 60
+#define ICO_HS_FLICK_TOUCH_FLICK_WIDTH 80
+#define ICO_HS_FLICK_TOUCH_FLICK_HEIGHT 80
 #define ICO_HS_FLICK_TOUCH_DISTANCE_XY 200
 #define ICO_HS_FLICK_TOUCH_FLICK_THREASHOLD_DISTANCE 100
+#define ICO_HS_FLICK_TOUCH_FLICK_THREASHOLD_MOVE_Y 80
 #define ICO_HS_FLICK_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.5d
 #define ICO_HS_FLICK_TOUCH_FLICK_ANIMA_TIME 300
 
@@ -40,6 +41,7 @@ class CicoHSFlickTouch
     static void Finalize(void);
     static void TouchDownFlick(void *data, Evas *evas, Evas_Object *obj, void *event_info); 
     static void TouchUpFlick(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+    static void TouchMoveFlick(void *data, Evas *evas, Evas_Object *obj, void *event_info);
     static Eina_Bool LongPushed(void *data);
 
   private:
@@ -54,7 +56,9 @@ class CicoHSFlickTouch
     static int touch_lasttime;
 
     static Ecore_Timer *timer;
+    static bool touch_down;
     static bool long_act;
+    static bool set_xy_pos;
     static int num_windows;
     static CicoHSFlickInputWindow* flick_windows[ICO_HS_MAX_FLICKWINDOWS];
     static CicoHSAppHistoryExt*    app_history;

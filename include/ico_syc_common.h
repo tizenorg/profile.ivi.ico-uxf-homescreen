@@ -54,6 +54,16 @@ int ico_syc_connect(ico_syc_callback_t callback, void *user_data);
 /*--------------------------------------------------------------------------*/
 void ico_syc_disconnect(void);
 
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_service
+ *          Service for communication to System Controller.
+ *
+ * @param       none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void ico_syc_service(void);
 
 #ifdef __cplusplus
 }

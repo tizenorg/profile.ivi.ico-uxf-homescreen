@@ -58,9 +58,10 @@ class CicoHSControlBarWindow :public CicoHSWindow
 
     void SetNightMode(void);
     void SetRegulation(void);
-    char GetChangeZoneKeyName(void);
     void AddShortcut(Evas *evas, int width);
     void TouchShortcut(const char *appid);
+
+    void onKeyDown(void *data, Evas *evas, Evas_Object *obj, void *info);
 
 protected:
     // assignment operator
@@ -82,10 +83,12 @@ private:
     Evas        *evas;          ///! evas instance
     Evas_Object *background;    ///! background evas object instance
     Evas_Object *menu_btn;      ///! menu button evas object instance
-    char changeZoneKeyName;     ///! change zone key name
+    char changeZoneKeyName[8];  ///! change zone key name
+    char homeKeyName[8];        ///! home button assigned key name
+    char backKeyName[8];        ///! back button assigned key name
+    char menuKeyName[8];        ///! menu button assigned key name
     const char *shortcut_appid[ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM];
     Evas_Object *shortcut[ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM];
-
 };
 #endif
 // vim: set expandtab ts=4 sw=4:

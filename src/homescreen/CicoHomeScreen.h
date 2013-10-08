@@ -36,6 +36,7 @@
 
 #include "CicoSCSystemConfig.h"
 #include "CicoSCLifeCycleController.h"
+#include "CicoHSAppHistory.h"
 #include "CicoHSAppHistoryExt.h"
 
 /* display position and size */
@@ -77,6 +78,7 @@ class CicoHomeScreen
     ~CicoHomeScreen(void);
     int Initialize(int orientation,CicoHomeScreenConfig *config);
     void InitializeAppHistory(const std::string& user, const std::string& path,
+                              const std::string& pathD,
                               const std::string& flagpath);
     void Finalize(void);
     int StartRelations();
@@ -105,6 +107,7 @@ class CicoHomeScreen
     static bool GetAppStatus(const char *appid);
     void ChangeActive(const char *appid, int surface);
     static void ChangeZone(void);
+    void requestChangeZone(CicoHSAppInfo* appinfo);
     static CicoHSAppInfo *GetAppInfo(const char *appid);
     void SetMode(int mode);
     int GetMode(void);
@@ -120,10 +123,15 @@ class CicoHomeScreen
     // update current sub displaye applicatin information
     void SetSubDisplayAppInfo(const char *appid);
     CicoHSAppInfo* GetSubDisplayAppInfo(void);
+    const char* GetSubDisplayAppid(void);
     // order of the start-up window
-    void startupCheckAdd(int pid, const std::string& appid);
+    void startupCheckAdd(int pid, const std::string& appid,
+                         bool bSubDisp = false);
     void startupCheck(const char* appid);
-
+    void finishStartup(void);
+    void readStartupApp(std::vector<pairAppidSubd>& apps);
+    void cancelWaitActivation(const std::string& app);
+    void requestWaitActivation(const std::string& app);
   private:
     int GetProcessWindow(const char *appid);
     static void EventCallBack(ico_syc_ev_e event,const void* detail,void* user_data);

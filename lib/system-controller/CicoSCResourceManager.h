@@ -64,6 +64,9 @@ public:
     // receive changed state
     void receiveChangedState(int state);
 
+    // get resource manager instance
+    CicoSCPolicyManager * getPolicyManager(void);
+
 private:
     // assignment operator
     CicoSCResourceManager& operator=(const CicoSCResourceManager &object);

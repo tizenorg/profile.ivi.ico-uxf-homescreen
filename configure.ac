@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.0.1], [])
+AC_INIT([org.tizen.ico.homescreen], [0.9.05], [])
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
@@ -128,7 +128,8 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/syscond/Makefile
                  src/homescreen/Makefile
-				  tests/Makefile
+                 tool/Makefile
+                 tests/Makefile
                  tests/system-controller/Makefile
                  tests/system-controller/apps-framework/Makefile])
 AC_PROG_RANLIB([ranlib])

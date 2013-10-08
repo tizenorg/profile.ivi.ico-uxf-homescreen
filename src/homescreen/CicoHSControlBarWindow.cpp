@@ -39,8 +39,46 @@ CicoHSControlBarWindow::CicoHSControlBarWindow(void)
 
     CicoHomeScreenConfig config;
     config.Initialize(ICO_HOMESCREEN_CONFIG_FILE);
-    const char *value = config.ConfigGetString("switchzone", "keyname", NULL);
-    changeZoneKeyName = value[0];
+    const char *value = config.ConfigGetString("switchzone", "keyname", "m");
+    if (strlen(value) > (sizeof(changeZoneKeyName) - 1)) {
+        ICO_WRN("[switchzone] keyname is strlen overflow. use default keyname(m)");
+    }
+    else {
+        memset(changeZoneKeyName, 0, sizeof(changeZoneKeyName));
+        strncpy(changeZoneKeyName, value, strlen(value));
+    }
+
+    value = config.ConfigGetString("standardswitch", "homekeyname", "h");
+    if (strlen(value) > (sizeof(homeKeyName) - 1)) {
+        ICO_WRN("[standardswitch] keyname is strlen overflow. use default keyname(h)");
+    }
+    else {
+        memset(homeKeyName, 0, sizeof(homeKeyName));
+        strncpy(homeKeyName, value, strlen(value));
+    }
+
+    value = config.ConfigGetString("standardswitch", "backkeyname", "b");
+    if (strlen(value) > (sizeof(backKeyName) - 1)) {
+        ICO_WRN("[standardswitch] keyname is strlen overflow. use default keyname(b)");
+    }
+    else {
+        memset(backKeyName, 0, sizeof(backKeyName));
+        strncpy(backKeyName, value, strlen(value));
+    }
+
+    value = config.ConfigGetString("standardswitch", "menukeyname", "l");
+    menuKeyName[0] = value[0];
+    if (strlen(value) > (sizeof(menuKeyName) - 1)) {
+        ICO_WRN("[standardswitch] keyname is strlen overflow. use default keyname(l)");
+    }
+    else {
+        memset(menuKeyName, 0, sizeof(menuKeyName));
+        strncpy(menuKeyName, value, strlen(value));
+    }
+    ICO_DBG("Assigned key config : changeZone[%s]", changeZoneKeyName);
+    ICO_DBG("Assigned key config : home[%s]", homeKeyName);
+    ICO_DBG("Assigned key config : back[%s]", backKeyName);
+    ICO_DBG("Assigned key config : menu[%s]", menuKeyName);
 
     char tmp_str[16];
     for (unsigned int ii = 0; ii < ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM; ii++) {
@@ -91,7 +129,8 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
     char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
     
     /*create window*/
-    ret = CreateWindow(ICO_HS_CONTROL_BAR_WINDOW_TITLE,pos_x,pos_y,width,height,EINA_TRUE);
+    ret = CreateWindow(ICO_HS_CONTROL_BAR_WINDOW_TITLE,
+                       pos_x, pos_y, width, height, EINA_TRUE);
     if(ret != ICO_OK){
        return ret;
     }
@@ -111,8 +150,25 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
     evas_object_event_callback_add(background, EVAS_CALLBACK_KEY_DOWN, 
                                    CicoHSControlBarWindow::evasKeyDownCB, this);
 
+    // key grab
     evas_object_focus_set(background, EINA_FALSE);     
-    Eina_Bool eret = evas_object_key_grab(background, "m", 0, 0, EINA_TRUE);
+    Eina_Bool eret = evas_object_key_grab(background, (const char*)changeZoneKeyName,
+                                          0, 0, EINA_TRUE);
+    if (EINA_FALSE == eret) {
+        ICO_WRN("evas_object_key_grab failed.");
+    }
+    eret = evas_object_key_grab(background, (const char*)homeKeyName,
+                                0, 0, EINA_TRUE);
+    if (EINA_FALSE == eret) {
+        ICO_WRN("evas_object_key_grab failed.");
+    }
+    eret = evas_object_key_grab(background, (const char*)backKeyName,
+                                0, 0, EINA_TRUE);
+    if (EINA_FALSE == eret) {
+        ICO_WRN("evas_object_key_grab failed.");
+    }
+    eret = evas_object_key_grab(background, (const char*)menuKeyName,
+                                0, 0, EINA_TRUE);
     if (EINA_FALSE == eret) {
         ICO_WRN("evas_object_key_grab failed.");
     }
@@ -386,21 +442,6 @@ CicoHSControlBarWindow::SetRegulation(void)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSControlBarWindow::GetChangeZoneKeyName
- *          get change zone key name
- *
- * @param[in]   none
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-char
-CicoHSControlBarWindow::GetChangeZoneKeyName(void)
-{
-    return changeZoneKeyName;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
  * @brief   CicoHSControlBarWindow::SetMenuWindowID
  *          set appid and surface
  *
@@ -413,32 +454,6 @@ CicoHSControlBarWindow::SetWindowID(const char *appid,int surface)
 {
     strncpy(this->appid,appid,ICO_HS_MAX_PROCESS_NAME);
     this->surface = surface;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  key up event callback function
- *
- *  @pamam [in] data    user data
- *  @param [in] evas    evas instcance
- *  @param [in] obj     evas object instcance
- *  @param [in] info    event information(Evas_Event_Key_Down)
- */
-//--------------------------------------------------------------------------
-void
-CicoHSControlBarWindow::evasKeyDownCB(void *data, Evas *evas,
-                                      Evas_Object *obj, void *info)
-{
-    Evas_Event_Key_Down *evinfo = NULL;
-    evinfo = (Evas_Event_Key_Down*)info;
-    CicoHSControlBarWindow *ctrlbarwin = (CicoHSControlBarWindow*)(data);
-
-    ICO_DBG("KeyDownCB: keyname=%s, key=%d",
-            evinfo->keyname, (char)*evinfo->key);
-
-    if (evinfo->keyname[0] == ctrlbarwin->GetChangeZoneKeyName()) {
-        CicoHomeScreen::ChangeZone();
-    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -463,4 +478,55 @@ CicoHSControlBarWindow::TouchShortcut(const char *appid)
     ICO_DBG("CicoHSControlBarWindow::TouchShortcut Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  key up event callback function
+ *
+ *  @pamam [in] data    user data
+ *  @param [in] evas    evas instcance
+ *  @param [in] obj     evas object instcance
+ *  @param [in] info    event information(Evas_Event_Key_Down)
+ */
+//--------------------------------------------------------------------------
+void
+CicoHSControlBarWindow::onKeyDown(void *data, Evas *evas,
+                                  Evas_Object *obj, void *info)
+{
+    Evas_Event_Key_Down *evinfo = NULL;
+    evinfo = (Evas_Event_Key_Down*)info;
+
+    ICO_DBG("onKeyDown: keyname=%s, key=%d",
+            evinfo->keyname, (char)*evinfo->key);
+
+    if (0 == strcmp(evinfo->keyname, changeZoneKeyName)) {
+        CicoHomeScreen::ChangeZone();
+    }
+    else if (0 == strcmp(evinfo->keyname, homeKeyName)) {
+        TouchHome();
+    }
+    else if (0 == strcmp(evinfo->keyname, backKeyName)) {
+        // TODO not assinded funciton 
+    }
+    else if (0 == strcmp(evinfo->keyname, menuKeyName)) {
+        // TODO not assinded funciton 
+    }
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  key up event callback function
+ *
+ *  @pamam [in] data    user data
+ *  @param [in] evas    evas instcance
+ *  @param [in] obj     evas object instcance
+ *  @param [in] info    event information(Evas_Event_Key_Down)
+ */
+//--------------------------------------------------------------------------
+void
+CicoHSControlBarWindow::evasKeyDownCB(void *data, Evas *evas,
+                                      Evas_Object *obj, void *info)
+{
+    CicoHSControlBarWindow *ctrlbarwin = (CicoHSControlBarWindow*)(data);
+    ctrlbarwin->onKeyDown(data, evas, obj, info);
+}
 // vim: set expandtab ts=4 sw=4:

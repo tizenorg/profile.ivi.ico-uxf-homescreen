@@ -15,6 +15,9 @@
  */
 //==========================================================================
 
+#include <string>
+using namespace std;
+
 #include "CicoSCPolicyManager.h"
 #include "CicoStateMachine.h"
 #include "CicoState.h"
@@ -866,5 +869,38 @@ CicoSCPolicyManager::getInputState(int input) const
         return m_inputStates[input]->isActive();
     }
     return false;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  notify connected
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCPolicyManager::notifyConnected(const string & appid)
+{
+    // Notify regulation changed state
+    CicoSCMessage *message = new CicoSCMessage();
+    message->addRootObject("command", MSG_CMD_NOTIFY_CHANGED_STATE);
+    message->addArgObject(MSG_PRMKEY_STATEID, ICO_SYC_STATE_REGULATION);
+    if (true == m_policyStates[STID_DRVREGULATION_ON]->isActive()) {
+        message->addArgObject(MSG_PRMKEY_STATE, ICO_SYC_STATE_ON);
+    }
+    else {
+        message->addArgObject(MSG_PRMKEY_STATE, ICO_SYC_STATE_OFF);
+    }
+    CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
+
+    // Notify NightMode changed state
+    message = new CicoSCMessage();
+    message->addRootObject("command", MSG_CMD_NOTIFY_CHANGED_STATE);
+    message->addArgObject(MSG_PRMKEY_STATEID, ICO_SYC_STATE_NIGHTMODE);
+    if (true == m_policyStates[STID_NIGHTMODE_ON]->isActive()) {
+        message->addArgObject(MSG_PRMKEY_STATE, ICO_SYC_STATE_ON);
+    }
+    else {
+        message->addArgObject(MSG_PRMKEY_STATE, ICO_SYC_STATE_OFF);
+    }
+    CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 }
 // vim:set expandtab ts=4 sw=4:

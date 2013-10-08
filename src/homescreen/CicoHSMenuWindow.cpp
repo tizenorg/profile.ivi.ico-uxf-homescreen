@@ -1125,11 +1125,9 @@ void
 CicoHSMenuWindow::DownNextMenu(void)
 {
     for (int i = 0; i < all_category_num; i++) {
-        if (category_info[i].tile_num > 0) {
-            if (current_page == category_info[i].page) {
-                if (subcurrent_page >= category_info[i].subpage_max){
-                    return;
-                }
+        if (current_page == category_info[i].page) {
+            if (subcurrent_page >= category_info[i].subpage_max){
+                return;
             }
         }
     }
@@ -1196,11 +1194,9 @@ CicoHSMenuWindow::DspCtrlPageCursor(void)
 {
     int subpage_max = 0;
     for (int i = 0; i < all_category_num ; i++) {
-        if (category_info[i].tile_num > 0) {
-            if (current_page == category_info[i].page) {
-                subpage_max = category_info[i].subpage_max;
-                break;
-            }
+        if (current_page == category_info[i].page) {
+            subpage_max = category_info[i].subpage_max;
+            break;
         }
     }
     

@@ -18,18 +18,7 @@
 #define __CICO_SC_SERVER_H__
 
 #include <list>
-using namespace std;
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
-#include <string.h>
-#include <math.h>
-#include <stdbool.h>
-#include <sys/epoll.h>
-
-#include <getopt.h>
+#include <string>
 
 #include <Ecore.h>
 #include <Eina.h>
@@ -46,6 +35,7 @@ class CicoSCWindowController;
 class CicoSCInputController;
 class CicoSCUserManager;
 class CicoSCResourceManager;
+class CicoSCPolicyManager;
 
 //==========================================================================
 /**
@@ -70,11 +60,14 @@ public:
     // set resource manager instance
     void setResourceMgr(CicoSCResourceManager* resourceMgr);
 
+    // set resource manager instance
+    void setPolicyMgr(CicoSCPolicyManager* policyMgr);
+
     // startup server
     int startup(int port, const char *protocol);
 
     // send message to application client
-    int sendMessage(const string & appid, CicoSCMessage* msg);
+    int sendMessage(const std::string & appid, CicoSCMessage* msg);
 
     // send message to homescreen
     int sendMessageToHomeScreen(CicoSCMessage* msg);
@@ -127,10 +120,13 @@ private:
     CicoSCUwsHandler* findUwsHandler(const Ecore_Fd_Handler *ecoreFdHandler);
 
     // find websocket handle by appid
-    CicoSCUwsHandler* findUwsHandler(const string & appid);
+    CicoSCUwsHandler* findUwsHandler(const std::string & appid);
 
     // query whether the handler exists
     bool isExistUwsHandler(const CicoSCUwsHandler *handler);
+
+    // notify connected appilication
+    void notifyConnected(const std::string & appid);
 
 private:
     static CicoSCServer*    ms_myInstance;   ///< this class instance
@@ -141,10 +137,16 @@ private:
     CicoSCInputController   *m_inputCtrl;    ///< input controller instance
     CicoSCUserManager       *m_userMgr;      ///< user manager instance
     CicoSCResourceManager   *m_resourceMgr;  ///< resource manager instance
+    CicoSCPolicyManager     *m_policyMgr;    ///< policy manager instance
 
-    list<CicoSCUwsHandler*> m_uwsHandlerList;///< websocket handler list
-    list<CicoSCMessage*>    m_sendMsgQueue;  ///< send message queue
-    list<CicoSCCommand*>    m_recvCmdQueue;  ///< recieve message queue
+    /// websocket handler list
+    std::list<CicoSCUwsHandler*> m_uwsHandlerList;
+
+    /// send message queue
+    std::list<CicoSCMessage*> m_sendMsgQueue;
+
+    /// recieve message queue
+    std::list<CicoSCCommand*> m_recvCmdQueue;
 };
 #endif  // __CICO_SC_SERVER_H__
 // vim:set expandtab ts=4 sw=4:

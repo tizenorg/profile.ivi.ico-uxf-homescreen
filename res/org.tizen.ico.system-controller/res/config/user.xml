@@ -6,12 +6,12 @@
 <userconfig>
 <users>
     <user>
-        <name>Alice</name>
+        <name>Daddy</name>
         <passwd></passwd>
         <hs>org.tizen.ico.homescreen</hs>
     </user>
     <user>
-        <name>Bob</name>
+        <name>Mommy</name>
         <passwd></passwd>
         <hs>org.tizen.ico.homescreen</hs>
     </user>
@@ -19,7 +19,7 @@
 
 <default>
     <user>
-        <name>Alice</name>
+        <name>Daddy</name>
     </user>
 </default>
 

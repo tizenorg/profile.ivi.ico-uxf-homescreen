@@ -110,6 +110,8 @@
 #define HS_LAYER_CURSOR         ICO_WINDOW_MGR_V_LAYER_CURSOR
                                             /* layer of Cursor   */
 
+#define HS_LAYER_2NDDISP_APP    3         // second display application layer
+
 /* config history name */
 #define ICO_HS_CONFIG_HSTRY_KEY1      "timer"
 #define ICO_HS_CONFIG_HSTRY_DEF1      "1"

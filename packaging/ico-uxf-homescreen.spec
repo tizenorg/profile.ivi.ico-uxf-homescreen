@@ -1,14 +1,14 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
-Version:    0.9.04
-Release:    1.2
+Version:    0.9.05
+Release:    1.3
 Group:		Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.2
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.05
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.06
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(ecore)
 BuildRequires: pkgconfig(ecore-wayland)
@@ -30,10 +30,11 @@ BuildRequires: pkgconfig(murphy-domain-controller)
 BuildRequires: pkgconfig(murphy-ecore)
 BuildRequires: pkgconfig(murphy-resource)
 BuildRequires: boost-devel
-BuildRequires: ico-uxf-utilities-devel >= 0.2.04
+BuildRequires: mesa-devel
+BuildRequires: ico-uxf-utilities-devel
 Requires: weston >= 1.2
-Requires: ico-uxf-weston-plugin >= 0.9.05
-Requires: ico-uxf-utilities >= 0.2.04
+Requires: ico-uxf-weston-plugin >= 0.9.06
+Requires: ico-uxf-utilities
 
 %description
 Sample homescreen application and system controller daemon
@@ -72,11 +73,14 @@ mkdir -p ${STATUSBARDIR}/res/images
 mkdir -p ${STATUSBARDIR}/res/edj
 mkdir -p ${STATUSBARDIR}/res/config
 mkdir -p ${STATUSBARDIR}/bin
+mkdir -p %{_bindir}
 cp -rf data/apps/org.tizen.ico.statusbar %{buildroot}/usr/apps/
 install -m 0755 src/homescreen/StatusBar ${STATUSBARDIR}/bin/
 install -m 0644 res/org.tizen.ico.homescreen/res/images/time*.png ${STATUSBARDIR}/res/images
 install -m 0644 data/share/packages/org.tizen.ico.statusbar.xml %{buildroot}/usr/share/packages
 cp res/org.tizen.ico.homescreen/res/apps/org.tizen.ico.statusbar/* ${STATUSBARDIR}/res/config
+cp tool/ico_clear_screen %{buildroot}%{_bindir}
+cp tool/ico_change_loginuser %{buildroot}%{_bindir}
 
 %post
 /sbin/ldconfig
@@ -109,6 +113,8 @@ rm -f /home/app/layout.txt
 /usr/lib/systemd/user/ico-system-controller.service
 /usr/lib/systemd/user/ico-uxf-wait-launchpad-ready.path
 /usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
+%{_bindir}/ico_clear_screen
+%{_bindir}/ico_change_loginuser
 %attr(644,app,app) /home/app/ico/defaultApps.info
 %attr(755,app,app) /home/app/ico
 /home/app/ico/defaultApps.info

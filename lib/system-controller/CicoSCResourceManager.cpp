@@ -398,11 +398,6 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
             req = popCurDispResOwerReq(req);
             chgzone = newreq->dispzoneid;
         }
-        else {
-            ICO_DBG("already ower appid=%s", req->appid);
-            ICO_DBG("CicoSCResourceManager::acquireDisplayResource Leave(true)");
-            return true;
-        }
     }
 
     // if exist in wating request list, pop request
@@ -472,13 +467,17 @@ CicoSCResourceManager::releaseDisplayResource(resource_request_t *newreq)
     ICO_DBG("CicoSCResourceManager::releaseDisplayResource Enter"
             "(newreq=0x%08x)", newreq);
 
-    // if exist current ower request, pop request
-    resource_request_t *req = popCurDispResOwerReq(newreq);
-    if (NULL == req) {
-        // if exist in wating request list, pop request
-        req = popWaitingDispResReq(newreq);
+    // if exist in wating request list, pop request
+    resource_request_t *req = popWaitingDispResReq(newreq);
+    if (NULL != req) {
+        delResourceRequest(req);
+        delResourceRequest(newreq);
+        ICO_DBG("CicoSCResourceManager::releaseDisplayResource Leave");
+        return;
     }
 
+    // if exist current ower request, pop request
+    req = popCurDispResOwerReq(newreq);
     if (NULL != req) {
         delResourceRequest(req);
     }
@@ -494,6 +493,7 @@ CicoSCResourceManager::releaseDisplayResource(resource_request_t *newreq)
         if (true == active) {
             resource_request_t* popreq = popWaitingDispResReq(*itr);
             updateDisplayResource(popreq);
+            m_winCtrl->active(popreq->surfaceid, -1);
             break;
         }
     }
@@ -827,6 +827,19 @@ CicoSCResourceManager::receiveChangedState(int state)
     ICO_DBG("CicoSCResourceManager::receiveChangedState Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get policy manager instance
+ *
+ *  @return resource manager instace
+ */
+//--------------------------------------------------------------------------
+CicoSCPolicyManager *
+CicoSCResourceManager::getPolicyManager(void)
+{
+    return m_policyMgr;
+}
+
 void
 CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
                                              int chgzoneid)
@@ -840,6 +853,9 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
         if (itr->second == req) {
             ICO_DBG("already ower appid=%s pid=%d surfaceid=0x%08X",
                     req->appid, req->pid, req->surfaceid);
+            // show request window
+            m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
+            m_winCtrl->active(req->surfaceid, -1);
             return;
         }
         resource_request_t *popreq = popCurDispResOwerReq(itr->second);
@@ -862,17 +878,14 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
     }
         
     if (NULL != m_winCtrl) {
-        if (-1 == chgzoneid) {
-            // show request window
-            m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
-        }
-        else {
+        if (-1 != chgzoneid) {
             // move request window
             m_winCtrl->setGeometry(req->surfaceid, req->dispzone,
                                    req->animation, req->animationTime,
                                    req->animation, req->animationTime);
-            m_winCtrl->show(req->surfaceid, NULL, 0);
         }
+        // show request window
+        m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
     }
     // state change to acquired
     req->state = RES_STATE_ACQUIRED;
@@ -907,6 +920,7 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
                 dumpWaitingDispResReq();
 #endif  //DEBUG
                 updateDisplayResource(req);
+                m_winCtrl->active(req->surfaceid, -1);
                 break;
             }
         }
@@ -1047,6 +1061,7 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
                     // show current window
                     // TODO animation?
                     m_winCtrl->show((*itr2)->surfaceid, NULL, 0);
+                    m_winCtrl->active((*itr2)->surfaceid, -1);
                 }
                 break;
             }
@@ -1068,9 +1083,10 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
                                                          current->prio);
             if (true == active) {
                 if (NULL != m_winCtrl) {
-                    // hide current window
+                    // show current window
                     // TODO animation?
                     m_winCtrl->show(current->surfaceid, NULL, 0);
+                    m_winCtrl->active(current->surfaceid, -1);
                 }
             }
         }

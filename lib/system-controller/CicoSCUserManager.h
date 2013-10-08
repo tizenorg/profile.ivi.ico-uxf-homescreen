@@ -48,8 +48,8 @@ public:
 
     // get information
     const CicoSCUser* getLoginUser(void);
-    const vector<CicoSCUser*>& getUserList(void);
-    const vector<std::string>& getHomeScreenList(void);
+    const std::vector<CicoSCUser*>& getUserList(void);
+    const std::vector<std::string>& getHomeScreenList(void);
 
     // change user
     void changeUser(const std::string & name, const std::string & passwd);
@@ -101,7 +101,7 @@ private:
     bool killingAppsAndHS(const std::string& usrnm);
 
     // working user directory make
-    void getWorkingDir(const std::string& usr, string& dir);
+    void getWorkingDir(const std::string& usr, std::string& dir);
 
     // launch homescreen request
     bool launchHomescreenReq(const std::string& usr,

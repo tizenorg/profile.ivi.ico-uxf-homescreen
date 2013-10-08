@@ -1,3 +1,11 @@
+* Tue Oct 08 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20131003.220120@49e6831
+- 0.9.05 release.
+-- bugfix: The page which does not exist by scrolling downward in a menu screen is displayed.
+-- addition: Notice of the operation event to application except the application history flick operation.
+-- addition: Prohibition of the application history operation of the driving mode.
+-- addition: Addition of two tools. ico_clear_screen and ico_change_loginuser.
+-- bugfix: TIVI-1935 - Input focus is not switched to the new top most app when switching via gesture
+
 * Thu Sep 26 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20130919.204217@93c93da
 - 0.9.04 release
 -- addition of the application operation history.

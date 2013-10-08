@@ -23,6 +23,7 @@
 
 #include <map>
 #include <vector>
+#include <string>
 using namespace std;
 
 //==========================================================================
@@ -78,6 +79,9 @@ public:
     bool getSoundZoneState(int zoneid) const;
     bool getInputState(int input) const;
 
+    // notify connected process
+    void notifyConnected(const std::string & appid);
+
 private:
     // default constructor
     CicoSCPolicyManager();
@@ -102,6 +106,7 @@ private:
 
     // initialize state machine
     int initStateMachine(void);
+
 private:
     bool                  m_initialized;
     DBusConnection        *m_dbusConnection;

@@ -29,6 +29,7 @@ using namespace std;
 #include "CicoSCUserManager.h"
 #include "CicoSCUser.h"
 #include "CicoSCResourceManager.h"
+#include "CicoSCPolicyManager.h"
 
 class CicoSCUwsHandler
 {
@@ -143,6 +144,19 @@ void
 CicoSCServer::setResourceMgr(CicoSCResourceManager *resourceMgr)
 {
     m_resourceMgr = resourceMgr;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   set policy manager instance
+ *
+ *  @param [in] policyMgr policy manager instance
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCServer::setPolicyMgr(CicoSCPolicyManager *policyMgr)
+{
+    m_policyMgr = policyMgr;
 }
 
 //--------------------------------------------------------------------------
@@ -520,6 +534,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
 
             ecore_main_fd_handler_active_set(handler->ecoreFdHandler, flags);
 
+            notifyConnected(handler->appid);
             break;
         }
         
@@ -642,5 +657,29 @@ CicoSCServer::isExistUwsHandler(const CicoSCUwsHandler *handler)
         }
     }
     return false;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  notify information to homescreen on connected
+ *
+ *  @param [in] appid   application id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCServer::notifyConnected(const std::string & appid)
+{
+    const CicoSCUser *loginUser = m_userMgr->getLoginUser();
+    if (NULL == loginUser) {
+        ICO_WRN("homescreen unknown");
+        return;
+    }
+
+    // if appid equal homescreen
+    if (0 == loginUser->homescreen.compare(appid)) {
+        if (NULL != m_policyMgr) {
+            m_policyMgr->notifyConnected(appid);
+        }
+    }
 }
 // vim:set expandtab ts=4 sw=4:

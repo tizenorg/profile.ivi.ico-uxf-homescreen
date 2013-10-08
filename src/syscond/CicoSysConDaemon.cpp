@@ -81,6 +81,7 @@ CicoSysConDaemon::onCreate(void *user_data)
         server->setInputCtrl(inputctrl);
         server->setUserMgr(usermgr);
         server->setResourceMgr(resourcemgr);
+        server->setPolicyMgr(resourcemgr->getPolicyManager());
 
         server->startup(18081, (const char*)"ico_syc_protocol");
         ret = CicoSCWayland::getInstance()->intialize();
@@ -90,8 +91,6 @@ CicoSysConDaemon::onCreate(void *user_data)
         CicoSCWayland::getInstance()->addEcoreMainWlFdHandler();
         
         usermgr->initialize();
-
-
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

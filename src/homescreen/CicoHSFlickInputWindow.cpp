@@ -104,6 +104,8 @@ CicoHSFlickInputWindow::CreateFlickInputWindow(int pos_x, int pos_y,
                                        CicoHSFlickTouch::TouchDownFlick, this);
     evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_UP,
                                        CicoHSFlickTouch::TouchUpFlick, this);
+    evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_MOVE,
+                                       CicoHSFlickTouch::TouchMoveFlick, this);
 
     /* move and show window     */
     evas_object_move(background, 0, 0);
