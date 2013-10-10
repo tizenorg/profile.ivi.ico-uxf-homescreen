@@ -1,12 +1,11 @@
 [Unit]
 Description=ico system controller
 Requires=weston.service
-Wants=ico-device-input-controller.service
-Wants=ico-vic-carsim.service
-Before=weston.service
+After=weston.service
+Wants=ico-device-input-controller.service ico-vic-carsim.service
 
 [Service]
 Environment=TIZEN_PLATFORMLOGGING_MODE=1
 Environment=TIZEN_DLOG_LEVEL=1
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/dbus/user_bus_socket
-ExecStart=/usr/bin/launch_app org.tizen.ico.system-controller
+ExecStart=/usr/apps/org.tizen.ico.system-controller/bin/IcoSysconDaemon
