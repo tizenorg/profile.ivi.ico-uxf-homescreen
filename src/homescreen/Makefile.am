@@ -2,7 +2,7 @@ AM_CFLAGS = $(GCC_CFLAGS)
 AM_CPPFLAGS = $(GCC_CXXFLAGS)
 AM_CXXFLAGS = $(GCC_CXXFLAGS)
 
-COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin
+COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin -lsecurity-server-client
 
 noinst_PROGRAMS   = \
 	HomeScreen	\
