@@ -40,7 +40,8 @@ public:
                            uint32_t surfaceid,
                            const char *winname,
                            int32_t pid,
-                           const char *appid);
+                           const char *appid,
+                           int32_t layertype);
 
     virtual void nameCB(void *data,
                         struct ico_window_mgr *ico_window_mgr,
@@ -62,6 +63,7 @@ public:
                              struct ico_window_mgr *ico_window_mgr,
                              uint32_t surfaceid,
                              uint32_t node,
+                             int32_t layertype,
                              uint32_t layer,
                              int32_t x,
                              int32_t y,
@@ -82,6 +84,7 @@ public:
     virtual void appSurfacesCB(void *data,
                                struct ico_window_mgr *ico_window_mgr,
                                const char *appid,
+                               int32_t    pid,
                                struct wl_array *surfaces);
 
     virtual void mapSurfaceCB(void *data,
@@ -161,7 +164,7 @@ protected:
     void setLayerVisible(uint32_t layer, int32_t visible);
 
     // wrapper function of ico_window_mgr_get_surfaces
-    void getSurfaces(const char *appid);
+    void getSurfaces(const char *appid, int32_t pid);
 
     // wrapper function of ico_window_mgr_map_surface
     void mapSurface(uint32_t surfaceid, int32_t framerate);
@@ -176,7 +179,8 @@ private:
                             uint32_t              surfaceid,
                             const char            *winname,
                             int32_t               pid,
-                            const char            *appid);
+                            const char            *appid,
+                            int32_t               layertype);
 
     static void wlNameCB(void *data,
                          struct ico_window_mgr *ico_window_mgr,
@@ -198,6 +202,7 @@ private:
                               struct ico_window_mgr *ico_window_mgr,
                               uint32_t surfaceid,
                               uint32_t node,
+                              int32_t layertype,
                               uint32_t layer,
                               int32_t x,
                               int32_t y,
@@ -218,6 +223,7 @@ private:
     static void wlAppSurfacesCB(void *data,
                                 struct ico_window_mgr *ico_window_mgr,
                                 const char *appid,
+                                int32_t    pid,
                                 struct wl_array *surfaces);
 
     static void wlMapSurfaceCB(void *data,
@@ -251,7 +257,7 @@ private:
                                int32_t          refresh);
 
 protected:
-    // ico_window_mgr listener 
+    // ico_window_mgr listener
     struct ico_window_mgr_listener m_listener;
 
     // wayland output listener

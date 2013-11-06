@@ -112,13 +112,18 @@ public:
 
     int unmapSurface(int surfaceid);
 
+    int getDisplayedWindow(int zoneid);
+
+    int setAttributes(int surfaceid);
+
     //
     virtual void createdCB(void *data,
                            struct ico_window_mgr *ico_window_mgr,
                            uint32_t surfaceid,
                            const char *winname,
                            int32_t pid,
-                           const char *appid);
+                           const char *appid,
+                           int32_t layertype);
 
     virtual void nameCB(void *data,
                         struct ico_window_mgr *ico_window_mgr,
@@ -140,6 +145,7 @@ public:
                              struct ico_window_mgr *ico_window_mgr,
                              uint32_t surfaceid,
                              uint32_t node,
+                             int32_t layertype,
                              uint32_t layer,
                              int32_t x,
                              int32_t y,
@@ -213,15 +219,16 @@ private:
                               int        animationTime);
 
 private:
+    // resource manager instance
     CicoSCResourceManager *m_resMgr;
 
     // window object list
     map<unsigned int, CicoSCWindow*> m_windowList;
 
     // display object list
-    vector<CicoSCDisplay*>   m_displayList;
+    vector<CicoSCDisplay*> m_displayList;
 
-    //
+    // total of physical display 
     unsigned int m_physicalDisplayTotal;
 
 };

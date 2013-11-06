@@ -30,7 +30,7 @@
 #include "CicoHSMenuWindow.h"
 #include "CicoHSBackWindow.h"
 #include "CicoHSControlBarWindow.h"
-#include "CicoHSFlickTouch.h"
+#include "CicoHSSwipeTouch.h"
 #include "CicoHSWindowController.h"
 #include "CicoHSAppInfo.h"
 
@@ -90,8 +90,8 @@ class CicoHomeScreen
     void UpDateBackWindow(void);
     void CreateControlBarWindow(void);
     void DeleteControlBarWindow(void);
-    void CreateFlickInputWindow(void);
-    void DeleteFlickInputWindow(void);
+    void CreateSwipeInputWindow(void);
+    void DeleteSwipeInputWindow(void);
     void StartLoop(void);
     char *GetHsPackageName(void);
     char *GetSbPackageName(void);
@@ -130,8 +130,12 @@ class CicoHomeScreen
     void startupCheck(const char* appid);
     void finishStartup(void);
     void readStartupApp(std::vector<pairAppidSubd>& apps);
-    void cancelWaitActivation(const std::string& app);
-    void requestWaitActivation(const std::string& app);
+    void requestHideAppid(const std::string& app);
+    void requestShowAppid(const std::string& app);
+    void requestActivationAppid(const std::string& app);
+    void controlRegulation(bool regStt=true);
+    static bool ActivationUpdate(void);
+    bool ActivationUpdate_i(void);
   private:
     int GetProcessWindow(const char *appid);
     static void EventCallBack(ico_syc_ev_e event,const void* detail,void* user_data);
@@ -168,8 +172,8 @@ class CicoHomeScreen
     CicoHSMenuWindow* menu_window;
     CicoHSBackWindow* back_window;
     CicoHSControlBarWindow* ctl_bar_window;
-    int num_flick_input_windows;
-    CicoHSFlickInputWindow* flick_input_windows[ICO_HS_MAX_FLICKWINDOWS];
+    int num_swipe_input_windows;
+    CicoHSSwipeInputWindow* swipe_input_windows[ICO_HS_MAX_SWIPEWINDOWS];
     /*mode*/
     int mode;
     /*configuration*/

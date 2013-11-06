@@ -1,3 +1,16 @@
+* Wed Nov 06 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20131029.175553@d661402
+- 0.9.07 release.
+-- bugfix: Last information cannot set up / acquire.(Native app)
+-- bugfix: A grab is abandoned in the case that there is not a history by application history operation(next history operation in the latest / oldest)
+-- change: The history of application gesture function name was changed into Swipe by Flick.
+           So changed Flick of a source file name and the class name to Swipe
+-- change: ico-uxf-weston-plugin interface change of get_surfaces request and create/configure event
+-- change: Improve system controller and homescreen startup
+-- merged: Fix build to link against the security-server-client
+-- addition: Add a "logoff function of all users" to a user change
+-- addition: Addition of the live thumbnail of the running application to a menu
+-- bugfix: TIVI-1996
+
 * Tue Oct 08 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20131003.220120@49e6831
 - 0.9.05 release.
 -- bugfix: The page which does not exist by scrolling downward in a menu screen is displayed.

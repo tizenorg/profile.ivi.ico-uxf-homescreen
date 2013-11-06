@@ -91,7 +91,7 @@ initDB(void)
 
 //--------------------------------------------------------------------------
 /**
- *  @briefÅ@executes an input control process corresponding to the command
+ *  @brief executes an input control process corresponding to the command
  *
  *  @param  cmd     command
  */

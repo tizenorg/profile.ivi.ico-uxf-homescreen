@@ -31,13 +31,11 @@
 
 #define ICO_HS_APPLICATION_FULL_SCREEN_POS_X 0
 #define ICO_HS_APPLICATION_FULL_SCREEN_POS_Y 64
-#define ICO_HS_APPLICATION_FULL_SCREEN_WIDTH 1080
-#define ICO_HS_APPLICATION_FULL_SCREEN_HEIGHT 1728
 
 #define ICO_HS_MAX_WINDOW_NAME 64
 #define ICO_HS_MAX_ZONE_NAME 64
 
-typedef struct _ico_hs_window_info{
+typedef struct _ico_hs_window_info {
     bool valid;
     char appid[ICO_HS_MAX_PROCESS_NAME];
     char name[ICO_HS_MAX_WINDOW_NAME];
@@ -52,11 +50,11 @@ typedef struct _ico_hs_window_info{
     int  raise;
     int  visible;
     int  active;
-}ico_hs_window_info;
+} ico_hs_window_info;
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  
+ *  @brief
  */
 //--------------------------------------------------------------------------
 class CicoHSAppInfo
@@ -76,6 +74,9 @@ public:
 
     // free window information
     void FreeWindowInfo(const char *name);
+
+    // free window information
+    void FreeWindowInfo(int surface);
 
     // get application id
     const char * GetAppId(void);
@@ -100,7 +101,7 @@ public:
 
     // get application running status
     bool GetStatus(void);
-   
+
     // set last surface id
     void SetLastSurface(int last_surface);
 

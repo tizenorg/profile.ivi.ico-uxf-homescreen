@@ -7,12 +7,12 @@
  *
  */
 /**
- * @brief   flick input window
+ * @brief   swipe input window
  *
  * @date    Sep-20-2013
  */
-#include "CicoHSFlickInputWindow.h"
-#include "CicoHSFlickTouch.h"
+#include "CicoHSSwipeInputWindow.h"
+#include "CicoHSSwipeTouch.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
 
@@ -21,16 +21,16 @@
 /*============================================================================*/
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::CicoHSFlickInputWindow
+ * @brief   CicoHSSwipeInputWindow::CicoHSSwipeInputWindow
  *          Constractor
  *
  * @param[in]   none
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-CicoHSFlickInputWindow::CicoHSFlickInputWindow(void)
+CicoHSSwipeInputWindow::CicoHSSwipeInputWindow(void)
 {
-    ICO_DBG("CicoHSFlickInputWindow::CicoHSFlickInputWindow: constractor");
+    ICO_DBG("CicoHSSwipeInputWindow::CicoHSSwipeInputWindow: constractor");
     evas = NULL;
     background = NULL;
     setuped = false;
@@ -38,61 +38,61 @@ CicoHSFlickInputWindow::CicoHSFlickInputWindow(void)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::~CicoHSFlickInputWindow
+ * @brief   CicoHSSwipeInputWindow::~CicoHSSwipeInputWindow
  *          Destractor
  *
  * @param[in]   none
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-CicoHSFlickInputWindow::~CicoHSFlickInputWindow(void)
+CicoHSSwipeInputWindow::~CicoHSSwipeInputWindow(void)
 {
-    ICO_DBG("CicoHSFlickInputWindow::CicoHSFlickInputWindow: destractor");
+    ICO_DBG("CicoHSSwipeInputWindow::CicoHSSwipeInputWindow: destractor");
     /* not somthing to do */
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::CreateFlickInputWindow
- *          crate window (flick input window)
+ * @brief   CicoHSSwipeInputWindow::CreateSwipeInputWindow
+ *          crate window (swipe input window)
  *
  * @param[in]   pos_x    position x
  * @param[in]   pos_y    position y
  * @param[in]   width    width
  * @param[in]   height   height
- * @param[in]   subname  flick input window sub name
+ * @param[in]   subname  swipe input window sub name
  * @return      OK or ERRROR
  */
 /*--------------------------------------------------------------------------*/
 int
-CicoHSFlickInputWindow::CreateFlickInputWindow(int pos_x, int pos_y,
+CicoHSSwipeInputWindow::CreateSwipeInputWindow(int pos_x, int pos_y,
                                                int width, int height, const char *subname)
 {
     int ret;
 
-    ICO_DBG("CreateFlickInputWindow: start(%s,x/y=%d/%d,w/h=%d/%d)",
+    ICO_DBG("CreateSwipeInputWindow: start(%s,x/y=%d/%d,w/h=%d/%d)",
             subname ? subname : "(null)", pos_x, pos_y, width, height);
 
     /*create window*/
     if (subname)    {
         snprintf(winname, sizeof(winname), "%s_%s",
-                 ICO_HS_FLICK_INPUT_WINDOW_TITLE, subname);
+                 ICO_HS_SWIPE_INPUT_WINDOW_TITLE, subname);
     }
     else    {
-        strncpy(winname, ICO_HS_FLICK_INPUT_WINDOW_TITLE, ICO_SYC_MAX_WINNAME_LEN);
+        strncpy(winname, ICO_HS_SWIPE_INPUT_WINDOW_TITLE, ICO_SYC_MAX_WINNAME_LEN);
     }
     winname[ICO_SYC_MAX_WINNAME_LEN-1] = 0;
-    ICO_DBG("CreateFlickInputWindow: winname=%s", winname);
+    ICO_DBG("CreateSwipeInputWindow: winname=%s", winname);
     ret = CreateWindow(winname, pos_x, pos_y, width, height, EINA_TRUE);
     if(ret != ICO_OK){
-        ICO_CRI("CicoHSFlickInputWindow::CreateFlickInputWindow: can not create window");
+        ICO_CRI("CicoHSSwipeInputWindow::CreateSwipeInputWindow: can not create window");
         return ret;
     }
 
     /* get evas */
     evas = ecore_evas_get(window);
     if (!evas) {
-        ICO_CRI("CicoHSFlickInputWindow::CreateFlickInputWindow: could not get evas.");
+        ICO_CRI("CicoHSSwipeInputWindow::CreateSwipeInputWindow: could not get evas.");
         return ICO_ERROR;
     }
 
@@ -101,32 +101,32 @@ CicoHSFlickInputWindow::CreateFlickInputWindow(int pos_x, int pos_y,
 
     /* set mouse/touch callback */
     evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_DOWN,
-                                       CicoHSFlickTouch::TouchDownFlick, this);
+                                       CicoHSSwipeTouch::TouchDownSwipe, this);
     evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_UP,
-                                       CicoHSFlickTouch::TouchUpFlick, this);
+                                       CicoHSSwipeTouch::TouchUpSwipe, this);
     evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_MOVE,
-                                       CicoHSFlickTouch::TouchMoveFlick, this);
+                                       CicoHSSwipeTouch::TouchMoveSwipe, this);
 
     /* move and show window     */
     evas_object_move(background, 0, 0);
     evas_object_resize(background, width, height);
     evas_object_show(background);
 
-    ICO_DBG("CreateFlickInputWindow: end");
+    ICO_DBG("CreateSwipeInputWindow: end");
     return ICO_OK;
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::FreeFlickInputWindow
- *          free window (flick input window)
+ * @brief   CicoHSSwipeInputWindow::FreeSwipeInputWindow
+ *          free window (swipe input window)
  *
  * @param[in]   none
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSFlickInputWindow::FreeFlickInputWindow(void)
+CicoHSSwipeInputWindow::FreeSwipeInputWindow(void)
 {
     evas_object_del(background);
     FreeWindow();
@@ -134,21 +134,21 @@ CicoHSFlickInputWindow::FreeFlickInputWindow(void)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::SetupFlickWindow
- *          initiale setup flick input window
+ * @brief   CicoHSSwipeInputWindow::SetupSwipeWindow
+ *          initiale setup swipe input window
  *
  * @param       none
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSFlickInputWindow::SetupFlickWindow(void)
+CicoHSSwipeInputWindow::SetupSwipeWindow(void)
 {
     ico_syc_win_move_t move;
     ico_syc_animation_t show;
 
     if (! setuped)  {
-        ICO_DBG("SetupFlickWindow: start");
+        ICO_DBG("SetupSwipeWindow: start");
         setuped = true;
         move.zone = NULL;
         move.pos_x = pos_x;
@@ -158,23 +158,23 @@ CicoHSFlickInputWindow::SetupFlickWindow(void)
         memset(&show, 0, sizeof(show));
         show.time = ICO_SYC_WIN_SURF_RAISE;
 
-        /* move flick input window to TouchLayer    */
-        ico_syc_change_layer(appid, surface, HS_LAYER_TOUCH);
+        /* move swipe input window to TouchLayer    */
+        ico_syc_change_layer(appid, surface, HS_LAYER_TOUCHPANEL);
         /* move window position and size            */
         ico_syc_move(appid, surface, &move, NULL);
         /* show and raise window                    */
         ico_syc_show(appid, surface, &show);
 
         /* show touch layer                         */
-        ico_syc_show_layer(HS_LAYER_TOUCH);
+        ico_syc_show_layer(HS_LAYER_TOUCHPANEL);
 
-        ICO_DBG("SetupFlickWindow: end");
+        ICO_DBG("SetupSwipeWindow: end");
     }
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::Show
+ * @brief   CicoHSSwipeInputWindow::Show
  *          show my window
  *
  * @param       none
@@ -182,14 +182,15 @@ CicoHSFlickInputWindow::SetupFlickWindow(void)
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSFlickInputWindow::Show(void)
+CicoHSSwipeInputWindow::Show(void)
 {
+    ICO_DBG("CicoHSSwipeInputWindow::Show: %08x.%s", surface, this->winname);
     ico_syc_show(appid, surface, NULL);
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::Hide
+ * @brief   CicoHSSwipeInputWindow::Hide
  *          hide my window
  *
  * @param       none
@@ -197,14 +198,15 @@ CicoHSFlickInputWindow::Show(void)
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSFlickInputWindow::Hide(void)
+CicoHSSwipeInputWindow::Hide(void)
 {
+    ICO_DBG("CicoHSSwipeInputWindow::Hide: %08x.%s", surface, this->winname);
     ico_syc_hide(appid, surface, NULL);
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::isMyWindowName
+ * @brief   CicoHSSwipeInputWindow::isMyWindowName
  *          check window name
  *
  * @param[in]   winname     target window name
@@ -214,7 +216,7 @@ CicoHSFlickInputWindow::Hide(void)
  */
 /*--------------------------------------------------------------------------*/
 bool
-CicoHSFlickInputWindow::isMyWindowName(const char *winname)
+CicoHSSwipeInputWindow::isMyWindowName(const char *winname)
 {
     bool    ret;
 
@@ -224,32 +226,32 @@ CicoHSFlickInputWindow::isMyWindowName(const char *winname)
 }
 
 int
-CicoHSFlickInputWindow::GetPosX(void)
+CicoHSSwipeInputWindow::GetPosX(void)
 {
     return pos_x;
 }
 
 int
-CicoHSFlickInputWindow::GetPosY(void)
+CicoHSSwipeInputWindow::GetPosY(void)
 {
     return pos_y;
 }
 
 int
-CicoHSFlickInputWindow::GetWidth(void)
+CicoHSSwipeInputWindow::GetWidth(void)
 {
     return width;
 }
 
 int
-CicoHSFlickInputWindow::GetHeight(void)
+CicoHSSwipeInputWindow::GetHeight(void)
 {
     return height;
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSFlickInputWindow::SetWindowID
+ * @brief   CicoHSSwipeInputWindow::SetWindowID
  *          set appid and surface
  *
  * @param[in]   none
@@ -257,7 +259,7 @@ CicoHSFlickInputWindow::GetHeight(void)
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSFlickInputWindow::SetWindowID(const char *appid, int surface)
+CicoHSSwipeInputWindow::SetWindowID(const char *appid, int surface)
 {
     ICO_DBG("SetWindowID: appid=%s surface=%08x", appid, surface);
     strncpy(this->appid, appid, ICO_HS_MAX_PROCESS_NAME);

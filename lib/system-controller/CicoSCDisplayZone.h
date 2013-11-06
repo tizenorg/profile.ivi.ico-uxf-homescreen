@@ -20,6 +20,11 @@
 #include <string>
 
 //==========================================================================
+//  Forward declaration
+//==========================================================================
+class CicoSCWindow;
+
+//==========================================================================
 /**
  *  @brief  This class hold display zone information
  */
@@ -44,12 +49,24 @@ private:
     CicoSCDisplayZone(const CicoSCDisplayZone &object);
 
 public:
-    int zoneid;           //!< display zone id
-    int x;                //!< display zone x position
-    int y;                //!< display zone y position
-    int width;            //!< display zone width
-    int height;           //!< display zone height
-    std::string fullname; //!< full name of layer
+    int zoneid;                     ///< display zone id
+    int x;                          ///< display zone x position
+    int y;                          ///< display zone y position
+    int width;                      ///< display zone width
+    int height;                     ///< display zone height
+    std::string fullname;           ///< full name of layer
+    CicoSCWindow *displayedWindow;  ///< current displayed window
+
+    /// fixed asppect ratio flag
+    bool aspectFixed;
+    /// horizontal direction to aligned at the left
+    bool aspectAlignLeft;
+    /// horizontal direction to aligned at the right
+    bool aspectAlignRight;
+    /// vertical direction is aligned at the top
+    bool aspectAlignTop;
+    /// vertical direction is aligned at the bottom
+    bool aspectAlignBottom;
 };
 #endif  // __CICO_SC_DISPLAYZONE_H__
 // vim:set expandtab ts=4 sw=4:

@@ -126,6 +126,9 @@ main(int argc, char *argv[])
     }
     else    {
         /* change login user        */
+        if (strcasecmp(newuser, "logoff") == 0) {
+            strcpy(newuser, " ");
+        }
         (void)ico_syc_change_user(newuser, "\0");
     }
 

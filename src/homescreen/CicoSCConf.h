@@ -22,6 +22,7 @@
 #include <sstream>
 
 #include <ico_log.h>
+#include "CicoSCCommonDef.h"
    
 //==========================================================================
 /**
@@ -153,7 +154,10 @@ class CicoSCDisplayZoneConf
 public:
     /// default constructor
     CicoSCDisplayZoneConf()
-        : id(-1), name(""), fullname(""), x(-1), y(-1), w(-1), h(-1) {}
+        : id(-1), name(""), fullname(""), x(-1), y(-1), w(-1), h(-1),
+          aspectFixed(false), aspectAlignLeft(false),
+          aspectAlignRight(false), aspectAlignTop(false),
+          aspectAlignBottom(false) {}
 
     /// destructor
     virtual ~CicoSCDisplayZoneConf() {}
@@ -161,23 +165,35 @@ public:
     /// dump log this class member variables
     void dumpConf(void)
     {
-        ICO_DBG("  zone: id=%d name=%s fullname=%s x=%d y=%d "
-                 "w=%d h=%d overlap=%s",
-                 id, name.c_str(), fullname.c_str(),
-                 x, y, w, h, overlapStr.c_str());
+        ICO_DBG("  zone: id=%d name=%s fullname=%s x/y=%d/%d "
+                "w/h=%d/%d aspect(fixed=%s l/r=%s/%s t/b=%s/%s",
+                id, name.c_str(), fullname.c_str(), x, y, w, h,
+                aspectFixed       ? "true" : "false",
+                aspectAlignLeft   ? "true" : "false",
+                aspectAlignRight  ? "true" : "false",
+                aspectAlignTop    ? "true" : "false",
+                aspectAlignBottom ? "true" : "false");
     }
 
 public:
-    int    id;              ///< display zone id
-    std::string name;       ///< display zone name
-    std::string fullname;   ///< display zone name
-    int    x;               ///< display zone x position
-    int    y;               ///< display zone y position
-    int    w;               ///< display zone width
-    int    h;               ///< display zone height
-    std::string overlapStr; ///< display overlap
-    std::vector<bool> overlap;  ///< display enable table
+    int               id;         ///< display zone id
+    std::string       name;       ///< display zone name
+    std::string       fullname;   ///< display zone fullname
+    int               x;          ///< display zone x position
+    int               y;          ///< display zone y position
+    int               w;          ///< display zone width
+    int               h;          ///< display zone height
 
+    /// fixed asppect ratio flag
+    bool aspectFixed;
+    /// horizontal direction to aligned at the left
+    bool aspectAlignLeft;   
+    /// horizontal direction to aligned at the right
+    bool aspectAlignRight;
+    /// vertical direction is aligned at the top
+    bool aspectAlignTop;
+    /// vertical direction is aligned at the bottom
+    bool aspectAlignBottom;
 };
 
 //==========================================================================
@@ -213,8 +229,12 @@ public:
     int         width;   ///< display width resolution
     int         height;  ///< display height resolution
     int         inch;    ///< display inch size
-    std::vector<CicoSCLayerConf*>        layerConfList;  // layer config list
-    std::vector<CicoSCDisplayZoneConf*>  zoneConfList;   // zone config list
+
+    // layer config list
+    std::vector<CicoSCLayerConf*> layerConfList;
+
+    // zone config list
+    std::vector<CicoSCDisplayZoneConf*> zoneConfList;
 };
 
 //==========================================================================

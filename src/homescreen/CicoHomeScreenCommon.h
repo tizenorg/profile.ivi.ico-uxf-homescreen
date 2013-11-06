@@ -32,10 +32,10 @@
 #define ICO_HS_MAX_APP_NUM 512
 
 /* Maximum length of application name   */
-#define ICO_HS_MAX_PROCESS_NAME 64     
+#define ICO_HS_MAX_PROCESS_NAME 64
 
 /* HomeScreen default process name   */
-#define ICO_HS_PROC_DEFAULT_HOMESCREEN "org.tizen.ico.homescreen"    
+#define ICO_HS_PROC_DEFAULT_HOMESCREEN "org.tizen.ico.homescreen"
 
 /*app name*/
 #define ICO_HS_APPID_DEFAULT_SB     "org.tizen.ico.statusbar"
@@ -54,7 +54,7 @@
 #define ICO_HS_MENU_WINDOW_TITLE "ico_hs_menuwindow"
 #define ICO_HS_BACK_WINDOW_TITLE "ico_hs_backwindow"
 #define ICO_HS_CONTROL_BAR_WINDOW_TITLE "ico_hs_controlbarwindow"
-#define ICO_HS_FLICK_INPUT_WINDOW_TITLE "ico_hs_flickinputwindow"
+#define ICO_HS_SWIPE_INPUT_WINDOW_TITLE "ico_hs_swipeinputwindow"
 
 /*path of layaout file*/
 #define ICO_HS_MENU_LAYOUT_FILE_PATH "/home/app/layout.txt"
@@ -101,13 +101,14 @@
 /*Layer dicralation*/
 #define HS_LAYER_BACKGROUND     0         /* layer of BackGround */
 #define HS_LAYER_APPLICATION    1         /* layer of Application */
-#define HS_LAYER_HOMESCREEN     2         /* layer of HomeScreen menu */
-#define HS_LAYER_SOFTKEYBOARD   3         /* layer of Software Keyboard  */
-#define HS_LAYER_INTERRUPTAPP   4         /* layer of Interrupted Application */
+#define HS_LAYER_METERAPP       2         /* layer of Meter Display Application */
+#define HS_LAYER_HOMESCREEN     3         /* layer of HomeScreen menu */
+#define HS_LAYER_CONTROLBAR     4         /* layer of Control/Status bar */
+#define HS_LAYER_FULLSCREEN     5         /* layer of FullScreen Application */
 #define HS_LAYER_ONSCREEN       6         /* layer of OnScreen   */
-#define HS_LAYER_TOUCH          ICO_WINDOW_MGR_V_LAYER_INPUT
+#define HS_LAYER_TOUCHPANEL     ICO_WINDOW_MGR_LAYERTYPE_TOUCH
                                           /* layer of TouchPanel input */
-#define HS_LAYER_CURSOR         ICO_WINDOW_MGR_V_LAYER_CURSOR
+#define HS_LAYER_CURSOR         ICO_WINDOW_MGR_LAYERTYPE_CURSOR
                                             /* layer of Cursor   */
 
 #define HS_LAYER_2NDDISP_APP    3         // second display application layer
@@ -128,4 +129,3 @@
 #define ICO_HS_ANIMATION_DURATION   (400)
 
 #endif
-

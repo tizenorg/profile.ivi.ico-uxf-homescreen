@@ -685,6 +685,7 @@ ico_syc_cb_thumb(ico_syc_callback_t callback, void *user_data,
 
     thumb_info->surface = ico_syc_get_int_member(argobj,
                                                  MSG_PRMKEY_SURFACE);
+    thumb_info->name = ico_syc_get_int_member(argobj, MSG_PRMKEY_NAME);
     thumb_info->width = ico_syc_get_int_member(argobj, MSG_PRMKEY_WIDTH);
     thumb_info->height = ico_syc_get_int_member(argobj, MSG_PRMKEY_HEIGHT);
     thumb_info->stride = ico_syc_get_int_member(argobj, MSG_PRMKEY_STRIDE);

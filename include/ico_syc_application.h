@@ -28,5 +28,8 @@ extern "C" {
 
 #include "ico_syc_appresctl.h"
 
+#ifdef __cplusplus
+}
+#endif
 #endif /*_ICO_SYC_APPLICATION_H_*/
 /* vim:set expandtab ts=4 sw=4: */

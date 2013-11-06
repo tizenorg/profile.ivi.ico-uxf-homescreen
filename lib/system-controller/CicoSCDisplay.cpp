@@ -36,7 +36,6 @@ CicoSCDisplay::CicoSCDisplay()
       displayno(-1),
       width(-1),
       height(-1),
-      inch(-1),
       pWidth(-1),
       pHeight(-1),
       orientation(ORIENTATION_HORIZONTAL),
@@ -62,15 +61,25 @@ void
 CicoSCDisplay::dump(void)
 {
     ICO_DBG("CicoSCDisplay: displayid=%d type=%d nodeid=%d displayno=%d "
-            "width=%d height=%d inch=%d pWidth=%d pHeight=%d "
+            "width=%d height=%d pWidth=%d pHeight=%d "
             "orientation =%d name=%s",
-            displayid, type, nodeid, displayno, width, height, inch,
+            displayid, type, nodeid, displayno, width, height,
             pWidth, pHeight, orientation, name.c_str());
  
-    vector<CicoSCLayer*>::iterator itr;
-    itr = layerList.begin();
-    for (; itr != layerList.end(); ++itr) {
-        const_cast<CicoSCLayer*>(*itr)->dump();
+    {
+        vector<CicoSCLayer*>::iterator itr;
+        itr = layerList.begin();
+        for (; itr != layerList.end(); ++itr) {
+            (*itr)->dump();
+        }
+    }
+
+    {
+        std::map<unsigned int, CicoSCDisplayZone*>::iterator itr;
+        itr = zoneList.begin();
+        for (; itr != zoneList.end(); ++itr) {
+            itr->second->dump();
+        }
     }
 }
 

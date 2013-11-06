@@ -7,12 +7,12 @@
  *
  */
 /**
- * @brief   flick input window
+ * @brief   swipe input window
  *
  * @date    Sep-20-2013
  */
-#ifndef __CICO_HS_FLICKINPUT_WINDOW_H__
-#define __CICO_HS_FLICKINPUT_WINDOW_H__
+#ifndef __CICO_HS_SWIPEINPUT_WINDOW_H__
+#define __CICO_HS_SWIPEINPUT_WINDOW_H__
 #include <stdio.h>
 #include <pthread.h>
 #include <libwebsockets.h>
@@ -30,15 +30,15 @@
 #include "CicoHomeScreenConfig.h"
 #include "CicoHSWindow.h"
 
-class CicoHSFlickInputWindow :public CicoHSWindow
+class CicoHSSwipeInputWindow :public CicoHSWindow
 {
   public:
-    CicoHSFlickInputWindow(void);
-    ~CicoHSFlickInputWindow(void);
-    int CreateFlickInputWindow(int pos_x, int pos_y,
+    CicoHSSwipeInputWindow(void);
+    ~CicoHSSwipeInputWindow(void);
+    int CreateSwipeInputWindow(int pos_x, int pos_y,
                                int width, int height, const char *subname = NULL);
-    void FreeFlickInputWindow(void);
-    void SetupFlickWindow(void);
+    void FreeSwipeInputWindow(void);
+    void SetupSwipeWindow(void);
     void Show(void);
     void Hide(void);
     bool isMyWindowName(const char *winname);
@@ -60,8 +60,8 @@ class CicoHSFlickInputWindow :public CicoHSWindow
     Evas_Object *background;            /* background object    */
 
   protected:
-    CicoHSFlickInputWindow operator=(const CicoHSFlickInputWindow&);
-    CicoHSFlickInputWindow(const CicoHSFlickInputWindow&);
+    CicoHSSwipeInputWindow operator=(const CicoHSSwipeInputWindow&);
+    CicoHSSwipeInputWindow(const CicoHSSwipeInputWindow&);
 };
-#endif  /*__CICO_HS_FLICKINPUT_WINDOW_H__*/
+#endif  /*__CICO_HS_SWIPEINPUT_WINDOW_H__*/
 // vim: set expandtab ts=4 sw=4:

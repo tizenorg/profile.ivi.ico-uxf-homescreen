@@ -336,7 +336,7 @@ void CicoHSAppHistoryExt::determined(CHSAHE_data_t* data)
         moveHistoryHead(m_waitSelApp);
         m_waitSelApp.clear();
         if (m_hs) {
-            m_hs->requestWaitActivation(appid);
+            m_hs->requestActivationAppid(appid);
         }
     }
     ICO_DBG("end");
@@ -617,7 +617,7 @@ const string& CicoHSAppHistoryExt::getNearHistory()
     list<string>::iterator p = m_appHistoryList.begin();
     if (p == m_appHistoryList.end()) {
         // NO history
-        ICO_TRA("end no history");
+        ICO_TRA("end no history I");
         return m_empty;
     }
     const char* pAppidSubD = getAppidSubDispBySystem();
@@ -629,7 +629,7 @@ const string& CicoHSAppHistoryExt::getNearHistory()
     ++p;
     if (p == m_appHistoryList.end()) {
         // NO history
-        ICO_TRA("end no history");
+        ICO_TRA("end no history II");
         return m_empty;
     }
     ICO_TRA("end near history is %s", (*p).c_str());
@@ -654,7 +654,7 @@ const string& CicoHSAppHistoryExt::getSwipeCurrentAppid()
 }
 
 /**
- * @breif update appid by vector<pairPidAppid>
+ * @brief update appid by vector<pairPidAppid>
  * @param appid target appid and update appide store
  * @ret bool
  * @retval true update appid

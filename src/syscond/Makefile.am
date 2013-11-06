@@ -26,6 +26,7 @@ IcoSysconDaemon_CPPFLAGS = 	\
 	@MURPHYDOMAINCONTROLLER_CFLAGS@		\
 	@MURPHYECORE_CFLAGS@				\
 	@MURPHYRESOURCE_CFLAGS@				\
+	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
 	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
@@ -49,6 +50,7 @@ IcoSysconDaemon_LDADD = \
 	@MURPHYDOMAINCONTROLLER_LIBS@	\
 	@MURPHYECORE_LIBS@				\
 	@MURPHYRESOURCE_LIBS@			\
+	@EDBUS_LIBS@					\
 	$(UWS_LIBS)						\
 	$(WESTONPLUGIN_LIBS)			\
 	../../lib/misc/state-machine/.libs/libico-state-machine.so

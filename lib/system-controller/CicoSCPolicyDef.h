@@ -54,12 +54,48 @@
 #define STID_DISPLAY0_ZONE1             10001
 #define STID_DISPLAY0_ZONE2             10002
 #define STID_DISPLAY0_ZONE3             10003
+#define STID_DISPLAY0_ZONE4             10004
+#define STID_DISPLAY0_ZONE5             10005
+#define STID_DISPLAY0_ZONE6             10006
+#define STID_DISPLAY0_ZONE7             10007
+#define STID_DISPLAY0_ZONE8             10008
+#define STID_DISPLAY0_ZONE9             10009
+#define STID_DISPLAY0_ZONE10            10010
+#define STID_DISPLAY0_ZONE11            10011
+#define STID_DISPLAY0_ZONE12            10012
+#define STID_DISPLAY0_ZONE13            10013
+#define STID_DISPLAY0_ZONE14            10014
+#define STID_DISPLAY0_ZONE15            10015
+#define STID_DISPLAY0_ZONE16            10016
+#define STID_DISPLAY0_ZONE17            10017
+#define STID_DISPLAY0_ZONE18            10018
+#define STID_DISPLAY0_ZONE19            10019
+#define STID_DISPLAY0_ZONE20            10020
+#define STID_DISPLAY0_NOOWER            10999
 
 // display1 zone state id
 #define STID_DISPLAY1_ZONE              11000
 #define STID_DISPLAY1_ZONE1             11001
 #define STID_DISPLAY1_ZONE2             11002
 #define STID_DISPLAY1_ZONE3             11003
+#define STID_DISPLAY1_ZONE4             11004
+#define STID_DISPLAY1_ZONE5             11005
+#define STID_DISPLAY1_ZONE6             11006
+#define STID_DISPLAY1_ZONE7             11007
+#define STID_DISPLAY1_ZONE8             11008
+#define STID_DISPLAY1_ZONE9             11009
+#define STID_DISPLAY1_ZONE10            11010
+#define STID_DISPLAY1_ZONE11            11011
+#define STID_DISPLAY1_ZONE12            11012
+#define STID_DISPLAY1_ZONE13            11013
+#define STID_DISPLAY1_ZONE14            11014
+#define STID_DISPLAY1_ZONE15            11015
+#define STID_DISPLAY1_ZONE16            11016
+#define STID_DISPLAY1_ZONE17            11017
+#define STID_DISPLAY1_ZONE18            11018
+#define STID_DISPLAY1_ZONE19            11019
+#define STID_DISPLAY1_ZONE20            11020
+#define STID_DISPLAY1_NOOWER            11999
 
 // display0 category state id
 #define STID_DISPLAY0_CATEGORY          12000
@@ -173,8 +209,8 @@
 #define EVID_NIGHTMODE                 5000
 #define EVID_DRVREGULATION             9000
 
-#define EVID_DISPLAY0_ZONE             10000
-#define EVID_DISPLAY1_ZONE             11000
+#define EVID_DISPLAY_ZONE_ACQUIRE      10000
+#define EVID_DISPLAY_ZONE_RELEASE      10999
 
 #define EVID_DISPLAY0_CATEGORY         12000
 #define EVID_DISPLAY1_CATEGORY         13000

@@ -27,7 +27,7 @@ echo "export XDG_RUNTIME_DIR=/run/user/5000" > /etc/profile.d/start_syscond.sh
 /usr/bin/sleep 0.3
 
 # 5. Start System Controller
-/usr/bin/launch_app org.tizen.ico.system-controller &
+/usr/apps/org.tizen.ico.system-controller/bin/IcoSysconDaemon &
 
 # 6. End of shell
 /usr/bin/sleep 2

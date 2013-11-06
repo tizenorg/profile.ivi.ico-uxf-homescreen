@@ -80,7 +80,7 @@ CicoHomeScreen::CicoHomeScreen(void)
     bg_height = 1;
     ctl_bar_width = 1;
     ctl_bar_height = 1;
-    num_flick_input_windows = 0;
+    num_swipe_input_windows = 0;
 
     menu_window = NULL;
     back_window = NULL;
@@ -130,7 +130,8 @@ CicoHomeScreen::ShowHomeScreenLayer(void)
     /*show home screen layers*/
     ico_syc_show_layer(HS_LAYER_APPLICATION);
     ico_syc_show_layer(HS_LAYER_HOMESCREEN);
-    ico_syc_show_layer(HS_LAYER_TOUCH);
+    ico_syc_show_layer(HS_LAYER_CONTROLBAR);
+    ico_syc_show_layer(HS_LAYER_TOUCHPANEL);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -272,19 +273,22 @@ CicoHomeScreen::ChangeActive(const char * appid, int surface)
     if (0 != wininfo->visible) {
         hs_instance->SetActiveAppInfo(appid);
         hs_instance->setActiveApp(appid);
+        ico_syc_show(appid, surface, NULL);
         ico_syc_change_active(appid, surface);
     }
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   change application display zone for active window 
+ * @brief   change application display zone for active window
  */
 /*--------------------------------------------------------------------------*/
 void
 CicoHomeScreen::ChangeZone(void)
 {
     ICO_TRA("CicoHomeScreen::ChangeZone Enter");
+
+    hs_instance->controlRegulation();
 
     CicoHSAppInfo* appinfo = hs_instance->GetSubDisplayAppInfo();
     // if sub display not exist showed appliction,
@@ -340,7 +344,7 @@ CicoHomeScreen::requestChangeZone(CicoHSAppInfo* appinfo)
     if (NULL == hs_instance->GetSubDisplayAppInfo()) {
         layer = HS_LAYER_2NDDISP_APP;
     }
-    
+
     ico_syc_change_layer(wininfo->appid, wininfo->surface, layer);
     ico_syc_move(wininfo->appid, wininfo->surface, &move,
                  &hs_instance->moveZoneAnimation);
@@ -351,7 +355,9 @@ CicoHomeScreen::requestChangeZone(CicoHSAppInfo* appinfo)
             ICO_DBG("\"%s\"->\"%s\"", wapp.c_str(), wininfo->appid);
             if ((false == wapp.empty()) &&
                 (0 != wapp.compare(wininfo->appid))) {
-                cancelWaitActivation(wapp);
+                requestHideAppid(wapp);
+                m_appHis->clearSelectApp();
+                m_appHis->homeSwipe();
             }
         }
         ICO_TRA("reset sub display");
@@ -369,7 +375,7 @@ CicoHomeScreen::requestChangeZone(CicoHSAppInfo* appinfo)
         }
         m_appHis->homeSwipe();
     }
- 
+
     ICO_TRA("Leave");
 }
 
@@ -392,7 +398,7 @@ CicoHomeScreen::GetWindowInfo(CicoHSAppInfo *appinfo,const char *window)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHomeScreen::GetWindowInfo
- *          get window info 
+ *          get window info
  *
  * @param[in]   appinfo    application info
  * @param[in]   surface    surface id
@@ -423,13 +429,13 @@ CicoHomeScreen::UpdateTile(const char *appid)
     }
     if (appinfo->GetStatus() == false)  {
         //show icon
+        ICO_DBG("CicoHomeScreen::UpdateTile: show menuIcon(%s)", appid);
         menu_window->ValidMenuIcon(appid);
-        ICO_DBG("CicoHomeScreen::UpdateTile: show menuIcon %s",appid);
     }
     else    {
         //show thumbnail
-        menu_window->ValidThumbnail(appid,appinfo->GetLastSurface());
-        ICO_DBG("CicoHomeScreen::UpdateTile: raise app %s",appid);
+        ICO_DBG("CicoHomeScreen::UpdateTile: show app thumbnail(%s)", appid);
+        menu_window->ValidThumbnail(appid, appinfo->GetLastSurface());
     }
 }
 
@@ -457,10 +463,10 @@ CicoHomeScreen::SetActiveAppInfo(const char *appid)
             return;
         }
     }
-
     ICO_DBG("active application changed. \"%s\"->\"%s\"",
             active_appinfo ? active_appinfo->GetAppId() : "unknown",
             appinfo ? appinfo->GetAppId() : "unknown");
+
     active_appinfo = appinfo;
 }
 
@@ -546,7 +552,7 @@ CicoHomeScreen::GetSubDisplayAppInfo(void)
  *  @retval not NULL : appid
  */
 /*--------------------------------------------------------------------------*/
-const char* 
+const char*
 CicoHomeScreen::GetSubDisplayAppid(void)
 {
     if (NULL == sub_display_appinfo) {
@@ -584,12 +590,6 @@ CicoHomeScreen::ExecuteApp_i(const char *appid)
         }
         else {
             //raise
-            if (m_appHis) {
-                const string& wapp = m_appHis->getSelectApp();
-                if (false == wapp.empty()) {
-                    cancelWaitActivation(wapp);
-                }
-            }
             RaiseApplicationWindow(appinfo->GetAppId(),
                                    appinfo->GetLastSurface());
             ICO_DBG("raise app %s", appid);
@@ -648,19 +648,21 @@ CicoHomeScreen::ShowHomeScreenWindow(ico_syc_win_info_t *win_info)
     move.pos_x = 0;
     move.width = full_width;
 
-    if(strncmp(win_info->name,ICO_HS_BACK_WINDOW_TITLE,
-               ICO_MAX_TITLE_NAME_LEN) == 0){
+    if (strncmp(win_info->name,ICO_HS_BACK_WINDOW_TITLE,
+                ICO_MAX_TITLE_NAME_LEN) == 0) {
         move.pos_y = ICO_HS_STATUSBAR_WINDOW_HEIGHT;
         move.height = full_height - ICO_HS_STATUSBAR_WINDOW_HEIGHT -
                       ICO_HS_CONTROLBAR_WINDOW_HEIGHT;
         layer = HS_LAYER_BACKGROUND;
-    }else if(strncmp(win_info->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
-             ICO_MAX_TITLE_NAME_LEN) == 0){
+    }
+    else if (strncmp(win_info->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
+                     ICO_MAX_TITLE_NAME_LEN) == 0) {
         move.pos_y = full_height - ICO_HS_CONTROLBAR_WINDOW_HEIGHT;
         move.height = ICO_HS_CONTROLBAR_WINDOW_HEIGHT;
-        layer = HS_LAYER_TOUCH;
-    }else if(strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
-             ICO_MAX_TITLE_NAME_LEN) == 0){
+        layer = HS_LAYER_CONTROLBAR;
+    }
+    else if (strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
+                     ICO_MAX_TITLE_NAME_LEN) == 0) {
         move.pos_y = ICO_HS_STATUSBAR_WINDOW_HEIGHT;
         move.height = full_height - ICO_HS_STATUSBAR_WINDOW_HEIGHT -
                       ICO_HS_CONTROLBAR_WINDOW_HEIGHT;
@@ -672,18 +674,18 @@ CicoHomeScreen::ShowHomeScreenWindow(ico_syc_win_info_t *win_info)
     }
 
     ico_syc_change_layer(win_info->appid,win_info->surface,layer);
-    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) surface(%d) pos(%d,%d) size(%d,%d)",win_info->appid,
-            win_info->name,win_info->surface,move.pos_x,move.pos_y,
-            move.width,move.height);
-    ico_syc_move(win_info->appid,win_info->surface,&move,NULL);
-    
+    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) surface(%d) "
+            "pos(%d,%d) size(%d,%d)", win_info->appid,
+            win_info->name, win_info->surface, move. pos_x, move.pos_y,
+            move.width, move.height);
+    ico_syc_move(win_info->appid, win_info->surface, &move, NULL);
+
     /*first time menu is unvisible*/
-    if((strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
-             ICO_MAX_TITLE_NAME_LEN) == 0) && 
-       (GetMode() == ICO_HS_MODE_APPLICATION)){
+    if ((strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
+                 ICO_MAX_TITLE_NAME_LEN) == 0) &&
+        (GetMode() == ICO_HS_MODE_APPLICATION)) {
         return;
     }
-
     ico_syc_show(win_info->appid, win_info->surface,NULL);
 }
 
@@ -706,7 +708,7 @@ CicoHomeScreen::ShowStatusBarWindow(ico_syc_win_info_t *win_info)
     move.pos_y = 0;
     move.width = full_width;
     move.height = ICO_HS_STATUSBAR_WINDOW_HEIGHT;
-    layer = HS_LAYER_HOMESCREEN;
+    layer = HS_LAYER_CONTROLBAR;
 
     ico_syc_change_layer(win_info->appid,win_info->surface,layer);
     ICO_DBG("CicoHomeScreen::ShowStatusBarWindow: id(%s) name(%s) surface(%d) "
@@ -762,7 +764,7 @@ CicoHomeScreen::ShowApplicationWindow(ico_syc_win_info_t *win_info)
     move.height = full_height - ICO_HS_STATUSBAR_WINDOW_HEIGHT -
                   ICO_HS_CONTROLBAR_WINDOW_HEIGHT;
     layer = HS_LAYER_APPLICATION;
-    
+
     ico_syc_change_layer(win_info->appid,win_info->surface,layer);
     ico_syc_move(win_info->appid,win_info->surface,&move,NULL);
     ico_syc_animation_t animation;
@@ -837,13 +839,13 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
 {
     int     idx;
 
-    ICO_DBG("CicoHomeScreen::EventCallBack: start (event %d)",event);
+//    ICO_DBG("CicoHomeScreen::EventCallBack: start (event %d)",event);
 
     if (event == ICO_SYC_EV_WIN_CREATE) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("CicoHomeScreen::EventCallBack : win create %s %i",
-                win_info->appid,win_info->surface);
+        ICO_DBG("Event:ICO_SYC_EV_WIN_CREATE(appid=%s surface=0x%08x)",
+                win_info->appid, win_info->surface);
         /*only save information*/
         if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0)  {
@@ -851,13 +853,13 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             hs_instance->hs_app_info->AddWindowInfo(win_info);
 
             /*when Menu window*/
-            if(strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
-                       ICO_MAX_TITLE_NAME_LEN) == 0){
+            if (strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
+                        ICO_MAX_TITLE_NAME_LEN) == 0) {
                 hs_instance->menu_window->SetMenuWindowID(win_info->appid,
                                                           win_info->surface);
             }
-            else if(strncmp(win_info->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
-                            ICO_MAX_TITLE_NAME_LEN) == 0){
+            else if (strncmp(win_info->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
+                             ICO_MAX_TITLE_NAME_LEN) == 0) {
                 hs_instance->ctl_bar_window->SetWindowID(win_info->appid,
                                                          win_info->surface);
             }
@@ -866,20 +868,20 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
                   /* null name, nothing to do */
                     return;
                 }
-                for (idx = 0; idx < hs_instance->num_flick_input_windows; idx++)    {
-                    if (hs_instance->flick_input_windows[idx]->
+                for (idx = 0; idx < hs_instance->num_swipe_input_windows; idx++)    {
+                    if (hs_instance->swipe_input_windows[idx]->
                                          isMyWindowName(win_info->name)) {
-                        hs_instance->flick_input_windows[idx]->
+                        hs_instance->swipe_input_windows[idx]->
                                          SetWindowID(win_info->appid, win_info->surface);
-                        hs_instance->flick_input_windows[idx]->SetupFlickWindow();
+                        hs_instance->swipe_input_windows[idx]->SetupSwipeWindow();
                         break;
                     }
                 }
             }
-
             /*show window*/
             hs_instance->ShowHomeScreenWindow(win_info);
-        }else if(strncmp(win_info->appid, 
+        }
+        else if (strncmp(win_info->appid,
                          hs_instance->GetSbPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
             /*Status Bar*/
@@ -887,7 +889,8 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
 
             /*show window*/
             hs_instance->ShowStatusBarWindow(win_info);
-        }else if(strncmp(win_info->appid, 
+        }
+        else if (strncmp(win_info->appid,
                          hs_instance->GetOsPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
             /*On Screen*/
@@ -896,7 +899,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
         else    {
             /*Application*/
             CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(win_info->appid);
-            if(appinfo == NULL){
+            if (appinfo == NULL) {
                 return;
             }
             appinfo->AddWindowInfo(win_info);
@@ -908,37 +911,37 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             hs_instance->UpdateTile(win_info->appid);
 
             hs_instance->startupCheck(win_info->appid);
-
         }
-    }else if(event == ICO_SYC_EV_WIN_NAME){
-        ico_syc_win_info_t *win_info = 
+    }
+    else if (event == ICO_SYC_EV_WIN_NAME) {
+        ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("CicoHomeScreen::EventCallBack : win info %s %s %d",
-                win_info->appid,win_info->name,win_info->surface); 
+        ICO_DBG("Event:ICO_SYC_EV_WIN_NAME(appid=%s surface=0x%08x name=%s)",
+                win_info->appid, win_info->surface, win_info->name);
 
-        if(strncmp(win_info->appid, hs_instance->GetHsPackageName(),
-                   ICO_HS_MAX_PROCESS_NAME) == 0){
+        if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
+                    ICO_HS_MAX_PROCESS_NAME) == 0) {
             /*Home Screen*/
             hs_instance->hs_app_info->AddWindowInfo(win_info);
 
             /*when Menu window*/
-            if(strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
-                       ICO_MAX_TITLE_NAME_LEN) == 0){
+            if (strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
+                        ICO_MAX_TITLE_NAME_LEN) == 0) {
                 hs_instance->menu_window->SetMenuWindowID(win_info->appid,
                                                           win_info->surface);
             }
-            else if(strncmp(win_info->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
-                            ICO_MAX_TITLE_NAME_LEN) == 0){
+            else if (strncmp(win_info->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
+                             ICO_MAX_TITLE_NAME_LEN) == 0) {
                 hs_instance->ctl_bar_window->SetWindowID(win_info->appid,
                                                          win_info->surface);
             }
             else    {
-                for (idx = 0; idx < hs_instance->num_flick_input_windows; idx++)    {
-                    if (hs_instance->flick_input_windows[idx]->
+                for (idx = 0; idx < hs_instance->num_swipe_input_windows; idx++)    {
+                    if (hs_instance->swipe_input_windows[idx]->
                                          isMyWindowName(win_info->name)) {
-                        hs_instance->flick_input_windows[idx]->
+                        hs_instance->swipe_input_windows[idx]->
                                          SetWindowID(win_info->appid, win_info->surface);
-                        hs_instance->flick_input_windows[idx]->SetupFlickWindow();
+                        hs_instance->swipe_input_windows[idx]->SetupSwipeWindow();
                         break;
                     }
                 }
@@ -946,27 +949,31 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
 
             /*show window*/
             hs_instance->ShowHomeScreenWindow(win_info);
-        }else if(strncmp(win_info->appid, hs_instance->GetSbPackageName(),
-                         ICO_HS_MAX_PROCESS_NAME) == 0){
+        }
+        else if (strncmp(win_info->appid, hs_instance->GetSbPackageName(),
+                         ICO_HS_MAX_PROCESS_NAME) == 0) {
             /*Status Bar*/
             hs_instance->sb_app_info->AddWindowInfo(win_info);
-        }else if(strncmp(win_info->appid, hs_instance->GetOsPackageName(),
-                         ICO_HS_MAX_PROCESS_NAME) == 0){
+        }
+        else if (strncmp(win_info->appid, hs_instance->GetOsPackageName(),
+                         ICO_HS_MAX_PROCESS_NAME) == 0) {
             /*On Screen*/
             hs_instance->os_app_info->AddWindowInfo(win_info);
-        }else{
+        }
+        else {
             /*Application*/
             CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(win_info->appid);
-            if(appinfo == NULL){
+            if (appinfo == NULL) {
                 return;
             }
             appinfo->AddWindowInfo(win_info);
         }
-    }else if(event == ICO_SYC_EV_WIN_DESTROY){
-        ico_syc_win_info_t *win_info = 
+    }
+    else if (event == ICO_SYC_EV_WIN_DESTROY) {
+        ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("CicoHomeScreen::EventCallBack : win delete %s %i",
-                win_info->appid,win_info->surface);
+        ICO_DBG("Event:ICO_SYC_EV_WIN_DESTROY(appid=%s surface=0x%08x)",
+                win_info->appid, win_info->surface);
         /*only save information*/
         if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0)  {
@@ -986,64 +993,103 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             /*Application*/
             CicoHSAppInfo *appinfo =
                        hs_instance->GetAppInfo(win_info->appid);
-            if (appinfo == NULL)    {
+            if (appinfo == NULL) {
                 return;
             }
+            appinfo->FreeWindowInfo(win_info->surface);
             hs_instance->UpdateTile(win_info->appid);
-            appinfo->FreeWindowInfo(win_info->name);
 
-            // udate active application information
+            // update active application information
             CicoHSAppInfo *active_appinfo = hs_instance->GetActiveAppInfo();
             if (appinfo == active_appinfo) {
                 hs_instance->SetActiveAppInfo(NULL);
             }
+
+            // update sub displayed application information
+            CicoHSAppInfo *subdisp_appinfo = hs_instance->GetSubDisplayAppInfo();
+            if (appinfo == subdisp_appinfo) {
+                hs_instance->SetSubDisplayAppInfo(NULL);
+            }
         }
     }
-    else if (event == ICO_SYC_EV_WIN_ACTIVE)    {
+    else if (event == ICO_SYC_EV_WIN_ACTIVE) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
+        ICO_DBG("Event:ICO_SYC_EV_WIN_ACTIVE(appid=%s surface=0x%08x)",
+                win_info->appid, win_info->surface);
         hs_instance->ChangeActive(win_info->appid, win_info->surface);
     }
     else if (event == ICO_SYC_EV_WIN_ATTR_CHANGE)   {
         ico_syc_win_attr_t *win_attr =
             reinterpret_cast<ico_syc_win_attr_t*>(const_cast<void*>(detail));
-        ICO_DBG("CicoHomeScreen::EventCallBack : win attr %s %s %d",
-                win_attr->appid,win_attr->name,win_attr->surface);
+        ICO_DBG("Event:ICO_SYC_EV_WIN_ATTR_CHANGE(appid=%s surface=0x%08x)",
+                win_attr->appid, win_attr->surface);
         if (strncmp(win_attr->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0)  {
             /*Home Screen*/
             hs_instance->hs_app_info->AddWindowAttr(win_attr);
-        }else if(strncmp(win_attr->appid, hs_instance->GetSbPackageName(),
-                         ICO_HS_MAX_PROCESS_NAME) == 0){
+        }
+        else if (strncmp(win_attr->appid, hs_instance->GetSbPackageName(),
+                         ICO_HS_MAX_PROCESS_NAME) == 0) {
             /*Status Bar*/
             hs_instance->sb_app_info->AddWindowAttr(win_attr);
-        }else if(strncmp(win_attr->appid, hs_instance->GetOsPackageName(),
-                         ICO_HS_MAX_PROCESS_NAME) == 0){
+        }
+        else if (strncmp(win_attr->appid, hs_instance->GetOsPackageName(),
+                         ICO_HS_MAX_PROCESS_NAME) == 0) {
             /*On Screen*/
             hs_instance->os_app_info->AddWindowAttr(win_attr);
         }
-        else    {
+        else {
             ICO_DBG("CicoHomeScreen::EventCallBack : application window %s %s",
                     win_attr->appid,win_attr->name);
             /*Application*/
             CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(win_attr->appid);
-            if (appinfo == NULL)    {
+            if (appinfo == NULL) {
                 return;
             }
             appinfo->AddWindowAttr(win_attr);
+            hs_instance->UpdateTile(win_attr->appid);
         }
     }
     else if (event == ICO_SYC_EV_THUMB_CHANGE)  {
         ico_syc_thumb_info_t *thumb_info =
             reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
         CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
-        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_CHANGE %s",
-                thumb_info->appid);
         if (appinfo == NULL)    {
+            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_CHANGE %s(%02x) "
+                    "no appinfo", thumb_info->appid, thumb_info->surface);
             return;
         }
-        //show icon
-        hs_instance->menu_window->SetThumbnail(thumb_info->appid,thumb_info->surface);
+//      ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_CHANGE %s(%02x)",
+//              thumb_info->appid, thumb_info->surface);
+        // show thumbnail icon
+        hs_instance->menu_window->SetThumbnail(thumb_info->appid, thumb_info);
+    }
+    else if (event == ICO_SYC_EV_THUMB_UNMAP)  {
+        ico_syc_thumb_info_t *thumb_info =
+            reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
+        CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
+        if (appinfo == NULL)    {
+            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s(%02x) "
+                    "no appinfo", thumb_info->appid, thumb_info->surface);
+            return;
+        }
+        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s(%02x)",
+                thumb_info->appid, thumb_info->surface);
+        hs_instance->menu_window->SetThumbnail(thumb_info->appid, NULL);
+    }
+    else if (event == ICO_SYC_EV_THUMB_ERROR)  {
+        ico_syc_thumb_info_t *thumb_info =
+            reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
+        CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
+        if (appinfo == NULL)    {
+            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_ERROR %s(%02x) "
+                    "no appinfo", thumb_info->appid, thumb_info->surface);
+            return;
+        }
+        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_ERROR %s(%02x)",
+                thumb_info->appid, thumb_info->surface);
+        hs_instance->menu_window->SetThumbnail(thumb_info->appid, NULL);
     }
     else if (event == ICO_SYC_EV_LAYER_ATTR_CHANGE) {
 
@@ -1078,8 +1124,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
     else if (event == ICO_SYC_EV_STATE_CHANGE)  {
         ico_syc_state_info_t *state_info =
             reinterpret_cast<ico_syc_state_info_t*>(const_cast<void*>(detail));
-
-        ICO_DBG("RECV: ICO_SYC_EV_STATE_CHANGE(id=%d state=%d)",
+        ICO_DBG("EVENT:ICO_SYC_EV_STATE_CHANGE(id=%d state=%d)",
                 state_info->id, state_info->state);
         if (ICO_SYC_STATE_REGULATION == state_info->id) {
             // set regulation state
@@ -1094,7 +1139,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             ecore_main_loop_thread_safe_call_async(CicoHomeScreen::SetNightMode, NULL);
         }
     }
-    ICO_DBG("CicoHomeScreen::EventCallBack: end");
+//    ICO_DBG("CicoHomeScreen::EventCallBack: end");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1121,16 +1166,16 @@ CicoHomeScreen::StartRelations(void)
                                              ICO_HS_APPID_DEFAULT_ONS),
             ICO_HS_MAX_PROCESS_NAME);
 // TODO
-#if 0 
+#if 0
     /* start onscreen & statusbar apps */
     os_app_info = GetAppInfo(os_package_name);
     ret = os_app_info->Execute();
     if (ret < 0) {
         ICO_WRN("execute failed(%s) err=%d", os_package_name, ret);
-    } 
+    }
 #endif
 
-    sb_app_info = GetAppInfo(sb_package_name); 
+    sb_app_info = GetAppInfo(sb_package_name);
     ret = sb_app_info->Execute();
     if (ret < 0) {
         ICO_WRN("execute failed(%s) err=%d", sb_package_name, ret);
@@ -1221,12 +1266,12 @@ CicoHomeScreen::Initialize(int orientation,CicoHomeScreenConfig *config)
 
     moveZoneAnimation.time = config->ConfigGetInteger("switchzone",
                                                       "animatime", 400);
-    
+
     // debug log
     ICO_DBG("moveZoneName=%s animation=%s time=%d",
             moveZoneName, moveZoneAnimation.name, moveZoneAnimation.time);
 
-    ICO_DBG("CicoHomeScreen::Initialize: end"); 
+    ICO_DBG("CicoHomeScreen::Initialize: end");
 
     return ICO_OK;
 }
@@ -1464,74 +1509,74 @@ CicoHomeScreen::DeleteControlBarWindow(void)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHomeScreen::CreateFlickInputWindow
- *          create flick input windows
+ * @brief   CicoHomeScreen::CreateSwipeInputWindow
+ *          create swipe input windows
  *
  * @param[in]   none
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHomeScreen::CreateFlickInputWindow(void)
+CicoHomeScreen::CreateSwipeInputWindow(void)
 {
-    ICO_DBG("CicoHomeScreen::CreateFlickInputWindow: start");
-    /* TODO: cullentry FlickInput windows is fixed size, need configuration ?   */
+    ICO_DBG("CicoHomeScreen::CreateSwipeInputWindow: start");
+    /* TODO: cullentry SwipeInput windows is fixed size, need configuration ?   */
     /* left side window     */
-    flick_input_windows[0] = new CicoHSFlickInputWindow();
-    flick_input_windows[0]->
-            CreateFlickInputWindow(ICO_HS_WINDOW_POS_X,
-                                   ICO_HS_WINDOW_POS_Y + ICO_HS_FLICK_TOUCH_DISTANCE_XY,
-                                   ICO_HS_FLICK_TOUCH_FLICK_WIDTH,
-                                   full_height - (ICO_HS_FLICK_TOUCH_DISTANCE_XY*2), "left");
-    flick_input_windows[0]->ShowWindow();
+    swipe_input_windows[0] = new CicoHSSwipeInputWindow();
+    swipe_input_windows[0]->
+            CreateSwipeInputWindow(ICO_HS_WINDOW_POS_X,
+                                   ICO_HS_WINDOW_POS_Y + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
+                                   ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
+                                   full_height - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2), "left");
+    swipe_input_windows[0]->ShowWindow();
 
     /* right side window    */
-    flick_input_windows[1] = new CicoHSFlickInputWindow();
-    flick_input_windows[1]->
-            CreateFlickInputWindow(full_width - ICO_HS_FLICK_TOUCH_FLICK_WIDTH,
-                                   ICO_HS_WINDOW_POS_Y + ICO_HS_FLICK_TOUCH_DISTANCE_XY,
-                                   ICO_HS_FLICK_TOUCH_FLICK_WIDTH,
-                                   full_height - (ICO_HS_FLICK_TOUCH_DISTANCE_XY*2), "right");
-    flick_input_windows[1]->ShowWindow();
+    swipe_input_windows[1] = new CicoHSSwipeInputWindow();
+    swipe_input_windows[1]->
+            CreateSwipeInputWindow(full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
+                                   ICO_HS_WINDOW_POS_Y + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
+                                   ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
+                                   full_height - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2), "right");
+    swipe_input_windows[1]->ShowWindow();
 
 #if 0       /* currently not support(not fix specification) */
     /* buttom side window   */
-    flick_input_windows[2] = new CicoHSFlickInputWindow();
-    flick_input_windows[2]->
-            CreateFlickInputWindow(ICO_HS_WINDOW_POS_X,
-                                   full_height - ICO_HS_FLICK_TOUCH_FLICK_HEIGHT,
-                                   full_width, ICO_HS_FLICK_TOUCH_FLICK_WIDTH, "buttom");
+    swipe_input_windows[2] = new CicoHSSwipeInputWindow();
+    swipe_input_windows[2]->
+            CreateSwipeInputWindow(ICO_HS_WINDOW_POS_X,
+                                   full_height - ICO_HS_SWIPE_TOUCH_SWIPE_HEIGHT,
+                                   full_width, ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH, "buttom");
 
-    flick_input_windows[2]->ShowWindow();
-    num_flick_input_windows = 3;
+    swipe_input_windows[2]->ShowWindow();
+    num_swipe_input_windows = 3;
 #else
-    num_flick_input_windows = 2;
+    num_swipe_input_windows = 2;
 #endif
-    ICO_DBG("CicoHomeScreen::CreateFlickInputWindow: end");
+    ICO_DBG("CicoHomeScreen::CreateSwipeInputWindow: end");
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHomeScreen::DeleteFlickInputWindow
- *          delete flick input windows
+ * @brief   CicoHomeScreen::DeleteSwipeInputWindow
+ *          delete swipe input windows
  *
  * @param[in]   none
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHomeScreen::DeleteFlickInputWindow(void)
+CicoHomeScreen::DeleteSwipeInputWindow(void)
 {
     int idx;
 
-    for (idx = 0; idx < num_flick_input_windows; idx++) {
-        if (flick_input_windows[idx])   {
-            flick_input_windows[idx]->FreeFlickInputWindow();
-            delete flick_input_windows[idx];
-            flick_input_windows[idx] = NULL;
+    for (idx = 0; idx < num_swipe_input_windows; idx++) {
+        if (swipe_input_windows[idx])   {
+            swipe_input_windows[idx]->FreeSwipeInputWindow();
+            delete swipe_input_windows[idx];
+            swipe_input_windows[idx] = NULL;
         }
     }
-    num_flick_input_windows = 0;
+    num_swipe_input_windows = 0;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1570,10 +1615,10 @@ CicoHomeScreen::StartHomeScreen()
     /*Create window*/
     CreateMenuWindow();
 
-    /*Create FlickInput window*/
-    CicoHSFlickTouch::Initialize(hs_instance->ctl_bar_window, hs_instance->m_appHis,
+    /*Create SwipeInput window*/
+    CicoHSSwipeTouch::Initialize(hs_instance->ctl_bar_window, hs_instance->m_appHis,
                                  full_width, full_height);
-    CreateFlickInputWindow();
+    CreateSwipeInputWindow();
 
     /*Show Home Screen*/
     ShowHomeScreenLayer();
@@ -1632,6 +1677,7 @@ CicoHomeScreen::ChangeMode(int pattern)
 
     if (hs_instance->GetMode() == ICO_HS_MODE_MENU) {
         ico_syc_animation_t animation;
+        ICO_DBG("CicoHomeScreen::ChangeMode: MENU->APP");
         if (pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE)  {
             animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
         }
@@ -1640,8 +1686,8 @@ CicoHomeScreen::ChangeMode(int pattern)
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Hide(&animation);
-        for (idx = 0; idx < hs_instance->num_flick_input_windows; idx++)    {
-            hs_instance->flick_input_windows[idx]->Show();
+        for (idx = 0; idx < hs_instance->num_swipe_input_windows; idx++)    {
+            hs_instance->swipe_input_windows[idx]->Show();
         }
         hs_instance->SetMode(ICO_HS_MODE_APPLICATION);
         CicoHSAppInfo *appinfo = hs_instance->GetActiveAppInfo();
@@ -1651,6 +1697,7 @@ CicoHomeScreen::ChangeMode(int pattern)
     }
     else if (hs_instance->GetMode() ==ICO_HS_MODE_APPLICATION)  {
         ico_syc_animation_t animation;
+        ICO_DBG("CicoHomeScreen::ChangeMode: APP->MENU");
         if (pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE)  {
             animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
         }
@@ -1659,8 +1706,8 @@ CicoHomeScreen::ChangeMode(int pattern)
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Show(&animation);
-        for (idx = 0; idx < hs_instance->num_flick_input_windows; idx++)    {
-            hs_instance->flick_input_windows[idx]->Hide();
+        for (idx = 0; idx < hs_instance->num_swipe_input_windows; idx++)    {
+            hs_instance->swipe_input_windows[idx]->Hide();
         }
         hs_instance->SetMode(ICO_HS_MODE_MENU);
     }
@@ -1746,12 +1793,33 @@ void
 CicoHomeScreen::SetRegulation(void* data)
 {
     ICO_DBG("CicoHomeScreen::SetRegulation Enter");
+    // window control
+    hs_instance->controlRegulation();
     // regulation action
     hs_instance->ctl_bar_window->SetRegulation();
     ico_syc_animation_t animation;
     animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
     hs_instance->menu_window->Hide(&animation);
+
+    // force focus change
+    if (false == CicoHSSystemState::getInstance()->getRegulation()) {
+        CicoHSAppInfo *active_appinfo = hs_instance->GetActiveAppInfo();
+        if (NULL != active_appinfo) {
+            ico_syc_change_active(active_appinfo->GetAppId(),
+                                  active_appinfo->GetLastSurface());
+            ico_syc_change_active(active_appinfo->GetAppId(), 0);
+        }
+    }
+    else {
+        if (NULL != hs_instance->ctl_bar_window) {
+            const char *ctl_bar_appid = hs_instance->ctl_bar_window->GetAppId();
+            int ctl_bar_surface = hs_instance->ctl_bar_window->GetSurfaceId();
+            ico_syc_change_active(ctl_bar_appid, ctl_bar_surface);
+            ico_syc_change_active(ctl_bar_appid, 0);
+        }
+    }
+
     ICO_DBG("CicoHomeScreen::SetRegulation Leave");
 }
 
@@ -1785,7 +1853,7 @@ CicoHomeScreen::RenewAppInfoList_i(void)
          (ii < (int)aillist.size()) && (ii < ICO_HS_MAX_APP_NUM);
          ii++)  {
         ICO_DBG("aillist[%d].m_appid.c_str() = %s",
-                 ii, aillist[ii].m_appid.c_str()); 
+                 ii, aillist[ii].m_appid.c_str());
 
         for (kk = 0; kk < ICO_HS_MAX_APP_NUM; kk++) {
             if (apps_info[kk] == NULL) {
@@ -1816,7 +1884,7 @@ CicoHomeScreen::RenewAppInfoList_i(void)
         }
         appid_p = apps_info[ii]->GetAppId();
         for ( kk = 0; kk < tmp_application_num; kk++) {
-            if (strcmp(appid_p, tmp_apps_info[kk]->GetAppId()) == 0) { 
+            if (strcmp(appid_p, tmp_apps_info[kk]->GetAppId()) == 0) {
                 break;
             }
         }
@@ -1894,17 +1962,7 @@ void CicoHomeScreen::startupCheck(const char* appid)
         return;
     }
     m_appHis->update_appid();
-    vector<int> pids;
-    life_cycle_controller->getPIDs(appid, pids);
-    if (0 == pids.size()) {
-        ICO_TRA("end");
-        return;
-    }
-    vector<int>::iterator it = pids.begin();
-    while (it != pids.end()) {
-        m_appHis->startupEntryFinish(*it);
-        ++it;
-    }
+    m_appHis->startupEntryFinish(appid);
     if (false == m_appHis->isFinish()) {
         ICO_TRA("end");
         return;
@@ -1940,7 +1998,7 @@ void CicoHomeScreen::finishStartup(void)
             ++it_h;
         }
     }
-    
+
     list<string>::reverse_iterator rit_h = h.rbegin();
     while(rit_h != h.rend()) {
         CicoHSAppInfo *ai = GetAppInfo((*rit_h).c_str());
@@ -1973,7 +2031,7 @@ void CicoHomeScreen::finishStartup(void)
         ico_syc_change_active(appid, surface);
         hs_instance->SetActiveAppInfo(appid);
     }
-        
+
     m_appHis->stopStartupCheck();
     ICO_TRA("end");
 }
@@ -2001,14 +2059,13 @@ void CicoHomeScreen::readStartupApp(std::vector<pairAppidSubd>& apps)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHomeScreen::cancelWaitActivation
- *          cancel wait Activation time out(Swipe move operate)
+ * @brief   CicoHomeScreen::requestHideAppid
+ *          request Hide appid
  *
  * @param  app appid
- * @param  bOldShow  true is home appid show / false is no show
  */
 /*--------------------------------------------------------------------------*/
-void CicoHomeScreen::cancelWaitActivation(const std::string& app)
+void CicoHomeScreen::requestHideAppid(const std::string& app)
 {
     const char* appid = app.c_str();
     ICO_TRA("start %s", appid);
@@ -2024,13 +2081,13 @@ void CicoHomeScreen::cancelWaitActivation(const std::string& app)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHomeScreen::requestWaitActivation
- *          request wait Activation time out(Swipe move operate)
+ * @brief   CicoHomeScreen::requestShowAppid
+ *          request Show appid
  *
  * @param  app appid
  */
 /*--------------------------------------------------------------------------*/
-void CicoHomeScreen::requestWaitActivation(const std::string& app)
+void CicoHomeScreen::requestShowAppid(const std::string& app)
 {
     const char* appid = app.c_str();
     ICO_TRA("start %s", appid);
@@ -2040,8 +2097,110 @@ void CicoHomeScreen::requestWaitActivation(const std::string& app)
         return;
     }
     int surface = ai->GetLastSurface();
+    ico_syc_show(appid, surface, NULL);
+    ICO_TRA("end");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHomeScreen::requestActivationAppid
+ *          request Activation
+ *
+ * @param  app appid
+ */
+/*--------------------------------------------------------------------------*/
+void CicoHomeScreen::requestActivationAppid(const std::string& app)
+{
+    const char* appid = app.c_str();
+    ICO_TRA("start %s", appid);
+    CicoHSAppInfo *ai = GetAppInfo(appid);
+    if (NULL == ai) {
+        ICO_DBG("end %d", appid);
+        return;
+    }
+    int surface = ai->GetLastSurface();
+    hs_instance->SetActiveAppInfo(app.c_str());
+    ico_syc_show(appid, surface, NULL);
     ico_syc_change_active(appid, surface);
     ICO_TRA("end");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHomeScreen::controlRegulation
+ *          controlRegulation
+ *
+ * @param  reqStt true / false
+ */
+/*--------------------------------------------------------------------------*/
+void CicoHomeScreen::controlRegulation(bool regStt)
+{
+    ICO_TRA("start %s", regStt? "true": "false");
+    if (NULL == m_appHis) {
+        ICO_TRA("end");
+        return;
+    }
+    const string& wapp = m_appHis->getSelectApp(); // select appid get
+    if (false == wapp.empty()) { // select appid nothing
+        const string& napp = m_appHis->getNearHistory(); // history top appid get
+        if (0 != wapp.compare(napp)) { // history top, wait app is Eqale
+            requestHideAppid(napp);
+            requestActivationAppid(wapp);
+            m_appHis->moveHistoryHead(wapp);
+        }
+        m_appHis->clearSelectApp(); // select appid clear
+        m_appHis->homeSwipe();
+    }
+    ICO_TRA("end");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHomeScreen::ActivationUpdate
+ *          history update by swipe app
+ *
+ * @return bool
+ * @retval true history update
+ * @retval false no history updath
+ */
+/*--------------------------------------------------------------------------*/
+bool
+CicoHomeScreen::ActivationUpdate(void)
+{
+    return hs_instance->ActivationUpdate_i();
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHomeScreen::ActivationUpdate_i
+ *          history update by swipe app
+ *
+ * @return bool
+ * @retval true history update
+ * @retval false no history updath
+ */
+/*--------------------------------------------------------------------------*/
+bool
+CicoHomeScreen::ActivationUpdate_i(void)
+{
+    if (NULL == m_appHis) {
+        ICO_DBG("false");
+        return false;
+    }
+    bool bR = false;
+    const string& wapp = m_appHis->getSelectApp(); // select appid get
+    if (false == wapp.empty()) { // select appid nothing
+        const string& napp = m_appHis->getNearHistory(); // history top appid get
+        if (0 != wapp.compare(napp)) { // history top, wait app is Eqale
+            requestActivationAppid(wapp);
+            m_appHis->moveHistoryHead(wapp);
+            bR = true;
+        }
+        m_appHis->clearSelectApp(); // select appid clear
+        m_appHis->homeSwipe();
+    }
+    ICO_DBG("%s", bR? "true": "false");
+    return bR;
 }
 
 // vim: set expandtab ts=4 sw=4:

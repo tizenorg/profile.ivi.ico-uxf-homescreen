@@ -195,7 +195,7 @@ _create_set_lastinfo_msg(const char *appid, const char *lastinfo)
     }
 
     /* set message */
-    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_GET_LASTINFO);
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_SET_LASTINFO);
     json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
     json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
 

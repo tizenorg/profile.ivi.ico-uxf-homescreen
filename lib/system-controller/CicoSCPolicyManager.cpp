@@ -31,6 +31,7 @@ using namespace std;
 #include "CicoSCMessage.h"
 #include "ico_syc_msg_cmd_def.h"
 #include "ico_syc_type.h"
+#include "CicoSCCommonDef.h"
 
 //==========================================================================
 //  define
@@ -66,6 +67,7 @@ typedef struct _vehicle_info_property_t {
 typedef struct _vehicle_info_data {
     int             key;    /* Vehicle Information key */
     DBusPendingCall *pending;
+    E_DBus_Signal_Handler *handler;
     int             request;
     double          val;
 } _vhcldata_t;
@@ -176,7 +178,17 @@ CicoSCPolicyManager::initialize(void)
 void
 CicoSCPolicyManager::terminate(void)
 {
+    int idx = 0;
+
     ICO_DBG("CicoSCPolicyManager::terminate Enter");
+
+    for (idx = 0; vhcl_data[idx].key; idx++) {
+        if (vhcl_data[idx].handler != NULL) {
+            e_dbus_signal_handler_del(m_dbusConnection, 
+                                      vhcl_data[idx].handler);
+        }
+    }
+
     ICO_DBG("CicoSCPolicyManager::terminate Leave");
 }
 
@@ -191,7 +203,8 @@ CicoSCPolicyManager::initAMB(void)
     ICO_DBG("CicoSCPolicyManager::initAMB Enter");
 
     int ret = 0;
-    DBusError dbus_error;
+    int idx;
+    char signalname[64];
 
     if (true == m_initialized) {
         ICO_DBG("CicoSCPolicyManager::initAMB Leave(EOK)");
@@ -201,19 +214,37 @@ CicoSCPolicyManager::initAMB(void)
     /* Zero clear vhcl_data */
     memset(vhcl_data, 0, sizeof(vhcl_data));
 
-    /* Reset D-Bus error */
-    dbus_error_init(&dbus_error);
+    e_dbus_init();
 
     /* Get D-Bus connection */
-    m_dbusConnection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
+    m_dbusConnection = e_dbus_bus_get(DBUS_BUS_SYSTEM);
     if (! m_dbusConnection) {
         ICO_ERR("dbus_bus_get failed.");
         ICO_ERR("CicoSCPolicyManager::initAMB Leave(EIO)");
         return ICO_SYC_EIO;
     }
 
-    /* send request to AMB */
-    sendAMBRequest();
+    /* receive propertychanged request to AMB */
+    for (idx = 0; apf_vhcl_info[idx].key; idx++) {
+        memset(signalname, 0, sizeof(signalname));
+        /* set vehicleinfo set key */
+        vhcl_data[idx].key = apf_vhcl_info[idx].key;
+
+        if (apf_vhcl_info[idx].path[0] == 0) {
+            /* currently not support this vehicle information */
+            continue;
+        }
+
+        strcpy(signalname, apf_vhcl_info[idx].property);
+        strcat(signalname, "Changed");
+        vhcl_data[idx].handler = e_dbus_signal_handler_add(m_dbusConnection, 
+                                                           DBUS_SERVICE, NULL,
+                                                           apf_vhcl_info[idx].interface,
+                                                           signalname, 
+                                                           AMBpropertyChanged, 
+                                                           (void*)&vhcl_data[idx].key);
+
+    }
 
     /* recv response from AMB timer start */
     ret = ecore_init();
@@ -245,6 +276,7 @@ CicoSCPolicyManager::initAMB(void)
 int
 CicoSCPolicyManager::sendAMBRequest(void)
 {
+#if 0
 //    ICO_DBG("CicoSCPolicyManager::sendAMBRequest Enter");
 
     DBusMessage *dbus_message = NULL;
@@ -318,6 +350,8 @@ CicoSCPolicyManager::sendAMBRequest(void)
 
     //ICO_DBG("CicoSCPolicyManager::sendAMBRequest Leave");
     return ret;
+#endif
+    return 0;
 }
 
 //--------------------------------------------------------------------------
@@ -328,6 +362,7 @@ CicoSCPolicyManager::sendAMBRequest(void)
 int
 CicoSCPolicyManager::getVehicleInfo(void)
 {
+    #if 0
     DBusMessage *dbus_message = NULL;
     DBusMessageIter iter_head;
     DBusMessageIter iter;
@@ -419,6 +454,8 @@ CicoSCPolicyManager::getVehicleInfo(void)
     };
 
     return ICO_SYC_EOK;
+#endif
+    return ICO_SYC_EOK;
 }
 
 //--------------------------------------------------------------------------
@@ -434,6 +471,79 @@ CicoSCPolicyManager::ecoreTimerCB(void *user_data)
     policyMgr->recvAMBVehicleInfo();
 
     return ECORE_CALLBACK_RENEW;
+}
+//--------------------------------------------------------------------------
+/**
+ *  @brief  receive AMB vehicle information
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCPolicyManager::AMBpropertyChanged(void *data, DBusMessage *msg) 
+{
+    DBusMessageIter iter, variant;
+    int idx;
+    char        type;
+    int32_t     i32;
+    int16_t     i16;
+    uint32_t    u32;
+    uint16_t    u16;
+    dbus_bool_t b;
+    uint8_t     u8;
+    double      d64;
+
+    int key;
+    key = *((int *)data);
+
+    if (!msg || !dbus_message_iter_init(msg, &iter)) {
+        ICO_ERR("received illegal message.");
+        return;
+    }
+
+    for (idx = 0; vhcl_data[idx].key; idx++) {
+        if (vhcl_data[idx].key == key) {
+            break;
+        }
+    }
+    if (idx == AMB_MAX_INFO) {
+        return;
+    }
+
+    dbus_message_iter_recurse(&iter, &variant);
+    type = dbus_message_iter_get_arg_type(&variant);
+    switch (type)   {
+    case DBUS_TYPE_INT32:
+        dbus_message_iter_get_basic(&variant, &i32);
+        vhcl_data[idx].val = (double)i32;
+        break;
+    case DBUS_TYPE_INT16:
+        dbus_message_iter_get_basic(&variant, &i16);
+        vhcl_data[idx].val = (double)i16;
+        break;
+    case DBUS_TYPE_UINT32:
+        dbus_message_iter_get_basic(&variant, &u32);
+        break;
+    case DBUS_TYPE_UINT16:
+        dbus_message_iter_get_basic(&variant, &u16);
+        vhcl_data[idx].val = (double)u16;
+        break;
+    case DBUS_TYPE_BOOLEAN:
+        dbus_message_iter_get_basic(&variant, &b);
+        if (b)      vhcl_data[idx].val = (double)1.0;
+        else        vhcl_data[idx].val = (double)0.0;
+        break;
+    case DBUS_TYPE_BYTE:
+        dbus_message_iter_get_basic(&variant, &u8);
+        vhcl_data[idx].val = (double)u8;
+        break;
+    case DBUS_TYPE_DOUBLE:
+        dbus_message_iter_get_basic(&variant, &d64);
+        vhcl_data[idx].val = (double)d64;
+        break;
+    default:
+        ICO_ERR("(%s) illegal data type(0x%02x)",
+                apf_vhcl_info[idx].property, ((int)type) & 0x0ff);
+        break;
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -452,7 +562,7 @@ CicoSCPolicyManager::recvAMBVehicleInfo(void)
     bool chgRegulation = false;
     bool chgNightMode  = false;
 
-    getVehicleInfo();
+    //getVehicleInfo();
 
     /* get vehicle info values  */
     for (idx = 0; idx < AMB_MAX_VHCLINFO; idx++)   {
@@ -559,7 +669,7 @@ CicoSCPolicyManager::recvAMBVehicleInfo(void)
     }
         
     /* send request to AMB */
-    sendAMBRequest();
+    //sendAMBRequest();
 
 //    ICO_DBG("CicoSCPolicyManager::recvAMBVehicleInfo Leave");
 }
@@ -615,10 +725,90 @@ CicoSCPolicyManager::initStateMachine(void)
 #endif  //-- } debug dump
     }
 
-    m_dispZoneStates.push_back(NULL);
-    m_dispZoneStates.push_back(m_policyStates[STID_DISPLAY0_ZONE1]);
-    m_dispZoneStates.push_back(m_policyStates[STID_DISPLAY0_ZONE2]);
-    m_dispZoneStates.push_back(m_policyStates[STID_DISPLAY0_ZONE3]);
+    {
+        std::map<int, const CicoState*>::iterator itr;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE1);
+        m_dispZoneStates[1] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE2);
+        m_dispZoneStates[2] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE3);
+        m_dispZoneStates[3] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE4);
+        m_dispZoneStates[4] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE5);
+        m_dispZoneStates[5] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE6);
+        m_dispZoneStates[6] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE7);
+        m_dispZoneStates[7] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE8);
+        m_dispZoneStates[8] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE9);
+        m_dispZoneStates[9] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE10);
+        m_dispZoneStates[10] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE11);
+        m_dispZoneStates[11] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE12);
+        m_dispZoneStates[12] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE13);
+        m_dispZoneStates[13] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE14);
+        m_dispZoneStates[14] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE15);
+        m_dispZoneStates[15] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE16);
+        m_dispZoneStates[16] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE17);
+        m_dispZoneStates[17] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE18);
+        m_dispZoneStates[18] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE19);
+        m_dispZoneStates[19] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY0_ZONE20);
+        m_dispZoneStates[20] = itr != m_policyStates.end() ? itr->second : NULL;
+
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE1);
+        m_dispZoneStates[21] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE2);
+        m_dispZoneStates[22] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE3);
+        m_dispZoneStates[23] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE4);
+        m_dispZoneStates[24] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE5);
+        m_dispZoneStates[25] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE6);
+        m_dispZoneStates[26] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE7);
+        m_dispZoneStates[27] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE8);
+        m_dispZoneStates[28] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE9);
+        m_dispZoneStates[29] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE10);
+        m_dispZoneStates[30] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE11);
+        m_dispZoneStates[31] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE12);
+        m_dispZoneStates[32] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE13);
+        m_dispZoneStates[33] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE14);
+        m_dispZoneStates[34] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE15);
+        m_dispZoneStates[35] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE16);
+        m_dispZoneStates[36] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE17);
+        m_dispZoneStates[37] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE18);
+        m_dispZoneStates[38] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE19);
+        m_dispZoneStates[39] = itr != m_policyStates.end() ? itr->second : NULL;
+        itr = m_policyStates.find(STID_DISPLAY1_ZONE20);
+        m_dispZoneStates[40] = itr != m_policyStates.end() ? itr->second : NULL;
+    }
 
     m_soundZoneStates.push_back(NULL);
     m_soundZoneStates.push_back(m_policyStates[STID_SOUND_ZONE1]);
@@ -708,14 +898,25 @@ CicoSCPolicyManager::acquireDisplayResource(int type, int zoneid, int priority)
     bool chg = false;
 
     if (RESID_TYPE_BASIC == type) {
-        bool zoneChg = testSMEvent(EVID_DISPLAY0_ZONE, zoneid);
+        bool zoneChg = testSMEvent(EVID_DISPLAY_ZONE_ACQUIRE, zoneid);
         bool cateChg = testSMEvent(EVID_DISPLAY0_CATEGORY, priority);
         ICO_DBG("zoneChg=%d cateChg=%d", zoneChg, cateChg);
         if ((true == zoneChg) && (true == cateChg)) {
-            sendSMEvent(EVID_DISPLAY0_ZONE, zoneid);
+            sendSMEvent(EVID_DISPLAY_ZONE_ACQUIRE, zoneid);
             sendSMEvent(EVID_DISPLAY0_CATEGORY, priority);
             chg = true;
         }
+#if 0   //-- { debug dump
+        else {
+            std::map<int, const CicoState*>::iterator itr;
+            itr = m_policyStates.begin();
+            for (; itr != m_policyStates.end(); ++itr) {
+                ICO_DBG("State=[%-45s] Active=%s",
+                        itr->second->getName().c_str(),
+                        itr->second->isActive() ? "true" : "false");
+            }
+        }
+#endif  //-- } debug dump
     }
     else if (RESID_TYPE_INTERRUPT == type) {
         if (1 == zoneid) {
@@ -739,7 +940,7 @@ CicoSCPolicyManager::acquireDisplayResource(int type, int zoneid, int priority)
 bool
 CicoSCPolicyManager::releaseDisplayResource(int zoneid, int priority)
 {
-    return true;
+    return sendSMEvent(EVID_DISPLAY_ZONE_RELEASE, zoneid);
 }
 
 bool
@@ -845,12 +1046,25 @@ CicoSCPolicyManager::notifyChangedState(int state)
 }
 
 bool
-CicoSCPolicyManager::getDispZoneState(int zoneid) const
+CicoSCPolicyManager::getDispZoneState(int zoneid)
 {
-    if ((0 < zoneid) && ((int)m_dispZoneStates.size()-1 > zoneid)) {
-        return m_dispZoneStates[zoneid]->isActive();
+    if (0 >= zoneid) {
+        return false;
     }
-    return false;
+
+    // find state instance
+    std::map<int, const CicoState*>::iterator itr;
+    itr = m_dispZoneStates.find(zoneid);
+    if (itr == m_dispZoneStates.end()) {
+        return false;
+    }
+
+    // if state instance is null
+    if (NULL == itr->second) {
+        return false;
+    }
+        
+    return itr->second->isActive();
 }
 
 bool
@@ -869,6 +1083,26 @@ CicoSCPolicyManager::getInputState(int input) const
         return m_inputStates[input]->isActive();
     }
     return false;
+}
+
+bool
+CicoSCPolicyManager::getRegulation(void)
+{
+    return m_policyStates[STID_DRVREGULATION_ON]->isActive();
+}
+
+bool
+CicoSCPolicyManager::isExistDisplayZoneOwer(int zoneid)
+{
+    if ((zoneid >= ICO_DISPLAY0_ZONEID_MIN) &&
+        (zoneid <= ICO_DISPLAY0_ZONEID_MAX)) {
+        return !m_policyStates[STID_DISPLAY0_NOOWER]->isActive();
+    }
+    if ((zoneid >= ICO_DISPLAY1_ZONEID_MIN) &&
+        (zoneid <= ICO_DISPLAY1_ZONEID_MAX)) {
+        return !m_policyStates[STID_DISPLAY1_NOOWER]->isActive();
+    }
+    return true;
 }
 
 //--------------------------------------------------------------------------

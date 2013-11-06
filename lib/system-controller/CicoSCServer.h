@@ -139,6 +139,8 @@ private:
     CicoSCResourceManager   *m_resourceMgr;  ///< resource manager instance
     CicoSCPolicyManager     *m_policyMgr;    ///< policy manager instance
 
+    bool m_dispatchProcessing;
+
     /// websocket handler list
     std::list<CicoSCUwsHandler*> m_uwsHandlerList;
 

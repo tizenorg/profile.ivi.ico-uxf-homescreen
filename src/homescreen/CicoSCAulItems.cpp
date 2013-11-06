@@ -187,7 +187,7 @@ bool CicoSCAulItems::getPidCgroupInfo(int pid, string& m, string& c)
 }
 
 /**
- * @breif appid update
+ * @brief appid update
  */
 void CicoSCAulItems::update_appid()
 {

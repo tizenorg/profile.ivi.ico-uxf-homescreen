@@ -27,6 +27,8 @@ class CicoSCCommand;
 class CicoSCUser;
 class CicoSCUserConf;
 
+typedef std::pair<int, std::string> pairPidAppid;
+
 //==========================================================================
 /*
  *  @brief  This class manages control of user and access to user information
@@ -58,6 +60,8 @@ public:
     void dumpUserList(void);
     void dumpHomeScreenList(void);
 
+    // application daed watcher
+    bool appDeadHandler(int pid);
 private:
     // default constructor
     CicoSCUserManager();
@@ -120,6 +124,10 @@ private:
     std::string                 m_parentDir;       ///  login-user use directory
     const CicoSCUserConf*       m_uConfig;
     std::string                 m_flagPath;        ///  history save control flag file
+    std::vector<pairPidAppid>   m_vppa;            ///  app dead watcher
+    bool                        m_wait;            ///  app dead wait flag
+    std::string                 m_waitName;        ///  wait backup login name
+    std::string                 m_waitHS;          ///  wait backup homescreen appid
 };
 #endif  // __CICO_SC_USER_MANAGER_H__
 // vim:set expandtab ts=4 sw=4:

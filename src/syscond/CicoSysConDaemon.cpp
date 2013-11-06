@@ -30,6 +30,7 @@
 #include "CicoSCLifeCycleController.h"
 #include "CicoSCUserManager.h"
 #include "CicoSCResourceManager.h"
+#include "Cico_aul_listen_app.h"
 
 /**
  *  Default Constructor
@@ -57,6 +58,8 @@ CicoSysConDaemon::onCreate(void *user_data)
     try {
         int ret = ICO_SYC_EOK;
         CicoSCSystemConfig::getInstance()->load("/usr/apps/org.tizen.ico.system-controller/res/config/system.xml");
+
+        initAulListenXSignal();
 
         CicoSCLifeCycleController *lifecycle =
             CicoSCLifeCycleController::getInstance();

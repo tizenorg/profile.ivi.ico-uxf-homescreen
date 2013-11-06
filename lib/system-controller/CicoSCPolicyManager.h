@@ -20,6 +20,7 @@
 #include <Ecore.h>
 #include <Eina.h>
 #include <dbus/dbus.h>
+#include <E_DBus.h>
 
 #include <map>
 #include <vector>
@@ -75,12 +76,17 @@ public:
     // get states
     const std::map<int, const CicoState*>& getPolicyStates(void);
 
-    bool getDispZoneState(int zoneid) const;
+    bool getDispZoneState(int zoneid);
     bool getSoundZoneState(int zoneid) const;
     bool getInputState(int input) const;
+    bool getRegulation(void);
+
+    bool isExistDisplayZoneOwer(int zoneid);
 
     // notify connected process
     void notifyConnected(const std::string & appid);
+
+    static void AMBpropertyChanged(void *data, DBusMessage *msg);
 
 private:
     // default constructor
@@ -109,14 +115,14 @@ private:
 
 private:
     bool                  m_initialized;
-    DBusConnection        *m_dbusConnection;
+    E_DBus_Connection     *m_dbusConnection;
     Ecore_Timer           *m_ecoreTimer;
 
     CicoStateMachine      *m_stateMachine;
     CicoSCResourceManager *m_resourceMgr;
 
-    std::map<int, const CicoState*>  m_policyStates;
-    std::vector<const CicoState*> m_dispZoneStates;
+    std::map<int, const CicoState*> m_policyStates;
+    std::map<int, const CicoState*> m_dispZoneStates;
     std::vector<const CicoState*> m_soundZoneStates;
     std::vector<const CicoState*> m_inputStates;
 };

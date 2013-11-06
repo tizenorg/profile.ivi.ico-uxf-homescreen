@@ -272,6 +272,9 @@ static int _get_event_from_cmd(int command)
     case MSG_CMD_GET_USERLIST:
         event = ICO_SYC_EV_USERLIST;
         break;
+    case MSG_CMD_GET_LASTINFO:
+        event = ICO_SYC_EV_LASTINFO;
+        break;
     case MSG_CMD_ACQUIRE_RES:
         event = ICO_SYC_EV_RES_ACQUIRE;
         break;

@@ -12,6 +12,7 @@
  * @date    Aug-08-2013
  */
 #include "CicoHSMenuTouch.h"
+#include "CicoSound.h"
 
 /*============================================================================*/
 /* static members                                                             */
@@ -174,6 +175,9 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
 
     /*execute application*/
     if(appid != NULL){
+        // play operation sound
+        CicoSound::GetInstance()->PlayOperationSound();
+
         menu_window->ExecuteApp(appid);
     }
 }
@@ -193,19 +197,14 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
 void
 CicoHSMenuTouch::TouchUpTerm(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-    Evas_Event_Mouse_Up *info;
-    int sub = 0;
+    // play opration sound
+    CicoSound::GetInstance()->PlayOperationSound();
 
     char *appid = reinterpret_cast<char*>(data);
 
-    strncpy(terminate_appid,appid,ICO_HS_MAX_PROCESS_NAME);
+    strncpy(terminate_appid, appid, ICO_HS_MAX_PROCESS_NAME);
 
     menu_window->ShowTerminateButton();
-#if 0
-    if(appid != NULL){
-        menu_window->TerminateApp(appid);
-    }
-#endif
 }
 
 /*--------------------------------------------------------------------------*/
@@ -223,6 +222,9 @@ CicoHSMenuTouch::TouchUpTerm(void *data, Evas *evas, Evas_Object *obj, void *eve
 void
 CicoHSMenuTouch::TouchUpTerminateYes(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
+    // play opration sound
+    CicoSound::GetInstance()->PlayOperationSound();
+
     menu_window->TerminateApp(terminate_appid);
 }
 /*--------------------------------------------------------------------------*/
@@ -240,5 +242,9 @@ CicoHSMenuTouch::TouchUpTerminateYes(void *data, Evas *evas, Evas_Object *obj, v
 void
 CicoHSMenuTouch::TouchUpTerminateNo(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
+    // play opration sound
+    CicoSound::GetInstance()->PlayOperationSound();
+
     menu_window->TerminateApp(NULL);
 }
+// vim: set expandtab ts=4 sw=4:

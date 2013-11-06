@@ -64,6 +64,7 @@ extern "C" {
 #define MSG_PRMKEY_RAISE        (char *)"raise"
 #define MSG_PRMKEY_VISIBLE      (char *)"visible"
 #define MSG_PRMKEY_ACTIVE       (char *)"active"
+#define MSG_PRMKEY_NAME         (char *)"name"
 #define MSG_PRMKEY_STRIDE       (char *)"stride"
 #define MSG_PRMKEY_FORMAT       (char *)"format"
 #define MSG_PRMKEY_RATE         (char *)"framerate"

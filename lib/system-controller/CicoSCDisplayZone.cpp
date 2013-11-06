@@ -24,7 +24,9 @@
  */
 //--------------------------------------------------------------------------
 CicoSCDisplayZone::CicoSCDisplayZone()
-    : zoneid(-1), x(-1), y(-1), width(-1), height(-1), fullname("")
+    : zoneid(-1), x(-1), y(-1), width(-1), height(-1), fullname(""),
+      displayedWindow(NULL), aspectFixed(false), aspectAlignLeft(false), 
+      aspectAlignRight(false), aspectAlignTop(false), aspectAlignBottom(false)
 {
 }
 
@@ -46,7 +48,13 @@ void
 CicoSCDisplayZone::dump(void)
 {
     ICO_DBG("CicoSCDisplayZone: zoneid=%d "
-            "x=%d y=%d width=%d height=%d fullname=%s",
-            zoneid, x, y, width, height, fullname.c_str());
+            "x/y=%d/%d w/h=%d/%d fullname=%s window=0x%08x "
+            "aspect(fixed=%s l/r=%s/%s t/b=%s/%s",
+            zoneid, x, y, width, height, fullname.c_str(), displayedWindow,
+            aspectFixed       ? "true" : "false",
+            aspectAlignLeft   ? "true" : "false",
+            aspectAlignRight  ? "true" : "false",
+            aspectAlignTop    ? "true" : "false",
+            aspectAlignBottom ? "true" : "false");
 }
 // vim:set expandtab ts=4 sw=4:

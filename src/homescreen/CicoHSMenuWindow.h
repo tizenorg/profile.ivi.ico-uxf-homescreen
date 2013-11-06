@@ -72,19 +72,21 @@ typedef struct _CicoLayoutInfo{
    int position;
    int tile_width;
    int tile_height;
-}CicoLayoutInfo;
+} CicoLayoutInfo;
 
 typedef struct _CicoCurrentPage{
     int current_page;
     int subcurrent_page;
-}CicoCurrentPage;
+} CicoCurrentPage;
 
 typedef struct _CicoCategoryInfo {
     int id;
     int page;
     int subpage_max;
     int tile_num;
-}CicoCategoryInfo;
+} CicoCategoryInfo;
+
+/*  tile size   */
 
 class CicoHSMenuWindow :public CicoHSWindow
 {
@@ -109,13 +111,13 @@ class CicoHSMenuWindow :public CicoHSWindow
     void ChangeNormalMode(void);
     void ShowTerminateButton(void);
     void HideTerminateButton(void);
-    void ValidMenuIcon(const char *appid);   
-    void ValidThumbnail(const char *appid,int surface);   
-    void SetThumbnail(const char *appid,int surface);   
+    void ValidMenuIcon(const char *appid);
+    void ValidThumbnail(const char *appid, int surface);
+    void SetThumbnail(const char *appid, ico_syc_thumb_info_t *info);
 
     static Eina_Bool MoveDownAnimation(void *data,double pos);
     static Eina_Bool MoveUpAnimation(void *data,double pos);
-    
+
     void SetNightMode(void);
 
     void DspCtrlPageCursor(void);
@@ -123,6 +125,9 @@ class CicoHSMenuWindow :public CicoHSWindow
     void UpBackMenu(void);
     static Eina_Bool MoveToNextSubAnimation(void *data,double pos);
     static Eina_Bool MoveToBackSubAnimation(void *data,double pos);
+
+    static int Tile_Width(void);
+    static int Tile_Height(void);
 
   private:
     int SetMenuBack(void);
@@ -155,30 +160,33 @@ class CicoHSMenuWindow :public CicoHSWindow
     /* image directory path */
     char img_dir_path[ICO_HS_MAX_PATH_BUFF_LEN];
     /* evas object */
-    Evas *evas;         
+    Evas *evas;
     /* menu back */
-    Evas_Object *canvas; 
-    Evas_Object *rectangle; 
+    Evas_Object *canvas;
+    Evas_Object *rectangle;
     /* tiles */
     CicoHSMenuTile *menu_tile[ICO_HS_MENU_MAX_TILE_NUM];
     /* Page pointer */
-    Evas_Object *page_pointer[ICO_HS_MENU_MAX_MENU_PAGE_NUM]; 
+    Evas_Object *page_pointer[ICO_HS_MENU_MAX_MENU_PAGE_NUM];
     /* Page cursor */
-    Evas_Object *page_up_cursor; 
-    Evas_Object *page_down_cursor; 
+    Evas_Object *page_up_cursor;
+    Evas_Object *page_down_cursor;
     /* for window control */
     char appid[ICO_HS_MAX_PROCESS_NAME];
     int surface;
     /*terminate button*/
-    Evas_Object *terminate_back; 
-    Evas_Object *terminate_really; 
-    Evas_Object *terminate_button_yes; 
-    Evas_Object *terminate_button_no; 
-   
+    Evas_Object *terminate_back;
+    Evas_Object *terminate_really;
+    Evas_Object *terminate_button_yes;
+    Evas_Object *terminate_button_no;
+
     CicoSCLifeCycleController *life_cycle_controller;
     /* my instance (for callback) */
     static CicoHSMenuWindow *menu_window_instance;
     bool m_showState;
+    /* tile size    */
+    static int  menu_tile_width;
+    static int  menu_tile_height;
 
   protected:
     CicoHSMenuWindow operator=(const CicoHSMenuWindow&);

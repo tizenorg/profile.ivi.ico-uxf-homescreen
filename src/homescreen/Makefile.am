@@ -29,11 +29,12 @@ HomeScreen_SOURCES = \
 	CicoHomeScreenSound.cpp \
 	CicoHomeScreenSoundConfig.cpp	\
 	CicoHSSystemState.cpp	\
-	CicoHSFlickTouch.cpp	\
-	CicoHSFlickInputWindow.cpp \
+	CicoHSSwipeTouch.cpp	\
+	CicoHSSwipeInputWindow.cpp \
 	CicoHSAppHistory.cpp	\
 	CicoHSAppHistoryExt.cpp	\
-	Cico_aul_listen_app.cpp
+	Cico_aul_listen_app.cpp \
+	CicoSound.cpp
 
 HomeScreen_CFLAGS= \
     $(EFL_CFLAGS) \
@@ -67,7 +68,8 @@ HomeScreen_LDADD = \
     -lico-util \
     -lico-uxf-weston-plugin \
     /usr/lib/libpkgmgr-client.so \
-	../../lib/apps-framework/.libs/libico-appfw.so
+	../../lib/apps-framework/.libs/libico-appfw.so \
+	-lwayland-egl -lEGL -lGLESv2
 
 #OnScreen_SOURCES = \
 #	on_screen.cpp        \
@@ -132,6 +134,7 @@ install-exec-hook:
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/var
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/config
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/sound
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
 	mkdir -p $(INSTALL_ROOT)/usr/share/packages
 	install -m 0755 HomeScreen $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/bin
@@ -156,6 +159,7 @@ install-exec-hook:
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/tizen_32.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/data/share/packages/org.tizen.ico.homescreen.xml $(INSTALL_ROOT)/usr/share/packages
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/config
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/sound/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/sound
 	cp -r $(top_srcdir)/data/apps/org.tizen.ico.homescreen $(INSTALL_ROOT)/usr/apps/
 
 uninstall:

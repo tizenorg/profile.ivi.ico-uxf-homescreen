@@ -62,11 +62,12 @@ public:
     // pid to appid converter
     bool getAppid(int pid, std::string& appid);
 
-    // flick operation I/F
+    // swipe operation I/F
     void selectApp(int pid);
     void selectApp(const std::string& appid);
     void selectApp(const char* appid);
     const std::string& getSelectApp() const;
+    void clearSelectApp();
 
     // time out selected app
     void determined(CHSAHE_data_t* data);
@@ -205,6 +206,14 @@ inline const std::string& CicoHSAppHistoryExt::getSubDispAppid() const
 inline const std::string& CicoHSAppHistoryExt::getSelectApp() const
 {
     return m_waitSelApp;
+}
+
+/**
+ * @brief select appid clear
+ */
+inline void CicoHSAppHistoryExt::clearSelectApp()
+{
+    m_waitSelApp.clear();
 }
 
 #endif // CICOHSAPPHISTORYEXT_H

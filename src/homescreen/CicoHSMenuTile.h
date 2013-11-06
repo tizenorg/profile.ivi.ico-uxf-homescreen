@@ -24,6 +24,11 @@
 #include <Ecore_Evas.h>
 #include <Edje.h>
 
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
+#include <EGL/eglext.h>
+
 #include "ico_syc_common.h"
 #include "ico_syc_winctl.h"
 
@@ -47,7 +52,7 @@
 /***+---+---+---+******/
 
 #define ICO_HS_MENUTILE_ROW 3
-#define ICO_HS_MENUTILE_COLUMN 4 
+#define ICO_HS_MENUTILE_COLUMN 4
 #define ICO_HS_MENUTILE_NUM (ICO_HS_MENUTILE_COLUMN * ICO_HS_MENUTILE_ROW)
 #define ICO_HS_MENUTILE_POSITION_0 0
 #define ICO_HS_MENUTILE_POSITION_1 1
@@ -70,13 +75,35 @@
 #define ICO_HS_MENUTILE_START_POS_X 80
 #define ICO_HS_MENUTILE_START_POS_Y 210
 
-#define ICO_HS_MENUTILE_WIDTH_DOUBLE (ICO_HS_MENUTILE_WIDTH * 2) + ICO_HS_MENUTILE_SPACE_TILE_AND_TILE
-#define ICO_HS_MENUTILE_HEIGHT_DOUBLE (ICO_HS_MENUTILE_HEIGHT * 2) + ICO_HS_MENUTILE_SPACE_TILE_AND_TILE
-
 #define ICO_HS_MENUTILE_TERM_ICON_PATH "/usr/apps/org.tizen.ico.homescreen/res/images/termIcon.png"
 #define ICO_HS_MENUTILE_DEFAULT_ICON_PATH "/usr/apps/org.tizen.ico.homescreen/res/images/tizen_32.png"
 #define ICO_HS_MENUTILE_TERM_ICON_WIDTH 64
 #define ICO_HS_MENUTILE_TERM_ICON_HEIGHT 64
+
+#define ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW  10
+#define ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE   1
+#define ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX    4
+#define ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2   6
+#define ICO_HS_MENUTILE_THUMBNAIL_REDUCE_RATE  10
+#define ICO_HS_MENUTILE_THUMBNAIL_REDUCTION     4
+
+struct _CicoHSMenuTile_glfunc {
+    EGLDisplay  egl_display;            // EGL display
+    PFNEGLCREATEIMAGEKHRPROC            create_image;               // create image
+    PFNGLEGLIMAGETARGETTEXTURE2DOESPROC image_target_texture_2d;    // set image target
+    PFNEGLDESTROYIMAGEKHRPROC           destroy_image;              // destroy image
+};
+struct _CicoHSMenuTile_thumb {
+    int         surface;                // surface id
+    int         name;                   // EGL buffer name
+    int         width;                  // frame buffer width
+    int         height;                 // frame buff height
+    int         stride;                 // frame buffer stride
+    int         format;                 // frame buffer format(only EGL_TEXTURE_RGBA)
+    int         fbcount;                // frame buffer change counter
+    EGLImageKHR image;                  // frame buffer image
+    GLuint      texture;                // texture id
+};
 
 class CicoHSMenuTile
 {
@@ -101,11 +128,14 @@ class CicoHSMenuTile
     const char* GetAppId(void);
     void ShowTermIcon(void);
     void HideTermIcon(void);
-    void ValidMenuIcon(void);   
+    void ValidMenuIcon(void);
     void ValidThumbnail(int surface);
-    void SetThumbnail(int surface);
+    void SetThumbnail(ico_syc_thumb_info_t *info);
+    void ShowMenu(bool show);
 
   private:
+    static struct _CicoHSMenuTile_glfunc glfunc;
+
     char appid[ICO_HS_MAX_PROCESS_NAME];
     char icon_image_path[ICO_HS_MAX_PATH_BUFF_LEN];
     int page;
@@ -115,14 +145,20 @@ class CicoHSMenuTile
     int height;
     int pos_x;
     int pos_y;
+    int thumb_reduce_x;
+    int thumb_reduce_y;
+    bool app_running;
+    bool menu_show;
+    Evas        *menu_evas;
     Evas_Object *tile;
+    Evas_Object *thumb_tile;
+    Evas_Object *icon;
+    Evas_Object *small_icon;
     Evas_Object *term_icon;
-    int                   thumb_surface;
-    ico_syc_thumb_info_t *thumbnail;
+    struct _CicoHSMenuTile_thumb thumb;
 
   protected:
     CicoHSMenuTile operator=(const CicoHSMenuTile&);
     CicoHSMenuTile(const CicoHSMenuTile&);
 };
-
 #endif

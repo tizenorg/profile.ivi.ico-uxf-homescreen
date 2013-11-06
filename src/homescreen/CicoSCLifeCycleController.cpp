@@ -62,7 +62,7 @@ const char* DNull = "(null)";
  * @param pkg_name package name
  * @param key "start"/"end"/"install_percent"/"command" strings
  * @param val "ok"/"error"/"0.000000"-"100.000000" strings
- * @param pmsg pkgmgr message 
+ * @param pmsg pkgmgr message
  * @param data user data
  */
 static int CSCLCCpkgmgr_handler(int req_id, const char *pkg_type,
@@ -365,7 +365,6 @@ int CicoSCLifeCycleController::suspend(int pid)
  */
 bool CicoSCLifeCycleController::isRunning(const char* appid)
 {
-    ICO_TRA("start %s", appid);
     bool r = false;
 #if 0 // TODO mk_k
     vector<CicoSCAulItems>::iterator it = m_aul.begin();
@@ -382,14 +381,14 @@ bool CicoSCLifeCycleController::isRunning(const char* appid)
     int sz = m_aul.size();
     for (int i = 0; i < sz; i++) {
         m_aul[i].update_appid();
-        ICO_DBG("%s == %s", m_aul[i].m_appid.c_str(), appid);
+//      ICO_DBG("%s == %s", m_aul[i].m_appid.c_str(), appid);
         if (m_aul[i].m_appid == appid) {
             r = true;
             break;
         }
     }
 #endif
-    ICO_TRA("end %s", r? "true": "false");
+    ICO_TRA("CicoSCLifeCycleController::isRunning %s=%s", appid, r ? "true" : "false");
     return r;
 }
 
@@ -532,7 +531,7 @@ void CicoSCLifeCycleController::initAIL()
 /**
  * @brief
  */
-int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name, 
+int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name,
                          const char *key, const char *val, const void *pmsg,
                          CicoSCLifeCycleController* x)
 {
@@ -922,7 +921,7 @@ bool CicoSCLifeCycleController::removeAUL(int pid)
 }
 
 /**
- * @brief 
+ * @brief
  * @param x CicoSCLifeCycleController class pointer
  */
 int CSCLCCapp_launch_handlerX(int pid, CicoSCLifeCycleController* x)
@@ -940,7 +939,6 @@ int CSCLCCapp_launch_handlerX(int pid, CicoSCLifeCycleController* x)
     ICO_TRA("end %s %d", appid, pid);
     return 0;
 }
-
 
 /**
  * @brief applications die. callback function

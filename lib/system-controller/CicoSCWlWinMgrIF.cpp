@@ -318,13 +318,15 @@ CicoSCWlWinMgrIF::setLayerVisible(uint32_t layer, int32_t visible)
  *  @brief   wrapper function of ico_window_mgr_get_surfaces
  *  
  *  @param [in] appid           id of application
+ *  @param [in] pid             id of process
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::getSurfaces(const char *appid)
+CicoSCWlWinMgrIF::getSurfaces(const char *appid, int pid)
 {
-    ICO_DBG("called: ico_window_mgr_get_surfaces(appid=%d)", appid);
-    ico_window_mgr_get_surfaces(m_winmgr, appid);
+    ICO_DBG("called: ico_window_mgr_get_surfaces(appid=%d,pid=%d)",
+            appid ? appid : " ", pid);
+    ico_window_mgr_get_surfaces(m_winmgr, appid ? appid : " ", pid);
 }
 
 //--------------------------------------------------------------------------
@@ -368,6 +370,7 @@ CicoSCWlWinMgrIF::unmapSurface(uint32_t surfaceid)
  *  @param [in] winname         surface window name(title)
  *  @param [in] pid             wayland client process Id
  *  @param [in] appid           wayland client application Id
+ *  @param [in] layertype       surface layer type
  */
 //--------------------------------------------------------------------------
 void
@@ -376,7 +379,8 @@ CicoSCWlWinMgrIF::createdCB(void                  *data,
                             uint32_t              surfaceid,
                             const char            *winname,
                             int32_t               pid,
-                            const char            *appid)
+                            const char            *appid,
+                            int32_t               layertype)
 {
     ICO_DBG("CicoSCWlWinMgrIF::createdCB called.");
 }
@@ -450,6 +454,8 @@ CicoSCWlWinMgrIF::visibleCB(void                  *data,
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] surfaceid       ico_window_mgr surface Id
  *  @param [in] node            surface node Id
+ *  @param [in] layertype       surface layer type
+ *  @param [in] layer           surface layer Id
  *  @param [in] x               surface upper-left X coordinate
  *  @param [in] y               surface upper-left Y coordinate
  *  @param [in] width           surface width
@@ -463,6 +469,7 @@ CicoSCWlWinMgrIF::configureCB(void                  *data,
                               struct ico_window_mgr *ico_window_mgr,
                               uint32_t              surfaceid,
                               uint32_t              node,
+                              int32_t               layertype,
                               uint32_t              layer,
                               int32_t               x,
                               int32_t               y,
@@ -520,6 +527,7 @@ CicoSCWlWinMgrIF::layerVisibleCB(void                  *data,
  *  @param [in] data            user data(unused)
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] appid           application Id
+ *  @param [in] pid             process Id
  *  @param [in] surface         surface Id array
  */
 //--------------------------------------------------------------------------
@@ -527,6 +535,7 @@ void
 CicoSCWlWinMgrIF::appSurfacesCB(void                  *data,
                                 struct ico_window_mgr *ico_window_mgr,
                                 const char            *appid,
+                                int32_t               pid,
                                 struct wl_array       *surfaces)
 {
     ICO_WRN("CicoSCWlWinMgrIF::appSurfacesCB called.");
@@ -540,6 +549,8 @@ CicoSCWlWinMgrIF::appSurfacesCB(void                  *data,
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] event           event
  *  @param [in] surfaceid       surface Id
+ *  @param [in] type            surface buffer type(EGL buffer/Shared memory)
+ *  @param [in] target          surface buffer target(EGL buffer name)
  *  @param [in] width           surface width
  *  @param [in] height          surface height
  *  @param [in] stride          surface buffer(frame buffer) stride
@@ -629,6 +640,7 @@ CicoSCWlWinMgrIF::outputModeCB(void             *data,
  *  @param [in] winname         surface window name(title)
  *  @param [in] pid             wayland client process Id
  *  @param [in] appid           wayland client application Id
+ *  @param [in] layertype       surface layer type
  */
 //--------------------------------------------------------------------------
 void
@@ -637,7 +649,8 @@ CicoSCWlWinMgrIF::wlCreatedCB(void                  *data,
                               uint32_t              surfaceid,
                               const char            *winname,
                               int32_t               pid,
-                              const char            *appid)
+                              const char            *appid,
+                              int32_t               layertype)
 {
 //    ICO_DBG("CicoSCWlWinMgrIF::wlCreatedCB Enter");
     if (NULL == data) {
@@ -646,7 +659,7 @@ CicoSCWlWinMgrIF::wlCreatedCB(void                  *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->createdCB(data, ico_window_mgr,
                                                     surfaceid, winname,
-                                                    pid, appid);
+                                                    pid, appid, layertype);
 //    ICO_DBG("CicoSCWlWinMgrIF::wlCreatedCB Leave");
 }
 
@@ -745,6 +758,8 @@ CicoSCWlWinMgrIF::wlVisibleCB(void                  *data,
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] surfaceid       ico_window_mgr surface Id
  *  @param [in] node            surface node Id
+ *  @param [in] layertype       surface layer type
+ *  @param [in] layer           surface layer Id
  *  @param [in] x               surface upper-left X coordinate
  *  @param [in] y               surface upper-left Y coordinate
  *  @param [in] width           surface width
@@ -758,6 +773,7 @@ CicoSCWlWinMgrIF::wlConfigureCB(void                  *data,
                                 struct ico_window_mgr *ico_window_mgr,
                                 uint32_t              surfaceid,
                                 uint32_t              node,
+                                int32_t               layertype,
                                 uint32_t              layer,
                                 int32_t               x,
                                 int32_t               y,
@@ -772,8 +788,8 @@ CicoSCWlWinMgrIF::wlConfigureCB(void                  *data,
         return;
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->configureCB(data, ico_window_mgr,
-                                                      surfaceid, node, layer,
-                                                      x, y, width, height,
+                                                      surfaceid, node, layertype,
+                                                      layer, x, y, width, height,
                                                       hint);
 //    ICO_DBG("CicoSCWlWinMgrIF::wlConfigureCB Leave");
 }
@@ -840,6 +856,7 @@ CicoSCWlWinMgrIF::wlLayerVisibleCB(void                  *data,
  *  @param [in] data            user data(unused)
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] appid           application Id
+ *  @param [in] pid             process Id
  *  @param [in] surface         surface Id array
  */
 //--------------------------------------------------------------------------
@@ -847,6 +864,7 @@ void
 CicoSCWlWinMgrIF::wlAppSurfacesCB(void                  *data,
                                   struct ico_window_mgr *ico_window_mgr,
                                   const char            *appid,
+                                  int32_t               pid,
                                   struct wl_array       *surfaces)
 {
 //    ICO_DBG("CicoSCWlWinMgrIF::wlAppSurfacesCB Enter");
@@ -856,7 +874,7 @@ CicoSCWlWinMgrIF::wlAppSurfacesCB(void                  *data,
         return;
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->appSurfacesCB(data, ico_window_mgr,
-                                                        appid, surfaces);
+                                                        appid, pid, surfaces);
 //    ICO_DBG("CicoSCWlWinMgrIF::wlAppSurfacesCB Leave");
 }
 

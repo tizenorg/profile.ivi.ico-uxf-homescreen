@@ -11,42 +11,42 @@
  *
  * @date    Aug-08-2013
  */
-#ifndef __CICO_HS_FLICK_TOUCH_H__
-#define __CICO_HS_FLICK_TOUCH_H__
+#ifndef __CICO_HS_SWIPE_TOUCH_H__
+#define __CICO_HS_SWIPE_TOUCH_H__
 #include <stdio.h>
 #include <pthread.h>
 #include <libwebsockets.h>
 
 
 #include <unistd.h>
-#include "CicoHSFlickInputWindow.h"
+#include "CicoHSSwipeInputWindow.h"
 #include "CicoHSControlBarWindow.h"
 #include "CicoHSAppHistoryExt.h"
 
-#define ICO_HS_FLICK_TOUCH_FLICK_WIDTH 80
-#define ICO_HS_FLICK_TOUCH_FLICK_HEIGHT 80
-#define ICO_HS_FLICK_TOUCH_DISTANCE_XY 200
-#define ICO_HS_FLICK_TOUCH_FLICK_THREASHOLD_DISTANCE 100
-#define ICO_HS_FLICK_TOUCH_FLICK_THREASHOLD_MOVE_Y 80
-#define ICO_HS_FLICK_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.5d
-#define ICO_HS_FLICK_TOUCH_FLICK_ANIMA_TIME 300
+#define ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH 80
+#define ICO_HS_SWIPE_TOUCH_SWIPE_HEIGHT 80
+#define ICO_HS_SWIPE_TOUCH_DISTANCE_XY 200
+#define ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE 80
+#define ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_MOVE_Y 80
+#define ICO_HS_SWIPE_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.5d
+#define ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME 300
 
-#define ICO_HS_MAX_FLICKWINDOWS 4
+#define ICO_HS_MAX_SWIPEWINDOWS 4
 
-class CicoHSFlickTouch
+class CicoHSSwipeTouch
 {
   public:
     static void Initialize(CicoHSControlBarWindow* ctl_bar, CicoHSAppHistoryExt *apphist,
                            int width, int height);
     static void Finalize(void);
-    static void TouchDownFlick(void *data, Evas *evas, Evas_Object *obj, void *event_info); 
-    static void TouchUpFlick(void *data, Evas *evas, Evas_Object *obj, void *event_info);
-    static void TouchMoveFlick(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+    static void TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+    static void TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+    static void TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void *event_info);
     static Eina_Bool LongPushed(void *data);
 
   private:
     static CicoHSControlBarWindow* ctl_bar_window;
-    
+
     static int full_width;
     static int full_height;
     static int touch_state_b_x;
@@ -60,11 +60,11 @@ class CicoHSFlickTouch
     static bool long_act;
     static bool set_xy_pos;
     static int num_windows;
-    static CicoHSFlickInputWindow* flick_windows[ICO_HS_MAX_FLICKWINDOWS];
+    static CicoHSSwipeInputWindow* swipe_windows[ICO_HS_MAX_SWIPEWINDOWS];
     static CicoHSAppHistoryExt*    app_history;
 
   protected:
-    CicoHSFlickTouch operator=(const CicoHSFlickTouch&);
-    CicoHSFlickTouch(const CicoHSFlickTouch&);
+    CicoHSSwipeTouch operator=(const CicoHSSwipeTouch&);
+    CicoHSSwipeTouch(const CicoHSSwipeTouch&);
 };
 #endif

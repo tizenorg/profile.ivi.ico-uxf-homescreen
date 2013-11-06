@@ -55,6 +55,8 @@ class CicoHSControlBarWindow :public CicoHSWindow
     void TouchHome(void);
 
     void SetWindowID(const char *appid,int surface);
+    int GetSurfaceId(void);
+    const char * GetAppId(void);
 
     void SetNightMode(void);
     void SetRegulation(void);
@@ -63,6 +65,7 @@ class CicoHSControlBarWindow :public CicoHSWindow
 
     void onKeyDown(void *data, Evas *evas, Evas_Object *obj, void *info);
 
+    bool ActivationUpdate(void);
 protected:
     // assignment operator
     CicoHSControlBarWindow operator=(const CicoHSControlBarWindow&);

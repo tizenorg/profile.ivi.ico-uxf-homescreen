@@ -1,7 +1,9 @@
 #!/bin/sh
 killall ico_dic-gtforce 2> /dev/null
 killall ico-vic-carsim 2> /dev/null
+killall weekeyboard 2> /dev/null
 killall weston 2> /dev/null
+killall pulseaudio 2> /dev/null
 killall IcoSysconDaemon 2> /dev/null
 killall MeterApp 2> /dev/null
 
@@ -14,13 +16,24 @@ killall ODBQpKvkS1.Settings 2> /dev/null
 killall ico-app-samplepkgins 2> /dev/null
 killall ico-app-vicsample 2> /dev/null
 killall ico-app-soundsample 2> /dev/null
+killall net.zmap.navi 2> /dev/null
+killall WebProcess 2> /dev/null
+killall WebProcess 2> /dev/null
+PIDS=`/usr/bin/ps ax | /usr/bin/fgrep -v fgrep | /usr/bin/fgrep wrt_launchpad_daemon_candidate | /usr/bin/fgrep /usr/bin | /usr/bin/cut -c1-6`
+if [ "$PIDS" != "" ] ; then
+	/usr/bin/kill -9 $PIDS 2> /dev/null
+fi
+
+killall  2> /dev/null
 
 sleep 1
 
 killall -9 HomeScreen 2> /dev/null
 killall -9 IcoSysconDaemon 2> /dev/null
 killall -9 MeterApp 2> /dev/null
+killall -9 weekeyboard 2> /dev/null
 killall -9 weston 2> /dev/null
+killall -9 pulseaudio 2> /dev/null
 killall -9 ico_dic-gtforce 2> /dev/null
 killall -9 ico-vic-carsim 2> /dev/null
 
@@ -44,6 +57,7 @@ killall -9 ODBQpKvkS1.Settings 2> /dev/null
 killall -9 ico-app-samplepkgins 2> /dev/null
 killall -9 ico-app-soundsample 2> /dev/null
 killall -9 ico-app-vicsample 2> /dev/null
+killall -9 net.zmap.navi 2> /dev/null
 
 killall -9 WebProcess 2> /dev/null
 killall -9 WebProcess 2> /dev/null
@@ -55,3 +69,4 @@ killall -9 WebProcess 2> /dev/null
 kill -9 `ps ax | grep wrt_launchpad_daemon_candidate | grep -v grep | cut -c1-6` 2> /dev/null
 killall -9 WebProcess 2> /dev/null
 kill -9 `ps ax | grep wrt_launchpad_daemon_candidate | grep -v grep | cut -c1-6` 2> /dev/null
+systemctl restart murphyd.service

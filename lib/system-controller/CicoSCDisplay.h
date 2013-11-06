@@ -66,7 +66,6 @@ public:
     int         displayno;   ///< consecutive numbers
     int         width;       ///< the number of the lateral pixels
     int         height;      ///< the number of vertical pixels
-    int         inch;        ///< ccreen physical size(0.1 inches of units)
     int         pWidth;      ///< compositor width
     int         pHeight;     ///< compositor height
     int         orientation; ///< screen orientation

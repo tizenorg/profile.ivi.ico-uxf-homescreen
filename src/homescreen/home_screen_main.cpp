@@ -27,6 +27,7 @@
 #include "CicoSCSystemConfig.h"
 #include "Cico_aul_listen_app.h"
 #include "CicoHomeScreen.h"
+#include "CicoSound.h"
 
 using namespace std;
 
@@ -120,6 +121,8 @@ main(int argc, char *argv[])
     sound->Initialize(config);
     ICO_DBG("main: sound initialize end");
 
+    CicoSound::GetInstance()->Initialize(config);
+
     /*AUL Listen Signal set(launch/dead)*/
     initAulListenXSignal();
 
@@ -127,7 +130,7 @@ main(int argc, char *argv[])
     ICO_DBG("main: homescreen initialize start");
     CicoHomeScreen *home_screen = new CicoHomeScreen();
 
-    ret = home_screen->Initialize(ICO_ORIENTATION_VERTICAL,config);
+    ret = home_screen->Initialize(ICO_ORIENTATION_VERTICAL, config);
     if(ret != ICO_OK){
         ICO_ERR("main: homescreen initialize failed");
         /*clear all classes*/

@@ -33,7 +33,8 @@ libico_system_controller_la_SOURCES =	\
 	CicoSCSysResourceMonitor.cpp		\
 	CicoSCResourceManager.cpp			\
 	ico_syc_mrp_resource.c				\
-	CicoSCPolicyManager.cpp
+	CicoSCPolicyManager.cpp				\
+	Cico_aul_listen_app.cpp
 
 libico_system_controller_la_CPPFLAGS =	\
 	$(GCC_CXXFLAGS)						\
@@ -51,6 +52,7 @@ libico_system_controller_la_CPPFLAGS =	\
 	@MURPHYDOMAINCONTROLLER_CFLAGS@		\
 	@MURPHYECORE_CFLAGS@				\
 	@MURPHYRESOURCE_CFLAGS@				\
+	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
 	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
@@ -71,6 +73,7 @@ libico_system_controller_la_LIBADD =	\
 	@MURPHYDOMAINCONTROLLER_LIBS@		\
 	@MURPHYECORE_LIBS@					\
 	@MURPHYRESOURCE_LIBS@				\
+	@EDBUS_LIBS@						\
 	$(UWS_LIBS)							\
 	$(WESTONPLUGIN_LIBS)
 

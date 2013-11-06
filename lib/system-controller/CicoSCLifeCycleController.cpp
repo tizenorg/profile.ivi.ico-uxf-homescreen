@@ -25,6 +25,7 @@
 #include "CicoSCConf.h"
 #include "CicoSCSystemConfig.h"
 #include "CicoSCSysResourceController.h"
+#include "Cico_aul_listen_app.h"
 
 using namespace std;
 
@@ -840,7 +841,7 @@ void CicoSCLifeCycleController::getCategory(const char* sPkg, const char* sNm,
         addCtgry[sizeof(addCtgry)-1] = 0;
     }
     if (addCtgry[0]) {
-         category.assign(addCtgry);
+        category.assign(addCtgry);
         ICO_DBG("category=%s", category.c_str());
     }
     ICO_TRA("end");
@@ -852,8 +853,8 @@ void CicoSCLifeCycleController::getCategory(const char* sPkg, const char* sNm,
 void CicoSCLifeCycleController::initAUL()
 {
     ICO_TRA("start");
-    aul_listen_app_launch_signal(CSCLCCapp_launch_handler, (void*)this);
-    aul_listen_app_dead_signal(CSCLCCapp_dead_handler, (void*)this);
+    aul_listen_app_launch_signal_add(CSCLCCapp_launch_handler, (void*)this);
+    aul_listen_app_dead_signal_add(CSCLCCapp_dead_handler, (void*)this);
     ICO_TRA("end");
 }
 

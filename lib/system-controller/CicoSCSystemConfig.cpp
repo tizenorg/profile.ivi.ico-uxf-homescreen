@@ -285,11 +285,9 @@ CicoSCSystemConfig::createDisplayConfList(const ptree & root)
         optional<string> name;
         optional<string> node;
         optional<int> no = optional<int>(-1);
-        optional<string> wayland;
         optional<string> type;
         optional<int> width = optional<int>(-1);
         optional<int> height = optional<int>(-1);
-        optional<int> inch = optional<int>(-1);
 
         id = child.second.get_optional<int>("<xmlattr>.id");
         if (false == id.is_initialized()) {
@@ -311,11 +309,6 @@ CicoSCSystemConfig::createDisplayConfList(const ptree & root)
             ICO_ERR("display.no element not found");
             continue;
         }
-        wayland = child.second.get_optional<string>("wayland");
-        if (false == wayland.is_initialized()) {
-            ICO_ERR("display.wayland element not found");
-            continue;
-        }
         type = child.second.get_optional<string>("type");
         if (false == type.is_initialized()) {
             ICO_ERR("display.type element not found");
@@ -331,11 +324,6 @@ CicoSCSystemConfig::createDisplayConfList(const ptree & root)
             ICO_ERR("display.height element not found");
             continue;
         }
-        inch = child.second.get_optional<int>("inch");
-        if (false == inch.is_initialized()) {
-            ICO_ERR("display.inch element not found");
-            continue;
-        }
 
         CicoSCDisplayConf* displayConf = new CicoSCDisplayConf();
         displayConf->id     = id.get();
@@ -345,18 +333,11 @@ CicoSCSystemConfig::createDisplayConfList(const ptree & root)
         displayConf->type   = m_displayTypeTable[type.get()];
         displayConf->width  = width.get();
         displayConf->height = height.get();
-        displayConf->inch   = inch.get();
 
         displayConf->dumpConf();
 
         createLayerConf(child, displayConf);
         createDisplayZoneConf(child, displayConf);
-
-        // TODO overlap to zoneid
-        vector<CicoSCDisplayZoneConf*>::iterator itr;
-        itr = displayConf->zoneConfList.begin();
-        for (; itr != displayConf->zoneConfList.end(); ++itr) {
-        }
 
         m_displayConfList.push_back(displayConf);
     }
@@ -432,7 +413,11 @@ CicoSCSystemConfig::createDisplayZoneConf(const ptree::value_type & child,
         optional<string> y;
         optional<string> w;
         optional<string> h;
-        optional<string> overlap;
+        optional<bool>   fixed;
+        optional<bool>   l;
+        optional<bool>   r;
+        optional<bool>   t;
+        optional<bool>   b;
 
         id = zone.second.get_optional<int>("<xmlattr>.id");
         if (false == id.is_initialized()) {
@@ -464,10 +449,25 @@ CicoSCSystemConfig::createDisplayZoneConf(const ptree::value_type & child,
             ICO_WRN("zone.geometry.h attr not found");
             continue;
         }
-        overlap = zone.second.get_optional<string>("overlap");
-        if (false == overlap.is_initialized()) {
-            ICO_WRN("zone.overlap element not found");
-            overlap = optional<string>("");
+        fixed = zone.second.get_optional<bool>("aspect.<xmlattr>.Fixed");
+        if (false == fixed.is_initialized()) {
+            fixed = optional<bool>(false);
+        }
+        l = zone.second.get_optional<bool>("aspect.<xmlattr>.AlignLeft");
+        if (false == l.is_initialized()) {
+            l = optional<bool>(false);
+        }
+        r = zone.second.get_optional<bool>("aspect.<xmlattr>.AlignRight");
+        if (false == r.is_initialized()) {
+            r = optional<bool>(false);
+        }
+        t = zone.second.get_optional<bool>("aspect.<xmlattr>.AlignTop");
+        if (false == t.is_initialized()) {
+            t = optional<bool>(false);
+        }
+        b = zone.second.get_optional<bool>("aspect.<xmlattr>.AlignBottom");
+        if (false == b.is_initialized()) {
+            b = optional<bool>(false);
         }
 
         CicoSCDisplayZoneConf* zoneConf = new CicoSCDisplayZoneConf();
@@ -478,7 +478,11 @@ CicoSCSystemConfig::createDisplayZoneConf(const ptree::value_type & child,
         zoneConf->y          = calcGeometryExpr(y.get(), displayConf);
         zoneConf->w          = calcGeometryExpr(w.get(), displayConf);
         zoneConf->h          = calcGeometryExpr(h.get(), displayConf);
-        zoneConf->overlapStr = overlap.get();
+        zoneConf->aspectFixed       = fixed.get();
+        zoneConf->aspectAlignLeft   = l.get();
+        zoneConf->aspectAlignRight  = r.get();
+        zoneConf->aspectAlignTop    = t.get();
+        zoneConf->aspectAlignBottom = b.get();
         displayConf->zoneConfList.push_back(zoneConf);
 
         zoneConf->dumpConf();

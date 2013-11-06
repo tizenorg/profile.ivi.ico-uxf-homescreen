@@ -63,7 +63,8 @@ CicoSCServer* CicoSCServer::ms_myInstance = NULL;
 //--------------------------------------------------------------------------
 CicoSCServer::CicoSCServer()
     : m_uwsContext(NULL), m_windowCtrl(NULL),
-      m_inputCtrl(NULL) , m_userMgr(NULL), m_resourceMgr(NULL)
+      m_inputCtrl(NULL) , m_userMgr(NULL), m_resourceMgr(NULL),
+      m_policyMgr(NULL), m_dispatchProcessing(false)
 {
 }
 
@@ -282,6 +283,12 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
         return;
     }
 
+    if (true == m_dispatchProcessing) {
+        ICO_DBG("CicoSCServer::dispatch Leave(disptch processing)");
+        return;
+    }
+
+    m_dispatchProcessing = true;
     list<CicoSCCommand*>::iterator itr;
     itr = m_recvCmdQueue.begin();
     while(itr != m_recvCmdQueue.end()) {
@@ -315,6 +322,7 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
         }
         delete cmd;
     }
+    m_dispatchProcessing = false;
 
     if (NULL == handler->ecoreFdHandler) {
         ICO_ERR("ecoreFdHandler is null");

@@ -42,6 +42,7 @@ using namespace boost::property_tree;
 #include "CicoSCUser.h"
 #include "CicoSCConf.h"
 #include "CicoSCSystemConfig.h"
+#include "Cico_aul_listen_app.h"
 
 using namespace std;
 
@@ -60,6 +61,23 @@ using namespace std;
 
 void chkAndAddSlash(string& s);
 
+/**
+ * @brief applications die. callback function
+ * @param pid
+ * @param data user data
+ * @return int
+ * @retval -1: parameter error
+ * @retval 0: handler execute
+ */
+static int CSCUMapp_dead_handler(int pid, void *data)
+{
+    CicoSCUserManager* x = (CicoSCUserManager*)data;
+    if ((NULL == x) || (0 == x)) {
+        return -1;
+    }
+    x->appDeadHandler(pid);
+    return 0;
+}
 
 //==========================================================================
 //
@@ -76,6 +94,12 @@ CicoSCUserManager* CicoSCUserManager::ms_myInstance = NULL;
 CicoSCUserManager::CicoSCUserManager()
     : m_login("")
 {
+    ICO_TRA("start");
+    aul_listen_app_dead_signal_add(CSCUMapp_dead_handler, (void*)this);
+    m_vppa.clear();
+    m_waitName.clear();
+    m_waitHS.clear();
+    m_wait = false;
     // login-user application information file
     m_uConfig = CicoSCSystemConfig::getInstance()->getUserConf();
     if ((NULL == m_uConfig) || (true == m_uConfig->m_parent_dir.empty())) {
@@ -95,7 +119,7 @@ CicoSCUserManager::CicoSCUserManager()
     }
     chkAndAddSlash(m_flagPath);
     m_flagPath += ICO_SYC_CHGUSR_FLAG_FIL;
-
+    ICO_TRA("end");
 }
 
 //--------------------------------------------------------------------------
@@ -126,6 +150,7 @@ CicoSCUserManager::~CicoSCUserManager()
         delete *itr;
     }
     m_userList.clear();
+    m_vppa.clear();
 
     ICO_DBG("CicoSCUserManager::~CicoSCUserManager() Leave(EOK)");
 }
@@ -171,7 +196,7 @@ CicoSCUserManager::handleCommand(const CicoSCCommand * cmd)
         userlistCB(cmd->appid);
         break;
     case MSG_CMD_GET_LASTINFO:
-        // get last information 
+        // get last information
         lastinfoCB(cmd->appid);
         break;
     case MSG_CMD_SET_LASTINFO:
@@ -328,6 +353,13 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
 
     string oldUsr = m_login; /* get before login user */
     const CicoSCUser *conf = NULL;
+    // check all user logoff
+    if ((name.empty()) || (name[0] == ' ')) {
+        ICO_DBG("CicoSCUserManager::changeUser Leave(all user logoff)");
+        flagFileOn();
+        killingAppsAndHS(oldUsr);
+        return;
+    }
 
     // get user config
     conf = findUserConfbyName(name);
@@ -345,7 +377,7 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
     flagFileOn();
 
 #if 0
-    // Imprinting to file, that file is application's running information 
+    // Imprinting to file, that file is application's running information
     string usr_dir_old;
     getWorkingDir(oldUsr, usr_dir_old);
     string outfilename = usr_dir_old + ICO_SYC_APP_INFO;
@@ -371,21 +403,33 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
         mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO);
     }
 
+    if (0 != m_vppa.size()) {
+        // wait dead signal recieve
+        m_waitName = conf->name;
+        m_waitHS = conf->homescreen;
+        m_wait = true;
+        // run call launchHomescreenReq is appDeadHandler !
+        ICO_DBG("CicoSCUserManager::changeUser Leave(WAIT:%s)", m_waitName.c_str());
+        return;
+    }
     // change homescreen application
+    sleep(2);                   // wait 2 sec for dead all applications
     launchHomescreenReq(conf->name, conf->homescreen);
-
     // change login user
     m_login = conf->name;
     saveLastUser();
     ICO_DBG("login user changed (user=%s)", m_login.c_str());
     ICO_INF("%s", tmpText);
     flagFileOff();
+    m_waitName.clear();
+    m_waitHS.clear();
+    m_wait = false;
     ICO_DBG("CicoSCUserManager::changeUser Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  imprinting to file, that file is application's running information 
+ *  @brief  imprinting to file, that file is application's running information
  *  @param  usrnam target user name
  *  @return bool
  *  @retval true success
@@ -461,6 +505,7 @@ bool CicoSCUserManager::killingAppsAndHS(const string&)
         return false;
     }
 */
+    m_vppa.clear();
     CicoSCLifeCycleController* oCSCLCC;
     oCSCLCC = CicoSCLifeCycleController::getInstance();
     if ((NULL == oCSCLCC) || (0 == oCSCLCC)) {
@@ -478,6 +523,7 @@ bool CicoSCUserManager::killingAppsAndHS(const string&)
         ICO_DBG("CicoSCUserManager::killingAppsAndHS Tgt:%d(%s)", pObj->m_pid,
                 pObj->m_appid.c_str());
         pids.push_back(pObj->m_pid);
+        m_vppa.push_back(pairPidAppid(pObj->m_pid, pObj->m_appid));
         r = true;
     }
     int sz = pids.size();
@@ -513,7 +559,7 @@ void CicoSCUserManager::getWorkingDir(const string& usr, string& dir)
  *  @retval false fail
  */
 //--------------------------------------------------------------------------
-bool CicoSCUserManager::launchHomescreenReq(const string& usr, 
+bool CicoSCUserManager::launchHomescreenReq(const string& usr,
                                             const string& appid_hs)
 {
     string usr_dir;
@@ -1103,6 +1149,69 @@ void chkAndAddSlash(string& s)
     if ('/' != p[sz-1]) {
         s += "/";
     }
+}
+
+
+/**
+ * @brief app dead Handler
+ * @param pid dead pid
+ * @return bool
+ * @retval true pid is target
+ * @retval false pid is no target
+ */
+bool CicoSCUserManager::appDeadHandler(int pid)
+{
+    ICO_TRA("start (%d)", pid);
+    if (false == m_wait) {
+        ICO_TRA("end");
+        return false;
+    }
+    ICO_DBG("dead app(%d)", pid);
+    bool bBINGO = false;
+    string appid;
+    vector<pairPidAppid>::iterator it = m_vppa.begin(); // iterator set begin
+    while(it != m_vppa.end()) {  // loop to the last data
+        if ((*it).first == pid) {
+            appid = (*it).second;
+            m_vppa.erase(it);
+            bBINGO = true;
+            break;  // break of while it
+        }
+        ++it;   // next data
+    }
+    if (false == bBINGO) {
+        ICO_TRA("end FAIL pid(%d)", pid);
+        return false;
+    }
+#if 1
+    int sz = m_vppa.size();
+    if (0 != sz) {
+        ICO_TRA("end contenue wait(%d)", sz);
+        return true;
+    }
+#else
+    if (0 != appid.compare(m_waitHS)) {
+        ICO_TRA("end contenue wait(%s)", appid.c_str());
+        return true;
+    }
+#endif
+    char tmpText[128];
+    sprintf(tmpText, "CHG USER[%s]->[%s]", m_login.c_str(), m_waitName.c_str());
+
+    // change homescreen application
+    sleep(2);                   // wait 2 sec for dead all applications
+    launchHomescreenReq(m_waitName, m_waitHS);
+    // change login user
+    m_login = m_waitName;
+    saveLastUser();
+    ICO_DBG("login user changed (user=%s)", m_login.c_str());
+    ICO_INF("%s", tmpText);
+    flagFileOff();
+    m_waitName.clear();
+    m_waitHS.clear();
+    m_wait = false;
+    ICO_DBG("end homescreen start req.(%s)", appid.c_str());
+    return true;
 }
 
 // vim:set expandtab ts=4 sw=4:

@@ -108,6 +108,10 @@ private:
     void updateSoundResourceRegulation(int state);
     void updateInputResourceRegulation(int state);
 
+    void updateDispResRegulationPreProc(resource_request_t *req);
+    void updateSoundResRegulationPreProc(resource_request_t *req);
+    void updateInputResRegulationPreProc(resource_request_t *req);
+
     resource_request_t * findCurDispResOwerReq(resource_request_t *req);
     resource_request_t * popCurDispResOwerReq(resource_request_t *req);
     void dumpCurDispResOwerReq(void);
@@ -115,6 +119,8 @@ private:
     resource_request_t * findWaitingDispResReq(resource_request_t *req);
     resource_request_t * popWaitingDispResReq(resource_request_t *req);
     void dumpWaitingDispResReq(void);
+
+    bool isMatchDisplayed(void);
 
 private:
     CicoSCPolicyManager       *m_policyMgr;
@@ -129,6 +135,12 @@ private:
     std::list<resource_request_t*> m_waitingDispResReq;
     map<int, list<resource_request_t*> > m_soundReqQueue;
     map<int, list<resource_request_t*> > m_inputReqQueue;
+
+    // show/hide animation name at regulation on or off
+    const std::string m_animaName;
+
+    // show/hide animation time at regulation on or off
+    int m_animaTime;
 };
 #endif  // __CICO_SC_RESOURCE_MANAGER_H__
 // vim:set expandtab ts=4 sw=4:

@@ -17,6 +17,7 @@
 #include "CicoHomeScreenResourceConfig.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
+#include "CicoSound.h"
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -340,6 +341,14 @@ CicoHSControlBarWindow::FreeControlBarWindow(void)
 void 
 CicoHSControlBarWindow::TouchHome(void)
 {
+    ActivationUpdate();
+    if (true == CicoHSSystemState::getInstance()->getRegulation()) {
+        CicoSound::GetInstance()->PlayFailureSound();
+    }
+    else {
+        CicoSound::GetInstance()->PlayOperationSound();
+    }
+        
     CicoHomeScreen::ChangeMode(ICO_HS_SHOW_HIDE_PATTERN_SLIDE);
 }
 
@@ -442,7 +451,7 @@ CicoHSControlBarWindow::SetRegulation(void)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSControlBarWindow::SetMenuWindowID
+ * @brief   CicoHSControlBarWindow::SetWindowID
  *          set appid and surface
  *
  * @param[in]   none
@@ -458,6 +467,34 @@ CicoHSControlBarWindow::SetWindowID(const char *appid,int surface)
 
 /*--------------------------------------------------------------------------*/
 /**
+ * @brief   CicoHSControlBarWindow::GetSurfaceId
+ *          get surface id of control bar window
+ *
+ * @return  surface id
+ */
+/*--------------------------------------------------------------------------*/
+int
+CicoHSControlBarWindow::GetSurfaceId(void)
+{
+    return this->surface;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSControlBarWindow::GetAppId
+ *          get application id of control bar
+ *
+ * @return  application id
+ */
+/*--------------------------------------------------------------------------*/
+const char *
+CicoHSControlBarWindow::GetAppId(void)
+{
+    return this->appid;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
  * @brief   CicoHSControlBarWindow::TouchShortcut
  *          touch shortcut button
  *
@@ -469,6 +506,9 @@ void
 CicoHSControlBarWindow::TouchShortcut(const char *appid)
 {
     ICO_DBG("CicoHSControlBarWindow::TouchShortcut Enter");
+    ActivationUpdate();
+
+    CicoSound::GetInstance()->PlayOperationSound();
 
     if (appid != NULL) {
         ICO_DBG("CicoHSControlBarWindow::TouchShortcut appid = [%s]", appid);
@@ -494,6 +534,8 @@ CicoHSControlBarWindow::onKeyDown(void *data, Evas *evas,
 {
     Evas_Event_Key_Down *evinfo = NULL;
     evinfo = (Evas_Event_Key_Down*)info;
+
+    CicoSound::GetInstance()->PlayOperationSound();
 
     ICO_DBG("onKeyDown: keyname=%s, key=%d",
             evinfo->keyname, (char)*evinfo->key);
@@ -529,4 +571,20 @@ CicoHSControlBarWindow::evasKeyDownCB(void *data, Evas *evas,
     CicoHSControlBarWindow *ctrlbarwin = (CicoHSControlBarWindow*)(data);
     ctrlbarwin->onKeyDown(data, evas, obj, info);
 }
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  Activation update swipe app
+ *
+ *  @return bool
+ *  @retval true update
+ *  @retval false no update
+ */
+//--------------------------------------------------------------------------
+bool
+CicoHSControlBarWindow::ActivationUpdate(void)
+{
+    return CicoHomeScreen::ActivationUpdate();
+}
+
 // vim: set expandtab ts=4 sw=4:

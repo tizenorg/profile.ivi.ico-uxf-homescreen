@@ -66,7 +66,7 @@ CicoHSWindowController::Initialize(void)
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-void 
+void
 CicoHSWindowController::Finalize(void)
 {
     /* end the ecore_evas */
@@ -79,8 +79,8 @@ CicoHSWindowController::Finalize(void)
  *          get size of full screen
  *
  * @param[in]   orientation    vertial or horizontal
- * @param[out]   width          width of window
- * @param[out]   height         heigth of window
+ * @param[out]  width          width of window
+ * @param[out]  height         heigth of window
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
@@ -102,6 +102,10 @@ CicoHSWindowController::GetFullScreenSize(int orientation,
     ICO_DBG("ecore_wl_screen_size_get => w/h=%d/%d",
             display_width, display_height);
 
+#if 1           /* TizenIVI 3.0 ecore return correct display size   */
+    *width = display_width;
+    *height = display_height;
+#else           /* TizenIVI 3.0 ecore return correct display size   */
     if (orientation == ICO_ORIENTATION_VERTICAL) {
         *width = display_width > display_height ?
                                  display_height : display_width;
@@ -114,9 +118,8 @@ CicoHSWindowController::GetFullScreenSize(int orientation,
         *height = (display_width < display_height ?
                                    display_width : display_height);
     }
-
-    ICO_DBG("CicoHSWindowController::GetFullScreenSize Leave(w/h=%d/%d)",
-            *width, *height);
+#endif          /* TizenIVI 3.0 ecore return correct display size   */
+    ICO_DBG("CicoHSWindowController::GetFullScreenSize Leave(w/h=%d/%d)", *width, *height);
 }
 
 /*--------------------------------------------------------------------------*/

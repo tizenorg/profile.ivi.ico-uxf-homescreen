@@ -58,4 +58,7 @@ stamp-h1 \
 ./tests/system-controller/system-controller/Makefile.in \
 ./tests/system-controller/test-dummy-hs/.deps \
 ./tests/system-controller/test-dummy-hs/Makefile \
-./tests/system-controller/test-dummy-hs/Makefile.in
+./tests/system-controller/test-dummy-hs/Makefile.in \
+./tool/.deps \
+./tool/Makefile \
+./tool/Makefile.in

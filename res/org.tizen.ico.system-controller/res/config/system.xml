@@ -16,117 +16,145 @@
     <display id="0" name="Center">
         <node>Center</node>
         <no>0</no>
-        <wayland>waylnad-0</wayland>
         <type>center</type>
         <width>1080</width>
         <height>1920</height>
-        <inch>101</inch>
         <layers>
             <layer id="0" name="BackGround">
-                <!-- type 1: background 2:normal 4:cursor 8:input -->
+                <!-- layer type -->
+                <!-- 1:background 2:application 3:homescreen 4:interrput application 5:onscreen 101:input 102:touch 103:cursor -->
                 <type>1</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="1" name="HomeScreen">
+            <layer id="1" name="Application">
                 <type>2</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="2" name="Application">
-                <type>2</type>
+            <layer id="2" name="SoftKeyboard">
+                <type>101</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="3" name="SoftKeyboard">
-                <type>8</type>
+            <layer id="3" name="HomeScreen">
+                <type>3</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="4" name="InterruptApp">
-                <type>2</type>
+            <layer id="4" name="ControlBar">
+                <type>3</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="5" name="Touch">
-                <type>8</type>
+            <layer id="5" name="InterruptApp">
+                <type>4</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
             <layer id="6" name="OnScreen">
-                <type>2</type>
+                <type>5</type>
                 <menuoverlap>true</menuoverlap>
             </layer>
-            <layer id="7" name="Cursor">
-                <type>4</type>
+            <layer id="7" name="Touch">
+                <type>102</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="8" name="Cursor">
+                <type>103</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
         </layers>
         <zones>
-            <zone id="0" name="Base">
-                <geometry x="-1" y="-1" w="-1" h="-1"/>
-                <overlap/>
-            </zone>
+            <!-- * zone is mandatory element
+                   attribute of "id" is zone id. range of first display zone id is 1...20
+                   attribute of "name" is the zone name of any.
+                 * geometry is mmandatory element. This geometry values represents the position and size of the zone aria.
+                   attribute of "x" represets x position of zone.
+                   attribute of "y" represets y position of zone.
+                   attribute of "w" represets width of zone.
+                   attribute of "h" represets hieght of zone.
+                   Special string "dispw" is a value equal the width of the display.
+                   Special string "disph" is a value equal the height of the display.
+                 * aspect is optional element
+                   If attribute of "Fixed" is true, the surface of this zone is fixed aspect ratio.
+                   If attribute of "Fixed" is true, attribute of "AlignLeft"/"AlignRight"/"AlignTop"/"AlignBottom" is valid.
+                   If attribute of "AlignLeft" is ture, horizontal direction to aligned at the left when maintaining the aspect ratio.
+                   If attribute of "AlignRight" is true, horizontal direction to aligned at the right when maintaining the aspect ratio.
+                   IF attribute of both "AlignLeft" and "AlignRight" is true, located in the center.
+                   If attribute of "AlignTop" is true, vertical direction is aligned at the top when you maintain the aspect ratio.
+                   If attribute of "AlignBottom" is true, vertical direction is aligned at the bottom when you maintain the aspect ratio.
+                   IF attribute of both "AlignTop" and "AlignBottom" is true, located in the center.
+            -->
             <zone id="1" name="Full">
                 <geometry x="0" y="64" w="dispw" h="disph-64-128"/>
-                <overlap>Upper;Lower;UpperLeft;UpperRight;LowerLeft;LowerRight</overlap>
             </zone>
             <zone id="2" name="Upper">
                 <geometry x="0" y="64" w="dispw" h="disph-64-128/2"/>
-                <overlap>Full;UpperLeft;UpperRight</overlap>
             </zone>
             <zone id="3" name="Lower">
                 <geometry x="0" y="heigh-64-128/2+64" w="dispw" h="disph-64-128/2"/>
-                <overlap>Full;LowerLeft;LowerRight</overlap>
             </zone>
             <zone id="4" name="UpperLeft">
                 <geometry x="0" y="64" w="dispw/2" h="disph-64-128/2"/>
-                <overlap>Full;Upper</overlap>
             </zone>
             <zone id="5" name="UpperRight">
                 <geometry x="dispw/2" y="64" w="dispw/2" h="disph-64-128/2"/>
-                <overlap>Full;Upper</overlap>
             </zone>
             <zone id="6" name="LowerLeft">
                 <geometry x="0" y="heigh-64-128/2+64" w="dispw/2" h="disph-64-128/2"/>
-                <overlap>Full;Lower</overlap>
             </zone>
             <zone id="7" name="LowerRight">
                 <geometry x="dispw/2" y="heigh-64-128/2+64" w="dispw/2" h="disph-64-128/2"/>
-                <overlap>Full;Lower</overlap>
             </zone>
             <zone id="8" name="SysApp">
                 <geometry x="0" y="64" w="dispw" h="disph-64-128"/>
-                <overlap/>
             </zone>
             <zone id="9" name="SysApp.Left">
                 <geometry x="0" y="64" w="dispw/2-181" h="disph-64-128"/>
-                <overlap/>
             </zone>
             <zone id="10" name="SysApp.Right">
                 <geometry x="dispw/2+181" y="64" w="dispw/2-181" h="disph-64-128"/>
-                <overlap/>
+            </zone>
+            <zone id="11" name="MobileFull">
+                <geometry x="0" y="64" w="dispw" h="disph-64-128"/>
+
+                <aspect Fixed="true" AlignLeft="false" AlignRight="false" AlignTop="flase" AlignBottom="false"/>
+            </zone>
+            <zone id="12" name="MobileUpper">
+                <geometry x="0" y="64" w="dispw" h="disph-64-128/2"/>
+                <aspect Fixed="true" AlignLeft="false" AlignRight="false" AlignTop="flase" AlignBottom="false"/>
+            </zone>
+            <zone id="13" name="MobileLower">
+                <geometry x="0" y="heigh-64-128/2+64" w="dispw" h="disph-64-128/2"/>
+                <aspect Fixed="true" AlignLeft="false" AlignRight="false" AlignTop="flase" AlignBottom="false"/>
             </zone>
         </zones>
     </display>
     <display id="1" name="Mid">
         <node>Center</node>
         <no>1</no>
-        <wayland>waylnad-0</wayland>
         <type>center</type>
         <width>1280</width>
         <height>480</height>
-        <inch>101</inch>
         <layers>
-            <layer id="2" name="Application">
+            <layer id="1" name="MainApp">
+                <type>2</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="2" name="SubDispMainApp">
+                <type>2</type>
+                <menuoverlap>false</menuoverlap>
+            </layer>
+            <layer id="3" name="SubDispSubApp">
                 <type>2</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
         </layers>
         <zones>
-            <zone id="20" name="Full">
+            <zone id="21" name="Full">
                 <geometry x="0" y="0" w="dispw" h="disph"/>
                 <overlap>Left;Right</overlap>
             </zone>
-            <zone id="21" name="Left">
+            <zone id="22" name="Left">
                 <geometry x="0" y="0" w="320" h="disph"/>
                 <overlap>Full</overlap>
             </zone>
-            <zone id="22" name="Right">
+            <zone id="23" name="Right">
                 <geometry x="960" y="0" w="320" h="disph"/>
                 <overlap>Full</overlap>
             </zone>
