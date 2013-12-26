@@ -66,6 +66,9 @@ public:
     // startup server
     int startup(int port, const char *protocol);
 
+    // startup server
+    void teardown(void);
+
     // send message to application client
     int sendMessage(const std::string & appid, CicoSCMessage* msg);
 
@@ -78,6 +81,12 @@ public:
                         const void                   *id,
                         const ico_uws_detail         *detail,
                         void                         *user_data);
+
+    // clear receive command queue
+    void clearRecvCmdQueue(const std::string & appid);
+
+    // clear send message queue
+    void clearSendMsgQueue(const std::string & appid);
 
 private:
     // default constructor

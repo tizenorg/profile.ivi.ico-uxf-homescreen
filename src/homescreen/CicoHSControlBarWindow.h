@@ -26,16 +26,16 @@
 #include <Edje.h>
 
 #include "CicoHomeScreenCommon.h"
-#include "CicoHomeScreenConfig.h"
+#include "CicoGKeyFileConfig.h"
 #include "CicoHSWindow.h"
 
-#define ICO_HS_CONTROL_BAR_MENU_BTN_START_POS_Y 10
-#define ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH 108
-#define ICO_HS_CONTROL_BAR_MENU_BTN_HEIGHT 108
+#define ICO_HS_CONTROL_BAR_MENU_BTN_START_POS_Y 14
+#define ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH 100
+#define ICO_HS_CONTROL_BAR_MENU_BTN_HEIGHT 100
 
-#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_START_POS_Y 10
-#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_WIDTH 108
-#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_HEIGHT 108
+#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_START_POS_Y 14
+#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_WIDTH 100
+#define ICO_HS_CONTROL_BAR_SHORTCUT_BTN_HEIGHT 100
 
 #define ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM 4
 #define ICO_HS_CONTROL_BAR_BTN_MAX_NUM (ICO_HS_CONTROL_BAR_SHORTCUT_MAX_NUM + 1)
@@ -51,7 +51,7 @@ class CicoHSControlBarWindow :public CicoHSWindow
     void Finalize(void);
     int CreateControlBarWindow(int pos_x,int pos_y,int width,int height);
     void FreeControlBarWindow(void);
-    
+
     void TouchHome(void);
 
     void SetWindowID(const char *appid,int surface);

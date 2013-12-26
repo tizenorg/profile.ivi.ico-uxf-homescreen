@@ -40,7 +40,7 @@ public:
     static CicoSCWayland* getInstance();
 
     // initialize wayland connection
-    int intialize(void);
+    int initialize(void);
 
     // flush display
     void flushDisplay(void);

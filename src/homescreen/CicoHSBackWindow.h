@@ -29,7 +29,7 @@
 #include <Edje.h>
 
 #include "CicoHomeScreenCommon.h"
-#include "CicoHomeScreenConfig.h"
+#include "CicoGKeyFileConfig.h"
 #include "CicoHSWindow.h"
 
 class CicoHSBackWindow :public CicoHSWindow
@@ -52,4 +52,4 @@ class CicoHSBackWindow :public CicoHSWindow
     CicoHSBackWindow(const CicoHSBackWindow&);
 };
 #endif
-
+// vim: set expandtab ts=4 sw=4:

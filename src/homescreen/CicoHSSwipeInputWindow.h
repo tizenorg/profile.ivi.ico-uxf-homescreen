@@ -27,7 +27,7 @@
 
 #include "ico_syc_type.h"
 #include "CicoHomeScreenCommon.h"
-#include "CicoHomeScreenConfig.h"
+#include "CicoGKeyFileConfig.h"
 #include "CicoHSWindow.h"
 
 class CicoHSSwipeInputWindow :public CicoHSWindow

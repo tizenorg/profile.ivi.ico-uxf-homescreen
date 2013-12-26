@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+     system controller application configureation
+-->
+<system-controller>
+  <!--
+    log setting
+    -->
+  <log>
+    <name>IcoSysConDaemon</name>
+    <level>
+      <performance enable="true"/>
+      <trace       enable="true"/>
+      <debug       enable="true"/>
+      <info        enable="true"/>
+      <warning     enable="true"/>
+      <critical    enable="true"/>
+      <error       enable="true"/>
+    </level>
+    <flush enable="true"/>
+    <ecore enalbe="true"/>
+  </log>
+</system-controller>
+<!-- vim: set expandtab ts=2 sw=2: -->

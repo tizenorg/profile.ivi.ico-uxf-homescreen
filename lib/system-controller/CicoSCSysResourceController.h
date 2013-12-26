@@ -32,6 +32,9 @@ class CicoSCSysResourceMonitor;
 class CicoSCResourceConf;
 #endif
 
+#define D_STRtasks      "tasks"
+#define D_STRcpushares  "cpu.shares"
+
 class CicoSCSysResourceController;
 
 /**
@@ -103,6 +106,8 @@ public:
 
     bool isWactchAllReady() const;
 
+    bool startSysResource(); // start cgroup controll
+
     bool watch();   // watch request (please interval call)
     const CicoSCSysResourceMonitor& getMonitor() const;
     int getCpuUsge() const;
@@ -119,9 +124,13 @@ protected:
     bool replaceCgroupFile(const std::string& tgt, int val);
     bool replaceCgroupFile(const std::string& tgt, const char* val);
 
-private:
+protected:
     CicoSCSysResourceMonitor* m_monitor;
     const CicoSCResourceConf* m_rConf;
+    std::vector<std::string> m_RCCpuTasks;
+    std::vector<std::string> m_RCCpuShares;
+    bool m_bDoIt;
+private:
     CicoStateMachine* m_stt;
 
     CicoSRCCPU_LOW* m_SRCCPU_LOW;
@@ -131,11 +140,8 @@ private:
 
     int m_cpu;
     int m_mem;
-    std::vector<std::string> m_RCCpuTasks;
-    std::vector<std::string> m_RCCpuShares;
     int m_cgrpCPU;
     int m_cgrpMEM;
-
 };
 
 /**

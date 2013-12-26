@@ -8,4 +8,4 @@ Wants=ico-device-input-controller.service ico-vic-carsim.service
 Environment=TIZEN_PLATFORMLOGGING_MODE=1
 Environment=TIZEN_DLOG_LEVEL=1
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/dbus/user_bus_socket
-ExecStart=/usr/apps/org.tizen.ico.system-controller/bin/IcoSysconDaemon
+ExecStart=/usr/apps/org.tizen.ico.system-controller/bin/IcoSysconDaemon --user app

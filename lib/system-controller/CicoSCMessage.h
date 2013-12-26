@@ -102,6 +102,7 @@ private:
     JsonObject          *m_argObj;      //!< json arg objects
     JsonArray           *m_array;       //!< json array
     std::string         m_toAppid;      //!< send to appid
+    std::string         m_data;         //!< json format data
 };
 #endif  // __CICO_SC_MESSAGE_H__
 // vim:set expandtab ts=4 sw=4:

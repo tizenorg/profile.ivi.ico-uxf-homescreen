@@ -32,8 +32,8 @@ using namespace std;
 #include "CicoSCWindowController.h"
 #include "CicoLog.h"
 
-#include "CicoSCSystemConfig.h"
-#include "CicoSCConf.h"
+#include "CicoSystemConfig.h"
+#include "CicoConf.h"
 #include "CicoSCDisplay.h"
 #include "CicoSCLayer.h"
 #include "CicoSCDisplayZone.h"
@@ -78,10 +78,10 @@ CicoSCWindowController::~CicoSCWindowController()
 int
 CicoSCWindowController::initDB(void)
 {
-    ICO_DBG("CicoSCWindowController::initDB: Enter");
+    ICO_TRA("CicoSCWindowController::initDB: Enter");
 
     const vector<CicoSCDisplayConf*>& displayList =
-            CicoSCSystemConfig::getInstance()->getDisplayConfList();
+            CicoSystemConfig::getInstance()->getDisplayConfList();
     vector<CicoSCDisplayConf*>::const_iterator itr;
     itr = displayList.begin();
     for (; itr != displayList.end(); ++itr) {
@@ -128,7 +128,7 @@ CicoSCWindowController::initDB(void)
         m_displayList.push_back(display);
     }
 
-    ICO_DBG("CicoSCWindowController::initDB: Leave");
+    ICO_TRA("CicoSCWindowController::initDB: Leave");
     return ICO_SYC_EOK;
 }
 
@@ -164,14 +164,15 @@ CicoSCWindowController::show(int        surfaceid,
                              const char *animation,
                              int        animationTime)
 {
-    ICO_DBG("CicoSCWindowController::show Enter"
+    ICO_TRA("CicoSCWindowController::show Enter"
             "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::show Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::show Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -222,7 +223,7 @@ CicoSCWindowController::show(int        surfaceid,
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::show Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::show Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -245,20 +246,21 @@ CicoSCWindowController::hide(int        surfaceid,
                              const char *animation,
                              int        animationTime)
 {
-    ICO_DBG("CicoSCWindowController::hide Enter"
+    ICO_TRA("CicoSCWindowController::hide Enter"
             "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::hide Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::hide Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
     if (false == window->visible) {
         ICO_DBG("already hide state");
-        ICO_DBG("CicoSCWindowController::hide Leave(EOK)");
+        ICO_TRA("CicoSCWindowController::hide Leave(EOK)");
         return ICO_SYC_EOK;
     }
 
@@ -295,7 +297,7 @@ CicoSCWindowController::hide(int        surfaceid,
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::hide Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::hide Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -322,14 +324,15 @@ CicoSCWindowController::resize(int        surfaceid,
                                const char *animation,
                                int        animationTime)
 {
-    ICO_DBG("CicoSCWindowController::resize Enter"
+    ICO_TRA("CicoSCWindowController::resize Enter"
             "(surfaceid=0x%08X h=%d w=%d animation=%s animationTime=%d)",
             surfaceid, w, h, animation, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::resize Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::resize Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -351,7 +354,7 @@ CicoSCWindowController::resize(int        surfaceid,
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::resize Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::resize Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -380,7 +383,7 @@ CicoSCWindowController::move(int        surfaceid,
                              const char *animation,
                              int        animationTime)
 {
-    ICO_DBG("CicoSCWindowController::move Enter"
+    ICO_TRA("CicoSCWindowController::move Enter"
             "(surfaceid=0x%08X nodeid=%d x=%d y=%d "
             "animation=%s animationTime=%d)",
             surfaceid, nodeid, x, y, animation, animationTime);
@@ -388,7 +391,8 @@ CicoSCWindowController::move(int        surfaceid,
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::move Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::move Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -416,7 +420,7 @@ CicoSCWindowController::move(int        surfaceid,
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::move Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::move Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -439,14 +443,15 @@ CicoSCWindowController::raise(int        surfaceid,
                               const char *animation,
                               int        animationTime)
 {
-    ICO_DBG("CicoSCWindowController::raise Enter"
+    ICO_TRA("CicoSCWindowController::raise Enter"
             "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::raise Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::raise Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -470,7 +475,7 @@ CicoSCWindowController::raise(int        surfaceid,
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::raise Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::raise Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -480,6 +485,7 @@ CicoSCWindowController::raise(int        surfaceid,
  *
  *  @param [in] surfaceid           wayland surface id
  *  @param [in] nodeid              node id
+ *  @param [in] layerid             layer id
  *  @param [in] x                   window x position
  *  @param [in] y                   window y position
  *  @param [in] w                   window width
@@ -498,6 +504,7 @@ CicoSCWindowController::raise(int        surfaceid,
 int
 CicoSCWindowController::setGeometry(int        surfaceid,
                                     int        nodeid,
+                                    int        layerid,
                                     int        x,
                                     int        y,
                                     int        w,
@@ -507,18 +514,19 @@ CicoSCWindowController::setGeometry(int        surfaceid,
                                     const char *moveAnimation,
                                     int        moveAnimationTime)
 {
-    ICO_DBG("CicoSCWindowController::setGeometry Enter"
-            "(surfaceid=0x%08X nodeid=%d x=%d y=%d w=%d h=%d "
+    ICO_TRA("CicoSCWindowController::setGeometry Enter"
+            "(surfaceid=0x%08X nodeid=%d layerid=%d x=%d y=%d w=%d h=%d "
             "resizeAnimation=%s resizeAnimationTime=%d "
             "moveAnimation=%s moveAnimationTime=%d)",
-            surfaceid, nodeid, x, y, w, h,
+            surfaceid, nodeid, layerid, x, y, w, h,
             resizeAnimation, resizeAnimationTime,
             moveAnimation, moveAnimationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::setGeometry Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::setGeometry Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -549,7 +557,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     if (m_physicalDisplayTotal <= (unsigned int)moveNodeId) {
         ICO_WRN("nodeid(%d) is over physical display total(%d)",
                 m_physicalDisplayTotal, nodeid);
-        ICO_WRN("CicoSCWindowController::setGeometry Leave(EINVAL)");
+        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
         return ICO_SYC_EINVAL;
     }
 
@@ -573,6 +581,14 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         moveH = h;
     }
 
+    // set window layer to Multi Window Manager
+    if (0 <= layerid) {
+        setWindowLayer(window->surfaceid, layerid);
+    }
+
+    // update window attr
+    window->nodeid = moveNodeId;
+
     // set visible request to Multi Window Manager
     CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
                                       moveX, moveY, moveW, moveH,
@@ -581,7 +597,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::setGeometry Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::setGeometry Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -590,6 +606,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
  *  @brief  set window(surface) geometry
  *
  *  @param [in] surfaceid           wayland surface id
+ *  @param [in] layerid             layer id
  *  @param [in] nodeid              node id
  *  @param [in] zone                display zone name
  *  @param [in] resizeAnimation     resize animation name
@@ -607,28 +624,31 @@ CicoSCWindowController::setGeometry(int        surfaceid,
 int
 CicoSCWindowController::setGeometry(int        surfaceid,
                                     const char *zone,
+                                    int        layerid,
                                     const char *resizeAnimation,
                                     int        resizeAnimationTime,
                                     const char *moveAnimation,
                                     int        moveAnimationTime)
 {
-    ICO_DBG("CicoSCWindowController::setGeometry Enter"
-            "(surfaceid=0x%08X zone=%s "
+    ICO_TRA("CicoSCWindowController::setGeometry Enter"
+            "(surfaceid=0x%08X zone=%s layerid=%d "
             "resizeAnimation=%s resizeAnimationTime=%d "
             "moveAnimation=%s moveAnimationTime=%d)",
-            surfaceid, zone,
+            surfaceid, zone, layerid,
             resizeAnimation, resizeAnimationTime,
             moveAnimation, moveAnimationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::setGeometry Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::setGeometry Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
     if ((NULL == zone) || ('\0' == zone[0])) {
-        ICO_WRN("CicoSCWindowController::setGeometry Leave(EINVAL)");
+        ICO_WRN("zone value is invalid");
+        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
         return ICO_SYC_EINVAL;
     }
 
@@ -646,14 +666,14 @@ CicoSCWindowController::setGeometry(int        surfaceid,
 
     if (NULL == dispzone) {
         ICO_WRN("display zone name(%s) is invalid.", zone);
-        ICO_WRN("CicoSCWindowController::setGeometry Leave(EINVAL)");
+        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
         return ICO_SYC_EINVAL;
     }
 
     if (m_physicalDisplayTotal <= (unsigned int)displayno) {
         ICO_WRN("nodeid(%d) is over physical display total(%d)",
                 m_physicalDisplayTotal, displayno);
-        ICO_WRN("CicoSCWindowController::setGeometry Leave(EINVAL)");
+        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
         return ICO_SYC_EINVAL;
     }
 
@@ -687,13 +707,13 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     window->zone = dispzone->fullname;
     setAttributes(window->surfaceid);
 
-    int ret = setGeometry(surfaceid, displayno,
+    int ret = setGeometry(surfaceid, displayno, layerid,
                           dispzone->x, dispzone->y,
                           dispzone->width, dispzone->height,
                           resizeAnimation, resizeAnimationTime,
                           moveAnimation, moveAnimationTime);
 
-    ICO_DBG("CicoSCWindowController::setGeometry Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::setGeometry Leave(EOK)");
     return ret;
 }
 
@@ -716,14 +736,15 @@ CicoSCWindowController::lower(int        surfaceid,
                               const char *animation,
                               int        animationTime)
 {
-    ICO_DBG("CicoSCWindowController::lower Enter"
+    ICO_TRA("CicoSCWindowController::lower Enter"
             "(surfaceid=0x%08X animation=%s animationTime=%d)",
             surfaceid, animation, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::lower Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::lower Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -746,7 +767,7 @@ CicoSCWindowController::lower(int        surfaceid,
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::lower Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::lower Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -766,13 +787,14 @@ CicoSCWindowController::lower(int        surfaceid,
 int
 CicoSCWindowController::setWindowLayer(int surfaceid, int layerid)
 {
-    ICO_DBG("CicoSCWindowController::setWindowLayer Enter"
+    ICO_TRA("CicoSCWindowController::setWindowLayer Enter"
             "(surfaceid=0x%08X layerid=%x)", surfaceid, layerid);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::setWindowLayer Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::setWindowLayer Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -782,7 +804,7 @@ CicoSCWindowController::setWindowLayer(int surfaceid, int layerid)
         // check special layer
         if ((layerid != ICO_WINDOW_MGR_LAYERTYPE_TOUCH) &&
             (layerid != ICO_WINDOW_MGR_LAYERTYPE_CURSOR)) {
-            ICO_WRN("CicoSCWindowController::setWindowLayer Leave(ENOENT[disp=%d,layer=%d])",
+            ICO_TRA("CicoSCWindowController::setWindowLayer Leave(ENOENT[disp=%d,layer=%d])",
                     window->displayid, layerid);
             return ICO_SYC_ENOENT;
         }
@@ -797,7 +819,7 @@ CicoSCWindowController::setWindowLayer(int surfaceid, int layerid)
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::setWindowLayer Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::setWindowLayer Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -817,13 +839,14 @@ CicoSCWindowController::setWindowLayer(int surfaceid, int layerid)
 int
 CicoSCWindowController::showLayer(int displayid, int layerid)
 {
-    ICO_DBG("CicoSCWindowController::showLayer Enter"
+    ICO_TRA("CicoSCWindowController::showLayer Enter"
             "(displayid=%d layerid=%d)", displayid, layerid);
 
     // find layer information in layer list
     CicoSCLayer* layer = findLayer(displayid, layerid);
     if (NULL == layer) {
-        ICO_WRN("CicoSCWindowController::showLayer Leave(ENOENT)");
+        ICO_WRN("not found layer information");
+        ICO_TRA("CicoSCWindowController::showLayer Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -832,7 +855,7 @@ CicoSCWindowController::showLayer(int displayid, int layerid)
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::showLayer Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::showLayer Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -852,14 +875,15 @@ CicoSCWindowController::showLayer(int displayid, int layerid)
 int
 CicoSCWindowController::hideLayer(int displayid, int layerid)
 {
-    ICO_DBG("CicoSCWindowController::hideLayer Enter"
+    ICO_TRA("CicoSCWindowController::hideLayer Enter"
             "displayid=%d layerid=%d)",
             displayid, layerid);
 
     // find layer information in layer list
     CicoSCLayer* layer = findLayer(displayid, layerid);
     if (NULL == layer) {
-        ICO_WRN("CicoSCWindowController::hideLayer Leave(ENOENT)");
+        ICO_WRN("not found layer information");
+        ICO_TRA("CicoSCWindowController::hideLayer Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -868,7 +892,7 @@ CicoSCWindowController::hideLayer(int displayid, int layerid)
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::hideVisible Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::hideVisible Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -890,14 +914,15 @@ CicoSCWindowController::active(int surfaceid, int target)
 {
     CicoSCWindow *window = NULL;
 
-    ICO_DBG("CicoSCWindowController::active Enter"
+    ICO_TRA("CicoSCWindowController::active Enter"
             "(surfaceid=0x%08X, target=%08X)", surfaceid, target);
 
     // find window information in window list
     if (surfaceid) {
         window = findWindow(surfaceid);
         if (NULL == window) {
-            ICO_WRN("CicoSCWindowController::active Leave(ENOENT)");
+            ICO_WRN("not found window information");
+            ICO_TRA("CicoSCWindowController::active Leave(ENOENT)");
             return ICO_SYC_ENOENT;
         }
     }
@@ -936,7 +961,7 @@ CicoSCWindowController::active(int surfaceid, int target)
         }
     }
 
-    ICO_DBG("CicoSCWindowController::active Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::active Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -956,12 +981,13 @@ CicoSCWindowController::active(int surfaceid, int target)
 int
 CicoSCWindowController::mapSurface(int surfaceid, int framerate)
 {
-    ICO_WRN("CicoSCWindowController::mapSurface Enter");
+    ICO_TRA("CicoSCWindowController::mapSurface Enter");
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::mapSurface Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::mapSurface Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -972,7 +998,7 @@ CicoSCWindowController::mapSurface(int surfaceid, int framerate)
     CicoSCWlWinMgrIF::mapSurface(surfaceid, framerate);
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::mapSurface Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::mapSurface Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -991,19 +1017,20 @@ CicoSCWindowController::mapSurface(int surfaceid, int framerate)
 int
 CicoSCWindowController::unmapSurface(int surfaceid)
 {
-    ICO_DBG("CicoSCWindowController::unmapSurface Enter");
+    ICO_TRA("CicoSCWindowController::unmapSurface Enter");
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::unmapSurface Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::unmapSurface Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
     CicoSCWlWinMgrIF::unmapSurface(surfaceid);
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::unmapSurface Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::unmapSurface Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -1045,20 +1072,22 @@ CicoSCWindowController::getDisplayedWindow(int zoneid)
 int
 CicoSCWindowController::setAttributes(int surfaceid)
 {
-    ICO_DBG("CicoSCWindowController::setAttributes Enter"
+    ICO_TRA("CicoSCWindowController::setAttributes Enter"
             "(surfaceid=0x%08X)", surfaceid);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::setAttributes Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::setAttributes Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
     // find zone
     const CicoSCDisplayZone* zone = findDisplayZone(window->zoneid);
     if (NULL == zone) {
-        ICO_WRN("CicoSCWindowController::setAttributes Leave(ENOENT)");
+        ICO_WRN("not found zone information");
+        ICO_TRA("CicoSCWindowController::setAttributes Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -1082,7 +1111,7 @@ CicoSCWindowController::setAttributes(int surfaceid)
     CicoSCWlWinMgrIF::setAttributes(surfaceid, attributes);
     CicoSCWayland::getInstance()->flushDisplay();
 
-    ICO_DBG("CicoSCWindowController::setAttributes Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::setAttributes Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -1108,14 +1137,15 @@ CicoSCWindowController::createdCB(void                  *data,
                                   const char            *appid,
                                   int32_t               layertype)
 {
-    ICO_DBG("CicoSCWindowController::createdCB Enter"
+    ICO_TRA("CicoSCWindowController::createdCB Enter"
             "(surfaceid=0x%08X winname=%s pid=%d appid=%s layer=%x)",
             surfaceid, winname, pid, appid, layertype);
 
     if (layertype == ICO_WINDOW_MGR_LAYERTYPE_INPUTPANEL)   {
         // So far, SystemController ignores this event
         // because it does not support InputPanel(Software Keyboard).
-        ICO_DBG("CicoSCWindowController::createdCB Leave(Input Panel)");
+        ICO_WRN("Input Panel layer create window information skip.");
+        ICO_TRA("CicoSCWindowController::createdCB Leave(Input Panel)");
         return;
     }
 
@@ -1130,9 +1160,9 @@ CicoSCWindowController::createdCB(void                  *data,
 
     CicoSCLifeCycleController* appctrl;
     appctrl = CicoSCLifeCycleController::getInstance();
-    const CicoSCAilItems *ailItem = appctrl->findAIL(appid);
+    const CicoAilItems *ailItem = appctrl->findAIL(appid);
     if (NULL == ailItem) {
-        const CicoSCAulItems* aulitem = appctrl->findAUL(pid);
+        const CicoAulItems* aulitem = appctrl->findAUL(pid);
         if (NULL != aulitem) {
             window->appid = aulitem->m_appid;
             ICO_DBG("appid=%s", window->appid.c_str());
@@ -1160,8 +1190,9 @@ CicoSCWindowController::createdCB(void                  *data,
         }
     }
     else{
+        delete window;
         ICO_WRN("ail item not found.");
-        ICO_WRN("CicoSCWindowController::createdCB Leave(ENOENT)");
+        ICO_TRA("CicoSCWindowController::createdCB Leave(ENOENT)");
         return;
     }
 
@@ -1208,7 +1239,7 @@ CicoSCWindowController::createdCB(void                  *data,
         opt->soundres  = true;
         opt->soundname = window->appid;
         opt->soundid   = 0;
-        CicoSCSystemConfig *sysconf = CicoSCSystemConfig::getInstance();
+        CicoSystemConfig *sysconf = CicoSystemConfig::getInstance();
         const CicoSCDefaultConf *defconf = sysconf->getDefaultConf();
         if (NULL != defconf) {
             const CicoSCSoundZoneConf *zoneconf =
@@ -1226,7 +1257,7 @@ CicoSCWindowController::createdCB(void                  *data,
     }
 #endif
 
-    ICO_DBG("CicoSCWindowController::createdCB Leave");
+    ICO_TRA("CicoSCWindowController::createdCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1245,12 +1276,13 @@ CicoSCWindowController::nameCB(void                  *data,
                                uint32_t              surfaceid,
                                const char            *winname)
 {
-    ICO_DBG("CicoSCWindowController::nameCB Enter"
+    ICO_TRA("CicoSCWindowController::nameCB Enter"
             "(surfaceid=0x%08X winname=%s)", surfaceid, winname);
 
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_DBG("CicoSCWindowController::nameCB Leave");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::nameCB Leave");
         return;
     }
 
@@ -1267,7 +1299,7 @@ CicoSCWindowController::nameCB(void                  *data,
     message->addArgObject("winname", window->name);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-    ICO_DBG("CicoSCWindowController::nameCB Leave");
+    ICO_TRA("CicoSCWindowController::nameCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1284,12 +1316,13 @@ CicoSCWindowController::destroyedCB(void                  *data,
                                     struct ico_window_mgr *ico_window_mgr,
                                     uint32_t              surfaceid)
 {
-    ICO_DBG("CicoSCWindowController::destroyedCB Enter"
+    ICO_TRA("CicoSCWindowController::destroyedCB Enter"
             "(surfaceid=0x%08X)", surfaceid);
 
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_DBG("CicoSCWindowController::destroyedCB Leave");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::destroyedCB Leave");
         return;
     }
 
@@ -1326,7 +1359,7 @@ CicoSCWindowController::destroyedCB(void                  *data,
         opt->soundres  = true;
         opt->soundname = window->appid;
         opt->soundid   = 0;
-        CicoSCSystemConfig *sysconf = CicoSCSystemConfig::getInstance();
+        CicoSystemConfig *sysconf = CicoSystemConfig::getInstance();
         const CicoSCDefaultConf *defconf = sysconf->getDefaultConf();
         if (NULL != defconf) {
             const CicoSCSoundZoneConf *zoneconf =
@@ -1343,7 +1376,7 @@ CicoSCWindowController::destroyedCB(void                  *data,
     m_windowList.erase(window->surfaceid);
     delete(window);
 
-    ICO_DBG("CicoSCWindowController::destroyedCB Leave");
+    ICO_TRA("CicoSCWindowController::destroyedCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1369,13 +1402,14 @@ CicoSCWindowController::visibleCB(void                  *data,
                                   int32_t               raise,
                                   int32_t               hint)
 {
-    ICO_DBG("CicoSCWindowController::visibleCB Enter"
+    ICO_TRA("CicoSCWindowController::visibleCB Enter"
             "(surfaceid=0x%08X visible=%d raise=%d hint=%d)",
             surfaceid, visible, raise, hint);
 
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_DBG("CicoSCWindowController::visibleCB Leave");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::visibleCB Leave");
         return;
     }
 
@@ -1391,7 +1425,7 @@ CicoSCWindowController::visibleCB(void                  *data,
     }
 
     if ((window->visible == newVisible) && (window->raise == newRaise) ){
-        ICO_DBG("CicoSCWindowController::visibleCB Leave");
+        ICO_TRA("CicoSCWindowController::visibleCB Leave");
         return;
     }
 
@@ -1423,7 +1457,7 @@ CicoSCWindowController::visibleCB(void                  *data,
     message->addArgObject("active", window->active ? 1 : 0);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-    ICO_DBG("CicoSCWindowController::visibleCB Leave");
+    ICO_TRA("CicoSCWindowController::visibleCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1457,7 +1491,7 @@ CicoSCWindowController::configureCB(void                  *data,
                                     int32_t               height,
                                     int32_t               hint)
 {
-    ICO_DBG("CicoSCWindowController::configureCB Enter"
+    ICO_TRA("CicoSCWindowController::configureCB Enter"
             "(surfaceid=0x%08X node=%d layer=%x.%x x=%d y=%d "
             "width=%d height=%d hint=%d)",
             surfaceid, node, layertype, layer, x, y, width, height, hint);
@@ -1465,12 +1499,13 @@ CicoSCWindowController::configureCB(void                  *data,
     if (layertype == ICO_WINDOW_MGR_LAYERTYPE_INPUTPANEL)   {
         // So far, SystemController ignores this event
         // because it does not support InputPanel(Software Keyboard).
-        ICO_DBG("CicoSCWindowController::configureCB Leave(Input Panel)");
+        ICO_TRA("CicoSCWindowController::configureCB Leave(Input Panel)");
         return;
     }
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_DBG("CicoSCWindowController::visibleCB Leave"
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::visibleCB Leave"
                 "(update window visible failed)");
         return;
     }
@@ -1481,12 +1516,6 @@ CicoSCWindowController::configureCB(void                  *data,
         window->width  = width;
         window->height = height;
         window->layertype = layertype;
-#if 0
-        if (window->layerid != layer) {
-            window->layerid = layer;
-            layer = findLayer(window->displayid, layer);
-        }
-#endif
     }
 
     // send message
@@ -1514,7 +1543,7 @@ CicoSCWindowController::configureCB(void                  *data,
     message->addArgObject("active", window->active ? 1 : 0);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-    ICO_DBG("CicoSCWindowController::configureCB Leave");
+    ICO_TRA("CicoSCWindowController::configureCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1534,22 +1563,23 @@ CicoSCWindowController::activeCB(void                  *data,
                                  uint32_t              surfaceid,
                                  int32_t               active)
 {
-    ICO_DBG("CicoSCWindowController::activeCB Enter"
+    ICO_TRA("CicoSCWindowController::activeCB Enter"
             "(surfaceid=0x%08X active=%d)", surfaceid, active);
 
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_DBG("CicoSCWindowController::activeCB Leave(not found window)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::activeCB Leave(not found window)");
         return;
     }
 
     if (0 == active) {
-        ICO_DBG("CicoSCWindowController::activeCB Leave(not active)");
+        ICO_TRA("CicoSCWindowController::activeCB Leave(not active)");
         return;
     }
 
     if (0 != window->active) {
-        ICO_DBG("CicoSCWindowController::activeCB Leave(already active)");
+        ICO_TRA("CicoSCWindowController::activeCB Leave(already active)");
         return;
     }
 
@@ -1562,7 +1592,7 @@ CicoSCWindowController::activeCB(void                  *data,
     message->addArgObject("winname", window->name);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-    ICO_DBG("CicoSCWindowController::activeCB Leave");
+    ICO_TRA("CicoSCWindowController::activeCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1582,7 +1612,7 @@ CicoSCWindowController::layerVisibleCB(void                  *data,
                                        uint32_t              layer,
                                        int32_t               visible)
 {
-    ICO_DBG("CicoSCWindowController::layerVisibleCB Enter"
+    ICO_TRA("CicoSCWindowController::layerVisibleCB Enter"
             "layer=%d visible=%d)", layer, visible);
 
     // send message
@@ -1593,7 +1623,7 @@ CicoSCWindowController::layerVisibleCB(void                  *data,
     message->addArgObject("visible", visible);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-    ICO_DBG("CicoSCWindowController::layerVisibleCB Leave");
+    ICO_TRA("CicoSCWindowController::layerVisibleCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1612,7 +1642,7 @@ CicoSCWindowController::appSurfacesCB(void                  *data,
                                       const char            *appid,
                                       struct wl_array       *surfaces)
 {
-    ICO_DBG("CicoSCWindowController::appSurfacesCB Enter(appid=%s)", appid);
+    ICO_TRA("CicoSCWindowController::appSurfacesCB Enter(appid=%s)", appid);
 
     //struct wl_array {
     //  size_t size;
@@ -1626,7 +1656,7 @@ CicoSCWindowController::appSurfacesCB(void                  *data,
         ICO_DBG("appSurfacesCB: surface=%d", (int)*p);
     }
 
-    ICO_DBG("CicoSCWindowController::appSurfacesCB Leave");
+    ICO_TRA("CicoSCWindowController::appSurfacesCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1659,7 +1689,7 @@ CicoSCWindowController::mapSurfaceCB(void                  *data,
 {
     int command;
 
-    ICO_DBG("CicoSCWindowController::mapSurfaceCB Enter(ev=%d surf=%x "
+    ICO_TRA("CicoSCWindowController::mapSurfaceCB Enter(ev=%d surf=%x "
             "type=%d target=%d w/h=%d/%d stride=%d form=%x)",
             event, surfaceid, type, target, width, height, stride, format);
 
@@ -1680,7 +1710,7 @@ CicoSCWindowController::mapSurfaceCB(void                  *data,
         command = MSG_CMD_UNMAP_THUMB;
         break;
     default:
-        ICO_DBG("CicoSCWindowController::mapSurfaceCB Leave(Unknown event(%d))", event);
+        ICO_TRA("CicoSCWindowController::mapSurfaceCB Leave(Unknown event(%d))", event);
         return;
     }
 
@@ -1696,7 +1726,7 @@ CicoSCWindowController::mapSurfaceCB(void                  *data,
     message->addArgObject("format", format);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-    ICO_DBG("CicoSCWindowController::mapSurfaceCB Leave");
+    ICO_TRA("CicoSCWindowController::mapSurfaceCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1727,7 +1757,7 @@ CicoSCWindowController::outputGeometryCB(void             *data,
                                          const char       *model,
                                          int32_t          transform)
 {
-    ICO_DBG("CicoSCWlWinMgrIF::outputGeometryCB Enter"
+    ICO_TRA("CicoSCWindowController::outputGeometryCB Enter"
             "(x=%d y=%d physical_width=%d physical_height=%d "
             "subpixel=%d make=%s model=%s transform=%d)",
             x, y, physical_width, physical_height,
@@ -1735,12 +1765,14 @@ CicoSCWindowController::outputGeometryCB(void             *data,
 
     ++m_physicalDisplayTotal;
     if (0 == m_displayList.size()) {
-        ICO_DBG("CicoSCWlWinMgrIF::outputGeometryCB Leave(display is zero)");
+        ICO_TRA("CicoSCWindowController::outputGeometryCB Leave"
+                "(display is zero)");
         return;
     }
 
     if (m_displayList.size() < m_physicalDisplayTotal) {
-        ICO_WRN("CicoSCWlWinMgrIF::outputGeometryCB Leave(display total unmatch)");
+        ICO_TRA("CicoSCWindowController::outputGeometryCB Leave"
+                "(display total unmatch)");
         return;
     }
 
@@ -1766,7 +1798,7 @@ CicoSCWindowController::outputGeometryCB(void             *data,
     }
     display->dump();
 
-    ICO_DBG("CicoSCWlWinMgrIF::outputGeometryCB Leave");
+    ICO_TRA("CicoSCWindowController::outputGeometryCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1789,12 +1821,12 @@ CicoSCWindowController::outputModeCB(void             *data,
                                      int32_t          height,
                                      int32_t          refresh)
 {
-    ICO_DBG("CicoSCWlWinMgrIF::outputModeCB Enter"
+    ICO_TRA("CicoSCWindowController::outputModeCB Enter"
             "(flags=%d width=%d height=%d refresh=%d)",
             flags, width, height, refresh);
 
     if (0 == m_displayList.size()) {
-        ICO_DBG("CicoSCWlWinMgrIF::outputModeCB Leave(display is zero");
+        ICO_TRA("CicoSCWindowController::outputModeCB Leave(display is zero)");
         return;
     }
 
@@ -1811,7 +1843,7 @@ CicoSCWindowController::outputModeCB(void             *data,
         display->dump();
     }
 
-    ICO_DBG("CicoSCWlWinMgrIF::outputModeCB Leave");
+    ICO_TRA("CicoSCWindowController::outputModeCB Leave");
 }
 
 //==========================================================================
@@ -1895,7 +1927,7 @@ CicoSCWindowController::findDisplayZone(int zoneid)
 void
 CicoSCWindowController::handleCommand(const CicoSCCommand * cmd)
 {
-//    ICO_DBG("CicoSCWindowController::handleCommand Enter(%d)", cmd->cmdid);
+//    ICO_TRA("CicoSCWindowController::handleCommand Enter(%d)", cmd->cmdid);
 
     CicoSCCmdWinCtrlOpt *opt = static_cast<CicoSCCmdWinCtrlOpt*>(cmd->opt);
 
@@ -1912,6 +1944,7 @@ CicoSCWindowController::handleCommand(const CicoSCCommand * cmd)
             /* show command (normal)    */
             (void)notifyResourceManager(opt->surfaceid,
                                         NULL,
+                                        opt->layerid,
                                         opt->animation.c_str(),
                                         opt->animationTime);
         }
@@ -1928,19 +1961,20 @@ CicoSCWindowController::handleCommand(const CicoSCCommand * cmd)
             break;
         }
         if (true == opt->zone.empty()) {
-            (void)setGeometry(opt->surfaceid, opt->nodeid, opt->x, opt->y,
-                              opt->width, opt->height,
+            (void)setGeometry(opt->surfaceid, opt->nodeid, opt->layerid,
+                              opt->x, opt->y, opt->width, opt->height,
                               opt->animation.c_str(), opt->animationTime,
                               opt->animation.c_str(), opt->animationTime);
         }
         else if (opt->zone == window->zone) {
-            (void)setGeometry(opt->surfaceid, opt->zone.c_str(),
+            (void)setGeometry(opt->surfaceid, opt->zone.c_str(), opt->layerid,
                               opt->animation.c_str(), opt->animationTime,
                               opt->animation.c_str(), opt->animationTime);
         }
         else {
             (void)notifyResourceManager(opt->surfaceid,
                                         opt->zone.c_str(),
+                                        opt->layerid,
                                         opt->animation.c_str(),
                                         opt->animationTime);
         }
@@ -1975,23 +2009,26 @@ CicoSCWindowController::handleCommand(const CicoSCCommand * cmd)
         break;
     }
 
-//    ICO_DBG("CicoSCWindowController::handleCommand Leave");
+//    ICO_TRA("CicoSCWindowController::handleCommand Leave");
 }
 
 int
 CicoSCWindowController::notifyResourceManager(int        surfaceid,
                                               const char *zone,
+                                              int        layerid,
                                               const char *animation,
                                               int        animationTime)
 {
-    ICO_DBG("CicoSCWindowController::notifyResourceManager Enter"
-            "(surfaceid=0x%08X zone=%s animation=%s animationTime=%d)",
-            surfaceid, zone, animation, animationTime);
+    ICO_TRA("CicoSCWindowController::notifyResourceManager Enter"
+            "(surfaceid=0x%08X zone=%s layerid=%d "
+            "animation=%s animationTime=%d)",
+            surfaceid, zone, layerid, animation, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
-        ICO_WRN("CicoSCWindowController::notifyResourceManager Leave(ENOENT)");
+        ICO_WRN("not found window information");
+        ICO_TRA("CicoSCWindowController::notifyResourceManager Leave(ENOENT)");
         return ICO_SYC_ENOENT;
     }
 
@@ -2005,6 +2042,7 @@ CicoSCWindowController::notifyResourceManager(int        surfaceid,
 
     opt->dispres       = true;
     opt->winname       = window->name;
+    opt->layerid       = layerid;
     opt->surfaceid     = window->surfaceid;
     opt->animation     = animation ? animation : "";
     opt->animationTime = animationTime;
@@ -2015,7 +2053,8 @@ CicoSCWindowController::notifyResourceManager(int        surfaceid,
             opt->dispzone = zone->fullname;
         }
         else {
-            ICO_WRN("CicoSCWindowController::notifyResourceManager Leave(ENOENT)");
+            ICO_WRN("not found zone information");
+            ICO_TRA("CicoSCWindowController::notifyResourceManager Leave(ENOENT)");
             return ICO_SYC_ENOENT;
         }
     }
@@ -2026,7 +2065,7 @@ CicoSCWindowController::notifyResourceManager(int        surfaceid,
     opt->soundres  = true;
     opt->soundname = window->appid;
     opt->soundid   = 0;
-    CicoSCSystemConfig *sysconf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysconf = CicoSystemConfig::getInstance();
     const CicoSCDefaultConf *defconf = sysconf->getDefaultConf();
     if (NULL != defconf) {
         const CicoSCSoundZoneConf *zoneconf =
@@ -2039,7 +2078,7 @@ CicoSCWindowController::notifyResourceManager(int        surfaceid,
 
     m_resMgr->handleCommand((const CicoSCCommand&)cmd, true);
 
-    ICO_DBG("CicoSCWindowController::notifyResourceManager Leave(EOK)");
+    ICO_TRA("CicoSCWindowController::notifyResourceManager Leave(EOK)");
     return ICO_SYC_EOK;
 }
 // vim:set expandtab ts=4 sw=4:

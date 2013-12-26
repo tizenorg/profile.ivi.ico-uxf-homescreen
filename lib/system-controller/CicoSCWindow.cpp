@@ -32,8 +32,8 @@ CicoSCWindow::CicoSCWindow()
       subwindow(0), eventmask(0), x(-1), y(-1), width(-1), height(-1),
       visible(false), raise(false), active(false)
 {
-    ICO_DBG("CicoSCWindow::CicoSCWindow Enter");
-    ICO_DBG("CicoSCWindow::CicoSCWindow Leave");
+//    ICO_TRA("CicoSCWindow::CicoSCWindow Enter");
+//    ICO_TRA("CicoSCWindow::CicoSCWindow Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -43,8 +43,8 @@ CicoSCWindow::CicoSCWindow()
 //--------------------------------------------------------------------------
 CicoSCWindow::~CicoSCWindow()
 {
-    ICO_DBG("CicoSCWindow::~CicoSCWindow Enter");
-    ICO_DBG("CicoSCWindow::~CicoSCWindow Leave");
+//    ICO_TRA("CicoSCWindow::~CicoSCWindow Enter");
+//    ICO_TRA("CicoSCWindow::~CicoSCWindow Leave");
 }
 
 //--------------------------------------------------------------------------

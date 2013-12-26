@@ -40,9 +40,11 @@ static void SetYinvert(Evas_Object *obj);
  */
 /*--------------------------------------------------------------------------*/
 CicoHSMenuTile::CicoHSMenuTile(const char *appid,
-                               const char *icon_image_path, int page, int subpage,
+                               const char *icon_image_path,
+                               int page, int subpage,
                                int position, int width, int height)
 {
+    ICO_TRA("CicoHSMenuTile::CicoHSMenuTile Enter");
     if (_CicoHSMenuTile_initialized == 0)  {
         // Initialize and setting OpenGL/EGL functions
         ICO_DBG("CicoHSMenuTile::CicoHSMenuTile: initialize OpenGL/EGL functions");
@@ -91,6 +93,7 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
     this->height = height;
     pos_x = GetPositionX();
     pos_y = GetPositionY();
+    ICO_TRA("CicoHSMenuTile::CicoHSMenuTile Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -118,6 +121,7 @@ CicoHSMenuTile::~CicoHSMenuTile(void)
 void
 CicoHSMenuTile::CreateObject(Evas *evas)
 {
+    ICO_TRA("CicoHSMenuTile::CreateObject Enter");
     /*initial vaule*/
     menu_evas = evas;
     menu_show = false;
@@ -146,8 +150,11 @@ CicoHSMenuTile::CreateObject(Evas *evas)
     evas_object_move(term_icon, pos_x + width - ICO_HS_MENUTILE_TERM_ICON_WIDTH, pos_y);
     evas_object_resize(term_icon, ICO_HS_MENUTILE_TERM_ICON_WIDTH,
                        ICO_HS_MENUTILE_TERM_ICON_HEIGHT);
+    evas_object_event_callback_add(term_icon, EVAS_CALLBACK_MOUSE_DOWN,
+                                   CicoHSMenuTouch::TouchDownTerm, appid);
     evas_object_event_callback_add(term_icon, EVAS_CALLBACK_MOUSE_UP,
                                    CicoHSMenuTouch::TouchUpTerm, appid);
+    ICO_TRA("CicoHSMenuTile::CreateObject Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -627,11 +634,12 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
         thumb.height = info->height;
         thumb.stride = info->stride;
         thumb.format = info->format;
+#if 0       /* too many log */
         ICO_DBG("CicoHSMenuTile::SetThumbnail: create %s(%08x) "
                 "name=%d w/h/s=%d/%d/%d tile w/h=%d/%d",
                 appid, thumb.surface, thumb.name,
                 thumb.width, thumb.height, thumb.stride, width, height);
-
+#endif
         // delete image and texture
         if (thumb.image)    {
             CicoHSMenuTile::glfunc.destroy_image(
@@ -868,8 +876,9 @@ SetYinvert(Evas_Object *obj)
        } func;
 
        Evas_Video_Surface video;
+#if 0                               /* delete at evas-1.7.8-15.1    */
        unsigned int video_caps;
-
+#endif
        const char       *tmpf;
        int              tmpf_fd;
 
@@ -1099,8 +1108,12 @@ SetYinvert(Evas_Object *obj)
     // Evas old version check and revise
     if (((int)im & 0xffff0000) == 0)    {
         // Evas old version
-        image_obj = (struct local_Evas_Object_Image *)(((int *)image_obj) - 1);
+        image_obj = (struct local_Evas_Object_Image *)(((int *)image_obj) + 1);
         im = (struct local_Evas_GL_Image *)image_obj->engine_data;
     }
-    im->native.yinvert = 1;
+    if (((int)im & 0xffff0000) != 0)    {
+        if (im->native.yinvert == 0)
+            im->native.yinvert = 1;
+    }
 }
+// vim: set expandtab ts=4 sw=4:

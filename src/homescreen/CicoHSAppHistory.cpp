@@ -25,7 +25,7 @@
 #include "CicoHSAppHistory.h"
 #include "CicoHomeScreenCommon.h"
 #include "CicoHomeScreen.h"
-#include "CicoLog.h"
+#include <ico_log.h>
 
 using namespace std;
 
@@ -386,3 +386,4 @@ const std::string& CicoHSAppHistory::getSwipeCurrentAppid()
     }
     return m_swipeStr;
 }
+// vim: set expandtab ts=4 sw=4:

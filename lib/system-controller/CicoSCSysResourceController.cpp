@@ -28,8 +28,8 @@
 #include "CicoSCSysResourceMonitor.h"
 #include "CicoSCLifeCycleController.h"
 #include "CicoSCSysResourceController.h"
-#include "CicoSCConf.h"
-#include "CicoSCSystemConfig.h"
+#include "CicoConf.h"
+#include "CicoSystemConfig.h"
 #include <Ecore.h>
 //#include <Ecore_Evas.h>
 
@@ -73,66 +73,15 @@ CicoSCSysResourceController::CicoSCSysResourceController()
     m_cgrpMEM = 0;
     m_cpu = -1;
     m_mem = -1;
-    m_rConf = CicoSCSystemConfig::getInstance()->getResourceConf();
+    m_bDoIt = false;
+    m_rConf = CicoSystemConfig::getInstance()->getResourceConf();
     if (0 != m_rConf) {
         g_RC_LOG = m_rConf->m_bLog;
         if (-1 != m_rConf->m_sampling) {
             g_samplingWaitTimer = m_rConf->m_sampling;
         }
     }
-    if (false == m_rConf->m_bDoIt) {
-        ICO_TRA("end");
-        return ;
-    }
     // cpu,cpuacct cgroup init
-    init_cgroup();  // cgroup 
-    m_monitor = new CicoSCSysResourceMonitor();
-    CicoSCSystemConfig* CSCSC = CicoSCSystemConfig::getInstance();
-    string filePath(CSCSC->getDefaultConf()->confdir);
-    filePath += string("/");
-    filePath += gstrStateMachineFileName;
-
-    CicoStateMachineCreator csmc;
-    m_stt = csmc.createFile(filePath);
-    if ((CicoStateMachine*)0 == m_stt) {
-        ICO_ERR("state machine create error(%s)", filePath.c_str());
-        return;
-    }
-
-    m_SRCCPU_LOW  = new CicoSRCCPU_LOW(this);
-    m_SRCCPU_HIGH = new CicoSRCCPU_HIGH(this);
-    m_SRCMEM_LOW  = new CicoSRCMEM_LOW(this);
-    m_SRCMEM_HIGH = new CicoSRCMEM_HIGH(this);
-
-    CicoState* s = (CicoState*)m_stt->getState(gstrSRCCPU_LOW);
-    if ((CicoState*)0 != s) {
-        s->addEntryAction(m_SRCCPU_LOW);
-        s->addDoAction(m_SRCCPU_LOW);
-    }
-    s = (CicoState*)m_stt->getState(gstrSRCCPU_HIGH);
-    if ((CicoState*)0 != s) {
-        s->addEntryAction(m_SRCCPU_HIGH);
-        s->addDoAction(m_SRCCPU_HIGH);
-    }
-    s = (CicoState*)m_stt->getState(gstrSRCMEM_LOW);
-    if ((CicoState*)0 != s) {
-        s->addEntryAction(m_SRCMEM_LOW);
-        s->addDoAction(m_SRCMEM_LOW);
-    }
-    s = (CicoState*)m_stt->getState(gstrSRCMEM_HIGH);
-    if ((CicoState*)0 != s) {
-        s->addEntryAction(m_SRCMEM_HIGH);
-        s->addDoAction(m_SRCMEM_HIGH);
-    }
-    m_stt->start();
-    double tVal = (double)g_samplingWaitTimer / 100;
-#if 1
-    ICO_TRA("ECORE_TIMER(%f)", tVal);
-    g_SCResourceWatch = ecore_timer_add(tVal, ico_SCResourceWatch, this);
-#else
-    ICO_TRA("ECORE_TIMER(%f)", tVal);
-    g_SCResourceWatch = ecore_timer_add(tVal, ico_SCResourceWatch, 0);
-#endif
     ICO_TRA("end");
 }
 
@@ -183,6 +132,70 @@ CicoSCSysResourceController::~CicoSCSysResourceController()
         ICO_TRA("delete CicoSCSysResourceMonitor");
     }
     ICO_TRA("end");
+}
+
+/**
+ * @brief startWatch
+ */
+bool CicoSCSysResourceController::startSysResource()
+{
+    ICO_TRA("start");
+    if (0 == m_rConf) {
+        ICO_TRA("end");
+        return false;
+    }
+    m_bDoIt = m_rConf->m_bDoIt;
+    if (false == m_bDoIt) {
+        ICO_TRA("end");
+        return false;
+    }
+    // cpu,cpuacct cgroup init
+    init_cgroup();  // cgroup 
+    m_monitor = new CicoSCSysResourceMonitor();
+    CicoSystemConfig* CSCSC = CicoSystemConfig::getInstance();
+    string filePath(CSCSC->getDefaultConf()->confdir);
+    filePath += string("/");
+    filePath += gstrStateMachineFileName;
+
+    CicoStateMachineCreator csmc;
+    m_stt = csmc.createFile(filePath);
+    if ((CicoStateMachine*)0 == m_stt) {
+        ICO_ERR("state machine create error(%s)", filePath.c_str());
+        ICO_TRA("end");
+        return false;
+    }
+
+    m_SRCCPU_LOW  = new CicoSRCCPU_LOW(this);
+    m_SRCCPU_HIGH = new CicoSRCCPU_HIGH(this);
+    m_SRCMEM_LOW  = new CicoSRCMEM_LOW(this);
+    m_SRCMEM_HIGH = new CicoSRCMEM_HIGH(this);
+
+    CicoState* s = (CicoState*)m_stt->getState(gstrSRCCPU_LOW);
+    if ((CicoState*)0 != s) {
+        s->addEntryAction(m_SRCCPU_LOW);
+        s->addDoAction(m_SRCCPU_LOW);
+    }
+    s = (CicoState*)m_stt->getState(gstrSRCCPU_HIGH);
+    if ((CicoState*)0 != s) {
+        s->addEntryAction(m_SRCCPU_HIGH);
+        s->addDoAction(m_SRCCPU_HIGH);
+    }
+    s = (CicoState*)m_stt->getState(gstrSRCMEM_LOW);
+    if ((CicoState*)0 != s) {
+        s->addEntryAction(m_SRCMEM_LOW);
+        s->addDoAction(m_SRCMEM_LOW);
+    }
+    s = (CicoState*)m_stt->getState(gstrSRCMEM_HIGH);
+    if ((CicoState*)0 != s) {
+        s->addEntryAction(m_SRCMEM_HIGH);
+        s->addDoAction(m_SRCMEM_HIGH);
+    }
+    m_stt->start();
+    double tVal = (double)g_samplingWaitTimer / 100;
+    ICO_TRA("ECORE_TIMER(%f)", tVal);
+    g_SCResourceWatch = ecore_timer_add(tVal, ico_SCResourceWatch, this);
+    ICO_TRA("end");
+    return true;
 }
 
 /**
@@ -331,7 +344,8 @@ void CicoSCSysResourceController::resourceControlMemLimit(bool bHight)
 bool CicoSCSysResourceController::entryCgroupCPU(int pid, int grpNo)
 {
     ICO_TRA("start pid(%d), cgrpNo(%d)", pid, grpNo);
-    if ((0 > grpNo) || ((int)m_RCCpuTasks.size() <= grpNo)) {
+    if (((0 > grpNo) || ((int)m_RCCpuTasks.size() <= grpNo)) ||
+        ((NULL == m_rConf) || (false == m_rConf->m_bDoIt))) {
         ICO_TRA("end %d", m_RCCpuTasks.size());
         return false;
     }
@@ -387,8 +401,8 @@ void CicoSCSysResourceController::init_cgroup_cpu()
         return;
     }
     string ss("/");
-    string sTasks("tasks");
-    string sShares("cpu.shares");
+    string sTasks(D_STRtasks);
+    string sShares(D_STRcpushares);
     string t1(m_rConf->m_cpuCGRPPath);
     if ('/' != t1[t1.size()-1]) {
         t1 += ss;
@@ -475,7 +489,7 @@ CicoSRCCPU_LOW::CicoSRCCPU_LOW(CicoSCSysResourceController* obj):
     m_val = -1;      // cpu or memory usage value
     m_baseVal = -1;  // cpu or memory base usage value
     m_cnt = 0;
-    m_rConf = CicoSCSystemConfig::getInstance()->getResourceConf();
+    m_rConf = CicoSystemConfig::getInstance()->getResourceConf();
 }
 
 /**

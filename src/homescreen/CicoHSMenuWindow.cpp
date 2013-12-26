@@ -13,7 +13,7 @@
  */
 #include "CicoHSMenuWindow.h"
 #include "CicoHSMenuTouch.h"
-#include "CicoHomeScreenResourceConfig.h"
+#include "CicoResourceConfig.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
 #include <stdio.h>
@@ -59,10 +59,9 @@ CicoHSMenuWindow::CicoHSMenuWindow(void)
 
     menu_window_instance = this;
 
-    life_cycle_controller = CicoSCLifeCycleController::getInstance();
+    life_cycle_controller = CicoHSLifeCycleController::getInstance();
 
-    CicoHomeScreenResourceConfig::GetImagePath(img_dir_path,
-                                               ICO_HS_MAX_PATH_BUFF_LEN);
+    CicoResourceConfig::GetImagePath(img_dir_path, ICO_HS_MAX_PATH_BUFF_LEN);
 
     m_showState = false;
 }
@@ -117,17 +116,19 @@ CicoHSMenuWindow::SetMenuBack(void)
     int err = evas_object_image_load_error_get(canvas);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSMenuWindow::SetMenuBack: backgound image is not exist");
+        ICO_TRA("CicoHSMenuWindow::SetMenuBack Leave(ERR)");
         evas_object_del(canvas);
         return ICO_ERROR;
     }
     evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_DOWN,
-                                       CicoHSMenuTouch::TouchDownMenu,NULL);
+                                   CicoHSMenuTouch::TouchDownMenu,NULL);
     evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_UP,
-                                       CicoHSMenuTouch::TouchUpMenu,NULL);
+                                   CicoHSMenuTouch::TouchUpMenu,NULL);
     evas_object_move(canvas, 0, 0);
     evas_object_resize(canvas, width, height);
     evas_object_show(canvas);
 
+    ICO_ERR("CicoHSMenuWindow::SetMenuBack Leave(EOK)");
     return ICO_OK;
 }
 
@@ -253,7 +254,7 @@ CicoHSMenuWindow::SetLayout(const char *filename,CicoLayoutInfo *layout,int num)
 void
 CicoHSMenuWindow::InitAppTiles(void)
 {
-    ICO_DBG("CicoHSMenuWindow::InitAppTiles Enter");
+    ICO_TRA("CicoHSMenuWindow::InitAppTiles Enter");
 
     current_page = 0;
     subcurrent_page = 0;
@@ -268,7 +269,7 @@ CicoHSMenuWindow::InitAppTiles(void)
     all_tile_num = 0;
     all_page_num = 0;
 
-    ICO_DBG("CicoHSMenuWindow::InitAppTiles Leave");
+    ICO_TRA("CicoHSMenuWindow::InitAppTiles Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -293,7 +294,7 @@ CicoHSMenuWindow::SetAppTiles(void)
     current_page = 0;
 
     /* get APP information */
-    std::vector<CicoSCAilItems> aillist =
+    std::vector<CicoAilItems> aillist =
         life_cycle_controller->getAilList();
 
     /* get category infomation */
@@ -433,7 +434,7 @@ CicoHSMenuWindow::FreeAppTiles(void)
 void
 CicoHSMenuWindow::RenewAppTiles(void)
 {
-    ICO_DBG("CicoHSMenuWindow::RenewAppTiles Enter");
+    ICO_TRA("CicoHSMenuWindow::RenewAppTiles Enter");
 
     int ret;
 
@@ -452,7 +453,7 @@ CicoHSMenuWindow::RenewAppTiles(void)
     /* update app info list */
     CicoHomeScreen::RenewAppInfoList();
 
-    ICO_DBG("CicoHSMenuWindow::RenewAppTiles Leave");
+    ICO_TRA("CicoHSMenuWindow::RenewAppTiles Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1323,7 +1324,7 @@ CicoHSMenuWindow::SetMenuWindowID(const char *appid,int surface)
 void
 CicoHSMenuWindow::Show(ico_syc_animation_t *animation)
 {
-    ICO_DBG("CicoHSMenuWindow::Show Enter");
+    ICO_TRA("CicoHSMenuWindow::Show Enter");
 
     // if regulation == true, forbid show window.
     if (true == CicoHSSystemState::getInstance()->getRegulation()) {
@@ -1346,7 +1347,7 @@ CicoHSMenuWindow::Show(ico_syc_animation_t *animation)
 
     ico_syc_show(appid, surface, animation);
 
-    ICO_DBG("CicoHSMenuWindow::Show Leave");
+    ICO_TRA("CicoHSMenuWindow::Show Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1361,7 +1362,7 @@ CicoHSMenuWindow::Show(ico_syc_animation_t *animation)
 void
 CicoHSMenuWindow::Hide(ico_syc_animation_t *animation)
 {
-    ICO_DBG("CicoHSMenuWindow::Hide Enter");
+    ICO_TRA("CicoHSMenuWindow::Hide Enter");
 
     if(terminate_mode == true){
         ChangeNormalMode();
@@ -1376,7 +1377,7 @@ CicoHSMenuWindow::Hide(ico_syc_animation_t *animation)
         }
     }
 
-    ICO_DBG("CicoHSMenuWindow::Hide Leave");
+    ICO_TRA("CicoHSMenuWindow::Hide Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1392,11 +1393,12 @@ void
 CicoHSMenuWindow::ExecuteApp(const char *appid)
 {
     if(terminate_mode == true){
+        ICO_DBG("CicoHSMenuWindow::ExecuteApp: exet %s but terminate_mode", appid);
         return;
     }
-
     CicoHomeScreen::ExecuteApp(appid);
 }
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHSMenuWindow::TerminateApp
@@ -1428,6 +1430,7 @@ void
 CicoHSMenuWindow::ChangeTerminateMode(void)
 {
     bool check = false;
+
     /*check */
     for (int ii = 0; ii < all_tile_num; ii++) {
         if(menu_tile[ii] == NULL){
@@ -1453,7 +1456,9 @@ CicoHSMenuWindow::ChangeTerminateMode(void)
         menu_tile[ii]->ShowTermIcon();
     }
     terminate_mode = true;
+    ICO_DBG("CicoHSMenuWindow::ChangeTerminateMode: change to terminate mode");
 }
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHSMenuWindow::ChangeNormalMode
@@ -1474,6 +1479,7 @@ CicoHSMenuWindow::ChangeNormalMode(void)
         menu_tile[ii]->HideTermIcon();
     }
     terminate_mode = false;
+    ICO_DBG("CicoHSMenuWindow::ChangeNormalMode: change to normal mode");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1488,7 +1494,7 @@ CicoHSMenuWindow::ChangeNormalMode(void)
 void
 CicoHSMenuWindow::ValidMenuIcon(const char *appid)
 {
-ICO_DBG("CicoHSMenuWindow::ValidMenuIcon(%s)", appid ? appid : "(NULL)" );
+    ICO_DBG("CicoHSMenuWindow::ValidMenuIcon(%s)", appid ? appid : "(NULL)" );
     for (int ii = 0; ii < all_tile_num; ii++) {
         if (strncmp(menu_tile[ii]->GetAppId(), appid, ICO_HS_MAX_PROCESS_NAME) == 0) {
             menu_tile[ii]->ValidMenuIcon();
@@ -1551,14 +1557,14 @@ CicoHSMenuWindow::SetThumbnail(const char *appid, ico_syc_thumb_info_t *info)
 void
 CicoHSMenuWindow::SetNightMode(void)
 {
-    ICO_DBG("CicoHSMenuWindow::SetNightMode Enter");
+    ICO_TRA("CicoHSMenuWindow::SetNightMode Enter");
     if (true == CicoHSSystemState::getInstance()->getNightMode()) {
         evas_object_color_set(rectangle,0,0,0,178);
     }
     else {
         evas_object_color_set(rectangle,120,120,120,178);
     }
-    ICO_DBG("CicoHSMenuWindow::SetNightMode Leave");
+    ICO_TRA("CicoHSMenuWindow::SetNightMode Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1590,3 +1596,4 @@ CicoHSMenuWindow::Tile_Height(void)
 {
     return CicoHSMenuWindow::menu_tile_height;
 }
+// vim: set expandtab ts=4 sw=4:

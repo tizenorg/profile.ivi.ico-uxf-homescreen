@@ -27,7 +27,7 @@
 #include "ico_syc_winctl.h"
 
 #include "CicoHomeScreenCommon.h"
-#include "CicoSCLifeCycleController.h"
+#include "CicoHSLifeCycleController.h"
 
 #define ICO_HS_APPLICATION_FULL_SCREEN_POS_X 0
 #define ICO_HS_APPLICATION_FULL_SCREEN_POS_Y 64
@@ -146,7 +146,7 @@ private:
     /// window information list
     std::vector<ico_hs_window_info *> m_window_info;
     /// life cycle controller instance
-    CicoSCLifeCycleController *m_life_cycle_controller;
+    CicoHSLifeCycleController *m_life_cycle_controller;
 };
 #endif  // __CICO_HS_APP_INFO_H__
 // vim: set expandtab ts=4 sw=4:

@@ -15,16 +15,22 @@
 #include <aul/aul.h>
 #include <package-manager.h>
 
-#include "CicoSCAilItems.h"
-#include "CicoSCAulItems.h"
+#include "CicoAilItems.h"
+#include "CicoAulItems.h"
 
 
 #ifndef __CICO_SC_WINDOW_H__
 class CicoSCWindow;
 #endif
 
+#if 0
 #ifndef CICOSCSYSRESOURCECONTROLLER_H
 class CicoSCSysResourceController;
+#endif
+#else
+#ifndef CICOSCAPPRESOURCECONTROLLER_H
+class CicoSCAppResourceController;
+#endif
 #endif
 
 class CicoSCLifeCycleController {
@@ -49,24 +55,27 @@ public:
     bool isRunning(const char* appid);
     bool isRunning(const std::string& appid);
 
-    const std::vector<CicoSCAilItems>& getAilList() const;
-    const CicoSCAilItems* findAIL(const char* appid) const;
-    const CicoSCAilItems* findAIL(const std::string& appid) const;
+    const std::vector<CicoAilItems>& getAilList() const;
+    const CicoAilItems* findAIL(const char* appid) const;
+    const CicoAilItems* findAIL(const std::string& appid) const;
     bool isAilRenew() const;
     void ailRenewFlagOff();
 
-    const std::vector<CicoSCAulItems>& getAulList();
+    const std::vector<CicoAulItems>& getAulList();
 // TODO mk_k Should I think about the multiple return values start
 /*
-    const CicoSCAulItems* findAUL(const char* appid) const;
-    const CicoSCAulItems* findAUL(const std::string& appid) const;
+    const CicoAulItems* findAUL(const char* appid) const;
+    const CicoAulItems* findAUL(const std::string& appid) const;
 */
-    const CicoSCAulItems* findAUL(int pid);
+    const CicoAulItems* findAUL(int pid);
     bool getPIDs(const char* appid, std::vector<int>& pids) const;
     bool getPIDs(std::string& appid, std::vector<int>& pids) const;
     void enterAUL(const char* appid, int pid, const CicoSCWindow* obj = NULL,
                   int aulstt = AUL_R_OK);
 
+    bool isAppResource() const;
+    bool startAppResource(const std::string& name);
+    void createAppResourceFile(const std::string& user);
 protected:
     void initAIL();
     friend ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
@@ -96,11 +105,15 @@ private:
     static CicoSCLifeCycleController* ms_myInstance;
 
 protected:
-    std::vector<CicoSCAilItems> m_ail;
-    std::vector<CicoSCAulItems> m_aul;
+    std::vector<CicoAilItems> m_ail;
+    std::vector<CicoAulItems> m_aul;
     GKeyFile* m_gconf;
     pkgmgr_client* m_pc;
+#if 0
     CicoSCSysResourceController* m_RC;
+#else
+    CicoSCAppResourceController* m_RC;
+#endif
     bool m_ailRenew;
 };
 
@@ -109,7 +122,7 @@ protected:
  * @return AIL information item list Container
  */
 inline
-const std::vector<CicoSCAilItems>& CicoSCLifeCycleController::getAilList() const
+const std::vector<CicoAilItems>& CicoSCLifeCycleController::getAilList() const
 {
     return m_ail;
 }

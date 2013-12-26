@@ -32,7 +32,7 @@ int CicoHSSwipeTouch::touch_state_a_y;
 int CicoHSSwipeTouch::touch_lasttime;
 
 Ecore_Timer *CicoHSSwipeTouch::timer;
-bool CicoHSSwipeTouch::touch_down;
+int CicoHSSwipeTouch::touch_down;
 bool CicoHSSwipeTouch::long_act;
 bool CicoHSSwipeTouch::set_xy_pos;
 
@@ -60,7 +60,7 @@ CicoHSSwipeTouch::Initialize(CicoHSControlBarWindow* ctl_bar, CicoHSAppHistoryEx
 {
     timer = NULL;
     num_windows = 0;
-    touch_down = false;
+    touch_down = 0;
     long_act = false;
     set_xy_pos = false;
 
@@ -108,16 +108,26 @@ CicoHSSwipeTouch::TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void 
     struct timeval ctime;
     int     x, y;
 
-    touch_down = true;
-    gettimeofday(&ctime, NULL);
-    touch_lasttime = (ctime.tv_sec * 1000 + ctime.tv_usec/1000);
+    if (timer)  {
+        ecore_timer_del(timer);
+        timer = NULL;
+    }
+    touch_down ++;
+
     info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
     window = (CicoHSSwipeInputWindow *)data;
-
     x = info->output.x + window->GetPosX();
     y = info->output.y + window->GetPosY();
-    ICO_DBG("TouchDownSwipe: x/y=%d/%d->%d/%d", info->output.x, info->output.y, x, y);
+    ICO_PRF("TOUCH_EVENT Swipe Down (%d,%d)->(%d,%d) (%d)",
+            info->output.x, info->output.y, x, y, touch_down);
 
+    if (touch_down == 1)    {
+        gettimeofday(&ctime, NULL);
+        touch_lasttime = (ctime.tv_sec * 1000 + ctime.tv_usec/1000);
+        long_act = false;
+        timer = ecore_timer_add(ICO_HS_SWIPE_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS,
+                                LongPushed, NULL);
+    }
     if ((x >= 0) && (x < 4096) && (y >= 0) && (y < 4096))   {
         if (set_xy_pos == false)    {
             set_xy_pos = true;
@@ -127,10 +137,6 @@ CicoHSSwipeTouch::TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void 
         touch_state_a_x = x;
         touch_state_a_y = y;
     }
-
-    long_act = false;
-    timer = ecore_timer_add(ICO_HS_SWIPE_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS,
-                            LongPushed, NULL);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -139,7 +145,7 @@ CicoHSSwipeTouch::TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void 
  *          touch down timeout called from ecore
  *
  * @param[in]   data    user data(unused)
- * @return      fixed EINA_TRUE
+ * @return      fixed ECORE_CALLBACK_CANCEL
  */
 /*--------------------------------------------------------------------------*/
 Eina_Bool
@@ -150,15 +156,15 @@ CicoHSSwipeTouch::LongPushed(void *data)
     long_act = true;
     timer = NULL;
 
+    if (touch_down > 0) {
+        /* release my grab  */
+        ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
+                           BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_RESET);
+        touch_down = 0;
+    }
     if (set_xy_pos == false)    {
         ICO_DBG("LongPushed: unknown coordinate, Skip");
 
-        /* release my grab  */
-        if (touch_down) {
-            ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
-                               BTN_TOUCH, 9);
-            touch_down = false;
-        }
         long_act = false;
         return ECORE_CALLBACK_CANCEL;
     }
@@ -170,8 +176,7 @@ CicoHSSwipeTouch::LongPushed(void *data)
                        ABS_Z, (touch_state_b_x << 16) | touch_state_b_y);
     /* send TOUCH Down  */
     ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
-                       BTN_TOUCH, touch_down ? 8 : 1);
-    touch_down = false;
+                       BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_DOWN);
     /* send ABS_X/Y     */
     ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
                        ABS_Z, ((touch_state_a_x) << 16) | (touch_state_a_y));
@@ -217,9 +222,15 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         touch_state_a_y = y;
     }
 
-    ICO_DBG("TouchUpSwipe: x/y=%d/%d->%d/%d (before %d/%d)",
-            info->output.x, info->output.y,
-            touch_state_a_x, touch_state_a_y, touch_state_b_x, touch_state_b_y);
+    ICO_PRF("TOUCH_EVENT Swipe Up   (%d,%d)->(%d,%d) before(%d,%d) (%d)",
+            info->output.x, info->output.y, touch_state_a_x, touch_state_a_y,
+            touch_state_b_x, touch_state_b_y, touch_down - 1);
+
+    if (touch_down > 1) {
+        touch_down --;
+        ICO_DBG("TouchUpSwipe: touch counter not 0(%d), Skip", touch_down);
+        return;
+    }
 
     if(timer != NULL){
         ecore_timer_del(timer);
@@ -229,6 +240,21 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
     gettimeofday(&ctime, NULL);
     touch_lasttime = (ctime.tv_sec * 1000 + ctime.tv_usec/1000);
 
+    if (touch_down == 0)    {
+        /* send ABS_X/Y     */
+        ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
+                           ABS_Z, (touch_state_a_x << 16) | touch_state_a_y);
+        /* send TOUCH Up    */
+        ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
+                           BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_UP);
+        set_xy_pos = false;
+        long_act = false;
+        ICO_DBG("TouchUpSwipe: no touch down, Skip");
+        return;
+    }
+
+    touch_down --;
+
     if (set_xy_pos == false)    {
         ICO_DBG("TouchUpSwipe: unknown coordinate, Skip");
 
@@ -237,26 +263,19 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 2,
                            ABS_Z, (touch_state_a_x << 16) | touch_state_a_y);
         /* send TOUCH Up    */
-        if ((touch_down == false) && (long_act == true))    {
-            /* Probably it is an internal event of Ecore    */
-            ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
-                               BTN_TOUCH, 7);
-        }
-        else    {
-            ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
-                               BTN_TOUCH, 0);
-        }
-        touch_down = false;
+        ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
+                           BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_UP);
         long_act = false;
         return;
     }
     set_xy_pos = false;
 
     /* long push    */
-    if((touch_down == false) || (long_act == true)) {
+    if(long_act == true)    {
         ICO_DBG("TouchUpSwipe: not down(%d) or timedout(%d)", touch_down, long_act);
-        touch_down = false;
         set_xy_pos = false;
+        touch_down = 0;
+        long_act = false;
 
         /* send touch release event */
         /* send ABS_X/Y     */
@@ -264,7 +283,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                            ABS_Z, (touch_state_a_x << 16) | touch_state_a_y);
         /* send TOUCH Up    */
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
-                           BTN_TOUCH, 0);
+                           BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_UP);
         return;
     }
     sub = touch_state_a_x - touch_state_b_x;
@@ -491,7 +510,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                            ABS_Z, (touch_state_b_x << 16) | touch_state_b_y);
         /* send TOUCH Down  */
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
-                           BTN_TOUCH, touch_down ? 8 : 1);
+                           BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_DOWN);
         /* send ABS_X/Y     */
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
                            ABS_Z, ((touch_state_b_x+1) << 16) | (touch_state_b_y+1));
@@ -505,10 +524,9 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                            ABS_Z, (touch_state_a_x << 16) | touch_state_a_y);
         /* send TOUCH Up    */
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
-                           BTN_TOUCH, 0);
+                           BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_UP);
         set_xy_pos = false;
     }
-    touch_down = false;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -544,19 +562,19 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
     touch_state_a_x = x;
     touch_state_a_y = y;
 
-    if ((set_xy_pos == false) || (touch_down == false)) {
+    if ((set_xy_pos == false) || (touch_down == 0)) {
         set_xy_pos = true;
         touch_state_b_x = touch_state_a_x;
         touch_state_b_y = touch_state_a_y;
         ICO_DBG("TouchMoveSwipe: save x/y=%d/%d", touch_state_b_x, touch_state_b_y);
     }
 
-    ICO_DBG("TouchMoveSwipe: button=%x cur.x/y=%d/%d->%d/%d",
-            info->buttons, info->cur.output.x, info->cur.output.y,
-            touch_state_a_x, touch_state_a_y);
+    ICO_DBG("TouchMoveSwipe: Swipe Move (%d,%d)->(%d,%d) Button=%x",
+            info->cur.output.x, info->cur.output.y,
+            touch_state_a_x, touch_state_a_y, info->buttons);
 
     /* long push    */
-    if(touch_down == false) {
+    if(touch_down == 0) {
         ICO_DBG("TouchMoveSwipe: no TouchDown, Skip");
         return;
     }
@@ -575,6 +593,7 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
 
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
                            ABS_Z, (touch_state_a_x << 16) | touch_state_a_y);
+        long_act = false;
         return;
     }
 
@@ -586,15 +605,20 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
             ecore_timer_del(timer);
             timer = NULL;
         }
-        long_act = true;
+        long_act = false;
 
+        if (touch_down > 0) {
+            /* release my grab  */
+            ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime,
+                               BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_RESET);
+        }
         /* send ABS_X/Y     */
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 2,
                            ABS_Z, (touch_state_b_x << 16) | touch_state_b_y);
         /* send TOUCH Down  */
         ico_syc_send_input("\0", 0, ICO_SYC_INPUT_TYPE_TOUCH, 0, touch_lasttime - 1,
-                               BTN_TOUCH, touch_down ? 8 : 1);
-        touch_down = false;
+                               BTN_TOUCH, ICO_INPUT_MGR_CONTROL_TOUCH_EVENT_DOWN);
+        touch_down = 0;
         /* send ABS_X/Y     */
         gettimeofday(&ctime, NULL);
         touch_lasttime = (ctime.tv_sec * 1000 + ctime.tv_usec/1000);
@@ -603,3 +627,4 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
         set_xy_pos = false;
     }
 }
+// vim: set expandtab ts=4 sw=4:

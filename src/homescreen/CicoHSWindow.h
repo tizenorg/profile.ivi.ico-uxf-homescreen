@@ -58,5 +58,5 @@ class CicoHSWindow
     Ecore_Evas *window; /* ecore-evas object */
 
 };
-
 #endif
+// vim:set expandtab ts=4 sw=4:

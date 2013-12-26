@@ -129,3 +129,4 @@
 #define ICO_HS_ANIMATION_DURATION   (400)
 
 #endif
+// vim:set expandtab ts=4 sw=4:

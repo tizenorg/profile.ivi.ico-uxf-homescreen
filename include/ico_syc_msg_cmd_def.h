@@ -11,7 +11,7 @@
 /**
  *  @file   ico_syc_msg_cmd_def.h
  *
- *  @brief  
+ *  @brief
  */
 /*========================================================================*/
 #ifndef __ICO_SYC_MSG_CMD_DEF_H__
@@ -160,6 +160,14 @@ extern "C" {
 
 /* notify state changed to homescreen */
 #define MSG_CMD_NOTIFY_CHANGED_STATE    0x00060001
+
+/* application operation */
+#define MSG_CMD_APP_START           1000
+#define MSG_CMD_APP_STOP            1001
+
+/* window change  */
+#define MSG_CMD_WIN_CHANGE          2000
+
 #ifdef __cplusplus
 }
 #endif

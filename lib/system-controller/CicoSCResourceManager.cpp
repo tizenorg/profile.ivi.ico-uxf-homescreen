@@ -24,12 +24,12 @@ using namespace std;
 #include "ico_syc_mrp_resource_private.h"
 
 #include "ico_syc_msg_cmd_def.h"
-#include "CicoSCSystemConfig.h"
-#include "CicoSCConf.h"
+#include "CicoSystemConfig.h"
+#include "CicoConf.h"
 #include "CicoSCCommand.h"
 #include "CicoSCPolicyManager.h"
 #include "CicoSCLifeCycleController.h"
-#include "CicoSCAilItems.h"
+#include "CicoAilItems.h"
 #include "CicoSCWindowController.h"
 #include "CicoSCInputController.h"
 #include "CicoSCPolicyDef.h"
@@ -112,7 +112,7 @@ CicoSCResourceManager::CicoSCResourceManager()
 {
     m_policyMgr = new CicoSCPolicyManager(this);
 
-    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
     list<resource_request_t*> l;
 
     {
@@ -171,38 +171,41 @@ CicoSCResourceManager::~CicoSCResourceManager()
 int
 CicoSCResourceManager::initialize(void)
 {
-    ICO_DBG("CicoSCResourceManager::initialize Enter");
+    ICO_TRA("CicoSCResourceManager::initialize Enter");
 
     int ret = ICO_SYC_EOK;
 
     ret = ico_syc_mrp_init(enforceSound, this);
     if (ICO_SYC_EOK != ret) {
+        ICO_TRA("CicoSCResourceManager::initialize Leave");
         return ret;
     }
 
     ret = m_policyMgr->initialize();
     if (ICO_SYC_EOK != ret) {
+        ICO_TRA("CicoSCResourceManager::initialize Leave");
         return ret;
     }
 
 
-    ICO_DBG("CicoSCResourceManager::initialize Leave");
+    ICO_TRA("CicoSCResourceManager::initialize Leave");
     return ret;
 }
   
 void
 CicoSCResourceManager::terminate(void)
 {
-    ICO_DBG("CicoSCResourceManager::terminate Enter");
+    ICO_TRA("CicoSCResourceManager::terminate Enter");
     m_policyMgr->terminate();
-    ICO_DBG("CicoSCResourceManager::terminate Leave");
+    ico_syc_mrp_term();
+    ICO_TRA("CicoSCResourceManager::terminate Leave");
 }
 
 void
 CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
                                      bool internal)
 {
-    ICO_DBG("CicoSCResourceManager::handleCommand Enter"
+    ICO_TRA("CicoSCResourceManager::handleCommand Enter"
             "(cmdid=0x%08X internal=%s)",
             cmd.cmdid, internal ? "true" : "false");
 
@@ -287,7 +290,7 @@ CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
         ICO_WRN("Unknown command");
     }
 
-    ICO_DBG("CicoSCResourceManager::handleCommand Leave");
+    ICO_TRA("CicoSCResourceManager::handleCommand Leave");
 }
 
 void
@@ -306,7 +309,7 @@ CicoSCResourceManager::setInputController(CicoSCInputController *inputCtrl)
 resource_request_t * 
 CicoSCResourceManager::popDispResReq(resource_request_t *req)
 {
-    ICO_DBG("CicoSCResourceManager::popDispResReq Enter");
+    ICO_TRA("CicoSCResourceManager::popDispResReq Enter");
 
     map<int, list<resource_request_t*> >::iterator itr;
     itr = m_dispReqQueue.begin();
@@ -318,13 +321,13 @@ CicoSCResourceManager::popDispResReq(resource_request_t *req)
             ICO_DBG("Dequeue waiting display request queue zone=%d req=0x%08x",
                     itr->first, *itr2);
             m_dispReqQueue[req->dispzoneid].erase(itr2);
-            ICO_DBG("CicoSCResourceManager::popDispResReq Leave"
+            ICO_TRA("CicoSCResourceManager::popDispResReq Leave"
                     "(0x%08x)", *itr2);
             return *itr2;
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::popDispResReq Leave(NULL)");
+    ICO_TRA("CicoSCResourceManager::popDispResReq Leave(NULL)");
     return NULL;
 }
 #endif
@@ -332,7 +335,7 @@ CicoSCResourceManager::popDispResReq(resource_request_t *req)
 resource_request_t *
 CicoSCResourceManager::popSoundResReq(resource_request_t *req)
 {
-    ICO_DBG("CicoSCResourceManager::popSoundResReq Enter");
+    ICO_TRA("CicoSCResourceManager::popSoundResReq Enter");
 
     map<int, list<resource_request_t*> >::iterator itr;
     itr = m_soundReqQueue.begin();
@@ -341,22 +344,23 @@ CicoSCResourceManager::popSoundResReq(resource_request_t *req)
         list<resource_request_t*>::iterator itr2;
         itr2 = find_if(itr->second.begin(), itr->second.end(), comp);
         if (itr->second.end() != itr2) {
-            ICO_DBG("Dequeue waiting sound request queue zone=%d req=0x%08x",
-                    itr->first, *itr2);
+            ICO_DBG("Dequeue waiting sound request queue"
+                    "(req=0x%08x zone:%02d:%s appid=%s)",
+                    *itr2, itr->first, (*itr2)->soundzone, (*itr2)->appid);
             m_soundReqQueue[req->soundzoneid].erase(itr2);
-            ICO_DBG("CicoSCResourceManager::popSoundResReq Leave"
+            ICO_TRA("CicoSCResourceManager::popSoundResReq Leave"
                     "(0x%08x)", *itr2);
             return *itr2;
         }
     }
-    ICO_DBG("CicoSCResourceManager::popSoundResReq Leave(NULL)");
+    ICO_TRA("CicoSCResourceManager::popSoundResReq Leave(NULL)");
     return NULL;
 }
 
 resource_request_t * 
 CicoSCResourceManager::popInputResReq(resource_request_t *req)
 {
-    ICO_DBG("CicoSCResourceManager::popInputResReq Enter");
+    ICO_TRA("CicoSCResourceManager::popInputResReq Enter");
 
     map<int, list<resource_request_t*> >::iterator itr;
     itr = m_inputReqQueue.begin();
@@ -365,16 +369,17 @@ CicoSCResourceManager::popInputResReq(resource_request_t *req)
         list<resource_request_t*>::iterator itr2;
         itr2 = find_if(itr->second.begin(), itr->second.end(), comp);
         if (itr->second.end() != itr2) {
-            ICO_DBG("Dequeue waiting input request queue input=%d req=0x%08x",
-                    itr->first, *itr2);
+            ICO_DBG("Dequeue waiting input request queue"
+                    "(req=0x%08x input:%d appid=%s)",
+                    *itr2, (*itr2)->input, (*itr2)->appid);
             m_inputReqQueue[req->input].erase(itr2);
-            ICO_DBG("CicoSCResourceManager::popInputResReq Leave"
+            ICO_TRA("CicoSCResourceManager::popInputResReq Leave"
                     "(0x%08x)", *itr2);
             return *itr2;
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::popDispResReq Leave(NULL)");
+    ICO_TRA("CicoSCResourceManager::popDispResReq Leave(NULL)");
     return NULL;
 }
 
@@ -383,14 +388,14 @@ bool
 CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
                                               bool control)
 {
-    ICO_DBG("CicoSCResourceManager::acquireDisplayResource Enter");
+    ICO_TRA("CicoSCResourceManager::acquireDisplayResource Enter");
 
-    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
     const CicoSCAppKindConf *appKindConf = NULL;
     appKindConf = sysConf->findAppKindConfbyId(newreq->appkind);
     if (NULL == appKindConf) {
         ICO_ERR("not found CicoSCAppKindConf instance");
-        ICO_DBG("CicoSCResourceManager::acquireDisplayResource Leave(false)");
+        ICO_TRA("CicoSCResourceManager::acquireDisplayResource Leave(false)");
         return false;
     }
 
@@ -406,7 +411,7 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
         delResourceRequest(newreq);
 
         ICO_DBG("kind of system application");
-        ICO_DBG("CicoSCResourceManager::acquireDisplayResource Leave(true)");
+        ICO_TRA("CicoSCResourceManager::acquireDisplayResource Leave(true)");
         return true;
     }
 
@@ -446,6 +451,7 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
         req->dispzoneid = newreq->dispzoneid;
         if (NULL != req->dispzone) free(req->dispzone);
         req->dispzone = strdup(newreq->dispzone);
+        req->layerid = newreq->layerid;
         if (NULL != req->animation) free(req->animation);
         req->animation = strdup(newreq->animation);
         req->animationTime = newreq->animationTime;
@@ -455,7 +461,7 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
     }
     
     if (false == control) {
-        ICO_DBG("Enqueue waiting display resource request"
+        ICO_TRA("Enqueue waiting display resource request"
                 "(req=0x%08x appid=%s)", req, req->appid);
         m_waitingDispResReq.push_front(req);
 #if 1   //DEBUG
@@ -474,7 +480,7 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
     else {
         if (-1 != chgzone) {
             // move request window
-            m_winCtrl->setGeometry(req->surfaceid, req->dispzone,
+            m_winCtrl->setGeometry(req->surfaceid, req->dispzone, req->layerid,
                                    req->animation, req->animationTime,
                                    req->animation, req->animationTime);
         }
@@ -493,14 +499,14 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
 #endif  //DEBUG
     }
 
-    ICO_DBG("CicoSCResourceManager::acquireDisplayResource Leave");
+    ICO_TRA("CicoSCResourceManager::acquireDisplayResource Leave");
     return true;
 }
 
 void
 CicoSCResourceManager::releaseDisplayResource(resource_request_t *newreq)
 {
-    ICO_DBG("CicoSCResourceManager::releaseDisplayResource Enter"
+    ICO_TRA("CicoSCResourceManager::releaseDisplayResource Enter"
             "(newreq=0x%08x)", newreq);
 
     // if exist in wating request list, pop request
@@ -508,7 +514,7 @@ CicoSCResourceManager::releaseDisplayResource(resource_request_t *newreq)
     if (NULL != req) {
         delResourceRequest(req);
         delResourceRequest(newreq);
-        ICO_DBG("CicoSCResourceManager::releaseDisplayResource Leave");
+        ICO_TRA("CicoSCResourceManager::releaseDisplayResource Leave");
         return;
     }
 
@@ -538,20 +544,20 @@ CicoSCResourceManager::releaseDisplayResource(resource_request_t *newreq)
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::releaseDisplayResource Leave");
+    ICO_TRA("CicoSCResourceManager::releaseDisplayResource Leave");
 }
 
 bool
 CicoSCResourceManager::acquireSoundResource(resource_request_t *newreq)
 {
-    ICO_DBG("CicoSCResourceManager::acquireSoundResource Enter");
+    ICO_TRA("CicoSCResourceManager::acquireSoundResource Enter");
 
-    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
     const CicoSCAppKindConf *appKindConf = NULL;
     appKindConf = sysConf->findAppKindConfbyId(newreq->appkind);
     if (NULL == appKindConf) {
         ICO_ERR("not found CicoSCAppKindConf instance");
-        ICO_DBG("CicoSCResourceManager::acquireSoundResource Leave(false)");
+        ICO_TRA("CicoSCResourceManager::acquireSoundResource Leave(false)");
         return false;
     }
 
@@ -562,7 +568,7 @@ CicoSCResourceManager::acquireSoundResource(resource_request_t *newreq)
         delResourceRequest(newreq);
 
         ICO_DBG("kind of system application");
-        ICO_DBG("CicoSCResourceManager::acquireSoundResource Leave(true)");
+        ICO_TRA("CicoSCResourceManager::acquireSoundResource Leave(true)");
         return true;
     }
 
@@ -576,7 +582,7 @@ CicoSCResourceManager::acquireSoundResource(resource_request_t *newreq)
     if (true == comp(m_curSoundResReq[req->soundzoneid])) {
         ICO_DBG("already acquired appid=%s pid=%d soundid=0x%08X",
                 req->appid, req->pid, req->soundid);
-        ICO_DBG("CicoSCResourceManager::acquireSoundResource Leave(true)");
+        ICO_TRA("CicoSCResourceManager::acquireSoundResource Leave(true)");
         // free new request
         delResourceRequest(newreq);
         return true;
@@ -590,19 +596,20 @@ CicoSCResourceManager::acquireSoundResource(resource_request_t *newreq)
         updateSoundResource(req);
     }
     else {
-        ICO_DBG("Enqueue waiting sound request queue zone=%d req=0x%08x",
-                req->soundzoneid, req);
+        ICO_DBG("Enqueue waiting sound request queue"
+                "(req=0x%08x zone:%02d:%s appid=%s)",
+                req, req->soundzoneid, req->soundzone, req->appid);
         m_soundReqQueue[req->soundzoneid].push_front(req);
     }
 
-    ICO_DBG("CicoSCResourceManager::acquireSoundResource Leave");
+    ICO_TRA("CicoSCResourceManager::acquireSoundResource Leave");
     return true;
 }
 
 void
 CicoSCResourceManager::releaseSoundResource(resource_request_t *newreq)
 {
-    ICO_DBG("CicoSCResourceManager::releaseSoundResource Enter");
+    ICO_TRA("CicoSCResourceManager::releaseSoundResource Enter");
 
     bool curchg = false;
     CompSoundResourceRequest comp(newreq);
@@ -612,6 +619,15 @@ CicoSCResourceManager::releaseSoundResource(resource_request_t *newreq)
          }
 
          if (true == comp(m_curSoundResReq[i])) {
+            ICO_DBG("Dequeue current sound resource ower request"
+                    "(req=0x%08x zoneid=%02d:%s appid=%s)",
+                    m_curSoundResReq[i], m_curSoundResReq[i]->dispzoneid,
+                    m_curSoundResReq[i]->dispzone,
+                    m_curSoundResReq[i]->appid);
+            ICO_PRF("CHG_GUI_RES sound   deprived zone=%02d:%s appid=%s",
+                    m_curSoundResReq[i]->dispzoneid,
+                    m_curSoundResReq[i]->dispzone,
+                    m_curSoundResReq[i]->appid);
             ico_syc_mrp_release_sound_resource(m_curSoundResReq[i]);
             delResourceRequest(newreq);
             delResourceRequest(m_curSoundResReq[i]);
@@ -631,7 +647,7 @@ CicoSCResourceManager::releaseSoundResource(resource_request_t *newreq)
             req = NULL;
         }
         delResourceRequest(newreq);
-        ICO_DBG("CicoSCResourceManager::releaseSoundResource Leave");
+        ICO_TRA("CicoSCResourceManager::releaseSoundResource Leave");
         return;
     }
 
@@ -652,7 +668,8 @@ CicoSCResourceManager::releaseSoundResource(resource_request_t *newreq)
             if (true == active) {
                 resource_request_t* req = *itr2;
                 ICO_DBG("Dequeue waiting sound request queue "
-                        "zone=%d req=0x%08x", itr->first, *itr2);
+                        "(req=0x%08x zone:%02d:%s appid=%s)",
+                        *itr2, itr->first, (*itr2)->soundzone, (*itr2)->appid);
                 itr->second.erase(itr2);
                 updateSoundResource(req);
                 break;
@@ -660,13 +677,13 @@ CicoSCResourceManager::releaseSoundResource(resource_request_t *newreq)
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::releaseSoundResource Leave");
+    ICO_TRA("CicoSCResourceManager::releaseSoundResource Leave");
 }
 
 bool
 CicoSCResourceManager::acquireInputResource(resource_request_t *newreq)
 {
-    ICO_DBG("CicoSCResourceManager::acquireInputResource Enter");
+    ICO_TRA("CicoSCResourceManager::acquireInputResource Enter");
 
     resource_request_t *req = popInputResReq(newreq);
     if (NULL == req) {
@@ -678,7 +695,7 @@ CicoSCResourceManager::acquireInputResource(resource_request_t *newreq)
     if (true == comp(m_curInputResReq[req->input])) {
         ICO_DBG("already acquired appid=%s pid=%d input=0x%08X",
                 req->appid, req->pid, req->input);
-        ICO_DBG("CicoSCResourceManager::acquireInputResource Leave(true)");
+        ICO_TRA("CicoSCResourceManager::acquireInputResource Leave(true)");
         // free new request
         delResourceRequest(newreq);
         return true;
@@ -689,18 +706,19 @@ CicoSCResourceManager::acquireInputResource(resource_request_t *newreq)
         updateInputResource(req);
     }
     else {
-        ICO_DBG("Enqueue waiting input request queue input=%d req=0x%08x",
-                req->input, req);
+        ICO_DBG("Enqueue waiting input request queue"
+                "(req=0x%08x input:%d appid=%s)", req, req->input, req->appid);
         m_inputReqQueue[req->input].push_front(req);
     }
 
-    ICO_DBG("CicoSCResourceManager::acquireInputResource Leave");
+    ICO_TRA("CicoSCResourceManager::acquireInputResource Leave(true)");
     return true;
 }
 
 void
 CicoSCResourceManager::releaseInputResource(resource_request_t *newreq)
 {
+    ICO_TRA("CicoSCResourceManager::releaseInputResource Enter");
     bool curchg = false;
     CompInputResourceRequest comp(newreq);
     for (int i = 0; i < (int)m_curInputResReq.size(); ++i) {
@@ -714,6 +732,12 @@ CicoSCResourceManager::releaseInputResource(resource_request_t *newreq)
                                          m_curInputResReq[i]->device,
                                          m_curInputResReq[i]->input);
             }
+            ICO_DBG("Dequeue current input resource ower request"
+                    "(req=0x%08x input=%d appid=%s)",
+                    m_curInputResReq[i], m_curInputResReq[i]->input,
+                    m_curInputResReq[i]->appid);
+            ICO_PRF("CHG_GUI_RES input   deprived input=%d appid=%s",
+                    m_curInputResReq[i]->input, m_curInputResReq[i]->appid);
             delResourceRequest(newreq);
             delResourceRequest(m_curInputResReq[i]);
             m_curInputResReq[i] = NULL;
@@ -731,7 +755,7 @@ CicoSCResourceManager::releaseInputResource(resource_request_t *newreq)
             req = NULL;
         }
         delResourceRequest(newreq);
-        ICO_DBG("CicoSCResourceManager::releaseInputResource Leave");
+        ICO_TRA("CicoSCResourceManager::releaseInputResource Leave");
         return;
     }
 
@@ -749,13 +773,15 @@ CicoSCResourceManager::releaseInputResource(resource_request_t *newreq)
             if (true == active) {
                 resource_request_t* req = *itr2;
                 ICO_DBG("Dequeue waiting input request queue "
-                        "input=%d req=0x%08x", itr->first, *itr2);
+                        "(req=0x%08x input:%d appid=%s)",
+                        *itr2, (*itr2)->input, (*itr2)->appid);
                 itr->second.erase(itr2);
                 updateInputResource(req);
                 break;
             }
         }
     }
+    ICO_TRA("CicoSCResourceManager::releaseInputResource Leave");
 }
 
 resource_request_t *
@@ -763,18 +789,18 @@ CicoSCResourceManager::newResourceRequest(int resid,
                                           int reqtype,
                                           const CicoSCCommand &cmd)
 {
-    ICO_DBG("CicoSCResourceManager::newResourceRequest Enter");
+    ICO_TRA("CicoSCResourceManager::newResourceRequest Enter");
 
     resource_request_t *req = NULL;
     req = (resource_request_t*)calloc(1, sizeof(resource_request_t));
     CicoSCCmdResCtrlOpt *opt = (CicoSCCmdResCtrlOpt*)cmd.opt;
-    CicoSCSystemConfig *systemConfig = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *systemConfig = CicoSystemConfig::getInstance();
 
     req->reqtype = reqtype;
 
     CicoSCLifeCycleController *lifeCycle =
         CicoSCLifeCycleController::getInstance();
-    const CicoSCAilItems* ailItem = lifeCycle->findAIL(cmd.appid);
+    const CicoAilItems* ailItem = lifeCycle->findAIL(cmd.appid);
     if (NULL != ailItem) {
         req->category = ailItem->m_categoryID;
         req->appkind = ailItem->m_kindID;
@@ -804,6 +830,7 @@ CicoSCResourceManager::newResourceRequest(int resid,
     if (resid == RESID_KIND_DISPLAY) {
         req->dispzone   = strdup(opt->dispzone.c_str());
         req->dispzoneid = systemConfig->getDizplayZoneIdbyFullName(req->dispzone);
+        req->layerid    = opt->layerid;
         req->winname    = strdup(opt->winname.c_str());
         req->surfaceid  = opt->surfaceid;
         req->id         = opt->surfaceid;;
@@ -825,7 +852,7 @@ CicoSCResourceManager::newResourceRequest(int resid,
         req->id     = opt->input;
     }
 
-    ICO_DBG("CicoSCResourceManager::newResourceRequest Leave"
+    ICO_TRA("CicoSCResourceManager::newResourceRequest Leave"
             "(req=0x%08x appid=%s)", req, req->appid);
     return req;
 }
@@ -851,16 +878,16 @@ CicoSCResourceManager::enforceSound(unsigned short state,
                                     resource_request_t *req,
                                     void *user_data)
 {
-    ICO_DBG("CicoSCResourceManager::enforceSound Enter");
+    ICO_TRA("CicoSCResourceManager::enforceSound Enter");
     /* NOP */
-    ICO_DBG("CicoSCResourceManager::enforceSound Leave");
+    ICO_TRA("CicoSCResourceManager::enforceSound Leave");
 }
             
 // receive changed state
 void
 CicoSCResourceManager::receiveChangedState(int state)
 {
-    ICO_DBG("CicoSCResourceManager::receiveChangedState Enter"
+    ICO_TRA("CicoSCResourceManager::receiveChangedState Enter"
             "(state=%d)", state);
 
     if (STID_DRVREGULATION_ON == state) { 
@@ -876,7 +903,7 @@ CicoSCResourceManager::receiveChangedState(int state)
         updateInputResourceRegulation(state);
     }
 
-    ICO_DBG("CicoSCResourceManager::receiveChangedState Leave");
+    ICO_TRA("CicoSCResourceManager::receiveChangedState Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -896,7 +923,7 @@ void
 CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
                                              int chgzoneid)
 {
-    ICO_DBG("CicoSCResourceManager::updateDisplayResource Enter"
+    ICO_TRA("CicoSCResourceManager::updateDisplayResource Enter"
             "(req=0x%08x)", req);
 
     std::map<unsigned int, resource_request_t*>::iterator itr;
@@ -909,6 +936,7 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
             // show request window
             m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
             m_winCtrl->activeCB(NULL, NULL, req->surfaceid, -1);
+            ICO_TRA("CicoSCResourceManager::updateDisplayResource Leave");
             return;
         }
         resource_request_t *popreq = popCurDispResOwerReq(itr->second);
@@ -922,7 +950,9 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
             popreq->state = RES_STATE_WAITING;
             // enqueue request
             ICO_DBG("Enqueue waiting display resource request"
-                    "(req=0x%08x appid=%s", popreq, popreq->appid);
+                    "(req=0x%08x zone=%02d:%s appid=%s",
+                    popreq, popreq->dispzoneid,
+                    popreq->dispzone, popreq->appid);
             m_waitingDispResReq.push_front(popreq);
 #if 1   //DEBUG
         dumpWaitingDispResReq();
@@ -944,25 +974,34 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
         }
 
         ICO_DBG("Dequeue current display resource ower request"
-                "(req=0x%08x zoneid=%d appid=%s)",
-                tmpreq, tmpreq->dispzoneid, tmpreq->appid);
+                "(req=0x%08x zoneid=%02d:%s appid=%s)",
+                tmpreq, tmpreq->dispzoneid, tmpreq->dispzone, tmpreq->appid);
+        ICO_PRF("CHG_GUI_RES display deprived zone=%02d:%s appid=%s",
+                tmpreq->dispzoneid, tmpreq->dispzone, tmpreq->appid);
         itr2->second = NULL;
 
         // hide current window
         m_winCtrl->hide(tmpreq->surfaceid, NULL, 0);
 
         ICO_DBG("Enqueue waiting display resource request"
-                "(req=0x%08x appid=%s", tmpreq, tmpreq->appid);
+                "(req=0x%08x zone=%02d:%s appid=%s",
+                tmpreq, tmpreq->dispzoneid, tmpreq->dispzone, tmpreq->appid);
         m_waitingDispResReq.push_front(tmpreq);
     }
 
     if (NULL != m_winCtrl) {
+        int ret = ICO_SYC_EOK;
         if (-1 != chgzoneid) {
             // move request window
-            m_winCtrl->setGeometry(req->surfaceid, req->dispzone,
-                                   req->animation, req->animationTime,
-                                   req->animation, req->animationTime);
+            ret = m_winCtrl->setGeometry(req->surfaceid, req->dispzone,
+                                         req->layerid,
+                                         req->animation, req->animationTime,
+                                         req->animation, req->animationTime);
+            if (ICO_SYC_EOK != ret) {
+                return;
+            }
         }
+
         // show request window
         m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
     }
@@ -970,8 +1009,10 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
     req->state = RES_STATE_ACQUIRED;
     // update current zone request
     ICO_DBG("Enqueue current display resource ower request"
-            "(req=0x%08x zoneid=%d appid=%s)",
-            req, req->dispzoneid, req->appid);
+            "(req=0x%08x zoneid=%02d:%s appid=%s)",
+            req, req->dispzoneid, req->dispzone, req->appid);
+    ICO_PRF("CHG_GUI_RES display acquired zone=%02d:%s appid=%s",
+            req->dispzoneid, req->dispzone, req->appid);
     m_curDispResOwerReq[req->dispzoneid] = req;
 #if 1   //DEBUG
     dumpCurDispResOwerReq();
@@ -998,25 +1039,29 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
             if (true == active) {
                 resource_request_t* req = *itr;
                 ICO_DBG("Dequeue waiting display resource request"
-                        "(req=0x%08x appid=%s)", *itr, (*itr)->appid);
+                        "(req=0x%08x zone=%02d:%s appid=%s)",
+                        *itr, (*itr)->dispzoneid,
+                        (*itr)->dispzone, (*itr)->appid);
                 m_waitingDispResReq.erase(itr);
 #if 1   //DEBUG
                 dumpWaitingDispResReq();
 #endif  //DEBUG
                 updateDisplayResource(req);
+#if 0
                 m_winCtrl->active(req->surfaceid, -1);
+#endif
                 break;
             }
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::updateDisplayResource Leave");
+    ICO_TRA("CicoSCResourceManager::updateDisplayResource Leave");
 }
 
 void
 CicoSCResourceManager::updateSoundResource(resource_request_t *req)
 {
-    ICO_DBG("CicoSCResourceManager::updateSoundResource Enter"
+    ICO_TRA("CicoSCResourceManager::updateSoundResource Enter"
             "(req=0x%08x)", req);
     for (int i = 0; i < (int)m_curSoundResReq.size(); ++i) {
         ICO_DBG("zoneid=%d active=%d current=0x%08x",
@@ -1033,9 +1078,19 @@ CicoSCResourceManager::updateSoundResource(resource_request_t *req)
             m_curSoundResReq[i]->state = RES_STATE_WAITING;
             // enqueue request
             ICO_DBG("Enqueue waiting sound request queue "
-                    "zone=%d req=0x%08x", i, m_curSoundResReq[i]);
+                    "(req=0x%08x zone:%02d:%s appid=%s)",
+                    m_curSoundResReq[i], i,
+                    m_curSoundResReq[i]->soundzone, m_curSoundResReq[i]->appid);
             m_soundReqQueue[i].push_front(m_curSoundResReq[i]);
+
             // initialize current zone request
+            ICO_DBG("Dequeue current sound request queue "
+                    "(req=0x%08x zone:%02d:%s appid=%s)",
+                    m_curSoundResReq[i], i,
+                    m_curSoundResReq[i]->soundzone, m_curSoundResReq[i]->appid);
+            ICO_PRF("CHG_GUI_RES sound   deprived zone=%02d:%s appid=%s",
+                    i, m_curSoundResReq[i]->soundzone,
+                    m_curSoundResReq[i]->appid);
             m_curSoundResReq[i] = NULL;
         }
     }
@@ -1047,15 +1102,20 @@ CicoSCResourceManager::updateSoundResource(resource_request_t *req)
         // state change to acquired
         req->state = RES_STATE_ACQUIRED;
         // update current zone request
+        ICO_DBG("Enqueue current sound request queue "
+                "(req=0x%08x zone:%02d:%s appid=%s)",
+                req, req->soundzoneid, req->soundzone, req->appid);
+        ICO_PRF("CHG_GUI_RES sound   acquired zone=%02d:%s appid=%s",
+                req->soundzoneid, req->soundzone, req->appid);
         m_curSoundResReq[req->soundzoneid] = req;
     }
-    ICO_DBG("CicoSCResourceManager::updateSoundResource Leave");
+    ICO_TRA("CicoSCResourceManager::updateSoundResource Leave");
 }
 
 void
 CicoSCResourceManager::updateInputResource(resource_request_t *req)
 {
-    ICO_DBG("CicoSCResourceManager::updateInputResource Enter"
+    ICO_TRA("CicoSCResourceManager::updateInputResource Enter"
             "(req=0x%08x)", req);
     for (int i = 0; i < (int)m_curInputResReq.size(); ++i) {
         ICO_DBG("input=%d active=%d current=0x%08x",
@@ -1077,9 +1137,17 @@ CicoSCResourceManager::updateInputResource(resource_request_t *req)
             m_curInputResReq[i]->state = RES_STATE_WAITING;
             // enqueue request
             ICO_DBG("Enqueue waiting input request queue "
-                    "zone=%d req=0x%08x", i, m_curInputResReq[i]);
+                    "(req=0x%08x input:%d appid=%s)",
+                    m_curInputResReq[i], i, m_curInputResReq[i]->appid);
             m_inputReqQueue[i].push_front(m_curInputResReq[i]);
             // initialize current zone request
+            ICO_DBG("Dequeue current input request queue "
+                    "(req=0x%08x input:%d appid=%s)",
+                    m_curInputResReq[i], 
+                    m_curInputResReq[i]->input, m_curInputResReq[i]->appid);
+            ICO_PRF("CHG_GUI_RES input   deprived input=%d appid=%s",
+                    m_curInputResReq[i]->input,
+                    m_curInputResReq[i]->appid);
             m_curInputResReq[i] = NULL;
         }
     }
@@ -1090,15 +1158,19 @@ CicoSCResourceManager::updateInputResource(resource_request_t *req)
         // state change to acquired
         req->state = RES_STATE_ACQUIRED;
         // update current zone request
+        ICO_DBG("Enqueue current input request queue "
+                "(req=0x%08x input:%d appid=%s)", req, req->input, req->appid);
+        ICO_PRF("CHG_GUI_RES input   acquired input=%d appid=%s",
+                req->input, req->appid);
         m_curInputResReq[req->input] = req;
     }
-    ICO_DBG("CicoSCResourceManager::updateInputResource Leave");
+    ICO_TRA("CicoSCResourceManager::updateInputResource Leave");
 }
 
 void
 CicoSCResourceManager::updateDisplayResourceRegulation(int state)
 {
-    ICO_DBG("CicoSCResourceManager::updateDisplayResourceRegulation Enter"
+    ICO_TRA("CicoSCResourceManager::updateDisplayResourceRegulation Enter"
             "(state=%d)", state);
 
     if (STID_DRVREGULATION_ON == state) {
@@ -1127,7 +1199,7 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
         }
 
         if (false == curchg) {
-            ICO_DBG("CicoSCResourceManager::updateDisplayResourceRegulation "
+            ICO_TRA("CicoSCResourceManager::updateDisplayResourceRegulation "
                     "Leave");
             return;
         }
@@ -1192,10 +1264,17 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
                                                                  req->prio);
                     if (true == active) {
                         ICO_DBG("Dequeue waiting display resource request"
-                                "(req=0x%08x appid=%s)", req, req->appid);
+                                "(req=0x%08x zone=%02d:%s appid=%s)",
+                                req, req->dispzoneid,
+                                req->dispzone, req->appid);
                         m_waitingDispResReq.erase(itr2);
                         ICO_DBG("Enqueue current display resource request"
-                                "(req=0x%08x appid=%s)", req, req->appid);
+                                "(req=0x%08x zone=%02d:%s appid=%s)",
+                                req, req->dispzoneid, 
+                                req->dispzone, req->appid);
+                        ICO_PRF("CHG_GUI_RES display acquired zone=%02d:%s "
+                                "appid=%s",
+                                req->dispzoneid, req->dispzone, req->appid);
                         m_curDispResOwerReq[req->dispzoneid] = req;
 #if 1   //DEBUG
                         dumpCurDispResOwerReq();
@@ -1237,13 +1316,13 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::updateDisplayResourceRegulation Leave");
+    ICO_TRA("CicoSCResourceManager::updateDisplayResourceRegulation Leave");
 }
 
 void
 CicoSCResourceManager::updateSoundResourceRegulation(int state)
 {
-    ICO_DBG("CicoSCResourceManager::updateSoundResourceRegulation Enter"
+    ICO_TRA("CicoSCResourceManager::updateSoundResourceRegulation Enter"
             "(state=%d)", state);
 
     bool curchg = false;
@@ -1263,7 +1342,8 @@ CicoSCResourceManager::updateSoundResourceRegulation(int state)
             current->state = RES_STATE_WAITING;
             // enqueue request
             ICO_DBG("Enqueue waiting sound request queue "
-                    "zone=%d req=0x%08x", i, current);
+                    "(req=0x%08x zone:%02d:%s appid=%s)",
+                    current,  i, current->soundzone, current->appid);
             m_soundReqQueue[i].push_front(current);
             // initialize current zone request
             m_curSoundResReq[i] = NULL;
@@ -1272,7 +1352,7 @@ CicoSCResourceManager::updateSoundResourceRegulation(int state)
     }
 
     if ((false == curchg) && (STID_DRVREGULATION_ON == state)) {
-        ICO_DBG("CicoSCResourceManager::updateSoundResourceRegulation Leave");
+        ICO_TRA("CicoSCResourceManager::updateSoundResourceRegulation Leave");
         return;
     }
 
@@ -1294,7 +1374,8 @@ CicoSCResourceManager::updateSoundResourceRegulation(int state)
             if (true == active) {
                 resource_request_t* req = *itr2;
                 ICO_DBG("Dequeue waiting sound request queue "
-                        "zone=%d req=0x%08x", itr->first, *itr2);
+                        "(req=0x%08x zone:%02d:%s appid=%s)",
+                        *itr2, itr->first, (*itr2)->soundzone, (*itr2)->appid);
                 itr->second.erase(itr2);
                 updateSoundResource(req);
                 break;
@@ -1302,13 +1383,13 @@ CicoSCResourceManager::updateSoundResourceRegulation(int state)
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::updateSoundResourceRegulation Leave");
+    ICO_TRA("CicoSCResourceManager::updateSoundResourceRegulation Leave");
 }
 
 void
 CicoSCResourceManager::updateInputResourceRegulation(int state)
 {
-    ICO_DBG("CicoSCResourceManager::updateInputResourceRegulation Enter"
+    ICO_TRA("CicoSCResourceManager::updateInputResourceRegulation Enter"
             "(state=%d)", state);
 
     bool curchg = false;
@@ -1332,7 +1413,8 @@ CicoSCResourceManager::updateInputResourceRegulation(int state)
             current->state = RES_STATE_WAITING;
             // enqueue request
             ICO_DBG("Enqueue waiting input request queue "
-                    "zone=%d req=0x%08x", i, current);
+                    "(req=0x%08x input:%d appid=%s)",
+                    current, i, current->appid);
             m_inputReqQueue[i].push_front(current);
             // initialize current zone request
             m_curInputResReq[i] = NULL;
@@ -1341,7 +1423,7 @@ CicoSCResourceManager::updateInputResourceRegulation(int state)
     }
 
     if ((false == curchg) && (STID_DRVREGULATION_ON == state)) {
-        ICO_DBG("CicoSCResourceManager::updateInputResourceRegulation Leave");
+        ICO_TRA("CicoSCResourceManager::updateInputResourceRegulation Leave");
         return;
     }
 
@@ -1361,7 +1443,8 @@ CicoSCResourceManager::updateInputResourceRegulation(int state)
             if (true == active) {
                 resource_request_t* req = *itr2;
                 ICO_DBG("Dequeue waiting input request queue "
-                        "zone=%d req=0x%08x", itr->first, *itr2);
+                        "(req=0x%08x input:%d appid=%s)",
+                        *itr2, (*itr2)->input, (*itr2)->appid);
                 itr->second.erase(itr2);
                 updateInputResource(req);
                 break;
@@ -1369,7 +1452,7 @@ CicoSCResourceManager::updateInputResourceRegulation(int state)
         }
     }
 
-    ICO_DBG("CicoSCResourceManager::updateInputResourceRegulation Leave");
+    ICO_TRA("CicoSCResourceManager::updateInputResourceRegulation Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1421,8 +1504,11 @@ CicoSCResourceManager::popCurDispResOwerReq(resource_request_t *req)
         CompDisplayResourceRequest comp(req);
         if (true == comp(itr->second)) {
             ICO_DBG("Dequeue current display resource ower request"
-                    "(req=0x%08x zoneid=%d appid=%s)",
-                    itr->second, itr->first, itr->second->appid);
+                    "(req=0x%08x zoneid=%02d:%s appid=%s)",
+                    itr->second, itr->first,
+                    itr->second->dispzone, itr->second->appid);
+            ICO_PRF("CHG_GUI_RES display deprived zone=%02d:%s appid=%s",
+                    itr->first, itr->second->dispzone, itr->second->appid);
             resource_request_t *findreq = itr->second;
             itr->second = NULL;
 #if 1   //DEBUG
@@ -1544,28 +1630,28 @@ CicoSCResourceManager::dumpWaitingDispResReq(void)
 void
 CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
 {
-    ICO_DBG("CicoSCResourceManager::updateDispResRegulationPreProc Enter");
+    ICO_TRA("CicoSCResourceManager::updateDispResRegulationPreProc Enter");
 #if 1   //DEBUG
     dumpCurDispResOwerReq();
     dumpWaitingDispResReq();
 #endif  //DEBUG
 
     if (NULL == req) {
-        ICO_DBG("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
+        ICO_TRA("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
         return;
     }
 
     if (false == m_policyMgr->getRegulation()) {
-        ICO_DBG("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
+        ICO_TRA("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
         return;
     }
 
-    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
     const CicoSCAppKindConf *appKindConf = NULL;
     appKindConf = sysConf->findAppKindConfbyId(req->appkind);
     if (NULL == appKindConf) {
         ICO_ERR("not found CicoSCAppKindConf instance");
-        ICO_DBG("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
+        ICO_TRA("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
         return;
     }
 
@@ -1581,7 +1667,7 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
         delResourceRequest(req);
 
         ICO_DBG("kind of system application");
-        ICO_DBG("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
+        ICO_TRA("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
         return;
     }
 
@@ -1644,6 +1730,8 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
         ICO_DBG("Dequeue current display resource request"
                 "(req=0x%08x zone:%02d:%s appid=%s)",
                 curreq, curreq->dispzoneid, curreq->dispzone, curreq->appid);
+        ICO_PRF("CHG_GUI_RES display deprived zone=%02d:%s appid=%s",
+                curreq->dispzoneid, curreq->dispzone, curreq->appid);
         m_curDispResOwerReq[curreq->dispzoneid] = NULL;
 
         if (curreq->surfaceid != req->surfaceid) {
@@ -1659,6 +1747,8 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
                         "(req=0x%08x zone:%02d:%s appid=%s)",
                         waitreq, waitreq->dispzoneid,
                         waitreq->dispzone, waitreq->appid);
+                ICO_PRF("CHG_GUI_RES display acquired zone=%02d:%s appid=%s",
+                        waitreq->dispzoneid, waitreq->dispzone, waitreq->appid);
                 m_curDispResOwerReq[waitreq->dispzoneid] = waitreq;
             }
         }
@@ -1667,6 +1757,8 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
                     "(req=0x%08x zone:%02d:%s appid=%s)",
                     curreq, curreq->dispzoneid,
                     curreq->dispzone, curreq->appid);
+            ICO_PRF("CHG_GUI_RES display acquired zone=%02d:%s appid=%s",
+                    curreq->dispzoneid, curreq->dispzone, curreq->appid);
             m_curDispResOwerReq[curreq->dispzoneid] = curreq;
         }
     }
@@ -1676,7 +1768,7 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
     dumpCurDispResOwerReq();
     dumpWaitingDispResReq();
 #endif  //DEBUG
-    ICO_DBG("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
+    ICO_TRA("CicoSCResourceManager::updateDispResRegulationPreProc Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1687,6 +1779,8 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
 void
 CicoSCResourceManager::updateSoundResRegulationPreProc(resource_request_t *req)
 {
+    ICO_TRA("CicoSCResourceManager::updateSoundResRegulationPreProc Enter");
+
     if (NULL == req) {
         return;
     }
@@ -1695,12 +1789,12 @@ CicoSCResourceManager::updateSoundResRegulationPreProc(resource_request_t *req)
         return;
     }
 
-    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
     const CicoSCAppKindConf *appKindConf = NULL;
     appKindConf = sysConf->findAppKindConfbyId(req->appkind);
     if (NULL == appKindConf) {
         ICO_ERR("not found CicoSCAppKindConf instance");
-        ICO_DBG("CicoSCResourceManager::acquireSoundResource Leave(false)");
+        ICO_TRA("CicoSCResourceManager::updateSoundResRegulationPreProc Leave");
         return;
     }
 
@@ -1711,7 +1805,7 @@ CicoSCResourceManager::updateSoundResRegulationPreProc(resource_request_t *req)
         delResourceRequest(req);
 
         ICO_DBG("kind of system application");
-        ICO_DBG("CicoSCResourceManager::acquireSoundResource Leave(true)");
+        ICO_TRA("CicoSCResourceManager::updateSoundResRegulationPreProc Leave");
         return;
     }
 
@@ -1724,32 +1818,43 @@ CicoSCResourceManager::updateSoundResRegulationPreProc(resource_request_t *req)
 
     if (NULL != curreq) {
         ICO_DBG("Dequeue current sound resource request"
-                "(req=0x%08x zone:%02d appid=%s)",
-                curreq, curreq->soundzoneid, curreq->appid);
+                "(req=0x%08x zone:%02d:%s appid=%s)",
+                curreq, curreq->soundzoneid, curreq->soundzone, curreq->appid);
+        ICO_PRF("CHG_GUI_RES sound   deprived zone=%02d:%s appid=%s",
+                curreq->soundzoneid, curreq->soundzone, curreq->appid);
         m_curSoundResReq[curreq->soundzoneid] = NULL;
 
         if (0 != strcmp(curreq->appid, req->appid)) {
             resource_request_t *waitreq = popSoundResReq(req);
             ICO_DBG("Enqueue waiting sound resource request"
-                    "(req=0x%08x zone:%02d appid=%s)",
-                    curreq, curreq->soundzoneid, curreq->appid);
+                    "(req=0x%08x zone:%02d:%s appid=%s)",
+                    curreq, curreq->soundzoneid,
+                    curreq->soundzone, curreq->appid);
             m_soundReqQueue[curreq->soundzoneid].push_front(curreq);
 
             if (NULL != waitreq) {
                 ICO_DBG("Enqueue current sound resource request"
-                        "(req=0x%08x zone:%02d appid=%s)",
-                        waitreq, waitreq->soundzoneid, waitreq->appid);
+                        "(req=0x%08x zone:%02d:%s appid=%s)",
+                        waitreq, waitreq->soundzoneid,
+                        waitreq->soundzone, waitreq->appid);
+                ICO_PRF("CHG_GUI_RES sound   acquired zone=%02d:%s appid=%s",
+                        waitreq->soundzoneid, waitreq->soundzoneid,
+                        waitreq->appid);
                 m_curSoundResReq[curreq->soundzoneid] = waitreq;
             }
         }
         else {
             ICO_DBG("Enqueue current sound resource request"
-                    "(req=0x%08x zone:%02d appid=%s)",
-                    curreq, curreq->soundzoneid, curreq->appid);
+                    "(req=0x%08x zone:%02d:%s appid=%s)",
+                    curreq, curreq->soundzoneid,
+                    curreq->soundzone, curreq->appid);
+            ICO_PRF("CHG_GUI_RES sound   acquired zone=%d:%s appid=%s",
+                    curreq->soundzoneid, curreq->soundzone, curreq->appid);
             m_curSoundResReq[curreq->soundzoneid] = curreq;
         }
     }
     delResourceRequest(req);
+    ICO_TRA("CicoSCResourceManager::updateSoundResRegulationPreProc Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1760,6 +1865,8 @@ CicoSCResourceManager::updateSoundResRegulationPreProc(resource_request_t *req)
 void
 CicoSCResourceManager::updateInputResRegulationPreProc(resource_request_t *req)
 {
+    ICO_TRA("CicoSCResourceManager::updateInputResRegulationPreProc Enter");
+
     if (NULL == req) {
         return;
     }
@@ -1777,32 +1884,39 @@ CicoSCResourceManager::updateInputResRegulationPreProc(resource_request_t *req)
 
     if (NULL != curreq) {
         ICO_DBG("Dequeue current input resource request"
-                "(req=0x%08x zone:%02d appid=%s)",
+                "(req=0x%08x input:%d appid=%s)",
                 curreq, curreq->input, curreq->appid);
+        ICO_PRF("CHG_GUI_RES input   deprived input=%d appid=%s",
+                curreq->input, curreq->appid);
         m_curInputResReq[curreq->input] = NULL;
 
         if (0 != strcmp(curreq->appid, req->appid)) {
             resource_request_t *waitreq = popInputResReq(req);
             ICO_DBG("Enqueue waiting input resource request"
-                    "(req=0x%08x zone:%02d appid=%s)",
+                    "(req=0x%08x input:%d appid=%s)",
                     curreq, curreq->input, curreq->appid);
             m_inputReqQueue[curreq->input].push_front(curreq);
 
             if (NULL != waitreq) {
                 ICO_DBG("Enqueue current input resource request"
-                        "(req=0x%08x zone:%02d appid=%s)",
+                        "(req=0x%08x input:%d appid=%s)",
                         waitreq, waitreq->input, waitreq->appid);
+                ICO_PRF("CHG_GUI_RES input   acquired input=%d appid=%s",
+                        waitreq->input, waitreq->appid);
                 m_curInputResReq[curreq->input] = waitreq;
             }
         }
         else {
             ICO_DBG("Enqueue current input resource request"
-                    "(req=0x%08x zone:%02d appid=%s)",
+                    "(req=0x%08x input:%d appid=%s)",
                     curreq, curreq->input, curreq->appid);
+            ICO_PRF("CHG_GUI_RES input   acquired input=%d appid=%s",
+                    curreq->input, curreq->appid);
             m_curInputResReq[curreq->input] = curreq;
         }
     }
     delResourceRequest(req);
+    ICO_TRA("CicoSCResourceManager::updateInputResRegulationPreProc Leave");
 }
 
 //--------------------------------------------------------------------------

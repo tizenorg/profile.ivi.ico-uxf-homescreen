@@ -1,3 +1,4 @@
-SUBDIRS=    \
-   syscond  \
-   homescreen
+SUBDIRS= \
+	syscond  	\
+	homescreen	\
+	statusbar

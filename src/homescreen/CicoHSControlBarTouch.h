@@ -25,15 +25,16 @@ class CicoHSControlBarTouch
   public:
     static void Initialize(CicoHSControlBarWindow* ctl_bar_window);
     static void Finalize(void);
-    static void TouchDownControlBar(void *data, Evas *evas, Evas_Object *obj, void *event_info); 
-    static void TouchUpControlBar(void *data, Evas *evas, Evas_Object *obj, void *event_info); 
+    static void TouchDownControlBar(void *data, Evas *evas, Evas_Object *obj, void *event_info);
+    static void TouchUpControlBar(void *data, Evas *evas, Evas_Object *obj, void *event_info);
   private:
     static CicoHSControlBarWindow* ctl_bar_window;
+
+    static bool touch_down;
 
   protected:
     CicoHSControlBarTouch operator=(const CicoHSControlBarTouch&);
     CicoHSControlBarTouch(const CicoHSControlBarTouch&);
 };
-
 #endif
-
+// vim: set expandtab ts=4 sw=4:

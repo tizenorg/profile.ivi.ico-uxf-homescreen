@@ -151,6 +151,7 @@ typedef enum _state_onoff {
  */
 typedef struct _win_move {
     char *zone;     /* area of showing application window */
+    int  layer;     /* layer of showing application window */
     int  pos_x;     /* window's display position (x) */
     int  pos_y;     /* window's display position (y) */
     int  width;     /* window width */
@@ -286,7 +287,6 @@ typedef struct _state_info {
 typedef void (*ico_syc_callback_t) (const ico_syc_ev_e event,
                                     const void *detail,
                                     void *user_data);
- 
 
 #ifdef __cplusplus
 }

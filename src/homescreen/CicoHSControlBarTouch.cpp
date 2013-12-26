@@ -17,6 +17,7 @@
 /* static members                                                             */
 /*============================================================================*/
 CicoHSControlBarWindow* CicoHSControlBarTouch::ctl_bar_window;
+bool CicoHSControlBarTouch::touch_down;
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -34,6 +35,7 @@ void
 CicoHSControlBarTouch::Initialize(CicoHSControlBarWindow* ctl_bar_window)
 {
     CicoHSControlBarTouch::ctl_bar_window = ctl_bar_window;
+    touch_down = false;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -67,6 +69,7 @@ void
 CicoHSControlBarTouch::TouchDownControlBar(void *data, Evas *evas,
                                            Evas_Object *obj, void *event_info)
 {
+    touch_down = true;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -85,16 +88,23 @@ void
 CicoHSControlBarTouch::TouchUpControlBar(void *data, Evas *evas,
                                          Evas_Object *obj, void *event_info)
 {
-//   Evas_Event_Mouse_Up *info;
-//   int sub = 0;
-    ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar start");  
-    if(data == NULL) {
+    ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar Enter(down=%d)",
+            (int)touch_down);
+
+    if (touch_down == false)    {
+        // multi touch up, skiep
+        ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar not down, Skip");
+    }
+    touch_down = false;
+
+    if (data == NULL) {
+        ICO_PRF("TOUCH_EVENT Ctrl-Bar Down->Up app=(NIL)");
         ctl_bar_window->TouchHome();
     }
     else {
-        ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar appid = [%s]",
-                (const char *)data);  
-        ctl_bar_window->TouchShortcut((const char *)data); 
+        ICO_PRF("TOUCH_EVENT Ctrl-Bar Down->Up app=%s", (const char *)data);
+        ctl_bar_window->TouchShortcut((const char *)data);
     }
-    ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar end");  
+    ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar Leave");
 }
+// vim: set expandtab ts=4 sw=4:

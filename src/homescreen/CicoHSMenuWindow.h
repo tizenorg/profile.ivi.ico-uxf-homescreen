@@ -28,14 +28,14 @@
 #include <Ecore_Evas.h>
 #include <Edje.h>
 
-#include "CicoHomeScreenConfig.h"
+#include "CicoGKeyFileConfig.h"
 #include "CicoHSWindow.h"
 #include "CicoHSMenuTile.h"
 
 #include "CicoHomeScreenCommon.h"
 
-#include "CicoSCAilItems.h"
-#include "CicoSCLifeCycleController.h"
+#include "CicoAilItems.h"
+#include "CicoHSLifeCycleController.h"
 
 #define ICO_HS_MENU_SHOWING 0
 #define ICO_HS_MENU_HIDING 1
@@ -180,7 +180,7 @@ class CicoHSMenuWindow :public CicoHSWindow
     Evas_Object *terminate_button_yes;
     Evas_Object *terminate_button_no;
 
-    CicoSCLifeCycleController *life_cycle_controller;
+    CicoHSLifeCycleController *life_cycle_controller;
     /* my instance (for callback) */
     static CicoHSMenuWindow *menu_window_instance;
     bool m_showState;
@@ -193,4 +193,4 @@ class CicoHSMenuWindow :public CicoHSWindow
     CicoHSMenuWindow(const CicoHSMenuWindow&);
 };
 #endif
-
+// vim: set expandtab ts=4 sw=4:

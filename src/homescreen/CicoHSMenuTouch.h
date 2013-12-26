@@ -23,7 +23,7 @@
 
 #define ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE 100
 #define ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_TIME_MSECONDS 1000
-#define ICO_HS_MENU_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.5d
+#define ICO_HS_MENU_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.0d
 
 class CicoHSMenuTouch
 {
@@ -51,6 +51,7 @@ class CicoHSMenuTouch
 
     static Ecore_Timer *timer;
     static bool long_act;
+    static bool touch_down;
 
   protected:
     CicoHSMenuTouch operator=(const CicoHSMenuTouch&);
@@ -58,3 +59,4 @@ class CicoHSMenuTouch
 };
 
 #endif
+// vim: set expandtab ts=4 sw=4:

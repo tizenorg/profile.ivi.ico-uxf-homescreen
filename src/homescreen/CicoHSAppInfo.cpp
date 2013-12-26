@@ -16,8 +16,9 @@
 //==========================================================================
 
 #include "CicoHSAppInfo.h"
-#include "CicoSCSystemConfig.h"
-#include "CicoSCConf.h"
+#include "CicoSystemConfig.h"
+#include "CicoConf.h"
+#include "CicoHSLifeCycleController.h"
 
 //==========================================================================
 //  public functions
@@ -33,7 +34,7 @@ CicoHSAppInfo::CicoHSAppInfo(const char *appid)
     : m_appid(appid), m_category(0), m_window_num(0), m_last_surface(0)
 {
     memset(m_window_info_i, 0, sizeof(m_window_info_i));
-    m_life_cycle_controller = CicoSCLifeCycleController::getInstance();
+    m_life_cycle_controller = CicoHSLifeCycleController::getInstance();
 }
 
 //--------------------------------------------------------------------------
@@ -374,10 +375,10 @@ CicoHSAppInfo::GetLastSurface(void)
 const char *
 CicoHSAppInfo::GetDefaultZone(void)
 {
-    m_life_cycle_controller = CicoSCLifeCycleController::getInstance();
-    const CicoSCAilItems* ailItem = m_life_cycle_controller->findAIL(m_appid);
+    m_life_cycle_controller = CicoHSLifeCycleController::getInstance();
+    const CicoAilItems* ailItem = m_life_cycle_controller->findAIL(m_appid);
 
-    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
     const CicoSCDisplayZoneConf *zoneConf = NULL;
     if (NULL != ailItem) {
         zoneConf = sysConf->findDisplayZoneConfbyId(ailItem->m_displayZone);

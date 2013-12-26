@@ -137,3 +137,4 @@ inline void CicoHSAppHistory::setHomeScreen(CicoHomeScreen* hs)
 }
 
 #endif // CICOHSAPPHISTORY_H
+// vim: set expandtab ts=4 sw=4:

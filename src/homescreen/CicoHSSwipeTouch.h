@@ -28,7 +28,7 @@
 #define ICO_HS_SWIPE_TOUCH_DISTANCE_XY 200
 #define ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE 80
 #define ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_MOVE_Y 80
-#define ICO_HS_SWIPE_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.5d
+#define ICO_HS_SWIPE_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.0d
 #define ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME 300
 
 #define ICO_HS_MAX_SWIPEWINDOWS 4
@@ -56,7 +56,7 @@ class CicoHSSwipeTouch
     static int touch_lasttime;
 
     static Ecore_Timer *timer;
-    static bool touch_down;
+    static int touch_down;
     static bool long_act;
     static bool set_xy_pos;
     static int num_windows;
@@ -68,3 +68,4 @@ class CicoHSSwipeTouch
     CicoHSSwipeTouch(const CicoHSSwipeTouch&);
 };
 #endif
+// vim: set expandtab ts=4 sw=4:

@@ -55,6 +55,7 @@ public:
 
     // change user
     void changeUser(const std::string & name, const std::string & passwd);
+    void cloaseUser();
 
     // dump log
     void dumpUserList(void);
@@ -62,6 +63,12 @@ public:
 
     // application daed watcher
     bool appDeadHandler(int pid);
+
+    bool isStoppingNow();
+
+    // working user directory make
+    void getWorkingDir(const std::string& usr, std::string& dir);
+    const std::string& getHomeDir() const;
 private:
     // default constructor
     CicoSCUserManager();
@@ -104,9 +111,6 @@ private:
     // Killing running application and homeScreen
     bool killingAppsAndHS(const std::string& usrnm);
 
-    // working user directory make
-    void getWorkingDir(const std::string& usr, std::string& dir);
-
     // launch homescreen request
     bool launchHomescreenReq(const std::string& usr,
                              const std::string& appid_hs);
@@ -129,5 +133,34 @@ private:
     std::string                 m_waitName;        ///  wait backup login name
     std::string                 m_waitHS;          ///  wait backup homescreen appid
 };
+
+/**
+ * @brief get Homescreen Stopping Status
+ * @ret bool
+ * @retval true: stopping now
+ * @retval false: no stop
+ *
+ */
+inline bool CicoSCUserManager::isStoppingNow(){
+    return !m_vppa.empty();
+}
+
+/**
+ * @brief close User
+ */
+inline void CicoSCUserManager::cloaseUser()
+{
+    flagFileOn();
+    killingAppsAndHS(m_login);
+}
+
+/**
+ *
+ */
+inline const std::string& CicoSCUserManager::getHomeDir() const
+{
+    return m_parentDir;
+}
+
 #endif  // __CICO_SC_USER_MANAGER_H__
 // vim:set expandtab ts=4 sw=4:

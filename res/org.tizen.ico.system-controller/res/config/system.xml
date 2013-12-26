@@ -262,7 +262,7 @@
         <priority>0</priority>
         <r_ctrl>1</r_ctrl>
     </category>
-    <category id="11" name="Entertainment.visiual">
+    <category id="11" name="Entertainment.visual">
         <type>unknown</type>
         <view>always</view>
         <sound>parked</sound>
@@ -321,7 +321,7 @@
 </inputs>
 
 <resource_cpu_control>
-    <do_it>yes</do_it>
+    <do_it>app</do_it>
     <ctrl_dir_path>/sys/fs/cgroup/cpu,cpuacct/SCprivate</ctrl_dir_path>
     <sampling_wait>300</sampling_wait>
     <retry_cnt>6</retry_cnt>
@@ -380,15 +380,50 @@
 
 <transition>none</transition>
 
-<log>
-    <!-- loglevel:ERROR=4,CRITICAL=8,WARNING=16,INFO=64,DEBUG=128 -->
-    <loglevel>128</loglevel>
-    <logflush>false</logflush>
-</log>
-
 <login_user>
     <parent_dir>/home/app/ico</parent_dir>
 </login_user>
+
+<vehicle_info>
+    <retryCnt>40</retryCnt>
+    <waitTime>200</waitTime> <!-- micro srcond -->
+    <vinfo id="1" name="VehicleSpeed">
+        <objname>VehicleSpeed</objname>
+        <property>VehicleSpeed</property>
+        <zone>0</zone>
+        <type>INT32</type>
+    </vinfo>
+    <vinfo id="2" name="ShiftPosition">
+        <objname>Transmission</objname>
+        <property>ShiftPosition</property>
+        <zone>0</zone>
+        <type>BYTE</type>
+    </vinfo>
+    <vinfo id="3" name="LeftTurn">
+        <objname>LightStatus</objname>
+        <property>LeftTurn</property>
+        <zone>0</zone>
+        <type>BOOLEAN</type>
+    </vinfo>
+    <vinfo id="4" name="RightTurn">
+        <objname>LightStatus</objname>
+        <property>RightTurn</property>
+        <zone>0</zone>
+        <type>BOOLEAN</type>
+    </vinfo>
+    <vinfo id="5" name="NightMode">
+        <objname>NightMode</objname>
+        <property>NightMode</property>
+        <zone>0</zone>
+        <type>UINT32</type>
+    </vinfo>
+    <vinfo id="6" name="DrivingMode">
+        <objname>DrivingMode</objname>
+        <property>DrivingMode</property>
+        <zone>0</zone>
+        <type>UINT32</type>
+    </vinfo>
+</vehicle_info>
 
 </systemconfig>
 <!-- vim:set expandtab ts=4 sw=4: -->

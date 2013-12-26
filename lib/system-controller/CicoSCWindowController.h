@@ -78,6 +78,7 @@ public:
 
     int setGeometry(int        surfaceid,
                     int        nodeid,
+                    int        layerid,
                     int        x,
                     int        y,
                     int        w,
@@ -89,6 +90,7 @@ public:
 
     int setGeometry(int        surfaceid,
                     const char *zone,
+                    int        layerid,
                     const char *resizeAnimation,
                     int        resizeAnimationTime,
                     const char *moveAnimation,
@@ -215,6 +217,7 @@ private:
 
     int notifyResourceManager(int        surfaceid,
                               const char *zone,
+                              int        layerid,
                               const char *animation,
                               int        animationTime);
 

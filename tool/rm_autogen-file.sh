@@ -22,6 +22,9 @@ missing \
 stamp-h1 \
 ./lib/Makefile \
 ./lib/Makefile.in \
+./lib/common/.deps \
+./lib/common/Makefile \
+./lib/common/Makefile.in \
 ./lib/system-controller/.deps \
 ./lib/system-controller/Makefile \
 ./lib/system-controller/Makefile.in \
@@ -42,6 +45,9 @@ stamp-h1 \
 ./src/homescreen/.deps \
 ./src/homescreen/Makefile \
 ./src/homescreen/Makefile.in \
+./src/statusbar/.deps \
+./src/statusbar/Makefile \
+./src/statusbar/Makefile.in \
 ./src/syscond/.deps \
 ./src/syscond/Makefile \
 ./src/syscond/Makefile.in \

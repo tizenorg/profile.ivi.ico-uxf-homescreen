@@ -68,33 +68,35 @@ CicoSCWlInputMgrIF::initInterface(void               *data,
                                   const char         *interface,
                                   uint32_t           version)
 {
-    ICO_DBG("CicoSCWlInputMgrIF::initInterface : Enter(interface=%s)",
+    ICO_TRA("CicoSCWlInputMgrIF::initInterface : Enter(interface=%s)",
             interface);
 
     if (0 == strcmp(interface, ICO_WL_INPUT_MGR_CTRL_IF)) {
         // get interface instance
+        ICO_DBG("called: wl_registry_bind");
         void *wlProxy = wl_registry_bind(registry,
                                          name,
                                          &ico_input_mgr_control_interface,
                                          1);
         if (NULL == wlProxy) {
-            ICO_WRN("initInterface : interface(%s) wl_registry_bind failed.",
-                    interface);
-            ICO_WRN("initInterface : Leave(binding failed)");
+            ICO_WRN("interface(%s) wl_registry_bind failed.", interface);
+            ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave",
+                    "(binding failed)");
             return;
         }
         m_inputmgr = (struct ico_input_mgr_control*)wlProxy;
     }
     else if (0 == strcmp(interface, ICO_WL_EXINPUT_IF)) {
         // get interface instance
+        ICO_DBG("called: wl_registry_bind");
         void *wlProxy = wl_registry_bind(registry,
                                          name,
                                          &ico_exinput_interface,
                                          1);
         if (NULL == wlProxy) {
-            ICO_WRN("initInterface : interface(%s) wl_registry_bind failed.",
-                    interface);
-            ICO_WRN("initInterface : Leave(binding failed)");
+            ICO_WRN("interface(%s) wl_registry_bind failed.", interface);
+            ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave",
+                    "(binding failed)");
             return;
         }
 
@@ -105,14 +107,15 @@ CicoSCWlInputMgrIF::initInterface(void               *data,
     }
     else if (0 == strcmp(interface, ICO_WL_INPUT_MGR_DEV_IF)) {
         // get interface instance
+        ICO_DBG("called: wl_registry_bind");
         void *wlProxy = wl_registry_bind(registry,
                                          name,
                                          &ico_input_mgr_device_interface,
                                          1);
         if (NULL == wlProxy) {
-            ICO_WRN("initInterface : interface(%s) wl_registry_bind failed.",
-                    interface);
-            ICO_WRN("initInterface : Leave(binding failed)");
+            ICO_WRN("interface(%s) wl_registry_bind failed.", interface);
+            ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave"
+                    "(binding failed)");
             return;
         }
 
@@ -127,7 +130,7 @@ CicoSCWlInputMgrIF::initInterface(void               *data,
         (NULL != m_exinput)) {
         m_initialized = true;
     }
-    ICO_DBG("CicoSCWlInputMgrIF::initInterface : Leave");
+    ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -402,7 +405,7 @@ CicoSCWlInputMgrIF::wlCapabilitiesCB(void               *data,
                                      const char         *codename,
                                      int32_t            code)
 {
-    ICO_DBG("CicoSCWlInputMgrIF::wlCapabilitiesCB Enter");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlCapabilitiesCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlCapabilitiesCB: data is null");
@@ -412,7 +415,7 @@ CicoSCWlInputMgrIF::wlCapabilitiesCB(void               *data,
                                                            device, type,
                                                            swname, input,
                                                            codename, code);
-    ICO_DBG("CicoSCWlInputMgrIF::wlCapabilitiesCB Leave");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlCapabilitiesCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -435,7 +438,7 @@ CicoSCWlInputMgrIF::wlCodeCB(void               *data,
                              const char         *codename,
                              int32_t            code)
 {
-    ICO_DBG("CicoSCWlInputMgrIF::wlCodeCB Enter");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlCodeCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlCodeCB: data is null");
@@ -445,7 +448,7 @@ CicoSCWlInputMgrIF::wlCodeCB(void               *data,
                                                    device, input,
                                                    codename, code);
 
-    ICO_DBG("CicoSCWlInputMgrIF::wlCodeCB Leave");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlCodeCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -470,7 +473,7 @@ CicoSCWlInputMgrIF::wlInputCB(void               *data,
                               int32_t            code,
                               int32_t            state)
 {
-    ICO_DBG("CicoSCWlInputMgrIF::wlInputCB Enter");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlInputCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlInputCB: data is null");
@@ -480,7 +483,7 @@ CicoSCWlInputMgrIF::wlInputCB(void               *data,
                                                     time, device, input,
                                                     code, state);
 
-    ICO_DBG("CicoSCWlInputMgrIF::wlInputCB Leave");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlInputCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -497,7 +500,7 @@ CicoSCWlInputMgrIF::wlRegionCB(void                        *data,
                                struct ico_input_mgr_device *ico_input_mgr_dev,
                                struct wl_array             *region)
 {
-    ICO_DBG("CicoSCWlInputMgrIF::wlRegionCB Enter");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlRegionCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlRegionCB: data is null");
@@ -506,6 +509,6 @@ CicoSCWlInputMgrIF::wlRegionCB(void                        *data,
     static_cast<CicoSCWlInputMgrIF*>(data)->regionCB(data, ico_input_mgr_dev,
                                                      region);
 
-    ICO_DBG("CicoSCWlInputMgrIF::wlRegionCB Leave");
+//    ICO_TRA("CicoSCWlInputMgrIF::wlRegionCB Leave");
 }
 // vim:set expandtab ts=4 sw=4:

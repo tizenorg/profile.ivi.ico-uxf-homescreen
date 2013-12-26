@@ -1,3 +1,10 @@
+* Thu Dec 26 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen_ivi_stable/20131119.040218@878f49e
+- 0.9.10 release
+-- bug fix: An action is inaccurate when the menu of HomeScreen is multi-touched
+-- bug fix: TIVI-1997 - Touch doesn't work in ico homescreen after some operations
+-- bug fix: TIVI-2161 - Close app by long press doesn't work after some operations
+-- revise: add manifest file for SMACK label setting
+
 * Wed Nov 06 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20131029.175553@d661402
 - 0.9.07 release.
 -- bugfix: Last information cannot set up / acquire.(Native app)

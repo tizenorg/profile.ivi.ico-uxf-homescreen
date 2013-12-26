@@ -88,7 +88,7 @@ void
 CicoHSWindowController::GetFullScreenSize(int orientation,
                                           int *width, int *height)
 {
-    ICO_DBG("CicoHSWindowController::GetFullScreenSize Enter");
+    ICO_TRA("CicoHSWindowController::GetFullScreenSize Enter");
 
     int display_width  = 0;
     int display_height = 0;
@@ -119,38 +119,6 @@ CicoHSWindowController::GetFullScreenSize(int orientation,
                                    display_width : display_height);
     }
 #endif          /* TizenIVI 3.0 ecore return correct display size   */
-    ICO_DBG("CicoHSWindowController::GetFullScreenSize Leave(w/h=%d/%d)", *width, *height);
+    ICO_TRA("CicoHSWindowController::GetFullScreenSize Leave(w/h=%d/%d)", *width, *height);
 }
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSWindowController::StartEcoreLoop
- *          start loop
- *
- * @param[in]   none
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-void
-CicoHSWindowController::StartEcoreLoop(void)
-{
-    /* Start main loop */
-    ecore_main_loop_begin();
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSWindowController::QuitEcoreLoop
- *          quit loop
- *
- * @param[in]   none
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-void
-CicoHSWindowController::QuitEcoreLoop(void)
-{
-    /* Quit main loop */
-    ecore_main_loop_quit();
-}
-
+// vim:set expandtab ts=4 sw=4:

@@ -12,7 +12,7 @@
  * @date    Aug-08-2013
  */
 #include "CicoHSBackWindow.h"
-#include "CicoHomeScreenResourceConfig.h"
+#include "CicoResourceConfig.h"
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -30,7 +30,7 @@ CicoHSBackWindow::CicoHSBackWindow(void)
 {
     evas = NULL;
 
-    CicoHomeScreenResourceConfig::GetImagePath(img_dir_path,ICO_HS_MAX_PATH_BUFF_LEN);
+    CicoResourceConfig::GetImagePath(img_dir_path,ICO_HS_MAX_PATH_BUFF_LEN);
 
 }
 
@@ -115,5 +115,4 @@ CicoHSBackWindow::FreeBackWindow(void)
     evas_object_del(canvas);    
     FreeWindow();
 }
-
-
+// vim: set expandtab ts=4 sw=4:

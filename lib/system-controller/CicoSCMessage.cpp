@@ -42,6 +42,7 @@ CicoSCMessage::CicoSCMessage()
     m_rootObj   = json_object_new();
     m_argObj    = json_object_new();
     m_array     = json_array_new();
+    m_data.clear();
 }
 
 //--------------------------------------------------------------------------
@@ -51,13 +52,13 @@ CicoSCMessage::CicoSCMessage()
 //--------------------------------------------------------------------------
 CicoSCMessage::~CicoSCMessage()
 {
-    //ICO_DBG("CicoSCMessage::~CicoSCMessage Enter");
+    //ICO_TRA("CicoSCMessage::~CicoSCMessage Enter");
     json_array_unref(m_array);
     json_object_unref(m_rootObj);
     json_object_unref(m_argObj);
     json_node_free(m_root);
     g_object_unref(m_generator);
-    //ICO_DBG("CicoSCMessage::~CicoSCMessage Leave");
+    //ICO_TRA("CicoSCMessage::~CicoSCMessage Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -252,7 +253,10 @@ CicoSCMessage::getData(void)
     json_node_take_object(m_root, m_rootObj);
     json_generator_set_root(m_generator, m_root);
     gsize len = 0;
-    return json_generator_to_data(m_generator, &len);
+    gchar* data = json_generator_to_data(m_generator, &len);
+    m_data = data;
+    g_free(data);
+    return m_data.c_str();
 }
 
 //--------------------------------------------------------------------------

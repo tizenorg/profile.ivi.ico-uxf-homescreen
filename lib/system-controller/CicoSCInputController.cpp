@@ -27,8 +27,8 @@ using namespace std;
 #include "ico_syc_error.h"
 #include "ico_syc_msg_cmd_def.h"
 #include "ico_syc_private.h"
-#include "CicoSCSystemConfig.h"
-#include "CicoSCConf.h"
+#include "CicoSystemConfig.h"
+#include "CicoConf.h"
 #include "CicoSCCommand.h"
 #include "CicoSCServer.h"
 #include "CicoSCMessage.h"
@@ -61,7 +61,7 @@ int
 initDB(void)
 {
     const vector<CicoSCInputDevConf*>& inputDevConfList =
-        CicoSCSystemConfig::getInstance()->getInputDevConfList();
+        CicoSystemConfig::getInstance()->getInputDevConfList();
     vector<CicoSCInputDevConf*>::const_iterator itr;
     itr = inputDevConfList.begin();
     for (; itr != inputDevConfList.end(); ++itr) {
@@ -99,7 +99,7 @@ initDB(void)
 void
 CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
 {
-    ICO_DBG("CicoSCInputController::handleCommand Enter"
+    ICO_TRA("CicoSCInputController::handleCommand Enter"
             "(cmdid=0x%08X)", cmd->cmdid);
 
     CicoSCCmdInputDevCtrlOpt *opt;
@@ -138,7 +138,7 @@ CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
         break;
     }
 
-    ICO_DBG("CicoSCInputController::handleCommand Leave");
+    ICO_TRA("CicoSCInputController::handleCommand Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -159,14 +159,14 @@ CicoSCInputController::addInputApp(const string &appid,
                                    int          fix,
                                    int          keycode)
 {
-    ICO_DBG("CicoSCInputController::addInputApp Enter"
+    ICO_TRA("CicoSCInputController::addInputApp Enter"
             "(appid=%s device=%s input=%d fix=%d keycode=%d)",
             appid.c_str(), device.c_str(), input, fix, keycode);
 
     CicoSCWlInputMgrIF::addInputApp(appid.c_str(), device.c_str(),
                                     input, fix, keycode);
 
-    ICO_DBG("CicoSCInputController::addInputApp Leave(EOK)");
+    ICO_TRA("CicoSCInputController::addInputApp Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -184,13 +184,13 @@ CicoSCInputController::delInputApp(const string &appid,
                                    const string &device,
                                    int          input)
 {
-    ICO_DBG("CicoSCInputController::delInputApp Enter"
+    ICO_TRA("CicoSCInputController::delInputApp Enter"
             "(appid=%s device=%s input=%d)",
             appid.c_str(), device.c_str(), input);
 
     CicoSCWlInputMgrIF::delInputApp(appid.c_str(), device.c_str(), input);
 
-    ICO_DBG("CicoSCInputController::delInputApp Leave(EOK)");
+    ICO_TRA("CicoSCInputController::delInputApp Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -216,14 +216,14 @@ CicoSCInputController::sendInputEvent(const string &appid,
                                       int          code,
                                       int          value)
 {
-    ICO_DBG("CicoSCInputController::sendInputEvent Enter"
+    ICO_TRA("CicoSCInputController::sendInputEvent Enter"
             "(appid=%s surfaceid=0x%08X type=%d dev_no=%d time=%d code=%d value=%d)",
             appid.c_str(), surfaceid, type, deviceno, time, code, value);
 
     CicoSCWlInputMgrIF::sendInputEvent(appid.c_str(), surfaceid,
                                        type, deviceno, time, code, value);
 
-    ICO_DBG("CicoSCInputController::sendInputEvent Leave(EOK)");
+    ICO_TRA("CicoSCInputController::sendInputEvent Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -265,7 +265,7 @@ CicoSCInputController::setInputRegion(const string &appid,
 
     snprintf(target, ICO_SYC_MAX_LEN-1, "%s@%s", winname.c_str(), appid.c_str());
 
-    ICO_DBG("CicoSCInputController::setInputRegion Enter"
+    ICO_TRA("CicoSCInputController::setInputRegion Enter"
             "(target=%s x=%d y=%d width=%d height=%d "
             "hotspot=%d/%d cursor=%d/%d-%d/%d attr=%d)",
             target, x, y, width, height, hotspot_x, hotspot_y,
@@ -275,7 +275,7 @@ CicoSCInputController::setInputRegion(const string &appid,
                                        hotspot_x, hotspot_y, cursor_x, cursor_y,
                                        cursor_width, cursor_height, attr);
 
-    ICO_DBG("CicoSCInputController::setInputRegion Leave(EOK)");
+    ICO_TRA("CicoSCInputController::setInputRegion Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -303,12 +303,12 @@ CicoSCInputController::unsetInputRegion(const string &appid,
 
     snprintf(target, ICO_SYC_MAX_LEN-1, "%s@%s", winname.c_str(), appid.c_str());
 
-    ICO_DBG("CicoSCInputController::unsetInputRegion Enter"
+    ICO_TRA("CicoSCInputController::unsetInputRegion Enter"
             "(target=%s x=%d y=%d width=%d height=%d", target, x, y, width, height);
 
     CicoSCWlInputMgrIF::unsetInputRegion(target, x, y, width, height);
 
-    ICO_DBG("CicoSCInputController::unsetInputRegion Leave(EOK)");
+    ICO_TRA("CicoSCInputController::unsetInputRegion Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -336,7 +336,7 @@ CicoSCInputController::capabilitiesCB(void               *data,
                                       const char         *codename,
                                       int32_t            code)
 {
-    ICO_DBG("CicoSCInputController::capabilitiesCB Enter",
+    ICO_TRA("CicoSCInputController::capabilitiesCB Enter",
             "device=%s type=%s swname=%s input=%s codename=%s code=%d",
             device, type, swname, input, codename, code);
 
@@ -359,7 +359,7 @@ CicoSCInputController::capabilitiesCB(void               *data,
         sw->input   = input;
     }
 
-    CicoSCSystemConfig *sysConf = CicoSCSystemConfig::getInstance();
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
     const CicoSCSwitchConf *swconf = NULL;
     swconf = sysConf->findSwitchConfbyName(device, swname);
     if (NULL != swconf) {
@@ -370,7 +370,7 @@ CicoSCInputController::capabilitiesCB(void               *data,
         }
     }
 
-    ICO_DBG("CicoSCInputController::capabilitiesCB Leave");
+    ICO_TRA("CicoSCInputController::capabilitiesCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -393,7 +393,7 @@ CicoSCInputController::codeCB(void               *data,
                               const char         *codename,
                               int32_t            code)
 {
-    ICO_DBG("CicoSCInputController::codeCB Enter"
+    ICO_TRA("CicoSCInputController::codeCB Enter"
             "(device=%s input=%d codename=%s code=%d)",
             device, input, codename, code);
 
@@ -418,7 +418,7 @@ CicoSCInputController::codeCB(void               *data,
     sw->code.push_back(code);
     sw->codename.push_back(codename);
 
-    ICO_DBG("CicoSCInputController::codeCB Leave");
+    ICO_TRA("CicoSCInputController::codeCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -443,7 +443,7 @@ CicoSCInputController::inputCB(void               *data,
                                int32_t            code,
                                int32_t            state)
 {
-    ICO_DBG("CicoSCInputController::inputCB Enter"
+    ICO_TRA("CicoSCInputController::inputCB Enter"
             "time=%d device=%s input=%d code=%d state=%d",
             time, device, input, code, state);
 
@@ -457,7 +457,7 @@ CicoSCInputController::inputCB(void               *data,
     message->addArgObject("state", state);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-    ICO_DBG("CicoSCInputController::inputCB Leave");
+    ICO_TRA("CicoSCInputController::inputCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -474,8 +474,8 @@ CicoSCInputController::regionCB(void                        *data,
                                 struct ico_input_mgr_device *ico_input_mgr_dev,
                                 struct wl_array             *region)
 {
-    ICO_DBG("CicoSCInputController::regionCB Enter");
-    ICO_DBG("CicoSCInputController::regionCB Leave");
+    ICO_TRA("CicoSCInputController::regionCB Enter");
+    ICO_TRA("CicoSCInputController::regionCB Leave");
 }
 
 //--------------------------------------------------------------------------

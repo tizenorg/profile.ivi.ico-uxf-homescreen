@@ -75,7 +75,9 @@ CicoSCServer::CicoSCServer()
 //--------------------------------------------------------------------------
 CicoSCServer::~CicoSCServer()
 {
-    // TODO
+    if (NULL != m_uwsContext) {
+        ico_uws_close(m_uwsContext);
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -203,6 +205,52 @@ CicoSCServer::startup(int port, const char *protocol)
 
 //--------------------------------------------------------------------------
 /**
+ *  @brief  teardown server
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCServer::teardown(void)
+{
+    ICO_TRA("CicoSCServer::teardown Enter");
+    {
+        std::list<CicoSCUwsHandler*>::iterator itr;
+        itr = m_uwsHandlerList.begin();
+        for (; itr !=  m_uwsHandlerList.end(); ++itr) {
+            if (NULL != (*itr)->ecoreFdHandler) {
+                ecore_main_fd_handler_del((*itr)->ecoreFdHandler);
+                (*itr)->ecoreFdHandler = NULL;
+            }
+            delete(*itr);
+        }
+        m_uwsHandlerList.clear();
+    }
+
+    {
+        std::list<CicoSCMessage*>::iterator itr;
+        itr = m_sendMsgQueue.begin();
+        for (; itr != m_sendMsgQueue.end(); ++itr) {
+            delete(*itr);
+        }
+        m_sendMsgQueue.clear();
+    }
+    
+    {
+        std::list<CicoSCCommand*>::iterator itr;
+        itr = m_recvCmdQueue.begin();
+        for (; itr != m_recvCmdQueue.end(); ++itr) {
+            delete(*itr);
+        }
+    }
+
+    if (NULL != m_uwsContext) {
+        ico_uws_close(m_uwsContext);
+        m_uwsContext = NULL;
+    }
+    ICO_TRA("CicoSCServer::teardown Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
  *  @brief   add poll websocket file destructor
  *
  *  @param [in] handler  websocket handler
@@ -211,7 +259,7 @@ CicoSCServer::startup(int port, const char *protocol)
 void
 CicoSCServer::addPollFd(CicoSCUwsHandler *handler)
 {
-    ICO_DBG("CicoSCServer::addPollFd Enter(fd=%d)", handler->fd);
+    ICO_TRA("CicoSCServer::addPollFd Enter(fd=%d)", handler->fd);
     Ecore_Fd_Handler_Flags flags;
     flags = (Ecore_Fd_Handler_Flags)(ECORE_FD_READ | ECORE_FD_ERROR);
 
@@ -222,7 +270,7 @@ CicoSCServer::addPollFd(CicoSCUwsHandler *handler)
     ICO_DBG("Enqueue uwsHandler(0x%08x)", handler);
     m_uwsHandlerList.push_back(handler);
 
-    ICO_DBG("CicoSCServer::addPollFd Leave");
+    ICO_TRA("CicoSCServer::addPollFd Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -235,10 +283,18 @@ CicoSCServer::addPollFd(CicoSCUwsHandler *handler)
 void
 CicoSCServer::delPollFd(CicoSCUwsHandler *handler)
 {
-    ICO_DBG("CicoSCServer::delPollFd Enter");
+    ICO_TRA("CicoSCServer::delPollFd Enter");
 
-    ecore_main_fd_handler_del(handler->ecoreFdHandler);
-    handler->ecoreFdHandler = NULL;
+    if (NULL == handler) {
+        ICO_WRN("handler is null");
+        ICO_TRA("CicoSCServer::delPollFd Leave");
+        return;
+    }
+
+    if (NULL != handler->ecoreFdHandler) {
+        ecore_main_fd_handler_del(handler->ecoreFdHandler);
+        handler->ecoreFdHandler = NULL;
+    }
 
     list<CicoSCUwsHandler*>::iterator itr;
     itr = m_uwsHandlerList.begin();
@@ -251,7 +307,7 @@ CicoSCServer::delPollFd(CicoSCUwsHandler *handler)
     }
     delete handler;
 
-    ICO_DBG("CicoSCServer::delPollFd Enter");
+    ICO_TRA("CicoSCServer::delPollFd Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -266,11 +322,11 @@ CicoSCServer::delPollFd(CicoSCUwsHandler *handler)
 void
 CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
 {
-//    ICO_DBG("CicoSCServer::dispatch Enter(handler=0x%08x)", handler);
+//    ICO_TRA("CicoSCServer::dispatch Enter(handler=0x%08x)", handler);
 
     if (NULL == handler) {
         ICO_WRN("handler is null");
-        ICO_DBG("CicoSCServer::dispatch Leave");
+        ICO_TRA("CicoSCServer::dispatch Leave");
         return;
     }
 
@@ -279,12 +335,12 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
     // There is a possibility that after calling ico_uws_service function,
     // the file is deleted.  Check whether handler not the disabled.
     if (false == isExistUwsHandler(handler)) {
-        ICO_DBG("CicoSCServer::dispatch Leave");
+        ICO_TRA("CicoSCServer::dispatch Leave");
         return;
     }
 
     if (true == m_dispatchProcessing) {
-        ICO_DBG("CicoSCServer::dispatch Leave(disptch processing)");
+        ICO_TRA("CicoSCServer::dispatch Leave(disptch processing)");
         return;
     }
 
@@ -326,7 +382,7 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
 
     if (NULL == handler->ecoreFdHandler) {
         ICO_ERR("ecoreFdHandler is null");
-        ICO_DBG("CicoSCServer::dispatch Leave");
+        ICO_TRA("CicoSCServer::dispatch Leave");
         return;
     }
 
@@ -347,13 +403,13 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
             send_itr = m_sendMsgQueue.erase(send_itr);
             ICO_DBG("Dequeue Message(id=%d)", msg->getId());
             if ((NULL != sendHandler) && (true == sendHandler->serviceFlag)) {
+                const char *data = msg->getData();
                 ICO_DBG("<<<SEND appid=%s id=0x%08x msg=%s",
-                        sendHandler->appid.c_str(), sendHandler->id, msg->getData());
+                        sendHandler->appid.c_str(), sendHandler->id, data);
 //                ICO_DBG("called: ico_usw_send called(context=0x%08x id=0x%08x)",
 //                        sendHandler->uwsContext, sendHandler->id);
                 ico_uws_send(sendHandler->uwsContext, sendHandler->id,
-                             (unsigned char *)msg->getData(),
-                             strlen(msg->getData()));
+                             (unsigned char *)data, strlen(data));
 
                 delete msg;
 
@@ -367,7 +423,7 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
         ecore_main_fd_handler_active_set(handler->ecoreFdHandler, flags);
     }
 
-//    ICO_DBG("CicoSCServer::dispatch Leave");
+//    ICO_TRA("CicoSCServer::dispatch Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -383,7 +439,7 @@ CicoSCServer::dispatch(const CicoSCUwsHandler *handler)
 int
 CicoSCServer::sendMessage(const string & appid, CicoSCMessage* msg)
 {
-    ICO_DBG("CicoSCServer::sendMessage Enter(appid=%s, msg=%s)",
+    ICO_TRA("CicoSCServer::sendMessage Enter(appid=%s, msg=%s)",
             appid.c_str(), msg->getData());
 
     msg->setSendToAppid(appid);
@@ -402,7 +458,7 @@ CicoSCServer::sendMessage(const string & appid, CicoSCMessage* msg)
         dispatch(handler);
     }
 
-    ICO_DBG("CicoSCServer::sendMessage Leave(EOK)");
+    ICO_TRA("CicoSCServer::sendMessage Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -418,6 +474,12 @@ CicoSCServer::sendMessage(const string & appid, CicoSCMessage* msg)
 int
 CicoSCServer::sendMessageToHomeScreen(CicoSCMessage* msg)
 {
+    // if user change processing(homescree is not running)
+    if (true == m_userMgr->isStoppingNow()) {
+        ICO_DBG("homescreen not running");
+        return ICO_SYC_ENOENT;
+    }
+
     const CicoSCUser *loginUser = m_userMgr->getLoginUser();
     if (NULL == loginUser) {
         ICO_WRN("homescreen unknown");
@@ -466,7 +528,7 @@ CicoSCServer::uwsReceiveEventCB(const struct ico_uws_context *context,
 Eina_Bool
 CicoSCServer::ecoreFdCallback(void *data, Ecore_Fd_Handler *ecoreFdhandler)
 {
-//    ICO_DBG("CicoSCServer::ecoreFdCallback Enter");
+//    ICO_TRA("CicoSCServer::ecoreFdCallback Enter");
 
     CicoSCUwsHandler *handler = NULL;
     handler =  static_cast<CicoSCServer*>(data)->findUwsHandler(ecoreFdhandler);
@@ -474,7 +536,7 @@ CicoSCServer::ecoreFdCallback(void *data, Ecore_Fd_Handler *ecoreFdhandler)
         static_cast<CicoSCServer*>(data)->dispatch(handler);
     }
 
-//    ICO_DBG("CicoSCServer::ecoreFdCallback Leave");
+//    ICO_TRA("CicoSCServer::ecoreFdCallback Leave");
     return ECORE_CALLBACK_RENEW;
 }
 
@@ -496,7 +558,21 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
                              const ico_uws_detail         *detail,
                              void                         *user_data)
 {
-//    ICO_DBG("CicoSCServer::receiveEventCB Enter");
+//    ICO_TRA("CicoSCServer::receiveEventCB Enter");
+
+    switch (event) {
+    case ICO_UWS_EVT_CLOSE:
+        ICO_DBG(">>>RECV ICO_UWS_EVT_CLOSE(id=0x%08x)", (int)id);
+//        ICO_TRA("CicoSCServer::receiveEventCB Leave");
+        return;
+    case ICO_UWS_EVT_ERROR:
+        ICO_DBG(">>>RECV ICO_UWS_EVT_ERROR(id=0x%08x, err=%d)", 
+                (int)id, detail->_ico_uws_error.code);
+//        ICO_TRA("CicoSCServer::receiveEventCB Leave");
+        return;
+    default:
+        break;
+    }
 
     // find handler
     CicoSCUwsHandler *handler = findUwsHandler(context, id);
@@ -514,6 +590,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
         break;
     case ICO_UWS_EVT_CLOSE:
         ICO_DBG(">>>RECV ICO_UWS_EVT_CLOSE(id=0x%08x)", (int)id);
+        delete handler;
         break;
     case ICO_UWS_EVT_RECEIVE:
     {
@@ -529,6 +606,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
         if (cmd->cmdid == MSG_CMD_SEND_APPID) {
             if (0 == cmd->appid.length()) {
                 ICO_WRN("command argument invalid appid null");
+                delete cmd;
                 break;
             }
             handler->appid = cmd->appid;
@@ -543,6 +621,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
             ecore_main_fd_handler_active_set(handler->ecoreFdHandler, flags);
 
             notifyConnected(handler->appid);
+            delete cmd;
             break;
         }
         
@@ -551,25 +630,81 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
         m_recvCmdQueue.push_back(cmd);
         break;
     }
-    case ICO_UWS_EVT_ERROR:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_ERROR(id=0x%08x, err=%d)", 
-                (int)id, detail->_ico_uws_error.code);
-        break;
     case ICO_UWS_EVT_ADD_FD:
         ICO_DBG(">>>RECV ICO_UWS_EVT_ADD_FD(id=0x%08x, fd=%d)",
-                    (int)id, detail->_ico_uws_fd.fd);
+                (int)id, detail->_ico_uws_fd.fd);
         handler->fd = detail->_ico_uws_fd.fd;
         addPollFd(handler);
         break;
     case ICO_UWS_EVT_DEL_FD:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_DEL_FD(id=0x%08x, fd=%d)",
-                    (int)id, detail->_ico_uws_fd.fd);
+        ICO_DBG(">>>RECV ICO_UWS_EVT_DEL_FD(id=0x%08x, fd=%d, appid=%s)",
+                (int)id, detail->_ico_uws_fd.fd, handler->appid.c_str());
+        clearRecvCmdQueue(handler->appid);
+        clearSendMsgQueue(handler->appid);
         delPollFd(handler);
         break;
     default:
         break;
     }
-//    ICO_DBG("CicoSCServer::receiveEventCB Leave");
+//    ICO_TRA("CicoSCServer::receiveEventCB Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   clear receive command queue
+ *
+ *  @param [in] appid   clear command application id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCServer::clearRecvCmdQueue(const std::string & appid)
+{
+    ICO_TRA("CicoSCServer::clearCmdQueue Enter(appid=%s)", appid.c_str());
+
+    std::list<CicoSCCommand*>::iterator itr;
+    itr = m_recvCmdQueue.begin();
+    for (; itr != m_recvCmdQueue.end(); ) {
+        if (0 == appid.compare((*itr)->appid)) {
+            ICO_DBG("Dequeue command(0x%08x)", (*itr)->cmdid);
+            delete *itr;
+            itr = m_recvCmdQueue.erase(itr);
+        }
+        else {
+            ++itr;
+        }
+    }
+    m_recvCmdQueue.clear();
+
+    ICO_TRA("CicoSCServer::clearCmdQueue Leave")
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   clear send message queue
+ *
+ *  @param [in] appid   clear message application id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCServer::clearSendMsgQueue(const std::string & appid)
+{
+    ICO_TRA("CicoSCServer::clearMsgQueue Enter(appid=%s)", appid.c_str())
+
+    std::list<CicoSCMessage*>::iterator itr;
+    itr = m_sendMsgQueue.begin();
+    while(itr != m_sendMsgQueue.end()) {
+        if (0 == appid.compare((*itr)->getSendToAppid())) {
+            ICO_DBG("Dequeue Message(id=%d)", (*itr)->getId());
+            delete *itr;
+            itr = m_sendMsgQueue.erase(itr);
+        }
+        else {
+            ++itr;
+        }
+    }
+    m_sendMsgQueue.clear();
+
+    ICO_TRA("CicoSCServer::clearMsgQueue Leave")
 }
 
 //--------------------------------------------------------------------------

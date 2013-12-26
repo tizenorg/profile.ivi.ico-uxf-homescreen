@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.9.06], [])
+AC_INIT([org.tizen.ico.homescreen], [0.9.10], [])
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
@@ -122,6 +122,7 @@ AC_CHECK_FUNCS([gethostname gettimeofday memset setenv strcasecmp strdup strerro
 
 AC_CONFIG_FILES([Makefile
                  lib/Makefile
+                 lib/common/Makefile
                  lib/apps-framework/Makefile
                  lib/misc/Makefile
                  lib/misc/state-machine/Makefile
@@ -129,6 +130,7 @@ AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/syscond/Makefile
                  src/homescreen/Makefile
+                 src/statusbar/Makefile
                  tool/Makefile
                  tests/Makefile
                  tests/system-controller/Makefile

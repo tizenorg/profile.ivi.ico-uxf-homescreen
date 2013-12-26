@@ -26,7 +26,7 @@
 
 #include "CicoHomeScreenCommon.h"
 
-#include "CicoHomeScreenConfig.h"
+#include "CicoGKeyFileConfig.h"
 #include "CicoHSMenuWindow.h"
 #include "CicoHSBackWindow.h"
 #include "CicoHSControlBarWindow.h"
@@ -34,8 +34,8 @@
 #include "CicoHSWindowController.h"
 #include "CicoHSAppInfo.h"
 
-#include "CicoSCSystemConfig.h"
-#include "CicoSCLifeCycleController.h"
+#include "CicoSystemConfig.h"
+#include "CicoHSLifeCycleController.h"
 #include "CicoHSAppHistory.h"
 #include "CicoHSAppHistoryExt.h"
 
@@ -58,11 +58,10 @@
 
 #define ICO_HS_CONFIG_HOMESCREEN    "homescreen"
 #define ICO_HS_CONFIG_ONSCREEN      "onscreen"
-#define ICO_HS_CONFIG_STATUBAR      "statusbar"
 #define ICO_HS_CONFIG_SOUND         "sound"
 #define ICO_HS_CONFIG_SB            "statusbar"
 #define ICO_HS_CONFIG_ONS           "onscreen"
-#define ICO_HS_APPID_DEFAULT_SB     "org.tizen.ico.statusbar"    /* default status bar appid */
+#define ICO_HS_APPID_DEFAULT_SB     "org.tizen.ico.statusbar"   /* default statusbar appid */
 #define ICO_HS_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"    /* default on screen appid */
 
 #define ICO_HS_GROUP_SPECIAL        "menu"
@@ -76,10 +75,8 @@ class CicoHomeScreen
   public:
     CicoHomeScreen(void);
     ~CicoHomeScreen(void);
-    int Initialize(int orientation,CicoHomeScreenConfig *config);
-    void InitializeAppHistory(const std::string& user, const std::string& path,
-                              const std::string& pathD,
-                              const std::string& flagpath);
+    int Initialize(int orientation,CicoGKeyFileConfig *config);
+    void InitializeAppHistory(void);
     void Finalize(void);
     int StartRelations();
     void CreateMenuWindow(void);
@@ -92,7 +89,6 @@ class CicoHomeScreen
     void DeleteControlBarWindow(void);
     void CreateSwipeInputWindow(void);
     void DeleteSwipeInputWindow(void);
-    void StartLoop(void);
     char *GetHsPackageName(void);
     char *GetSbPackageName(void);
     char *GetOsPackageName(void);
@@ -111,7 +107,7 @@ class CicoHomeScreen
     static CicoHSAppInfo *GetAppInfo(const char *appid);
     void SetMode(int mode);
     int GetMode(void);
-    void StartHomeScreen();
+    int StartHomeScreen(int orientation);
     void UpdateTile(const char *appid);
     static void RenewAppInfoList(void);
 
@@ -136,6 +132,9 @@ class CicoHomeScreen
     void controlRegulation(bool regStt=true);
     static bool ActivationUpdate(void);
     bool ActivationUpdate_i(void);
+    static void ShowApp(const std::string& app);
+    static void HideApp(const std::string& app);
+    static void MoveApp(const std::string& app, const std::string& zone);
   private:
     int GetProcessWindow(const char *appid);
     static void EventCallBack(ico_syc_ev_e event,const void* detail,void* user_data);
@@ -148,6 +147,7 @@ class CicoHomeScreen
     static void SetNightMode(void* data);
     static void SetRegulation(void* data);
 
+    void ShowApp_i(const std::string& app);
     void RenewAppInfoList_i(void);
 
     /*application control(do not use now)*/
@@ -177,11 +177,11 @@ class CicoHomeScreen
     /*mode*/
     int mode;
     /*configuration*/
-    CicoHomeScreenConfig *config;
+    CicoGKeyFileConfig *config;
     /*my instance for callback*/
     static CicoHomeScreen *hs_instance;
 
-    CicoSCLifeCycleController* life_cycle_controller;
+    CicoHSLifeCycleController* life_cycle_controller;
     CicoHSAppHistoryExt* m_appHis;
 
     // current sub display appinfo
@@ -199,5 +199,5 @@ class CicoHomeScreen
     CicoHomeScreen operator=(const CicoHomeScreen&);
     CicoHomeScreen(const CicoHomeScreen&);
 };
-
 #endif
+// vim:set expandtab ts=4 sw=4:

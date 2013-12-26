@@ -6,201 +6,157 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  */
-/**
- * @brief   homescreen application main
- *
- * @date    Feb-15-2013
- */
 
-#include <fstream>
-#include <string>
-#include <vector>
+//==========================================================================
+/**
+ *  @file   home_screen_main.cpp
+ *
+ *  @brief  This file is implimantion of homescreen application main function
+ */
+//==========================================================================
+
+#include <cstring>
 #include <iostream>
-#include <cstdio>
-#include <bundle.h>
-#include <aul/aul.h>
-#include <home_screen_main.h>
-#include <cerrno>
-#include "CicoHomeScreenConfig.h"
-#include "ico_syc_public.h"
-#include "CicoSCConf.h"
-#include "CicoSCSystemConfig.h"
-#include "Cico_aul_listen_app.h"
-#include "CicoHomeScreen.h"
-#include "CicoSound.h"
+#include <Eina.h>
+#include "ico_log.h"
+#include "CicoHSEFLApp.h"
+#include "CicoHSCmdOpts.h"
+#include "CicoGKeyFileConfig.h"
 
-using namespace std;
+#define ICO_CONFIG_LOG       "log"
+#define ICO_CONFIG_LOG_NAME  "filename"
+#define ICO_CONFIG_LOG_LEVEL "loglevel"
+#define ICO_CONFIG_LOG_FLUSH "logflush"
+#define ICO_CONFIG_LOG_ECORE "ecorelog"
 
-string g_login_user_name;
-
-static Eina_Bool launchApps(void* data);
+//--------------------------------------------------------------------------
 /**
- * ecore timer void data typedef
+ *  @brief  setup log
  */
-typedef struct t_launcApps_data {
-    string filePath;
-    string filePathD;
-    CicoHomeScreen *hs;
-} launcApps_data_t;
+//--------------------------------------------------------------------------
+void
+setupLog(void)
+{
+    /* init configuration */
+    CicoGKeyFileConfig hsConfig;
+    hsConfig.Initialize(ICO_HOMESCREEN_CONFIG_FILE);
+
+    // ico log open
+    std::string name;
+    name = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                     ICO_CONFIG_LOG_NAME,
+                                     "HomeScreen");
+    ico_log_open(name.c_str());
 
 
-/*--------------------------------------------------------------------------*/
+    // ico log level
+    int log_level = 0;
+    std::string level = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                                  ICO_CONFIG_LOG_LEVEL,
+                                                  "all");
+
+    if (NULL != strstr(level.c_str(), "performance")) {
+        log_level |= ICO_LOG_LVL_PRF;
+    }
+
+    if (NULL != strstr(level.c_str(), "trace")) {
+        log_level |= ICO_LOG_LVL_TRA;
+    }
+
+    if (NULL != strstr(level.c_str(), "debug")) {
+        log_level |= ICO_LOG_LVL_DBG;
+    }
+
+    if (NULL != strstr(level.c_str(), "info")) {
+        log_level |= ICO_LOG_LVL_INF;
+    }
+
+    if (NULL != strstr(level.c_str(), "warning")) {
+        log_level |= ICO_LOG_LVL_WRN;
+    }
+
+    if (NULL != strstr(level.c_str(), "critical")) {
+        log_level |= ICO_LOG_LVL_CRI;
+    }
+
+    if (NULL != strstr(level.c_str(), "error")) {
+        log_level |= ICO_LOG_LVL_ERR;
+    }
+
+    std::string flush = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                                  ICO_CONFIG_LOG_FLUSH,
+                                                  "on");
+    if (NULL != strstr(flush.c_str(), "on")) {
+        log_level |= ICO_LOG_FLUSH;
+    }
+    else {
+        log_level |= ICO_LOG_NOFLUSH;
+    }
+
+    if (NULL != strstr(level.c_str(), "none")) {
+        ico_log_set_level(0);
+    }
+    else if (NULL == strstr(level.c_str(), "all")) {
+        ico_log_set_level(log_level);
+    }
+
+    // eocre log print
+    std::string ecore = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                                  ICO_CONFIG_LOG_ECORE,
+                                                  "on");
+    if (NULL != strstr(ecore.c_str(), "on")) {
+        eina_init();
+        eina_log_level_set(EINA_LOG_LEVEL_DBG);
+    }
+}
+
+//--------------------------------------------------------------------------
 /**
- * @brief   main
- *          homescreen main. initialize UXF, app manager, and ecore.
+ *  @brief   homescreen main 
+ *           homescreen main. initialize UXF, app manager, and ecore.
  *
- * @param[in]   argc                counts of argment
- * @param[in]   argv                argment
- * @return      result
- * @retval      >=0                 success
- * @retval      -1                  error
+ *  @param [in] argc    counts of argment
+ *  @param [in] argv    argment
+ *  @return     result
+ *  @retval     0       success
+ *  @retval     -1      error
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 int
 main(int argc, char *argv[])
 {
-    int ret;
+    try {
+        printf("=== start HomeScreen main entry\n");
+ 
+        // setupLog
+        setupLog();
+        ICO_INF( "START_MODULE HomeScreen" );
 
-    eina_init();
-    eina_log_level_set(EINA_LOG_LEVEL_DBG);
+        // perse command options
+        CicoHSCmdOpts::getInstance()->parse(argc, argv);
 
-    ico_log_open("HomeScreen");
+        // start homescreen
+        CicoHSEFLApp hsEFLApp;
+        int ret = hsEFLApp.start(argc, argv);
 
-    // load system config
-    CicoSCSystemConfig::getInstance()->load(ICO_HS_LIFECYCLE_CONTROLLER_SETTING_PATH);
-
-    /* init configuration */
-    ICO_DBG("main: config initialize start");
-    CicoHomeScreenConfig *config = new CicoHomeScreenConfig();
-    config->Initialize(ICO_HOMESCREEN_CONFIG_FILE);
-    ICO_DBG("main: config initialize end");
-
-    /* get LOGIN-USER parameter */
-    bundle *b = bundle_import_from_argv(argc, argv); // import from argc+argv
-    const char* valusr = bundle_get_val(b, ICO_SYC_APP_BUNDLE_KEY1);
-    const char* valpath = bundle_get_val(b, ICO_SYC_APP_BUNDLE_KEY2);
-    const char* valpathD = bundle_get_val(b, ICO_SYC_APP_BUNDLE_KEY3);
-    const char* valFlagPath = bundle_get_val(b, ICO_SYC_APP_BUNDLE_KEY4);
-    if ((NULL != valusr) && (0 != valusr)) {
-        g_login_user_name = valusr;
+        ICO_DBG("ret = %d error=%s", ret, hsEFLApp.appfwErrorToString(ret));
     }
-    else {
-        g_login_user_name.clear();
+    catch (const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+        ICO_ERR("main: catch exception [%s]", e.what());
+        return -1;
     }
-    launcApps_data_t x;
-    x.hs = NULL;
-
-    if ((NULL != valpath) && (0 != valpath)) {
-        x.filePath = valpath;
+    catch (const std::string& str) {
+        std::cerr << str << std::endl;
+        ICO_ERR("main: catch exception [%s]", str.c_str());
+        return -1;
     }
-    else {
-        x.filePath.clear();
+    catch (...) {
+        ICO_ERR("main: catch exception unknown");
+        return -1;
     }
-
-    if ((NULL != valpathD) && (0 != valpathD)) {
-        x.filePathD = valpathD;
-    }
-    else {
-        x.filePathD.clear();
-    }
-    string flagPath;
-    if ((NULL != valFlagPath) && (0 != valFlagPath)) {
-        flagPath = valFlagPath;
-    }
-    else {
-        flagPath.clear();
-    }
-    ICO_DBG("PARAM=\"%s\", \"%s\", \"%s\", \"%s\"", g_login_user_name.c_str(),
-            x.filePath.c_str(), x.filePathD.c_str(), flagPath.c_str());
-    bundle_free(b);
-    valusr = valpath = valpathD = valFlagPath = NULL;
-
-    /* init home screen soud */
-    ICO_DBG("main: sound initialize start");
-    CicoHomeScreenSound *sound = new CicoHomeScreenSound();
-    sound->Initialize(config);
-    ICO_DBG("main: sound initialize end");
-
-    CicoSound::GetInstance()->Initialize(config);
-
-    /*AUL Listen Signal set(launch/dead)*/
-    initAulListenXSignal();
-
-    /*create homescreen*/
-    ICO_DBG("main: homescreen initialize start");
-    CicoHomeScreen *home_screen = new CicoHomeScreen();
-
-    ret = home_screen->Initialize(ICO_ORIENTATION_VERTICAL, config);
-    if(ret != ICO_OK){
-        ICO_ERR("main: homescreen initialize failed");
-        /*clear all classes*/
-        delete home_screen;
-        delete sound;
-        delete config;
-        exit(8);
-    }
-    ICO_DBG("main: homescreen initialize end");
-
-    ICO_DBG("main: create homescreen ");
-    /* application history class init. before call launchApps */
-    home_screen->InitializeAppHistory(g_login_user_name, x.filePath,
-                                      x.filePathD, flagPath);
-    /* application history launch */
-    x.hs = home_screen;
-    ecore_timer_add(0.01, launchApps, &x);
-
-    /*home screen start and go into main loop*/
-    home_screen->StartHomeScreen();
-
-    ICO_DBG("main: end homescreen");
-
-    /* when loop is terminated */
-    /* delete homescreen */
-    home_screen->Finalize();
-
-    /*clear all classes*/
-    delete home_screen;
-
-    delete sound;
-
-    delete config;
+    ICO_INF( "END_MODULE HomeScreen" );
 
     return 0;
 }
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   launch applications
- *
- * @param   filepath  start applications list file path
- * @param   filepathD defalt start applications list file path
- * @return  bool
- * @retval  true  success
- * @retval  false fail
- */
-/*--------------------------------------------------------------------------*/
-static Eina_Bool launchApps(void* data)
-{
-    ICO_DBG("start");
-    launcApps_data_t* x = (launcApps_data_t*) data;
-    if ((NULL == x) || (NULL == x->hs)) {
-        ICO_DBG("end");
-        return ECORE_CALLBACK_CANCEL;
-    }
-
-    vector<pairAppidSubd> apps;
-    x->hs->readStartupApp(apps);
-
-    int sz = apps.size();
-    for (int i =sz; i > 0; i--) {
-        string appid = apps[i-1].first;
-        bool bFLAG = apps[i-1].second;
-        int pid = aul_launch_app(appid.c_str(), NULL);
-        ICO_DBG("aul_launch_app[%d]%d:%s:%d", i, pid, appid.c_str(), (int)bFLAG);
-        if ((0 < pid) && (NULL != x->hs)) {
-            x->hs->startupCheckAdd(pid, appid, bFLAG);
-        }
-    }
-    ICO_DBG("end");
-    return ECORE_CALLBACK_CANCEL;
-}
+// vim: set expandtab ts=4 sw=4:

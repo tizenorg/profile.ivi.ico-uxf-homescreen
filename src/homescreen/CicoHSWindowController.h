@@ -35,8 +35,6 @@ class CicoHSWindowController
     static void Initialize(void);
     static void Finalize(void);
     static void GetFullScreenSize(int orientation,int *width,int *height);
-    static void StartEcoreLoop(void);
-    static void QuitEcoreLoop(void);
 
   protected:
     CicoHSWindowController operator=(const CicoHSWindowController&);
@@ -44,6 +42,5 @@ class CicoHSWindowController
   private:
     static Ecore_Evas *ms_ecoreEvas;
 };
-
 #endif
-
+// vim:set expandtab ts=4 sw=4:

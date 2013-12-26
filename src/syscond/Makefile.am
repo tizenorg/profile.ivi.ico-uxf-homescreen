@@ -7,7 +7,7 @@ check_PROGRAMS =	\
 	IcoSysconDaemon
 
 IcoSysconDaemon_SOURCES =	\
-	CicoEFLApp.cpp			\
+	CicoSysConLogConfig.cpp	\
 	CicoSysConDaemon.cpp	\
 	main.cpp
 
@@ -30,11 +30,12 @@ IcoSysconDaemon_CPPFLAGS = 	\
 	$(UWS_CFLAGS)						\
 	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
-    -I../../lib/system-controller
-
+    -I../../lib/system-controller		\
+    -I../../lib/common
 
 IcoSysconDaemon_LDADD = \
 	../../lib/system-controller/.libs/libico-system-controller.a	\
+	../../lib/common/.libs/libico-common.a	\
 	../../lib/misc/state-machine/.libs/libico-state-machine.a		\
 	@ECORE_LIBS@					\
 	@EINA_LIBS@						\
@@ -52,10 +53,7 @@ IcoSysconDaemon_LDADD = \
 	@MURPHYRESOURCE_LIBS@			\
 	@EDBUS_LIBS@					\
 	$(UWS_LIBS)						\
-	$(WESTONPLUGIN_LIBS)			\
-	../../lib/misc/state-machine/.libs/libico-state-machine.so
-
-#	-lmurphy-resolver
+	$(WESTONPLUGIN_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
 

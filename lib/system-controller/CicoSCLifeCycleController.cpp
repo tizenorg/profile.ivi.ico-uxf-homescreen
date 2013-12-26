@@ -19,12 +19,13 @@
 
 #include "ico_syc_error.h"
 #include "CicoLog.h"
-#include "CicoSCAulItems.h"
-#include "CicoSCAilItems.h"
+#include "CicoAulItems.h"
+#include "CicoAilItems.h"
 #include "CicoSCLifeCycleController.h"
-#include "CicoSCConf.h"
-#include "CicoSCSystemConfig.h"
+#include "CicoConf.h"
+#include "CicoSystemConfig.h"
 #include "CicoSCSysResourceController.h"
+#include "CicoSCAppResourceController.h"
 #include "Cico_aul_listen_app.h"
 
 using namespace std;
@@ -136,7 +137,15 @@ CicoSCLifeCycleController::CicoSCLifeCycleController()
 {
     m_gconf = (GKeyFile*)NULL;
     m_pc = (pkgmgr_client*)NULL;
+#if 0
     m_RC = new CicoSCSysResourceController;
+    m_RC->startSysResource();
+#else
+    m_RC = new CicoSCAppResourceController;
+    if (false == m_RC->startSysResource()) {
+        m_RC->initAppResource();
+    }
+#endif
     ailRenewFlagOff();
     initAIL();
     initAUL();
@@ -173,15 +182,16 @@ int CicoSCLifeCycleController::launch(const char* appid, bundle* b)
     ICO_TRA("start %s", appid);
     // appid check AIL table exist
     if (NULL == findAIL(appid)) {
-        ICO_TRA("not find");
+        ICO_TRA("end fail(not find)");
         return ICO_SYC_ENOSYS;
     }
+    ICO_PRF("CHG_APP_STA request app=%s", appid);
     int r = aul_launch_app(appid, b);
     if (0 > r) {
-        ICO_TRA("aul_launch_app NG %d", r);
+        ICO_TRA("end fail(%d)", r);
         return ICO_SYC_ENOSYS;
     }
-    ICO_TRA("launch success");
+    ICO_TRA("end success(%d)", r);
     return ICO_SYC_EOK;
 }
 
@@ -256,7 +266,7 @@ int CicoSCLifeCycleController::terminate(const std::string& appid)
 int CicoSCLifeCycleController::terminate(int pid)
 {
     ICO_TRA("CicoSCLifeCycleController::terminate %d", pid);
-    const CicoSCAulItems* t = findAUL(pid);
+    const CicoAulItems* t = findAUL(pid);
     if ((NULL == t) || (0 == t)) {
         ICO_TRA("not find");
         return ICO_SYC_EPERM;
@@ -353,7 +363,7 @@ bool CicoSCLifeCycleController::isRunning(const char* appid)
     ICO_TRA("start %s", appid);
     bool r = false;
 #if 0 // TODO mk_k
-    vector<CicoSCAulItems>::iterator it;
+    vector<CicoAulItems>::iterator it;
     for (it = m_aul.begin(); it != m_aul.end(); ++it) {
         it->update_appid();
         if (0 == strcasecmp(it->m_appid.c_str(), appid)) {
@@ -390,13 +400,13 @@ bool CicoSCLifeCycleController::isRunning(const std::string& appid)
 /**
  * @brief find ail data
  * @param appid find key
- * @return CicoSCAilItems class pointer
+ * @return CicoAilItems class pointer
  * @retval NULL is not find
  */
-const CicoSCAilItems* CicoSCLifeCycleController::findAIL(const char* appid) const
+const CicoAilItems* CicoSCLifeCycleController::findAIL(const char* appid) const
 {
     ICO_TRA("start");
-    const CicoSCAilItems* r = NULL;
+    const CicoAilItems* r = NULL;
     int sz = m_ail.size();
     for (int i = 0; i < sz; i++) {
         if (0 == strcasecmp(m_ail[i].m_appid.c_str(), appid)) {
@@ -411,10 +421,10 @@ const CicoSCAilItems* CicoSCLifeCycleController::findAIL(const char* appid) cons
 /**
  * @brief find ail data
  * @param appid find key
- * @return CicoSCAilItems class pointer
+ * @return CicoAilItems class pointer
  * @retval NULL is not find
  */
-const CicoSCAilItems* CicoSCLifeCycleController::findAIL(const std::string& appid) const
+const CicoAilItems* CicoSCLifeCycleController::findAIL(const std::string& appid) const
 {
 //    ICO_TRA("call findAIL(const char*)");
     return findAIL((const char*)appid.c_str());
@@ -430,7 +440,7 @@ bool CicoSCLifeCycleController::getPIDs(const char* appid, std::vector<int>& pid
     ICO_TRA("start %s", appid);
     bool r = false;
 #if 0 // TODO mk_k
-    vector<CicoSCAulItems>::iterator it;
+    vector<CicoAulItems>::iterator it;
     for (it = m_aul.begin(); it != m_aul.end(); ++it) {
         it->update_appid();
         if (0 == strcasecmp(it->m_appid.c_str(), appid)) {
@@ -441,7 +451,7 @@ bool CicoSCLifeCycleController::getPIDs(const char* appid, std::vector<int>& pid
 #else
     int sz = m_aul.size();
     for (int i = 0; i < sz; i++) {
-        CicoSCAulItems* t = (CicoSCAulItems*)m_aul[i].p();
+        CicoAulItems* t = (CicoAulItems*)m_aul[i].p();
         t->update_appid();
         if (0 == strcasecmp(t->m_appid.c_str(), appid)) {
             pids.push_back(t->m_pid);
@@ -468,13 +478,13 @@ bool CicoSCLifeCycleController::getPIDs(std::string& appid, std::vector<int>& pi
  * @param appid target application appid
  * @return pid
  */
-const CicoSCAulItems* CicoSCLifeCycleController::findAUL(int pid)
+const CicoAulItems* CicoSCLifeCycleController::findAUL(int pid)
 {
     ICO_TRA("start %d", pid);
-    const CicoSCAulItems* r = NULL;
+    const CicoAulItems* r = NULL;
     int sz = m_aul.size();
     for (int i = 0; i < sz; i++) {
-        CicoSCAulItems* t = (CicoSCAulItems*)m_aul[i].p();
+        CicoAulItems* t = (CicoAulItems*)m_aul[i].p();
         t->update_appid();
         if (t->m_pid == pid) {
             r = t;
@@ -543,7 +553,7 @@ int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name
 void CicoSCLifeCycleController::renewAIL()
 {
     ICO_TRA("start");
-    vector<CicoSCAilItems> old = m_ail;
+    vector<CicoAilItems> old = m_ail;
     m_ail.clear();
     int cnt =0;
     while (false == createAilItems()) {
@@ -563,8 +573,8 @@ void CicoSCLifeCycleController::renewAIL()
     vector<string> add_appid;
     vector<string> remove_appid;
 
-    vector<CicoSCAulItems>::iterator it_n;
-    vector<CicoSCAulItems>::iterator it_o;
+    vector<CicoAulItems>::iterator it_n;
+    vector<CicoAulItems>::iterator it_o;
     for(it_n = m_aul.begin(); it_n != m_aul.end(); ++it_n) {
         bool bingo = false;
         for(it_o = old.begin(); it_o != old.end(); ++it_o) {
@@ -694,7 +704,7 @@ bool CicoSCLifeCycleController::createAilItems()
     if (NULL == m_gconf) {
         m_gconf = g_key_file_new();
         GString* gsfp = g_string_new("xx");
-        CicoSCSystemConfig* CSCSC = CicoSCSystemConfig::getInstance();
+        CicoSystemConfig* CSCSC = CicoSystemConfig::getInstance();
         g_string_printf(gsfp, "%s/%s", CSCSC->getDefaultConf()->confdir.c_str(),
                         ICO_SYC_CONFIG_APPATTR);
         GError  *gerr = NULL;
@@ -767,7 +777,7 @@ bool CicoSCLifeCycleController::addAIL(const char* sPkg, const char* sIco,
     ICO_TRA("start pkg(%s)", sPkg? sPkg: "(NULL)");
     string category;
     getCategory(sPkg, sNm, sCtg, category);
-    CicoSCAilItems CSCAI(sPkg, sIco, sNm, sCtg, sTyp, sExe, category, bndsp);
+    CicoAilItems CSCAI(sPkg, sIco, sNm, sCtg, sTyp, sExe, category, bndsp);
     m_ail.push_back(CSCAI);
     ICO_TRA("end");
     return true;
@@ -826,12 +836,22 @@ void CicoSCLifeCycleController::getCategory(const char* sPkg, const char* sNm,
             snprintf(work, sizeof(work)-1, "%s.%d",
                      appCtgryType == 0 ? sPkg : sNm, i);
             gerr = NULL;
+
+            if (NULL != appCtgry) {
+                g_free(appCtgry);
+                appCtgry = NULL;
+            }
+
             appCtgry = g_key_file_get_string(m_gconf, sectAppAttr, work, &gerr);
             if (gerr != NULL) {
                 g_clear_error(&gerr);
                 break;
             }
         }
+    }
+    if (NULL != appCtgry) {
+        g_free(appCtgry);
+        appCtgry = NULL;
     }
     g_clear_error(&gerr);
 
@@ -868,7 +888,7 @@ void CicoSCLifeCycleController::enterAUL(const char* appid, int pid,
     bool bPushBack = true;
     int sz = m_aul.size();
     for (int i = 0; i < sz; i++) {
-        CicoSCAulItems* t = (CicoSCAulItems*) m_aul[i].p();
+        CicoAulItems* t = (CicoAulItems*) m_aul[i].p();
         t->update_appid();
         if (t->m_pid == pid) {
             bPushBack = false;  // push_back flag off
@@ -888,15 +908,72 @@ void CicoSCLifeCycleController::enterAUL(const char* appid, int pid,
         // AUL list Unregistered
         ICO_DBG("push_back(AUL(%s, %d, %x))", appid, pid, obj);
         int ctgry = DINITm_categoryID;
-        const CicoSCAilItems* ailObj = findAIL(appid);
+        const CicoAilItems* ailObj = findAIL(appid);
         if ((NULL != ailObj) && (0 != ailObj)) {
             ctgry = ailObj->m_categoryID;
         }
-        CicoSCAulItems entryAUL(appid, pid, ctgry, aulstt, obj);
+        CicoAulItems entryAUL(appid, pid, ctgry, aulstt, obj);
         m_aul.push_back(entryAUL);
         if (-1 != entryAUL.m_cpucgroup) {
             m_RC->entryCgroupCPU(pid, entryAUL.m_cpucgroup);
         }
+        m_RC->entryApp(appid, pid);
+    }
+    ICO_TRA("end");
+}
+
+/**
+ * @brief application resource function is runnning
+ * @ret bool runnning state
+ * @retval true application resource runnning
+ * @retval true application resource stopping
+ */
+bool CicoSCLifeCycleController::isAppResource() const
+{
+    if (NULL == m_RC) {
+        return false;
+    }
+    return m_RC->isAppResource();
+}
+
+/**
+ * @brief
+ * @param anem user login name
+ */
+bool CicoSCLifeCycleController::startAppResource(const string& name)
+{
+    ICO_TRA("start");
+    if (NULL == m_RC) {
+        ICO_TRA("end");
+        return false;
+    }
+    bool bR = m_RC->startAppResource(name);
+    ICO_TRA("end %s", bR? "true": "false");
+    return bR;
+}
+
+/**
+ * @brief
+ * @param anem user login name
+ */
+void CicoSCLifeCycleController::createAppResourceFile(const string& user)
+{
+    ICO_TRA("start");
+    if (NULL == m_RC) {
+        ICO_TRA("end");
+        return;
+    }
+    if (false == m_RC->isAppResource()) {
+        ICO_TRA("end");
+        return;
+    }
+    string file;
+    m_RC->getAppResourceFilePath(user, file);
+    struct stat buff;
+    /* file check */
+    memset(&buff, 0, sizeof(buff));
+    if (0 != stat(file.c_str(), &buff)) {
+        m_RC->createAppResourceFile(file);
     }
     ICO_TRA("end");
 }
@@ -908,7 +985,7 @@ bool CicoSCLifeCycleController::removeAUL(int pid)
 {
     ICO_TRA("start %d", pid);
     bool r = false;
-    vector<CicoSCAulItems>::iterator it;
+    vector<CicoAulItems>::iterator it;
     for(it = m_aul.begin(); it != m_aul.end(); ++it) {
         if (pid == it->m_pid) {
             ICO_DBG("erase appid=%s", it->m_appid.c_str());
@@ -935,7 +1012,7 @@ int CSCLCCapp_launch_handlerX(int pid, CicoSCLifeCycleController* x)
     char appid[255];
     memset(appid, 0, sizeof(appid));
     int iR = Xaul_app_get_appid_bypid(pid, appid, sizeof(appid)); // pid to appid
-    ICO_DBG("%d=aul_app_get_appid_bypid  %d , %s", iR, pid, appid);
+    ICO_PRF("CHG_APP_STA notice  app=%s, pid=%d, rval=%d", appid, pid, iR);
     x->enterAUL(appid, pid, NULL, iR);
     ICO_TRA("end %s %d", appid, pid);
     return 0;
@@ -967,11 +1044,11 @@ int CSCLCCapp_dead_handlerX(int pid, CicoSCLifeCycleController* x)
  * @brief AUL infomaton list
  * @return AUL information item list Container
  */
-const std::vector<CicoSCAulItems>& CicoSCLifeCycleController::getAulList()
+const std::vector<CicoAulItems>& CicoSCLifeCycleController::getAulList()
 {
     int sz = m_aul.size();
     for (int i = 0; i < sz; i++) {
-        CicoSCAulItems* t = (CicoSCAulItems*)m_aul[i].p();
+        CicoAulItems* t = (CicoAulItems*)m_aul[i].p();
         t->update_appid();
     }
     return m_aul;

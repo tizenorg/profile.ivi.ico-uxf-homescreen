@@ -217,4 +217,4 @@ inline void CicoHSAppHistoryExt::clearSelectApp()
 }
 
 #endif // CICOHSAPPHISTORYEXT_H
-
+// vim: set expandtab ts=4 sw=4:

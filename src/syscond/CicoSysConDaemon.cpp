@@ -7,13 +7,13 @@
  *
  */
 
-/*========================================================================*/    
+//==========================================================================
 /**
  *  @file   CicoSysConDaemon.cpp
  *
- *  @brief  
+ *  @brief  This file is implimention of CicoSysConDaemon class
  */
-/*========================================================================*/    
+//==========================================================================
 
 #include <exception>
 #include <iostream>
@@ -22,78 +22,108 @@
 #include "CicoSysConDaemon.h"
 #include "ico_syc_error.h"
 #include "CicoLog.h"
-#include "CicoSCSystemConfig.h"
+#include "CicoSystemConfig.h"
 #include "CicoSCServer.h"
 #include "CicoSCWayland.h"
 #include "CicoSCWindowController.h"
 #include "CicoSCInputController.h"
 #include "CicoSCLifeCycleController.h"
+#include "CicoSCUser.h"
 #include "CicoSCUserManager.h"
 #include "CicoSCResourceManager.h"
 #include "Cico_aul_listen_app.h"
+#include "CicoSCVInfoManager.h"
 
+//--------------------------------------------------------------------------
 /**
- *  Default Constructor
+ *  @brief  default constructor
  */
+//--------------------------------------------------------------------------
 CicoSysConDaemon::CicoSysConDaemon()
+    : m_winctrl(NULL), m_inputctrl(NULL), m_resourcemgr(NULL)
 {
-//    ICO_DBG("CicoSysConDaemon::CicoSysConDaemon Enter");
-//    ICO_DBG("CicoSysConDaemon::CicoSysConDaemon Leave");
+//    ICO_TRA("CicoSysConDaemon::CicoSysConDaemon Enter");
+//    ICO_TRA("CicoSysConDaemon::CicoSysConDaemon Leave");
 }
 
+//--------------------------------------------------------------------------
 /**
- *  Destructor
+ *  @brief  callback function on create
+ *
+ *  @param [in] user_data   The user data passed from the callback
+ *                          registration function
+ *
+ *  @return true on success, false on error
  */
+//--------------------------------------------------------------------------
 CicoSysConDaemon::~CicoSysConDaemon()
 {
-//    ICO_DBG("CicoSysConDaemon::~CicoSysConDaemon Enter");
-//    ICO_DBG("CicoSysConDaemon::~CicoSysConDaemon Leave");
+//    ICO_TRA("CicoSysConDaemon::~CicoSysConDaemon Enter");
+//    ICO_TRA("CicoSysConDaemon::~CicoSysConDaemon Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  callback function on terminate
+ *
+ *  @param [in] user_data   The user data passed from the callback
+ *                          registration function
+ */
+//--------------------------------------------------------------------------
 bool
 CicoSysConDaemon::onCreate(void *user_data)
 {
-    ICO_DBG("CicoSysConDaemon::onCreate Enter");
+    ICO_TRA("CicoSysConDaemon::onCreate Enter");
 
     try {
         int ret = ICO_SYC_EOK;
-        CicoSCSystemConfig::getInstance()->load("/usr/apps/org.tizen.ico.system-controller/res/config/system.xml");
+        CicoSystemConfig::getInstance()->load("/usr/apps/org.tizen.ico.system-controller/res/config/system.xml");
 
         initAulListenXSignal();
 
+        CicoSCVInfoManager::getInstance()->startup();
+
         CicoSCLifeCycleController *lifecycle =
             CicoSCLifeCycleController::getInstance();
-        CicoSCWindowController *winctrl     = new CicoSCWindowController();
-        CicoSCInputController  *inputctrl   = new CicoSCInputController();
+        m_winctrl     = new CicoSCWindowController();
+        m_inputctrl   = new CicoSCInputController();
 
-        CicoSCResourceManager  *resourcemgr = new CicoSCResourceManager();
-        resourcemgr->setWindowController(winctrl);
-        resourcemgr->setInputController(inputctrl);
-        ret = resourcemgr->initialize();
+        m_resourcemgr = new CicoSCResourceManager();
+        m_resourcemgr->setWindowController(m_winctrl);
+        m_resourcemgr->setInputController(m_inputctrl);
+        ret = m_resourcemgr->initialize();
         if (ICO_SYC_EOK != ret) {
             return false;
         }
 
-        winctrl->setResourceManager(resourcemgr);
+        m_winctrl->setResourceManager(m_resourcemgr);
 
         CicoSCUserManager *usermgr = CicoSCUserManager::getInstance();
         usermgr->load("/usr/apps/org.tizen.ico.system-controller/res/config/user.xml");
 
         CicoSCServer *server = CicoSCServer::getInstance();
-        server->setWindowCtrl(winctrl);
-        server->setInputCtrl(inputctrl);
+        server->setWindowCtrl(m_winctrl);
+        server->setInputCtrl(m_inputctrl);
         server->setUserMgr(usermgr);
-        server->setResourceMgr(resourcemgr);
-        server->setPolicyMgr(resourcemgr->getPolicyManager());
+        server->setResourceMgr(m_resourcemgr);
+        server->setPolicyMgr(m_resourcemgr->getPolicyManager());
 
         server->startup(18081, (const char*)"ico_syc_protocol");
-        ret = CicoSCWayland::getInstance()->intialize();
+        ret = CicoSCWayland::getInstance()->initialize();
         if (ICO_SYC_EOK != ret) {
             return false;
         }
         CicoSCWayland::getInstance()->addEcoreMainWlFdHandler();
-        
+
         usermgr->initialize();
+        if (true == lifecycle->isAppResource()) {
+            const CicoSCUser* user = usermgr->getLoginUser();
+            if (NULL != user) {
+                if (false == lifecycle->startAppResource(user->name)) {
+                    lifecycle->createAppResourceFile(user->name);
+                }
+            }
+        }
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
@@ -113,34 +143,75 @@ CicoSysConDaemon::onCreate(void *user_data)
         return false;
     }
 
-    ICO_DBG("CicoSysConDaemon::onCreate Leave(true)");
+    ICO_TRA("CicoSysConDaemon::onCreate Leave(true)");
+    ICO_PRF("SYS_STARTED Initialization is complete");
 
     return true;
 }
 
-#if 0
+//--------------------------------------------------------------------------
+/**
+ *  @brief  callback function on terminate
+ *
+ *  @param [in] user_data   The user data passed from the callback
+ *                          registration function
+ */
+//--------------------------------------------------------------------------
 void
 CicoSysConDaemon::onTerminate(void *user_data)
 {
-    _DBG("CicoSysConDaemon::onTerminate entry");
+    ICO_TRA("CicoSysConDaemon::onTerminate Enter");
+    CicoSCUserManager *usermgr = CicoSCUserManager::getInstance();
+    usermgr->cloaseUser();
+    stop();
+    CicoSCServer::getInstance()->teardown();
+    CicoSCVInfoManager::getInstance()->teardown();
+    ICO_TRA("CicoSysConDaemon::onTerminate Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  callback function on pause
+ *
+ *  @param [in] user_data   The user data passed from the callback
+ *                          registration function
+ */
+//--------------------------------------------------------------------------
 void
 CicoSysConDaemon::onPause(void *user_data)
 {
-    _DBG("CicoSysConDaemon::onPause entry");
+    ICO_TRA("CicoSysConDaemon::onPause Enter");
+    ICO_TRA("CicoSysConDaemon::onPause Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  callback function on resume
+ *
+ *  @param [in] user_data   The user data passed from the callback
+ *                          registration function
+ */
+//--------------------------------------------------------------------------
 void
 CicoSysConDaemon::onResume(void *user_data)
 {
-    _DBG("CicoSysConDaemon::onResume entry");
+    ICO_TRA("CicoSysConDaemon::onResume Enter");
+    ICO_TRA("CicoSysConDaemon::onResume Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  callback function on service
+ *
+ *  @param [in] service     The handle to the service
+ *  @param [in] user_data   The user data passed from the callback
+ *                          registration function
+ */
+//--------------------------------------------------------------------------
 void
 CicoSysConDaemon::onService(service_h service, void *user_data)
 {
-    _DBG("CicoSysConDaemon::onService entry");
+    ICO_TRA("CicoSysConDaemon::onService Enter");
+    ICO_TRA("CicoSysConDaemon::onService Leave");
 }
-#endif
-/* vim: set expandtab ts=4 sw=4: */
+// vim: set expandtab ts=4 sw=4:

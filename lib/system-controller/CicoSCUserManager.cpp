@@ -34,14 +34,14 @@ using namespace boost::property_tree;
 
 #include "CicoSCCommand.h"
 #include "CicoSCLastInfo.h"
-#include "CicoSCAulItems.h"
+#include "CicoAulItems.h"
 #include "CicoSCLifeCycleController.h"
 #include "CicoSCMessage.h"
 #include "CicoSCServer.h"
 #include "CicoSCUserManager.h"
 #include "CicoSCUser.h"
-#include "CicoSCConf.h"
-#include "CicoSCSystemConfig.h"
+#include "CicoConf.h"
+#include "CicoSystemConfig.h"
 #include "Cico_aul_listen_app.h"
 
 using namespace std;
@@ -101,7 +101,7 @@ CicoSCUserManager::CicoSCUserManager()
     m_waitHS.clear();
     m_wait = false;
     // login-user application information file
-    m_uConfig = CicoSCSystemConfig::getInstance()->getUserConf();
+    m_uConfig = CicoSystemConfig::getInstance()->getUserConf();
     if ((NULL == m_uConfig) || (true == m_uConfig->m_parent_dir.empty())) {
         m_parentDir = ICO_SYC_DEFAULT_PATH;
     }
@@ -129,7 +129,7 @@ CicoSCUserManager::CicoSCUserManager()
 //--------------------------------------------------------------------------
 CicoSCUserManager::~CicoSCUserManager()
 {
-    ICO_DBG("CicoSCUserManager::~CicoSCUserManager() Enter");
+    ICO_TRA("CicoSCUserManager::~CicoSCUserManager Enter");
 
     // clear homescreen list
     m_homescreenList.clear();
@@ -152,7 +152,7 @@ CicoSCUserManager::~CicoSCUserManager()
     m_userList.clear();
     m_vppa.clear();
 
-    ICO_DBG("CicoSCUserManager::~CicoSCUserManager() Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::~CicoSCUserManager Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -182,7 +182,7 @@ CicoSCUserManager::getInstance(void)
 void
 CicoSCUserManager::handleCommand(const CicoSCCommand * cmd)
 {
-    ICO_DBG("CicoSCUserManager::handleCommand Enter (%d)", cmd->cmdid);
+    ICO_TRA("CicoSCUserManager::handleCommand Enter(%d)", cmd->cmdid);
 
     CicoSCCmdUserMgrOpt *opt = static_cast<CicoSCCmdUserMgrOpt*>(cmd->opt);
 
@@ -208,7 +208,7 @@ CicoSCUserManager::handleCommand(const CicoSCCommand * cmd)
         break;
     }
 
-    ICO_DBG("CicoSCUserManager::handleCommand Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::handleCommand Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -222,7 +222,7 @@ CicoSCUserManager::handleCommand(const CicoSCCommand * cmd)
 int
 CicoSCUserManager::load(const string & confFile)
 {
-    ICO_DBG("CicoSCUserManager::load Enter (%s)", confFile.c_str());
+    ICO_TRA("CicoSCUserManager::load Enter (%s)", confFile.c_str());
 
     ptree root;
     // read config file (xml)
@@ -234,7 +234,7 @@ CicoSCUserManager::load(const string & confFile)
     // set login user name
     setLoginUser(root);
 
-    ICO_DBG("CicoSCUserManager::load Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::load Leave(EOK)");
 
     // always success
     return ICO_SYC_EOK;
@@ -251,12 +251,13 @@ CicoSCUserManager::load(const string & confFile)
 int
 CicoSCUserManager::initialize(void)
 {
-    ICO_DBG("CicoSCUserManager::initialize Enter");
+    ICO_TRA("CicoSCUserManager::initialize Enter");
 
     // get login user information
     const CicoSCUser *user = findUserConfbyName(m_login);
     if (NULL == user) {
-        ICO_ERR("CicoSCUserManager::initialize Leave(ENXIO)");
+        ICO_ERR("user not found");
+        ICO_TRA("CicoSCUserManager::initialize Leave(ENXIO)");
         return ICO_SYC_ENXIO;
     }
 
@@ -289,7 +290,7 @@ CicoSCUserManager::initialize(void)
     // save last user
     saveLastUser();
 
-    ICO_DBG("CicoSCUserManager::initialize Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::initialize Leave(EOK)");
 
     return ICO_SYC_EOK;
 }
@@ -345,7 +346,7 @@ CicoSCUserManager::getHomeScreenList(void)
 void
 CicoSCUserManager::changeUser(const string & name, const string & passwd)
 {
-    ICO_DBG("CicoSCUserManager::changeUser Enter"
+    ICO_TRA("CicoSCUserManager::changeUser Enter"
             "(user=%s pass=%s)", name.c_str(), passwd.c_str());
 
     char tmpText[128];
@@ -355,22 +356,28 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
     const CicoSCUser *conf = NULL;
     // check all user logoff
     if ((name.empty()) || (name[0] == ' ')) {
-        ICO_DBG("CicoSCUserManager::changeUser Leave(all user logoff)");
+        ICO_TRA("CicoSCUserManager::changeUser Leave(all user logoff)");
         flagFileOn();
         killingAppsAndHS(oldUsr);
+        return;
+    }
+
+    // if changed user name is same last user name
+    if (0 == name.compare(m_login)) {
+        ICO_TRA("CicoSCUserManager::changeUser Leave(request is same user)");
         return;
     }
 
     // get user config
     conf = findUserConfbyName(name);
     if (NULL == conf) {
-        ICO_ERR("CicoSCUserManager::changeUser Leave(ENXIO)");
+        ICO_TRA("CicoSCUserManager::changeUser Leave(ENXIO)");
         return;
     }
 
     // check password
     if (passwd != conf->passwd) {
-        ICO_ERR("CicoSCUserManager::changeUser Leave(EINVAL)");
+        ICO_TRA("CicoSCUserManager::changeUser Leave(EINVAL)");
         return;
     }
 
@@ -386,6 +393,8 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
 
     // killing running application and homeScreen
     killingAppsAndHS(oldUsr);
+    CicoSCLifeCycleController* csclcc = CicoSCLifeCycleController::getInstance();
+    csclcc->startAppResource(name);
 
     // check wheather directory exists
     vector<string> mk_dir_info;
@@ -402,6 +411,7 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
         }
         mkdir(dir, S_IRWXU | S_IRWXG | S_IRWXO);
     }
+    csclcc->createAppResourceFile(name);
 
     if (0 != m_vppa.size()) {
         // wait dead signal recieve
@@ -409,7 +419,7 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
         m_waitHS = conf->homescreen;
         m_wait = true;
         // run call launchHomescreenReq is appDeadHandler !
-        ICO_DBG("CicoSCUserManager::changeUser Leave(WAIT:%s)", m_waitName.c_str());
+        ICO_TRA("CicoSCUserManager::changeUser Leave(WAIT:%s)", m_waitName.c_str());
         return;
     }
     // change homescreen application
@@ -424,7 +434,7 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
     m_waitName.clear();
     m_waitHS.clear();
     m_wait = false;
-    ICO_DBG("CicoSCUserManager::changeUser Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::changeUser Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
@@ -438,24 +448,18 @@ CicoSCUserManager::changeUser(const string & name, const string & passwd)
 //--------------------------------------------------------------------------
 bool CicoSCUserManager::impritingLastApps(const string& ofnm)
 {
-    // <TODO></TODO>
-    // <TODO></TODO>
-    // <TODO></TODO>
+    ICO_TRA("CicoSCUserManager::impritingLastApps Enter");
     vector<string> vs;
-#if 0
-
-    AAAAAAAAAA
-
-#else
     CicoSCLifeCycleController* oCSCLCC;
     oCSCLCC = CicoSCLifeCycleController::getInstance();
     if ((NULL == oCSCLCC) || (0 == oCSCLCC)) {
-        ICO_ERR("CicoSCUserManager::impritingLastApps Leave(ENXIO)");
+        ICO_ERR(" CicoSCLifeCycleController is null");
+        ICO_TRA("CicoSCUserManager::impritingLastApps Leave(false)");
         return false;
     }
-    const vector<CicoSCAulItems>& aulList = oCSCLCC->getAulList();
+    const vector<CicoAulItems>& aulList = oCSCLCC->getAulList();
     for (int i=aulList.size() ; i != 1; i--) {
-        const CicoSCAulItems* pO = aulList[i-1].p();
+        const CicoAulItems* pO = aulList[i-1].p();
         if ((NULL == pO) || (0 == pO)) {
             continue;
         }
@@ -470,10 +474,10 @@ bool CicoSCUserManager::impritingLastApps(const string& ofnm)
         }
         vs.push_back(pO->m_appid);
     }
-#endif
+
     if (0 == vs.size()) {
         remove(ofnm.c_str());
-        ICO_ERR("CicoSCUserManager::impritingLastApps app none");
+        ICO_TRA("CicoSCUserManager::impritingLastApps Leave(app none)");
         return true;
     }
     ofstream ofs;
@@ -483,7 +487,7 @@ bool CicoSCUserManager::impritingLastApps(const string& ofnm)
         ofs << *it << endl;
     }
     ofs.close();
-    ICO_ERR("CicoSCUserManager::impritingLastApps app = %d", vs.size());
+    ICO_TRA("CicoSCUserManager::impritingLastApps app = %d", vs.size());
     return false;
 }
 
@@ -498,25 +502,20 @@ bool CicoSCUserManager::impritingLastApps(const string& ofnm)
 //--------------------------------------------------------------------------
 bool CicoSCUserManager::killingAppsAndHS(const string&)
 {
-/* TODO
-    const CicoSCUser *cnf = findUserConfbyName(usrnm);
-    if (NULL == cnf) {
-        ICO_ERR("CicoSCUserManager::killingAppsAndHS Leave(ENXIO)");
-        return false;
-    }
-*/
+    ICO_TRA("CicoSCUserManager::killingAppsAndHS Enter");
+
     m_vppa.clear();
     CicoSCLifeCycleController* oCSCLCC;
     oCSCLCC = CicoSCLifeCycleController::getInstance();
     if ((NULL == oCSCLCC) || (0 == oCSCLCC)) {
-        ICO_ERR("CicoSCUserManager::killingAppsAndHS Leave(ENXIO)");
+        ICO_TRA("CicoSCUserManager::killingAppsAndHS Leave(ENXIO)");
         return false;
     }
     bool r = false;
-    const vector<CicoSCAulItems>& aulList = oCSCLCC->getAulList();
+    const vector<CicoAulItems>& aulList = oCSCLCC->getAulList();
     vector<int> pids;
     for (int i=aulList.size() ; i != 0; i--) {
-        const CicoSCAulItems* pObj = aulList[i-1].p();
+        const CicoAulItems* pObj = aulList[i-1].p();
         if ((NULL == pObj) || (0 == pObj)) {
             continue;
         }
@@ -530,7 +529,8 @@ bool CicoSCUserManager::killingAppsAndHS(const string&)
     for (int j=0; j < sz; j++) {
         oCSCLCC->terminate(pids[j]);
     }
-    ICO_DBG("CicoSCUserManager::killingAppsAndHS ret=%s", r? "true": "false");
+    ICO_TRA("CicoSCUserManager::killingAppsAndHS Leave(ret=%s)",
+            r? "true": "false");
     return r;
 }
 
@@ -587,9 +587,7 @@ bool CicoSCUserManager::launchHomescreenReq(const string& usr,
     oCSCLCC = CicoSCLifeCycleController::getInstance();
     int r = oCSCLCC->launch(appid_hs.c_str(), b);
 
-// <TODO>
-// ???  bundle_free(b);
-// </TODO>
+    bundle_free(b);
 
     if (ICO_SYC_EOK != r) {
         ICO_DBG("CicoSCUserManager::launchHomescreenReq false(%d)", r);
@@ -648,7 +646,7 @@ CicoSCUserManager::dumpHomeScreenList(void)
 void
 CicoSCUserManager::userlistCB(const string & appid)
 {
-    ICO_DBG("CicoSCUserManager::userlistCB Enter (%s)", appid.c_str());
+    ICO_TRA("CicoSCUserManager::userlistCB Enter (%s)", appid.c_str());
 
     // send message
     CicoSCMessage *message = new CicoSCMessage();
@@ -670,7 +668,7 @@ CicoSCUserManager::userlistCB(const string & appid)
 
     CicoSCServer::getInstance()->sendMessage(appid, message);
 
-    ICO_DBG("CicoSCUserManager::userlistCB Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::userlistCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -685,7 +683,7 @@ CicoSCUserManager::userlistCB(const string & appid)
 void
 CicoSCUserManager::lastinfoCB(const string & appid)
 {
-    ICO_DBG("CicoSCUserManager::lastinfoCB Enter (%s)", appid.c_str());
+    ICO_TRA("CicoSCUserManager::lastinfoCB Enter(%s)", appid.c_str());
 
     // send message
     CicoSCMessage *message = new CicoSCMessage();
@@ -707,7 +705,7 @@ CicoSCUserManager::lastinfoCB(const string & appid)
 
     CicoSCServer::getInstance()->sendMessage(appid, message);
 
-    ICO_DBG("CicoSCUserManager::lastinfoCB Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::lastinfoCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -720,7 +718,7 @@ CicoSCUserManager::lastinfoCB(const string & appid)
 void
 CicoSCUserManager::saveLastUser(void)
 {
-    ICO_DBG("CicoSCUserManager::saveLastUser Enter (name=%s)", m_login.c_str());
+    ICO_TRA("CicoSCUserManager::saveLastUser Enter(name=%s)", m_login.c_str());
 
     // output last user name to file
     std::ofstream stream;
@@ -729,7 +727,7 @@ CicoSCUserManager::saveLastUser(void)
     stream << m_login << std::endl;
     stream.close();
 
-    ICO_DBG("CicoSCUserManager::saveLastUser Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::saveLastUser Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -742,14 +740,14 @@ CicoSCUserManager::saveLastUser(void)
 void
 CicoSCUserManager::loadLastUser(void)
 {
-    ICO_DBG("CicoSCUserManager::loadLastUser Enter");
+    ICO_TRA("CicoSCUserManager::loadLastUser Enter");
 
     // check weather file exists
     struct stat st;
     int ret = stat(ICO_SYC_LASTUSER_FILE, &st);
     if (0 != ret) {
         // last user file does not exist
-        ICO_DBG("CicoSCUserManager::loadLastUser Leave(ENXIO)");
+        ICO_TRA("CicoSCUserManager::loadLastUser Leave");
         return;
     }
 
@@ -776,7 +774,7 @@ CicoSCUserManager::loadLastUser(void)
         }
     }
 
-    ICO_DBG("CicoSCUserManager::loadLastUser Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::loadLastUser Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -789,10 +787,11 @@ CicoSCUserManager::loadLastUser(void)
 void
 CicoSCUserManager::loadLastInfo()
 {
-    ICO_DBG("CicoSCUserManager::loadLastInfo Enter (name=%s)", m_login.c_str());
+    ICO_TRA("CicoSCUserManager::loadLastInfo Enter(name=%s)", m_login.c_str());
 
     if (m_login.empty()) {
-        ICO_ERR("CicoSCUserManager::loadLastInfo Leave(EINVAL)");
+        ICO_ERR("m_login is empty");
+        ICO_TRA("CicoSCUserManager::loadLastInfo Leave(m_login is empty)");
         return;
     }
 
@@ -802,7 +801,8 @@ CicoSCUserManager::loadLastInfo()
     // check login user
     if (NULL == loginUser) {
         // login user does not exist in the user list
-        ICO_DBG("CicoSCUserManager::setLastInfo Leave(ENXIO)");
+        ICO_ERR("login user not found");
+        ICO_TRA("CicoSCUserManager::setLastInfo Leave(login user not found)");
         return;
     }
 
@@ -812,7 +812,8 @@ CicoSCUserManager::loadLastInfo()
     int ret = stat(dir.c_str(), &st);
     if (0 != ret) {
         // lastinfo directory does not exist
-        ICO_DBG("CicoSCUserManager::loadLastInfo Leave(ENXIO)");
+        ICO_ERR("lastinfo directory dose not exist)");
+        ICO_TRA("CicoSCUserManager::loadLastInfo Leave(dir dose not exist)");
         return;
     }
 
@@ -845,7 +846,7 @@ CicoSCUserManager::loadLastInfo()
     }
     free(filelist);
 
-    ICO_DBG("CicoSCUserManager::loadLastInfo Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::loadLastInfo Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -859,7 +860,7 @@ CicoSCUserManager::loadLastInfo()
 void
 CicoSCUserManager::setLoginUser(const ptree & root)
 {
-    ICO_DBG("CicoSCUserManager::setLoginUser Enter");
+    ICO_TRA("CicoSCUserManager::setLoginUser Enter");
 
     // load last user name
     loadLastUser();
@@ -896,7 +897,7 @@ CicoSCUserManager::setLoginUser(const ptree & root)
     // dump data
     ICO_DBG("login user name: %s", m_login.c_str());
 
-    ICO_DBG("CicoSCUserManager::setLoginUser Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::setLoginUser Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -910,7 +911,7 @@ CicoSCUserManager::setLoginUser(const ptree & root)
 void
 CicoSCUserManager::createUserList(const ptree & root)
 {
-    ICO_DBG("CicoSCUserManager::createUserList Enter");
+    ICO_TRA("CicoSCUserManager::createUserList Enter");
 
     ptree homescreens = root.get_child("userconfig.users");
 
@@ -957,7 +958,7 @@ CicoSCUserManager::createUserList(const ptree & root)
         m_userList.push_back(userConf);
     }
 
-    ICO_DBG("CicoSCUserManager::createUserList Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::createUserList Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -971,7 +972,7 @@ CicoSCUserManager::createUserList(const ptree & root)
 void
 CicoSCUserManager::createHomeScreenList(const ptree & root)
 {
-    ICO_DBG("CicoSCUserManager::createHomeScreenList Enter");
+    ICO_TRA("CicoSCUserManager::createHomeScreenList Enter");
 
     ptree homescreens = root.get_child("userconfig.homescreens");
 
@@ -992,7 +993,7 @@ CicoSCUserManager::createHomeScreenList(const ptree & root)
     // dump data
     dumpHomeScreenList();
 
-    ICO_DBG("CicoSCUserManager::createHomeScreenList Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::createHomeScreenList Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -1007,7 +1008,7 @@ CicoSCUserManager::createHomeScreenList(const ptree & root)
 void
 CicoSCUserManager::setLastInfo(const string & appid, const string & info)
 {
-    ICO_DBG("CicoSCUserManager::setLastInfo Enter(appid: %s, info: %s)",
+    ICO_TRA("CicoSCUserManager::setLastInfo Enter(appid: %s, info: %s)",
             appid.c_str(), info.c_str());
 
     CicoSCUser* loginUser = NULL;
@@ -1018,7 +1019,8 @@ CicoSCUserManager::setLastInfo(const string & appid, const string & info)
     // check login user
     if (NULL == loginUser) {
         // login user does not exist in the user list
-        ICO_DBG("CicoSCUserManager::setLastInfo Leave(ENXIO)");
+        ICO_ERR("login user does not exist in the user list");
+        ICO_TRA("CicoSCUserManager::setLastInfo Leave");
         return;
     }
 
@@ -1067,7 +1069,7 @@ CicoSCUserManager::setLastInfo(const string & appid, const string & info)
     ICO_DBG("login user=%s", (loginUser->name).c_str());
     lastInfo->dumpLastInfo();
 
-    ICO_DBG("CicoSCUserManager::setLastInfo Leave(EOK)");
+    ICO_TRA("CicoSCUserManager::setLastInfo Leave(EOK)");
 }
 
 //--------------------------------------------------------------------------
@@ -1081,20 +1083,20 @@ CicoSCUserManager::setLastInfo(const string & appid, const string & info)
 const CicoSCUser*
 CicoSCUserManager::findUserConfbyName(const string & name)
 {
-//    ICO_DBG("CicoSCUserManager::findUserConfbyName Enter (%s)", name.c_str());
+//    ICO_TRA("CicoSCUserManager::findUserConfbyName Enter (%s)", name.c_str());
 
     vector<CicoSCUser*>::iterator itr;
     itr = m_userList.begin();
     for (; itr != m_userList.end(); ++itr) {
         const CicoSCUser* conf = const_cast<CicoSCUser*>(*itr);
         if (name == conf->name) {
-//            ICO_DBG("CicoSCUserManager::findUserConfbyName Leave(%s)",
+//            ICO_TRA("CicoSCUserManager::findUserConfbyName Leave(%s)",
 //                    conf->name);
             return conf;
         }
     }
 
-//    ICO_DBG("CicoSCUserManager::findUserConfbyName Leave(NULL)");
+//    ICO_TRA("CicoSCUserManager::findUserConfbyName Leave(NULL)");
     return NULL;
 }
 
@@ -1137,20 +1139,6 @@ void CicoSCUserManager::flagFileOff()
     ICO_DBG("FILE(%s) FLAG off(remove)", f);
     return;
 }
-
-/**
- * @brief directory last slash add
- * @param s directory path string
- */
-void chkAndAddSlash(string& s)
-{
-    int sz = s.size();
-    const char* p = s.c_str();
-    if ('/' != p[sz-1]) {
-        s += "/";
-    }
-}
-
 
 /**
  * @brief app dead Handler
@@ -1210,8 +1198,7 @@ bool CicoSCUserManager::appDeadHandler(int pid)
     m_waitName.clear();
     m_waitHS.clear();
     m_wait = false;
-    ICO_DBG("end homescreen start req.(%s)", appid.c_str());
+    ICO_TRA("end homescreen start req.(%s)", appid.c_str());
     return true;
 }
-
 // vim:set expandtab ts=4 sw=4:

@@ -1,6 +1,6 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
-Version:    0.9.07
+Version:    0.9.10
 Release:    1.1
 Group:		Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
@@ -8,7 +8,7 @@ URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.2
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.07
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.08
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(ecore)
 BuildRequires: pkgconfig(ecore-wayland)
@@ -34,8 +34,8 @@ BuildRequires: boost-devel
 BuildRequires: mesa-devel
 BuildRequires: ico-uxf-utilities-devel
 Requires: weston >= 1.2
-Requires: ico-uxf-weston-plugin >= 0.9.07
-Requires: ico-uxf-utilities
+Requires: ico-uxf-weston-plugin >= 0.9.08
+Requires: ico-uxf-utilities >= 0.9.06
 
 %description
 Sample homescreen application and system controller daemon
@@ -69,17 +69,6 @@ rm -rf %{buildroot}
 
 %make_install
 
-STATUSBARDIR="%{buildroot}/usr/apps/org.tizen.ico.statusbar"
-mkdir -p ${STATUSBARDIR}/res/images
-mkdir -p ${STATUSBARDIR}/res/edj
-mkdir -p ${STATUSBARDIR}/res/config
-mkdir -p ${STATUSBARDIR}/bin
-mkdir -p %{_bindir}
-cp -rf data/apps/org.tizen.ico.statusbar %{buildroot}/usr/apps/
-install -m 0755 src/homescreen/StatusBar ${STATUSBARDIR}/bin/
-install -m 0644 res/org.tizen.ico.homescreen/res/images/time*.png ${STATUSBARDIR}/res/images
-install -m 0644 data/share/packages/org.tizen.ico.statusbar.xml %{buildroot}/usr/share/packages
-cp res/org.tizen.ico.homescreen/res/apps/org.tizen.ico.statusbar/* ${STATUSBARDIR}/res/config
 cp tool/ico_clear_screen %{buildroot}%{_bindir}
 cp tool/ico_change_loginuser %{buildroot}%{_bindir}
 
@@ -102,6 +91,7 @@ rm -f /home/app/layout.txt
 %{_bindir}/ail_initdb
 
 %files
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 /usr/apps/org.tizen.ico.homescreen
 /usr/apps/org.tizen.ico.statusbar
@@ -121,6 +111,7 @@ rm -f /home/app/layout.txt
 /home/app/ico/defaultApps.info
 
 %files system-controller-devel
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_includedir}/ico-appfw/ico_syc_application.h
 %{_includedir}/ico-appfw/ico_syc_appresctl.h

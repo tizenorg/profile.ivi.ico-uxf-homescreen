@@ -74,7 +74,7 @@ CicoSCCommand::~CicoSCCommand()
 int
 CicoSCCommand::parseMessage(const char *message)
 {
-//    ICO_DBG("CicoSCCommand::parseMessage Enter(%s)", message);
+//    ICO_TRA("CicoSCCommand::parseMessage Enter(%s)", message);
     try {
         stringstream jsonString(message);
         ptree root;
@@ -110,11 +110,11 @@ CicoSCCommand::parseMessage(const char *message)
     catch (std::exception const& e)
     {
         ICO_WRN("catch exception %s", e.what());
-//        ICO_ERR("CicoSCCommand::parseMessage Leave(EINVAL)");
+//        ICO_TRA("CicoSCCommand::parseMessage Leave(EINVAL)");
         return ICO_SYC_EINVAL;
     }
 
-//    ICO_DBG("CicoSCCommand::parseMessage Leave(EOK)");
+//    ICO_TRA("CicoSCCommand::parseMessage Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -126,7 +126,7 @@ CicoSCCommand::parseMessage(const char *message)
 void
 CicoSCCommand::dump(void)
 {
-    ICO_DBG("Command: cmdid=0x%08X appid=%s pid=%d", cmdid, appid.c_str(), pid);
+    ICO_INF("Command: cmdid=0x%08X appid=%s pid=%d", cmdid, appid.c_str(), pid);
     if (NULL != this->opt) {
         this->opt->dump();
     }

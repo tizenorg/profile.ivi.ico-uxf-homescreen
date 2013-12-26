@@ -7,63 +7,70 @@
  *
  */
 
-/*========================================================================*/    
+//==========================================================================
 /**
  *  @file   CicoSysConDaemon.h
  *
- *  @brief  
+ *  @brief  This file is definition of CicoSysConDaemon class
  */
-/*========================================================================*/    
+//==========================================================================
+#ifndef __CICO_SYS_CON_DAEMON_H__
+#define __CICO_SYS_CON_DAEMON_H__
 
-//#include <app.h>
 #include <stdio.h>
 #include "CicoEFLApp.h"
 
-#ifndef __CICO_UI_SAMPLE_APP_H__
-#define __CICO_UI_SAMPLE_APP_H__
+//==========================================================================
+//  Forward declaration
+//==========================================================================
+class CicoSCWindowController;
+class CicoSCInputController;
+class CicoSCResourceManager;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+//==========================================================================
+/**
+ *  @brief  ELF Application functions for SystemController
+ */
+//==========================================================================
 class CicoSysConDaemon : public CicoEFLApp {
 public:
-    /**
-     *  Default Constructor
-     */
+    // default constructor
     CicoSysConDaemon();
-    
-    /**
-     *  Destructor
-     */
+
+    // destructor
     virtual ~CicoSysConDaemon();
 
-    /**
-     *
-     */
+    // callback function on create
     virtual bool onCreate(void *user_data);
-#if 0
-    void onTerminate(void *user_data);
-    void onPause(void *user_data);
-    void onResume(void *user_data);
-    void onService(service_h service, void *user_data);
-#endif
+
+    // callback function on terminate
+    virtual void onTerminate(void *user_data);
+
+    // callback function on pause
+    virtual void onPause(void *user_data);
+
+    // callback function on resume
+    virtual void onResume(void *user_data);
+
+    // callback function on service
+    virtual void onService(service_h service, void *user_data);
 
 protected:
-    /**
-     *  Assignment Operator
-     */
+    // assignment operator
     CicoSysConDaemon& operator=(const CicoSysConDaemon &object);
 
-    /**
-     *  Copy Constructor
-     */
+    // copy constructor
     CicoSysConDaemon(const CicoSysConDaemon &object);
+
+private:
+    // CicoSCWindowController instance
+    CicoSCWindowController* m_winctrl;
+
+    // CicoSCInputController instance
+    CicoSCInputController*  m_inputctrl;
+
+    // CicoSCResourceManager instance
+    CicoSCResourceManager*  m_resourcemgr;
 };
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /* __CICO_UI_SAMPLE_APP_H__ */
-/* vim:set expandtab ts=4 sw=4: */
+#endif  // __CICO_SYS_CON_DAEMON_H__
+// vim:set expandtab ts=4 sw=4:

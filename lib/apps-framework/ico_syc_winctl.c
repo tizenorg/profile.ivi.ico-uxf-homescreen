@@ -156,10 +156,12 @@ _create_win_move_msg(const char *appid, int surface,
     /* set move info */
     if (move->zone != NULL) {
         json_object_set_string_member(argobj, MSG_PRMKEY_ZONE, move->zone);
+        json_object_set_int_member(argobj, MSG_PRMKEY_LAYER, move->layer);
     }
     else {
         json_object_set_int_member(argobj, MSG_PRMKEY_POS_X, move->pos_x);
         json_object_set_int_member(argobj, MSG_PRMKEY_POS_Y, move->pos_y);
+        json_object_set_int_member(argobj, MSG_PRMKEY_LAYER, -1);
     }
     json_object_set_int_member(argobj, MSG_PRMKEY_WIDTH, move->width);
     json_object_set_int_member(argobj, MSG_PRMKEY_HEIGHT, move->height);

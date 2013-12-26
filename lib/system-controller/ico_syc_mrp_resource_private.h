@@ -64,7 +64,7 @@ typedef struct {
 #define ICO_UXF_MAX_DEVICE_NAME  255
 
 /* request information                          */
-typedef struct  _resource_request    {
+typedef struct  _resource_request {
     int                         id;             /* request object                   */
     int                         prio;           /* request priority                 */
     unsigned short              reqtype;        /* Request type                     */
@@ -78,6 +78,7 @@ typedef struct  _resource_request    {
 
     char *dispzone;       /* area of showing application window */
     int  dispzoneid;      /* area of showing application window */
+    int  layerid;         /* layer of showing application window */
     char *winname;        /* window's surface name */
     int  surfaceid;       /* window id */
     char *animation;      /* name of animation */
@@ -106,6 +107,7 @@ typedef void (*ico_syc_mrp_enforce_sound_t)(unsigned short state,
 
 int ico_syc_mrp_init(ico_syc_mrp_enforce_sound_t soundcb,
                      void *user_data);
+void ico_syc_mrp_term(void);
 
 bool ico_syc_mrp_acquire_sound_resource(resource_request_t *req);
 bool ico_syc_mrp_release_sound_resource(resource_request_t *req);

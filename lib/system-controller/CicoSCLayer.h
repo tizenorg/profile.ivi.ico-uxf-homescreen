@@ -17,7 +17,7 @@
 #ifndef __CICO_SC_LAYER_H__
 #define __CICO_SC_LAYER_H__
 
-#include "CicoSCCommonDef.h"
+#include "CicoCommonDef.h"
 
 //--------------------------------------------------------------------------
 /**

@@ -79,19 +79,20 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
                                 const char         *interface,
                                 uint32_t           version)
 {
-    ICO_DBG("CicoSCWlWinMgrIF::initInterface : Enter(interface=%s)", interface);
+    ICO_TRA("CicoSCWlWinMgrIF::initInterface Enter(interface=%s)", interface);
 
     // check interface name
     if (0 == strcmp(interface, ICO_WL_WIN_MGR_IF)) {
         // get interface instance
+        ICO_DBG("called: wl_registry_bind");
         void *wlProxy = wl_registry_bind(registry,
                                          name,
                                          &ico_window_mgr_interface,
                                          1);
         if (NULL == wlProxy) {
-            ICO_WRN("initInterface : interface(%s) wl_registry_bind failed.",
+            ICO_WRN("interface(%s) wl_registry_bind failed.",
                     interface);
-            ICO_WRN("CicoSCWlWinMgrIF::initInterface : Leave(binding failed)");
+            ICO_TRA("CicoSCWlWinMgrIF::initInterface Leave(binding failed)");
             return;
         }
 
@@ -104,21 +105,22 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
         ico_window_mgr_set_user_data(m_winmgr, NULL/*TODO*/);
 #endif
 
-        ICO_DBG("call ico_window_mgr_declare_manager");
+        ICO_DBG("called: ico_window_mgr_declare_manager");
         ico_window_mgr_declare_manager(m_winmgr,
                                        ICO_WINDOW_MGR_DECLARE_MANAGER_MANAGER);
 
     }
     else if (0 == strcmp(interface, ICO_WL_OUTPUT_IF)) {
         // get interface instance
+        ICO_DBG("called: wl_registry_bind");
         void *wlProxy = wl_registry_bind(registry,
                                          name,
                                          &wl_output_interface,
                                          1);
         if (NULL == wlProxy) {
-            ICO_WRN("initInterface : interface(%s) wl_registry_bind failed.",
+            ICO_WRN("interface(%s) wl_registry_bind failed.",
                     interface);
-            ICO_WRN("CicoSCWlWinMgrIF::initInterface : Leave(binding failed)");
+            ICO_TRA("CicoSCWlWinMgrIF::initInterface Leave(binding failed)");
             return;
         }
 
@@ -131,7 +133,8 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
 #endif
     }
     else {
-        ICO_WRN("initInterface : Leave(unmatch interface)");
+        ICO_WRN("unmatch interface");
+        ICO_TRA("CicoSCWlWinMgrIF::initInterface Leave(unmatch interface)");
         return;
     }
 
@@ -139,7 +142,7 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
         m_initialized = true;
     }
 
-    ICO_DBG("CicoSCWlWinMgrIF::initInterface : Leave");
+    ICO_TRA("CicoSCWlWinMgrIF::initInterface Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -382,7 +385,7 @@ CicoSCWlWinMgrIF::createdCB(void                  *data,
                             const char            *appid,
                             int32_t               layertype)
 {
-    ICO_DBG("CicoSCWlWinMgrIF::createdCB called.");
+    ICO_WRN("CicoSCWlWinMgrIF::createdCB called.");
 }
 
 //--------------------------------------------------------------------------
@@ -652,7 +655,7 @@ CicoSCWlWinMgrIF::wlCreatedCB(void                  *data,
                               const char            *appid,
                               int32_t               layertype)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlCreatedCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlCreatedCB Enter");
     if (NULL == data) {
         ICO_WRN("wlCreatedCB : data is null");
         return;
@@ -660,7 +663,7 @@ CicoSCWlWinMgrIF::wlCreatedCB(void                  *data,
     static_cast<CicoSCWlWinMgrIF*>(data)->createdCB(data, ico_window_mgr,
                                                     surfaceid, winname,
                                                     pid, appid, layertype);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlCreatedCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlCreatedCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -679,7 +682,7 @@ CicoSCWlWinMgrIF::wlNameCB(void                  *data,
                            uint32_t              surfaceid,
                            const char            *winname)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlNameCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlNameCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlNameCB: data is null");
@@ -687,7 +690,7 @@ CicoSCWlWinMgrIF::wlNameCB(void                  *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->nameCB(data, ico_window_mgr,
                                                  surfaceid, winname);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlNameCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlNameCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -704,7 +707,7 @@ CicoSCWlWinMgrIF::wlDestroyedCB(void                  *data,
                                 struct ico_window_mgr *ico_window_mgr,
                                 uint32_t              surfaceid)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlDestroyedCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlDestroyedCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlDestroyedCB: data is null");
@@ -712,7 +715,7 @@ CicoSCWlWinMgrIF::wlDestroyedCB(void                  *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->destroyedCB(data, ico_window_mgr,
                                                       surfaceid);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlDestroyedCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlDestroyedCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -738,7 +741,7 @@ CicoSCWlWinMgrIF::wlVisibleCB(void                  *data,
                               int32_t               raise,
                               int32_t               hint)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlVisibleCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlVisibleCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlVisibleCB: data is null");
@@ -747,7 +750,7 @@ CicoSCWlWinMgrIF::wlVisibleCB(void                  *data,
     static_cast<CicoSCWlWinMgrIF*>(data)->visibleCB(data, ico_window_mgr,
                                                     surfaceid, visible,
                                                     raise, hint);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlVisibleCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlVisibleCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -781,7 +784,7 @@ CicoSCWlWinMgrIF::wlConfigureCB(void                  *data,
                                 int32_t               height,
                                 int32_t               hint)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlConfigureCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlConfigureCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlConfigureCB: data is null");
@@ -791,7 +794,7 @@ CicoSCWlWinMgrIF::wlConfigureCB(void                  *data,
                                                       surfaceid, node, layertype,
                                                       layer, x, y, width, height,
                                                       hint);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlConfigureCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlConfigureCB Leave");
 }
 //--------------------------------------------------------------------------
 /**
@@ -810,7 +813,7 @@ CicoSCWlWinMgrIF::wlActiveCB(void                  *data,
                              uint32_t              surfaceid,
                              int32_t               active)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlActiveCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlActiveCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlActiveCB: data is null");
@@ -818,7 +821,7 @@ CicoSCWlWinMgrIF::wlActiveCB(void                  *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->activeCB(data, ico_window_mgr,
                                                    surfaceid, active);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlActiveCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlActiveCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -838,7 +841,7 @@ CicoSCWlWinMgrIF::wlLayerVisibleCB(void                  *data,
                                    uint32_t              layer,
                                    int32_t               visible)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlLayerVisibleCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlLayerVisibleCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlLayerVisibleCB: data is null");
@@ -846,7 +849,7 @@ CicoSCWlWinMgrIF::wlLayerVisibleCB(void                  *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->layerVisibleCB(data, ico_window_mgr,
                                                          layer, visible);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlLayerVisibleCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlLayerVisibleCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -867,7 +870,7 @@ CicoSCWlWinMgrIF::wlAppSurfacesCB(void                  *data,
                                   int32_t               pid,
                                   struct wl_array       *surfaces)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlAppSurfacesCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlAppSurfacesCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlAppSurfacesCB: data is null");
@@ -875,7 +878,7 @@ CicoSCWlWinMgrIF::wlAppSurfacesCB(void                  *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->appSurfacesCB(data, ico_window_mgr,
                                                         appid, pid, surfaces);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlAppSurfacesCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlAppSurfacesCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -906,7 +909,7 @@ CicoSCWlWinMgrIF::wlMapSurfaceCB(void                  *data,
                                  int32_t               stride,
                                  uint32_t              format)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlMapSurfaceCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlMapSurfaceCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlMapSurfaceCB: data is null");
@@ -917,7 +920,7 @@ CicoSCWlWinMgrIF::wlMapSurfaceCB(void                  *data,
                                                        type, target,
                                                        width, height,
                                                        stride, format);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlMapSurfaceCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlMapSurfaceCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -948,7 +951,7 @@ CicoSCWlWinMgrIF::wlOutputGeometryCB(void             *data,
                                      const char       *model,
                                      int32_t          transform)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlOutputGeometryCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlOutputGeometryCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlOutputGeometryCB: data is null");
@@ -962,7 +965,7 @@ CicoSCWlWinMgrIF::wlOutputGeometryCB(void             *data,
                                                            make,
                                                            model,
                                                            transform);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlOutputGeometryCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlOutputGeometryCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -985,7 +988,7 @@ CicoSCWlWinMgrIF::wlOutputModeCB(void             *data,
                                  int32_t          height,
                                  int32_t          refresh)
 {
-//    ICO_DBG("CicoSCWlWinMgrIF::wlOutputModeCB Enter");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlOutputModeCB Enter");
 
     if (NULL == data) {
         ICO_WRN("wlOutputGeometryCB: data is null");
@@ -993,6 +996,6 @@ CicoSCWlWinMgrIF::wlOutputModeCB(void             *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->outputModeCB(data, wl_output, flags,
                                                        width, height, refresh);
-//    ICO_DBG("CicoSCWlWinMgrIF::wlOutputModeCB Leave");
+//    ICO_TRA("CicoSCWlWinMgrIF::wlOutputModeCB Leave");
 }
 // vim:set expandtab ts=4 sw=4:

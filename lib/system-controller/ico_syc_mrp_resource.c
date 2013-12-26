@@ -108,10 +108,10 @@ int ico_syc_mrp_init(ico_syc_mrp_enforce_sound_t soundcb, void *user_data)
 
     mrp_list_init(&mrp_reqs);
 
-    ICO_DBG("mrp_mainloop_ecore_get() called.");
+    ICO_DBG("called: mrp_mainloop_ecore_get()");
     mrp_ml = mrp_mainloop_ecore_get();
 
-    ICO_DBG("mrp_res_connecte() called.");
+    ICO_DBG("called: mrp_res_connecte()");
     mrp_ctx = mrp_res_create(mrp_ml, ico_syc_mrp_state_cb, NULL);
 
     if (!mrp_ctx) {
@@ -119,7 +119,7 @@ int ico_syc_mrp_init(ico_syc_mrp_enforce_sound_t soundcb, void *user_data)
         return ICO_SYC_EIO;
     }
 
-    ICO_DBG("mrp_domctl_create() called.");
+    ICO_DBG("called: mrp_domctl_create()");
     mrp_dc = mrp_domctl_create("ico-homescreen", mrp_ml,
                                ico_tables, MRP_ARRAY_SIZE(ico_tables),
                                ico_watches, MRP_ARRAY_SIZE(ico_watches),
@@ -131,13 +131,28 @@ int ico_syc_mrp_init(ico_syc_mrp_enforce_sound_t soundcb, void *user_data)
         return ICO_SYC_EIO;
     } 
 
-    ICO_DBG("mrp_domctl_connect() called.");
+    ICO_DBG("called: mrp_domctl_connect()");
     if (!mrp_domctl_connect(mrp_dc, MRP_DEFAULT_DOMCTL_ADDRESS, 0)) {
         ICO_ERR("ico_syc_mrp_init: Leave(mrp_domctl_connect Error)");
         return ICO_SYC_EIO;
     } 
 
     return ICO_SYC_EOK;
+}
+
+void ico_syc_mrp_term(void)
+{
+    if (NULL != mrp_ctx) {
+        mrp_res_destroy(mrp_ctx);
+    }
+
+    if (NULL != mrp_dc) {
+        mrp_domctl_destroy(mrp_dc);
+    }
+
+    if (NULL != mrp_ml) {
+        mrp_mainloop_destroy(mrp_ml);
+    }
 }
 
 void
@@ -220,7 +235,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
             ICO_DBG("ico_syc_mrp_acquire_sound_resource: "
                     "could not create resource for sound");
 
-            ICO_DBG("mrp_res_create_resource_set called.");
+            ICO_DBG("called: mrp_res_create_resource_set()");
             rs = mrp_res_create_resource_set(mrp_ctx,
                                              resource_class,
                                              ico_syc_mrp_resource_cb,
@@ -232,7 +247,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
                 return false;
             }
 
-            ICO_DBG("mrp_res_set_autorelease called.");
+            ICO_DBG("called: mrp_res_set_autorelease()");
             if (!mrp_res_set_autorelease(mrp_ctx, FALSE, rs)) {
                 ICO_ERR("ico_syc_mrp_acquire_sound_resource: "
                         "failed to set auto release mode");
@@ -240,7 +255,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
                 return false;
             }
 
-            ICO_DBG("mrp_res_create_resource called.");
+            ICO_DBG("called: mrp_res_create_resource");
             res = mrp_res_create_resource(mrp_ctx, rs, "audio_playback", TRUE, FALSE);
 
             if (!res) {
@@ -282,7 +297,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
             req->released = 0;
         }
 
-        ICO_DBG("mrp_res_acquire_resource_set called.");
+        ICO_DBG("called: mrp_res_acquire_resource_set()");
         mrp_res_acquire_resource_set(mrp_ctx, req->rset);
     }
 
@@ -598,6 +613,9 @@ ico_syc_mrp_active_app(const char *appid)
     values[1].type = MRP_DOMCTL_STRING;
     values[1].str = appid;
 
+    ICO_DBG("called: mrp_domctl_set_data"
+            "(tables[0].rows[0]={\"%s\",\"%s\"})",
+            values[0].str, values[1].str);
     if (!mrp_domctl_set_data(mrp_dc, tables, 1,
                              ico_sys_mrp_export_notify, NULL)) {
         ICO_DBG("ico_syc_mrp_active_app: "

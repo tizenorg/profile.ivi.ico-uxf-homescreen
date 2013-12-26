@@ -1,0 +1,28 @@
+{
+    "function": "app",
+    "ctrl_dir_path": "/sys/fs/cgroup/cpu,cpuacct/SCprivate",
+    "sampling_wait": 300,
+    "retry_cnt": 6,
+    "low_limit_value": 30,
+    "high_limit_value": 92,
+    "sector":[
+        {
+            "id": 0,
+            "name": "groupA",
+            "hight":[500, 600, 700],
+            "low":  [1000, 500, 600]
+        },
+        {
+            "id": 1,
+            "name": "groupB",
+            "hight":[300, 250, 200],
+            "low":  [1000, 300, 250]
+        },
+        {
+            "id": 2,
+            "name": "groupC",
+            "hight":[200, 150, 100],
+            "low":  [1000, 200, 150]
+        }
+    ]
+}

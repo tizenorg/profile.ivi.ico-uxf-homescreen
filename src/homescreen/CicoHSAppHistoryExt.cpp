@@ -27,7 +27,7 @@
 #include "Cico_aul_listen_app.h"
 #include "CicoHomeScreenCommon.h"
 #include "CicoHomeScreen.h"
-#include "CicoLog.h"
+#include <ico_log.h>
 
 using namespace std;
 
@@ -53,7 +53,7 @@ static int ico_CHSAHapp_launch_handler(int pid, void *data)
     char appid[255];
     memset(appid, 0, sizeof(appid));
     int iR = Xaul_app_get_appid_bypid(pid, appid, sizeof(appid));
-    ICO_DBG("%d=aul_app_get_appid_bypid  %d , %s", iR, pid, appid);
+    ICO_PRF("CHG_APP_STA 1.notice  app=%s, pid=%d, rval=%d", appid, pid, iR);
     return o->appLaunch(pid, appid, iR);
 }
 
@@ -803,3 +803,4 @@ void CicoHSAppHistoryExt::stopStartupCheck()
     m_vpbpa.clear();
     m_lastStartupApp.clear();
 }
+// vim: set expandtab ts=4 sw=4:

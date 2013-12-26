@@ -71,7 +71,6 @@ public:
                 animation.c_str(), animationTime,
                 x, y, width, height, raise,
                 visible, active, framerate, stride, format);
-
     }
 
     int         nodeid;         //!< id of node
@@ -169,7 +168,7 @@ class CicoSCCmdResCtrlOpt : public CicoSCCommandOption
 public:
     /// default constructor
     CicoSCCmdResCtrlOpt()
-        : dispres(false), dispzone(""), winname(""), surfaceid(-1),
+        : dispres(false), dispzone(""), layerid(-1), winname(""), surfaceid(-1),
           animation(""), animationTime(0),
           soundres(false), soundzone(""), soundname(""), adjust(0),
           inputres(false), device(""), input(0), type(0) {}
@@ -181,11 +180,11 @@ public:
     void dump(void)
     {
         ICO_DBG("ResCtrlOpt: "
-                "diapres=%s dispzone=%s winname=%s srufaceid=0x%08X "
+                "diapres=%s dispzone=%s layerid=%d winname=%s srufaceid=0x%08X "
                 "animation=%s animatime=%d soundres=%s soundzone=%s"
                 "soundname=%s soundid=%d adjust=%d inputres=%s "
                 "device=%s input=%d type=%d",
-                dispres ? "true" : "false",  dispzone.c_str(),
+                dispres ? "true" : "false",  dispzone.c_str(), layerid,
                 winname.c_str(), surfaceid, animation.c_str(),
                 animationTime, soundres ? "true" : "false",
                 soundzone.c_str(), soundname.c_str(),
@@ -195,6 +194,7 @@ public:
 
     bool        dispres;         //!< flag of display resource
     std::string dispzone;        //!< name of display zone
+    int         layerid;         //!< id of window layer
     std::string winname;         //!< name of window
     int         surfaceid;       //!< id of surface
     std::string animation;       //!< name of animation

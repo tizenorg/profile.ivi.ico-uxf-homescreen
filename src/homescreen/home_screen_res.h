@@ -15,8 +15,9 @@
 #ifndef HOME_SCREEN_RES_H
 #define HOME_SCREEN_RES_H
 
+#if 0
 /* file_path */
-#define default_path "./"
+//#define default_path "./"
 #define edj_path "/usr/apps/%s/res/edj/"
 #define image_path "/usr/apps/%s/res/images/"
 #define sound_path "/usr/apps/%s/res/sounds/"
@@ -26,6 +27,7 @@
 #define local_image_path "%s/res/images/"
 #define local_sound_path "%s/res/sounds/"
 #define local_manifest_path "%s/res/apps/org.tizen.ico.homescreen/"
+#endif
 
 #define fname_api_all_off   "api_all_off.png"
 #define fname_api_all_on    "api_all_on.png"
@@ -126,3 +128,4 @@
 #define fname_colon    "time_ten.png"
 
 #endif /* HOME_SCREEN_RES_H */
+// vim:set expandtab ts=4 sw=4:

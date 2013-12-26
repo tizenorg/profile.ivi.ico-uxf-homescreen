@@ -13,8 +13,8 @@
  */
 #include "CicoHSControlBarWindow.h"
 #include "CicoHSControlBarTouch.h"
-#include "CicoHomeScreenConfig.h"
-#include "CicoHomeScreenResourceConfig.h"
+#include "CicoGKeyFileConfig.h"
+#include "CicoResourceConfig.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
 #include "CicoSound.h"
@@ -35,10 +35,9 @@ CicoHSControlBarWindow::CicoHSControlBarWindow(void)
 {
     evas = NULL;
 
-    CicoHomeScreenResourceConfig::GetImagePath(img_dir_path,
-        ICO_HS_MAX_PATH_BUFF_LEN);
+    CicoResourceConfig::GetImagePath(img_dir_path, ICO_HS_MAX_PATH_BUFF_LEN);
 
-    CicoHomeScreenConfig config;
+    CicoGKeyFileConfig config;
     config.Initialize(ICO_HOMESCREEN_CONFIG_FILE);
     const char *value = config.ConfigGetString("switchzone", "keyname", "m");
     if (strlen(value) > (sizeof(changeZoneKeyName) - 1)) {
@@ -242,19 +241,19 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
 void
 CicoHSControlBarWindow::AddShortcut(Evas *evas, int width)
 {
-    ICO_DBG("CicoHSControlBarWindow::AddShortcut Enter");
+    ICO_TRA("CicoHSControlBarWindow::AddShortcut Enter");
 
     int escPosX;
     int x;
     int tmp_space;
     int s_cnt = 0;
     const char *tmp_appid;
-    CicoSCLifeCycleController *life_cycle_controller;
+    CicoHSLifeCycleController *life_cycle_controller;
 
     /* menu button x position */
     escPosX = (width / 2) - (ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH / 2);
 
-    life_cycle_controller = CicoSCLifeCycleController::getInstance();
+    life_cycle_controller = CicoHSLifeCycleController::getInstance();
 
     tmp_space = (width - (ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH
                 * ICO_HS_CONTROL_BAR_BTN_MAX_NUM))
@@ -281,7 +280,7 @@ CicoHSControlBarWindow::AddShortcut(Evas *evas, int width)
         }
 
         /* get APP information */
-        std::vector<CicoSCAilItems> aillist =
+        std::vector<CicoAilItems> aillist =
         life_cycle_controller->getAilList();
 
         /* add shortcut object */
@@ -308,7 +307,7 @@ CicoHSControlBarWindow::AddShortcut(Evas *evas, int width)
         s_cnt++;
     }
 
-    ICO_DBG("CicoHSControlBarWindow::AddShortcut Leave");
+    ICO_TRA("CicoHSControlBarWindow::AddShortcut Leave");
     return;
 }
 
@@ -364,7 +363,7 @@ CicoHSControlBarWindow::TouchHome(void)
 void
 CicoHSControlBarWindow::SetNightMode(void)
 {
-    ICO_DBG("CicoHSControlBarWindow::SetNightMode Enter");
+    ICO_TRA("CicoHSControlBarWindow::SetNightMode Enter");
 
     bool state = CicoHSSystemState::getInstance()->getNightMode();
 
@@ -400,7 +399,7 @@ CicoHSControlBarWindow::SetNightMode(void)
         evas_object_image_file_set(menu_btn, img_path, NULL);
     }
 
-    ICO_DBG("CicoHSControlBarWindow::SetNightMode Leave");
+    ICO_TRA("CicoHSControlBarWindow::SetNightMode Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -415,7 +414,7 @@ CicoHSControlBarWindow::SetNightMode(void)
 void
 CicoHSControlBarWindow::SetRegulation(void)
 {
-    ICO_DBG("CicoHSControlBarWindow::SetRegulation Enter");
+    ICO_TRA("CicoHSControlBarWindow::SetRegulation Enter");
 
     char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
     if (true == CicoHSSystemState::getInstance()->getNightMode()) {
@@ -446,7 +445,7 @@ CicoHSControlBarWindow::SetRegulation(void)
     }
     evas_object_image_file_set(menu_btn, img_path, NULL);
 
-    ICO_DBG("CicoHSControlBarWindow::SetRegulation Leave");
+    ICO_TRA("CicoHSControlBarWindow::SetRegulation Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -505,7 +504,7 @@ CicoHSControlBarWindow::GetAppId(void)
 void
 CicoHSControlBarWindow::TouchShortcut(const char *appid)
 {
-    ICO_DBG("CicoHSControlBarWindow::TouchShortcut Enter");
+    ICO_TRA("CicoHSControlBarWindow::TouchShortcut Enter");
     ActivationUpdate();
 
     CicoSound::GetInstance()->PlayOperationSound();
@@ -515,7 +514,7 @@ CicoHSControlBarWindow::TouchShortcut(const char *appid)
         CicoHomeScreen::ExecuteApp(appid);
     }
 
-    ICO_DBG("CicoHSControlBarWindow::TouchShortcut Leave");
+    ICO_TRA("CicoHSControlBarWindow::TouchShortcut Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -537,7 +536,7 @@ CicoHSControlBarWindow::onKeyDown(void *data, Evas *evas,
 
     CicoSound::GetInstance()->PlayOperationSound();
 
-    ICO_DBG("onKeyDown: keyname=%s, key=%d",
+    ICO_PRF("TOUCH_EVENT Key Down keyname=%s, key=%d",
             evinfo->keyname, (char)*evinfo->key);
 
     if (0 == strcmp(evinfo->keyname, changeZoneKeyName)) {
@@ -586,5 +585,4 @@ CicoHSControlBarWindow::ActivationUpdate(void)
 {
     return CicoHomeScreen::ActivationUpdate();
 }
-
 // vim: set expandtab ts=4 sw=4:

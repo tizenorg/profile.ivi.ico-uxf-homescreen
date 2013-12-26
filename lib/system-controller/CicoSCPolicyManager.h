@@ -71,8 +71,6 @@ public:
 
     void notifyChangedState(int state);
 
-    void recvAMBVehicleInfo(void);
-
     // get states
     const std::map<int, const CicoState*>& getPolicyStates(void);
 
@@ -86,8 +84,6 @@ public:
     // notify connected process
     void notifyConnected(const std::string & appid);
 
-    static void AMBpropertyChanged(void *data, DBusMessage *msg);
-
 private:
     // default constructor
     CicoSCPolicyManager();
@@ -98,32 +94,39 @@ private:
     // copy constructor
     CicoSCPolicyManager(const CicoSCPolicyManager &object);
 
-    // initialize amb connection
-    int initAMB(void);
-
-    // send request to amb
-    int sendAMBRequest(void);
-
-    // get vehicle information
-    int getVehicleInfo(void);
-
-    // timer callback function for ecore
-    static Eina_Bool ecoreTimerCB(void *user_data);
-
     // initialize state machine
     int initStateMachine(void);
 
-private:
-    bool                  m_initialized;
-    E_DBus_Connection     *m_dbusConnection;
-    Ecore_Timer           *m_ecoreTimer;
+    // callback function for changed vehicle informantion
+    void onChangedVehicleInfo(int type, void *event);
 
+private:
+    // callback function for changed vehicle informantion
+    static Eina_Bool changedVehicleInfoCB(void *data, int type, void *event);
+
+private:
+    // initialized flag
+    bool m_initialized;
+
+    // ecore event handler
+    Ecore_Event_Handler*  m_ecoreEvHandler;
+
+    // CicoStateMachine instance
     CicoStateMachine      *m_stateMachine;
+
+    // CicoSCResourceManager instance
     CicoSCResourceManager *m_resourceMgr;
 
+    // state list
     std::map<int, const CicoState*> m_policyStates;
+
+    // display zone state list
     std::map<int, const CicoState*> m_dispZoneStates;
+
+    // sound zone state list
     std::vector<const CicoState*> m_soundZoneStates;
+
+    // input state list
     std::vector<const CicoState*> m_inputStates;
 };
 #endif  // __CICO_SC_POLICY_MANAGER_H__

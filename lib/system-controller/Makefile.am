@@ -8,10 +8,7 @@ noinst_LTLIBRARIES =\
 
 libico_system_controller_la_LDFLAGS = -version-info 0:9:0 
 libico_system_controller_la_SOURCES =	\
-	CicoSCAilItems.cpp					\
-	CicoSCAulItems.cpp					\
 	CicoSCLifeCycleController.cpp		\
-	CicoSCSystemConfig.cpp				\
 	CicoSCWaylandIF.cpp					\
 	CicoSCWayland.cpp					\
 	CicoSCWlWinMgrIF.cpp				\
@@ -31,10 +28,11 @@ libico_system_controller_la_SOURCES =	\
 	CicoSCUserManager.cpp				\
 	CicoSCSysResourceController.cpp		\
 	CicoSCSysResourceMonitor.cpp		\
+	CicoSCAppResourceController.cpp		\
 	CicoSCResourceManager.cpp			\
 	ico_syc_mrp_resource.c				\
 	CicoSCPolicyManager.cpp				\
-	Cico_aul_listen_app.cpp
+	CicoSCVInfoManager.cpp
 
 libico_system_controller_la_CPPFLAGS =	\
 	$(GCC_CXXFLAGS)						\
@@ -56,9 +54,11 @@ libico_system_controller_la_CPPFLAGS =	\
 	$(UWS_CFLAGS)						\
 	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
+	-I../common							\
 	-I../misc/state-machine
 
 libico_system_controller_la_LIBADD =	\
+	../common/.libs/libico-common.a		\
 	@ECORE_LIBS@						\
 	@EINA_LIBS@							\
 	@GLIB_LIBS@							\
