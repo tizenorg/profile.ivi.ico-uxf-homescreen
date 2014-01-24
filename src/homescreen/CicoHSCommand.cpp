@@ -216,8 +216,8 @@ CicoHSCommand::getArgArray(const ptree& pt, std::vector<CicoHSCommandArg>& vArg)
         string Pzone;
         const char* sAppid = NULL;
         const char* sZone = NULL;
-        int iPid = 0;
-        int iVisible = 0;
+        int iPid = -1;
+        int iVisible = -1;
         try {
             // arg.appid
             if (boost::optional<std::string> appid = info.get_optional<std::string>("appid")) {
@@ -269,7 +269,7 @@ CicoHSCommand::getArg(const ptree& pt, std::vector<CicoHSCommandArg>& vArg)
     string Pzone;
     const char* sAppid = NULL;
     const char* sZone = NULL;
-    int iPid = 0;
+    int iPid = -1;
     int iVisible = -1;
 
     try {
@@ -301,7 +301,7 @@ CicoHSCommand::getArg(const ptree& pt, std::vector<CicoHSCommandArg>& vArg)
     }
 
 //    if (((NULL != sAppid) || (0 != iPid)) && ((NULL != sZone) || (-1 != iVisible))) {
-    if (((NULL != sAppid) || (0 != iPid))) {
+    if (((NULL != sAppid) || (-1 != iPid))) {
         vArg.push_back(CicoHSCommandArg(sAppid, sZone, iVisible, iPid));
         return true;
     }

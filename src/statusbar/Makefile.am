@@ -2,46 +2,53 @@ AM_CFLAGS = $(GCC_CFLAGS)
 AM_CPPFLAGS = $(GCC_CXXFLAGS)
 AM_CXXFLAGS = $(GCC_CXXFLAGS)
 
-COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin -lsecurity-server-client
-
 noinst_PROGRAMS   = \
 	StatusBar
 
 StatusBar_SOURCES = \
-	status_bar.cpp						\
-	CicoStatusBarControlWindow.cpp		\
-	CicoStatusBarTime.cpp
+	CicoCommonComponent.cpp			\
+	CicoCommonModule.cpp 			\
+	CicoCommonWindow.cpp			\
+	CicoModuleImplementation.cpp	\
+	CicoComponentImplementation.cpp	\
+	CicoStatusBar.cpp				\
+	CicoSBEFLApp.cpp				\
+	main.cpp
 
 StatusBar_CFLAGS = \
+	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
 	$(EFL_CFLAGS)	\
 	$(OPT_CFLAGS)	\
-	$(WL_CFLAGS)	\
 	$(AUL_CFLAGS)	\
 	$(UWS_CFLAGS)	\
-	-I/usr/include/ico-uxf-weston-plugin \
+	$(NOTIFICATION_CFLAGS) \
 	-I/usr/include/ico-util	\
 	-I../../include			\
-	-I../../lib/common
+	-I../../lib/common      \
+	-I../../lib/notification
 
 StatusBar_CXXFLAGS = \
+	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
 	$(EFL_CFLAGS)	\
 	$(OPT_CFLAGS)	\
-	$(WL_CFLAGS)	\
 	$(AUL_CFLAGS)	\
 	$(UWS_CFLAGS)	\
-	-I/usr/include/ico-uxf-weston-plugin \
+	$(NOTIFICATION_CFLAGS) \
 	-I/usr/include/ico-util \
 	-I../../include			\
-	-I../../lib/common
+	-I../../lib/common	\
+	-I../../lib/notification \
+	-std=c++11
 
 StatusBar_LDADD = \
 	../../lib/common/.libs/libico-common.a \
+	../../lib/notification/.libs/libico-notification.a \
+	@CAPIAPPFWAPPLICATION_LIBS@ 	\
 	$(EFL_LIBS)		\
 	$(OPT_LIBS)		\
-	$(WL_LIBS)		\
-	$(COMMON_LIBS)	\
 	$(AUL_LIBS)		\
-	$(UWS_LIBS)
+	$(UWS_LIBS)		\
+	$(NOTIFICATION_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
 

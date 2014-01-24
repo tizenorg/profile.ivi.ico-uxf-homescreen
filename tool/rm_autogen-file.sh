@@ -28,6 +28,9 @@ stamp-h1 \
 ./lib/system-controller/.deps \
 ./lib/system-controller/Makefile \
 ./lib/system-controller/Makefile.in \
+./lib/notification/.deps \
+./lib/notification/Makefile \
+./lib/notification/Makefile.in \
 ./lib/apps-framework/.deps \
 ./lib/apps-framework/Makefile \
 ./lib/apps-framework/Makefile.in \
@@ -48,11 +51,17 @@ stamp-h1 \
 ./src/statusbar/.deps \
 ./src/statusbar/Makefile \
 ./src/statusbar/Makefile.in \
+./src/onscreen/.deps \
+./src/onscreen/Makefile \
+./src/onscreen/Makefile.in \
 ./src/syscond/.deps \
 ./src/syscond/Makefile \
 ./src/syscond/Makefile.in \
 ./tests/Makefile \
 ./tests/Makefile.in \
+./tests/statusbar/.deps \
+./tests/statusbar/Makefile \
+./tests/statusbar/Makefile.in \
 ./tests/system-controller/Makefile \
 ./tests/system-controller/Makefile.in \
 ./tests/system-controller/apps-framework/result \

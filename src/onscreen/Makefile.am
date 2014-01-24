@@ -2,60 +2,45 @@ AM_CFLAGS = $(GCC_CFLAGS)
 AM_CPPFLAGS = $(GCC_CXXFLAGS)
 AM_CXXFLAGS = $(GCC_CXXFLAGS)
 
-COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin -lsecurity-server-client
-
 noinst_PROGRAMS   = \
 	OnScreen
 
 OnScreen_SOURCES = \
-	on_screen.cpp					\
-	CicoOnScreenAction.cpp			\
-	CicoOnScreenAppList.cpp			\
-	CicoOnScreenControlWindow.cpp	\
-	CicoOnScreenContext.cpp
+	on_screen_main.cpp \
+	CicoOSEFLApp.cpp   \
+	CicoOnScreen.cpp
 
 OnScreen_CFLAGS= 					\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
     $(EFL_CFLAGS) 					\
     $(OPT_CFLAGS) 					\
-    $(WL_CFLAGS) 					\
     $(AUL_CFLAGS) 					\
-    $(AIL_CFLAGS) 					\
     $(UWS_CFLAGS) 					\
-    $(PKGMGR_CFLAGS) 				\
-	$(UWS_CFLAGS)					\
-	$(WESTONPLUGIN_CFLAGS)			\
+	$(NOTIFICATION_CFLAGS)          \
     -I../../include 				\
-    -I../../lib/common
+    -I../../lib/common              \
+    -I../../lib/notification
 
 OnScreen_CXXFLAGS= 				\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
     $(EFL_CFLAGS) 					\
     $(OPT_CFLAGS) 					\
-    $(WL_CFLAGS) 					\
     $(AUL_CFLAGS) 					\
-    $(AIL_CFLAGS) 					\
     $(UWS_CFLAGS) 					\
-    $(PKGMGR_CFLAGS) 				\
-	$(UWS_CFLAGS)					\
-	$(WESTONPLUGIN_CFLAGS)			\
+	$(NOTIFICATION_CFLAGS)          \
     -I../../include 				\
-    -I../../lib/common
+    -I../../lib/common              \
+    -I../../lib/notification
 
 OnScreen_LDADD = 					\
 	../../lib/common/.libs/libico-common.a 			\
+	../../lib/notification/.libs/libico-notification.a \
 	@CAPIAPPFWAPPLICATION_LIBS@ 	\
-	@PKGMGR_LIBS@					\
     $(EFL_LIBS) 					\
     $(OPT_LIBS) 					\
-    $(WL_LIBS) 						\
-    $(COMMON_LIBS) 					\
-    $(UWS_LIBS) 					\
     $(AUL_LIBS) 					\
-    $(AIL_LIBS) 					\
-	$(UWS_LIBS)						\
-	../../lib/apps-framework/.libs/libico-appfw.so	\
-	-lwayland-egl -lEGL -lGLESv2
+    $(UWS_LIBS) 					\
+	$(NOTIFICATION_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)
 

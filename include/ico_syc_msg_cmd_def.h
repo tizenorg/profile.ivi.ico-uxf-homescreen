@@ -132,6 +132,7 @@ extern "C" {
 #define MSG_CMD_NAME                0x00010009
 #define MSG_CMD_MAP_THUMB           0x00010011
 #define MSG_CMD_UNMAP_THUMB         0x00010012
+#define MSG_CMD_MAP_BUFFER          0x00010013
 #define MSG_CMD_SHOW_LAYER          0x00010020
 #define MSG_CMD_HIDE_LAYER          0x00010021
 #define MSG_CMD_CHANGE_LAYER_ATTR   0x00010022

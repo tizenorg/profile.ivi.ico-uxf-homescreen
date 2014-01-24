@@ -128,7 +128,7 @@ CicoHSMenuWindow::SetMenuBack(void)
     evas_object_resize(canvas, width, height);
     evas_object_show(canvas);
 
-    ICO_ERR("CicoHSMenuWindow::SetMenuBack Leave(EOK)");
+    ICO_TRA("CicoHSMenuWindow::SetMenuBack Leave(EOK)");
     return ICO_OK;
 }
 

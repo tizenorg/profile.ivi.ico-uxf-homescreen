@@ -110,6 +110,8 @@ public:
 
     int active(int surfaceid, int target);
 
+    int setmapBuffer(const char *shmname, int bufsize, int bufnum);
+
     int mapSurface(int surfaceid, int framerate);
 
     int unmapSurface(int surfaceid);

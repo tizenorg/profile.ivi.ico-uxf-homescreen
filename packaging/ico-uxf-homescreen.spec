@@ -1,14 +1,14 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
-Version:    0.9.10
-Release:    1.1
+Version:    0.9.12
+Release:    1.2
 Group:		Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.2
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.08
+BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.09
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(ecore)
 BuildRequires: pkgconfig(ecore-wayland)
@@ -30,11 +30,12 @@ BuildRequires: pkgconfig(murphy-common)
 BuildRequires: pkgconfig(murphy-domain-controller)
 BuildRequires: pkgconfig(murphy-ecore)
 BuildRequires: pkgconfig(murphy-resource)
+BuildRequires: pkgconfig(notification)
 BuildRequires: boost-devel
 BuildRequires: mesa-devel
-BuildRequires: ico-uxf-utilities-devel
+BuildRequires: ico-uxf-utilities-devel >= 0.9.06
 Requires: weston >= 1.2
-Requires: ico-uxf-weston-plugin >= 0.9.08
+Requires: ico-uxf-weston-plugin >= 0.9.09
 Requires: ico-uxf-utilities >= 0.9.06
 
 %description
@@ -76,27 +77,34 @@ cp tool/ico_change_loginuser %{buildroot}%{_bindir}
 /sbin/ldconfig
 
 # Update the app database.
-%{_bindir}/pkg_initdb
-%{_bindir}/ail_initdb
+%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.homescreen.xml
+%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.statusbar.xml
+%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.system-controller.xml
+%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.onscreen.xml
+
+%preun
+# Update the app database.
+%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.homescreen.xml
+%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.statusbar.xml
+%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.system-controller.xml
+%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.onscreen.xml
 
 %postun
 /sbin/ldconfig
 rm -f /usr/share/applications/org.tizen.ico.homescreen.desktop
 rm -f /usr/share/applications/org.tizen.ico.statusbar.desktop
+rm -f /usr/share/applications/org.tizen.ico.onscreen.desktop
 rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
-rm -f /home/app/layout.txt
-
-# Update the app database.
-%{_bindir}/pkg_initdb
-%{_bindir}/ail_initdb
 
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 /usr/apps/org.tizen.ico.homescreen
 /usr/apps/org.tizen.ico.statusbar
+/usr/apps/org.tizen.ico.onscreen
 /usr/share/packages/org.tizen.ico.homescreen.xml
 /usr/share/packages/org.tizen.ico.statusbar.xml
+/usr/share/packages/org.tizen.ico.onscreen.xml
 %{_libdir}/libico-appfw.*
 %{_libdir}/libico-state-machine.*
 /usr/apps/org.tizen.ico.system-controller

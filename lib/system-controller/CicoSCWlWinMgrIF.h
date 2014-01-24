@@ -166,6 +166,9 @@ protected:
     // wrapper function of ico_window_mgr_get_surfaces
     void getSurfaces(const char *appid, int32_t pid);
 
+    // wrapper function of ico_window_mgr_set_map_buffer
+    void setmapBuffer(const char *shmname, int bufsize, int bufnum);
+
     // wrapper function of ico_window_mgr_map_surface
     void mapSurface(uint32_t surfaceid, int32_t framerate);
 

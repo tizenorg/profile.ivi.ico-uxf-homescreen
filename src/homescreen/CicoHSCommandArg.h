@@ -38,7 +38,7 @@ public:
     CicoHSCommandArg(const char* appid,
                 const char* zone,
                 int visible,
-                int pid=0);
+                int pid);
     // destructor
      ~CicoHSCommandArg();
 

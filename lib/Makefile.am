@@ -1,5 +1,6 @@
 SUBDIRS=\
 	common \
-    apps-framework  \
-    misc \
-    system-controller 
+	notification \
+	apps-framework  \
+	misc \
+	system-controller 

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.9.10], [])
+AC_INIT([org.tizen.ico.homescreen], [0.9.12], [])
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
@@ -38,6 +38,7 @@ PKG_CHECK_MODULES([BUNDLE], [bundle])
 PKG_CHECK_MODULES([AUL], [aul])
 PKG_CHECK_MODULES([PKGMGR], [pkgmgr])
 PKG_CHECK_MODULES([WAYLANDCLIENT], [wayland-client])
+PKG_CHECK_MODULES([NOTIFICATION], [notification])
 
 # libraries for homescreen.
 PKG_CHECK_MODULES([EDJE], [edje])
@@ -123,6 +124,7 @@ AC_CHECK_FUNCS([gethostname gettimeofday memset setenv strcasecmp strdup strerro
 AC_CONFIG_FILES([Makefile
                  lib/Makefile
                  lib/common/Makefile
+                 lib/notification/Makefile
                  lib/apps-framework/Makefile
                  lib/misc/Makefile
                  lib/misc/state-machine/Makefile
@@ -131,8 +133,10 @@ AC_CONFIG_FILES([Makefile
                  src/syscond/Makefile
                  src/homescreen/Makefile
                  src/statusbar/Makefile
+                 src/onscreen/Makefile
                  tool/Makefile
                  tests/Makefile
+                 tests/statusbar/Makefile
                  tests/system-controller/Makefile
                  tests/system-controller/apps-framework/Makefile])
 AC_PROG_RANLIB([ranlib])

@@ -1,3 +1,8 @@
+* Fri Jan 24 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/release/20140109.181708@cae10ac
+- 0.9.12 release
+-- revise: live thumbnail display processing is changed into GPU un-depending
+-- bugfix: TIVI-2290 Reinstalling ico-uxf-homescreen causes black screen
+
 * Thu Dec 26 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen_ivi_stable/20131119.040218@878f49e
 - 0.9.10 release
 -- bug fix: An action is inaccurate when the menu of HomeScreen is multi-touched
@@ -37,7 +42,7 @@
 -- bugfix : display history order is not reproduced.
 -- bugfix: when show app in second display, crash homescreen
 -- bugfix: the prev swipe operation, failure occurs to the next swipe
--- updated homescreen service file.(delete Type=oneshot) 
+-- updated homescreen service file.(delete Type=oneshot)
 
 * Thu Sep 19 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/20130911.211140@65dbd1c
 - 0.9.03 release.
@@ -105,7 +110,7 @@
 
 * Wed Jun 12 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/2.0alpha-wayland/20130606.173158@c36bbb6
 - 0.3.06 release
-- Fix for TIVI-840 - [WLD] Nothing rendered when launching Contacts app 
+- Fix for TIVI-840 - [WLD] Nothing rendered when launching Contacts app
   Change the way of setting argument.
 - Fix for TIVI-987 - [WLD]App priority does not work
   A priority judgment error of the interrupt image right.
@@ -147,7 +152,7 @@
 - fixed reduced some memory leaks.
 
 * Fri Apr 26 19:15:52 UTC 2013 - tracy.graydon@intel.com
-- Setting up 2.0alpha-wayland branch (master not used for IVI) 
+- Setting up 2.0alpha-wayland branch (master not used for IVI)
 
 * Fri Apr 26 2013 Shibata Makoto <shibata@mac.tec.toyota.co.jp> d21d2c0
 - Import initial.
