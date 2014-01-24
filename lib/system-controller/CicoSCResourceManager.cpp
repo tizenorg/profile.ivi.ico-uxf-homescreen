@@ -445,8 +445,38 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
         }
     }
 
+    bool displayMatch = false;
     // 
     if (req != newreq) {
+        char zoneO[128],zoneN[128];
+        zoneO[0] = zoneN[0] = '\0';
+        if ((NULL != req) && (NULL != req->dispzone)) {
+            char* d = zoneO;
+            const char* s = req->dispzone;
+            while ('\0' != *s) {  // is stop code
+                if ('.' == *s) {  // DISPLAY.ZONE found a period
+                    break;  // break of while
+                }
+                *d++ = *s++; // char copy
+            }
+            *d='\0';  // set stop code
+        }
+        if ((NULL != newreq) && (NULL != newreq->dispzone)) {
+            char* d = zoneO;
+            const char* s = newreq->dispzone;
+            while ('\0' != *s) {  // is stop code
+                if ('.' == *s) {  // DISPLAY.ZONE found a period
+                    break;  // break of while
+                }
+                *d++ = *s++;  // char copy
+            }
+            *d='\0';  // set stop code
+        }
+        if ((0 != strlen(zoneO)) || (0 != strlen(zoneN))) {
+            if (0 == strcmp(zoneO, zoneN)) {
+                displayMatch = true;
+            }
+        }
         // update request data
         req->dispzoneid = newreq->dispzoneid;
         if (NULL != req->dispzone) free(req->dispzone);
@@ -474,15 +504,17 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
     bool state = m_policyMgr->acquireDisplayResource(type,
                                                      req->dispzoneid,
                                                      req->prio);
-    if (true == state) {
+    if ((true == state) && (false == displayMatch)){
         updateDisplayResource(req, chgzone);
     }
     else {
-        if (-1 != chgzone) {
-            // move request window
-            m_winCtrl->setGeometry(req->surfaceid, req->dispzone, req->layerid,
-                                   req->animation, req->animationTime,
-                                   req->animation, req->animationTime);
+        if ((-1 != chgzone) || (true == displayMatch)) {
+            if (NULL != m_winCtrl) {
+                // move request window
+                m_winCtrl->setGeometry(req->surfaceid, req->dispzone, req->layerid,
+                                       req->animation, req->animationTime,
+                                       req->animation, req->animationTime);
+            }
         }
         else {
             // just in case, hide window
@@ -935,7 +967,9 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
                     req->appid, req->pid, req->surfaceid);
             // show request window
             m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
+#if 0 // MKMK
             m_winCtrl->activeCB(NULL, NULL, req->surfaceid, -1);
+#endif
             ICO_TRA("CicoSCResourceManager::updateDisplayResource Leave");
             return;
         }
@@ -1838,7 +1872,7 @@ CicoSCResourceManager::updateSoundResRegulationPreProc(resource_request_t *req)
                         waitreq, waitreq->soundzoneid,
                         waitreq->soundzone, waitreq->appid);
                 ICO_PRF("CHG_GUI_RES sound   acquired zone=%02d:%s appid=%s",
-                        waitreq->soundzoneid, waitreq->soundzoneid,
+                        waitreq->soundzoneid, waitreq->soundzone,
                         waitreq->appid);
                 m_curSoundResReq[curreq->soundzoneid] = waitreq;
             }

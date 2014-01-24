@@ -137,6 +137,21 @@ int ico_syc_change_layer(const char *appid, int surface, int layer);
 
 /*--------------------------------------------------------------------------*/
 /**
+ * @brief   ico_syc_map_buffer
+ *          Set map buffer for surface image mapping to the memory.
+ *
+ * @param[in]   shmname                 shared memory name
+ * @param[in]   bufsize                 buffer size [byte]
+ * @param[in]   bufnum                  number of buffer
+ * @return      result
+ * @retval      0                       success
+ * @retval      not 0                   error
+ */
+/*--------------------------------------------------------------------------*/
+int ico_syc_map_buffer(const char *shmname, int bufsize, int bufnum);
+
+/*--------------------------------------------------------------------------*/
+/**
  * @brief   ico_syc_map_thumb
  *          Map the thumbnail data for mapping to the memory.
  *

@@ -193,7 +193,8 @@ typedef struct _win_attr {
 typedef struct _thumb_info {
     char *appid;    /* application id */
     int  surface;   /* window's surface id */
-    int  name;      /* EGL buffer name */
+    int  type;      /* buffer type(ICO_WINDOW_MGR_MAP_TYPE_EGL/SHM/PIXEL)*/
+    int  name;      /* EGL buffer name/shared memory buffer index(+1) */
     int  width;     /* window width */
     int  height;    /* window height */
     int  stride;    /* byte par line of frame buffer */

@@ -31,6 +31,7 @@
 
 #include "ico_syc_common.h"
 #include "ico_syc_winctl.h"
+#include "ico_window_mgr.h"
 
 #include "CicoHomeScreenCommon.h"
 
@@ -87,6 +88,11 @@
 #define ICO_HS_MENUTILE_THUMBNAIL_REDUCE_RATE  10
 #define ICO_HS_MENUTILE_THUMBNAIL_REDUCTION     4
 
+/*shared memory buffer*/
+#define ICO_HS_SHMBUFFER_NAME       "/HomeScreen_ShmBuffer"
+#define ICO_HS_SHMBUFFER_SIZE       (1920*1080*4+ICO_UIFW_IMAGE_HEADER_SIZE)
+#define ICO_HS_SHMBUFFER_NUM        (3)
+
 struct _CicoHSMenuTile_glfunc {
     EGLDisplay  egl_display;            // EGL display
     PFNEGLCREATEIMAGEKHRPROC            create_image;               // create image
@@ -95,6 +101,7 @@ struct _CicoHSMenuTile_glfunc {
 };
 struct _CicoHSMenuTile_thumb {
     int         surface;                // surface id
+    int         type;                   // frame buffer type
     int         name;                   // EGL buffer name
     int         width;                  // frame buffer width
     int         height;                 // frame buff height
@@ -103,6 +110,7 @@ struct _CicoHSMenuTile_thumb {
     int         fbcount;                // frame buffer change counter
     EGLImageKHR image;                  // frame buffer image
     GLuint      texture;                // texture id
+    char        *pixel_data;            // glReadPixels data buffer
 };
 
 class CicoHSMenuTile
@@ -135,6 +143,7 @@ class CicoHSMenuTile
 
   private:
     static struct _CicoHSMenuTile_glfunc glfunc;
+    static char *thumbmapbuffer;
 
     char appid[ICO_HS_MAX_PROCESS_NAME];
     char icon_image_path[ICO_HS_MAX_PATH_BUFF_LEN];

@@ -94,11 +94,10 @@ CicoAilItems::~CicoAilItems()
     ICO_TRA("end");
 }
 /**
- * @brief init member 
+ * @brief init member
  */
 void CicoAilItems::init()
 {
-    
     m_appid.clear();      // PACKAGE NAME
     m_icon.clear();       // ICON
     m_name.clear();       // NAME
@@ -400,7 +399,7 @@ void CicoAilItems::categoryParse(const std::string categorys)
             continue;
         }
 
-        ICO_DBG("Parse UNKOWN %s", it->c_str());
+        ICO_DBG("Parse UNKNOWN %s", it->c_str());
     }
     categoryGetDisplay(displayName, layerName, dispZoneName);
     categoryGetSound(soundName, soundZoneName);
@@ -535,7 +534,7 @@ bool CicoAilItems::categoryParseGetValue(const std::string& s,
     ICO_TRA("end %s", val.c_str());
     return true;
 }
-    
+
 /**
  * @brief get
  * @param disp display key name

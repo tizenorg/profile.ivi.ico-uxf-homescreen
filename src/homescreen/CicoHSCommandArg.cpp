@@ -42,8 +42,8 @@ CicoHSCommandArg::CicoHSCommandArg()
 {
     m_appid = "";
     m_zone = "";
-    m_visible = 0;
-    m_pid = 0;
+    m_visible = -1;
+    m_pid = -1;
 }
 
 //--------------------------------------------------------------------------

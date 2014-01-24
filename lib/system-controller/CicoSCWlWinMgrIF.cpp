@@ -334,6 +334,23 @@ CicoSCWlWinMgrIF::getSurfaces(const char *appid, int pid)
 
 //--------------------------------------------------------------------------
 /** 
+ *  @brief   wrapper function of ico_window_mgr_set_map_buffer
+ *  
+ *  @param[in]  shmname     shared memory name(POSIX I/F)
+ *  @param[in]  bufsize     buffer size in byte
+ *  @param[in]  bufnum      number of buffers
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setmapBuffer(const char *shmname, int bufsize, int bufnum)
+{
+    ICO_DBG("called: ico_window_mgr_set_map_buffer(shmname=%s, bufsize=%d, bufnum=%d)",
+            shmname ? shmname : "(null)", bufsize, bufnum);
+    ico_window_mgr_set_map_buffer(m_winmgr, shmname, bufsize, bufnum);
+}
+
+//--------------------------------------------------------------------------
+/** 
  *  @brief   wrapper function of ico_window_mgr_map_surface
  *  
  *  @param [in] surface     id of wayland surface

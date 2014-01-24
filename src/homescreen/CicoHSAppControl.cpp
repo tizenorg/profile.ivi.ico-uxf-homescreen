@@ -12,7 +12,7 @@
  * @date    Dec-18-2013
  */
 
-using namespace std;
+#include <string>
 #include "CicoHSAppControl.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSCommand.h"
@@ -20,6 +20,7 @@ using namespace std;
 
 #include <ico_log.h>
 #include "ico_syc_msg_cmd_def.h"
+using namespace std;
 
 /*============================================================================*/
 /* static members                                                             */
@@ -91,8 +92,12 @@ CicoHSAppControl::handleCommand(const CicoHSCommand * cmd)
 {
     ICO_TRA("CicoHSAppControl::handleCommand Enter(%d)", cmd->cmdid);
 
-    CicoHSCmdAppCtlOpt *opt = static_cast<CicoHSCmdAppCtlOpt*>(cmd->opt);
     int ret = -1;
+    CicoHSCmdAppCtlOpt *opt = static_cast<CicoHSCmdAppCtlOpt*>(cmd->opt);
+    if((opt->arg).empty() == true) {
+        ICO_WRN("arg parameter is not set up");
+        return;
+    }
     vector<CicoHSCommandArg>::iterator it = opt->arg.begin();
 
     switch (cmd->cmdid) {
@@ -151,7 +156,7 @@ CicoHSAppControl::GetAppId(int pid, string& appid)
     ICO_TRA("CicoHSAppControl::GetAppId Enter");
 
     if (pid == -1 ) {
-        ICO_ERR("No pid");
+        ICO_WRN("No pid");
         return -1;
     }
 
@@ -212,6 +217,16 @@ CicoHSAppControl::MoveApp(const string& appid, const string& zone)
 {
     ICO_TRA("CicoHSAppControl::MoveApp Enter");
 
+    if(appid.empty() == true) {
+        ICO_WRN("No appid");
+        return;
+    }
+
+    if(zone.empty() == true) {
+        ICO_WRN("No zone");
+        return;
+    }
+
     CicoHomeScreen::MoveApp(appid, zone);
 
     ICO_TRA("CicoHSAppControl::MoveApp Leave");
@@ -230,6 +245,11 @@ void
 CicoHSAppControl::ShowApp(const string& appid)
 {
     ICO_TRA("CicoHSAppControl::ShowApp Enter");
+
+    if(appid.empty() == true) {
+        ICO_WRN("No appid");
+        return;
+    }
 
     CicoHomeScreen::ShowApp(appid);
 
@@ -250,6 +270,11 @@ CicoHSAppControl::HideApp(const string& appid)
 {
     ICO_TRA("CicoHSAppControl::HideApp Enter");
 
+    if(appid.empty() == true) {
+        ICO_WRN("No appid");
+        return;
+    }
+
     CicoHomeScreen::HideApp(appid);
 
     ICO_TRA("CicoHSAppControl::HideApp Leave");
@@ -269,6 +294,11 @@ CicoHSAppControl::ExecuteApp(const string& appid)
 {
     ICO_TRA("CicoHSAppControl::ExecuteApp Enter");
 
+    if(appid.empty() == true) {
+        ICO_WRN("No appid");
+        return;
+    }
+
     CicoHomeScreen::ExecuteApp(appid.c_str());
 
     ICO_TRA("CicoHSAppControl::ExecuteApp Leave");
@@ -287,6 +317,11 @@ void
 CicoHSAppControl::TerminateApp(const string& appid)
 {
     ICO_TRA("CicoHSAppControl::TerminateApp Enter");
+
+    if(appid.empty() == true) {
+        ICO_WRN("No appid");
+        return;
+    }
 
     CicoHomeScreen::TerminateApp(appid.c_str());
 
@@ -311,7 +346,7 @@ CicoHSAppControl::WinChgControl(vector<CicoHSCommandArg>& arg)
     // Check show control and appid get
     bool bShow = false;
     vector<CicoHSCommandArg>::iterator it = arg.begin();
-    while ( it != arg.end() ) {
+    while (it != arg.end()) {
         if (true == (it->m_appid).empty()) {
             if (0 != GetAppId(it->m_pid, it->m_appid)) {
                 ++it;
@@ -337,12 +372,17 @@ CicoHSAppControl::WinChgControl(vector<CicoHSCommandArg>& arg)
         ++it;
     }
     // Show set
+    string lastShowApp;
     it = arg.begin();
     while ( it != arg.end() ) {
         if ((1 == it->m_visible) && (false == (it->m_appid).empty())) {
             WinChangeApp(it->m_appid, it->m_zone, it->m_visible);
+            lastShowApp = it->m_appid;
         }
         ++it;
+    }
+    if (false == lastShowApp.empty()) {
+        CicoHomeScreen::ActivationUpdate();
     }
     ICO_TRA("end");
     return true;

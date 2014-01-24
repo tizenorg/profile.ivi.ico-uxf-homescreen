@@ -1174,7 +1174,7 @@ CicoHomeScreen::StartRelations(void)
                                              ICO_HS_APPID_DEFAULT_ONS),
             ICO_HS_MAX_PROCESS_NAME);
 // TODO
-#if 0
+#if 1
     /* start onscreen & statusbar apps */
     os_app_info = GetAppInfo(os_package_name);
     ret = os_app_info->Execute();

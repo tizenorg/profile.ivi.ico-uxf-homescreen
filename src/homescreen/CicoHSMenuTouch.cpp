@@ -71,10 +71,10 @@ CicoHSMenuTouch::Finalize(void)
  * @brief   CicoHSMenuTouch::TouchDownMenu
  *          touch down action at menu
  *
- * @param[in]   data    data
- * @param[in]   evas    evas
- * @param[in]   obj     object
- * @param[in]   event_info    event information
+ * @param[in]   data        data
+ * @param[in]   evas        evas
+ * @param[in]   obj         object
+ * @param[in]   event_info  event information
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
@@ -106,8 +106,8 @@ CicoHSMenuTouch::TouchDownMenu(void *data, Evas *evas, Evas_Object *obj, void *e
     char *appid = reinterpret_cast<char*>(data);
 
     if (appid == NULL) {
-        ICO_DBG("CicoHSMenuTouch::TouchDownMenu: (%d,%d) No App",
-            touch_state_b_x, touch_state_b_y);
+        ICO_DBG("CicoHSMenuTouch::TouchDownMenu: %08x (%d,%d) No App",
+            (int)data, touch_state_b_x, touch_state_b_y);
         return;
     }
     ICO_PRF("TOUCH_EVENT Menu Down (%d,%d) app=%s",
@@ -191,7 +191,7 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
 
     ICO_PRF("TOUCH_EVENT Menu Up   (%d,%d)->(%d,%d) app=%s",
             touch_state_b_x, touch_state_b_y,
-            touch_state_a_x, touch_state_a_y, appid? appid: "(NULL)");
+            touch_state_a_x, touch_state_a_y, appid ? appid: "(NULL)");
 
     if (abs(sub_x) > abs(sub_y)) {
 
@@ -279,7 +279,7 @@ CicoHSMenuTouch::TouchUpTerm(void *data, Evas *evas, Evas_Object *obj, void *eve
     CicoSound::GetInstance()->PlayOperationSound();
 
     char *appid = reinterpret_cast<char*>(data);
-    ICO_PRF("TOUCH_EVENT Term Down->Up app=%s", appid? appid:"(NIL)");
+    ICO_PRF("TOUCH_EVENT Term Down->Up app=%s", appid ? appid : "(NIL)");
 
     strncpy(terminate_appid, appid, ICO_HS_MAX_PROCESS_NAME);
 

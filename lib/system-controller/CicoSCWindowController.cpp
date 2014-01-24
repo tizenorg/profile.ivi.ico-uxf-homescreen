@@ -967,6 +967,30 @@ CicoSCWindowController::active(int surfaceid, int target)
 
 //--------------------------------------------------------------------------
 /**
+ *  @brief   set surface map buffer
+ *
+ *  @param [in] shmname     shared memory name (POSIX I/F)
+ *  @param [in] bufsize     shared memory buffer size
+ *  @param [in] bufnum      number of shared memory buffer
+ *
+ *  @return ICO_SYC_EOK on success, other on error(currently EOK only)
+ *  @retval ICO_SYC_EOK     success
+ */
+//--------------------------------------------------------------------------
+int
+CicoSCWindowController::setmapBuffer(const char *shmname, int bufsize, int bufnum)
+{
+    ICO_TRA("CicoSCWindowController::setmapBuffer Enter");
+
+    CicoSCWlWinMgrIF::setmapBuffer(shmname, bufsize, bufnum);
+    CicoSCWayland::getInstance()->flushDisplay();
+
+    ICO_TRA("CicoSCWindowController::setmapBuffer Leave(EOK)");
+    return ICO_SYC_EOK;
+}
+
+//--------------------------------------------------------------------------
+/**
  *  @brief   map surface
  *
  *  @param [in] surfaceid   wayland surface id
@@ -1215,7 +1239,6 @@ CicoSCWindowController::createdCB(void                  *data,
     message->addArgObject("winname", window->name);
     CicoSCServer::getInstance()->sendMessageToHomeScreen(message);
 
-#if 1
     if (NULL != m_resMgr) {
         CicoSCCommand cmd;
         CicoSCCmdResCtrlOpt *opt = new CicoSCCmdResCtrlOpt();
@@ -1255,7 +1278,6 @@ CicoSCWindowController::createdCB(void                  *data,
     else {
         show(window->surfaceid, NULL, 0);
     }
-#endif
 
     ICO_TRA("CicoSCWindowController::createdCB Leave");
 }
@@ -1719,6 +1741,7 @@ CicoSCWindowController::mapSurfaceCB(void                  *data,
     message->addRootObject("command", command);
     message->addRootObject("appid", window->appid);
     message->addArgObject("surface", window->surfaceid);
+    message->addArgObject("attr", type);
     message->addArgObject("name", target);
     message->addArgObject("width", width);
     message->addArgObject("height", height);
@@ -1987,6 +2010,10 @@ CicoSCWindowController::handleCommand(const CicoSCCommand * cmd)
     case MSG_CMD_CHANGE_LAYER:
         ICO_DBG("command: MSG_CMD_CHANGE_LAYER");
         (void)setWindowLayer(opt->surfaceid, opt->layerid);
+        break;
+    case MSG_CMD_MAP_BUFFER:
+        ICO_DBG("command: MSG_CMD_MAP_BUFFER");
+        (void)setmapBuffer(opt->animation.c_str(), opt->width, opt->height);
         break;
     case MSG_CMD_MAP_THUMB:
         ICO_DBG("command: MSG_CMD_MAP_THUMB");

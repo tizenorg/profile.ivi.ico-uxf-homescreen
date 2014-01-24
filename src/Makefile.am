@@ -1,4 +1,5 @@
 SUBDIRS= \
 	syscond  	\
 	homescreen	\
-	statusbar
+	statusbar	\
+	onscreen

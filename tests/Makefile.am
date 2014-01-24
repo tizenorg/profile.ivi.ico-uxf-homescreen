@@ -3,4 +3,5 @@
 #   homescreen
 
 SUBDIRS=\
-   system-controller
+	system-controller \
+	statusbar

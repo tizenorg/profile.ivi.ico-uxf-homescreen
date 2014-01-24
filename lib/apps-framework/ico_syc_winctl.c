@@ -41,6 +41,8 @@ static msg_t _create_win_move_msg(const char *appid, int surface,
 static msg_t _create_active_win_msg(const char *appid, int surface);
 static msg_t _create_change_layer_msg(const char *appid, int surface,
                                       int layer);
+static msg_t _create_map_buffer_msg(const char *appid, const char *shmname,
+                                    int bufsize, int bufnum);
 static msg_t _create_map_thumb_msg(const char *appid, int surface, int framerate);
 static msg_t _create_unmap_thumb_msg(const char *appid, int surface);
 static msg_t _create_layer_msg(const char *appid, int layer, int attr,
@@ -268,6 +270,57 @@ _create_change_layer_msg(const char *appid, int surface, int layer)
 
     json_object_set_int_member(argobj, MSG_PRMKEY_SURFACE, surface);
     json_object_set_int_member(argobj, MSG_PRMKEY_LAYER, layer);
+    json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
+
+    /* create root object */
+    root = json_node_new(JSON_NODE_OBJECT);
+    json_node_take_object(root, obj);
+
+    /* create generator object */
+    gen = json_generator_new();
+    json_generator_set_root(gen, root);
+
+    return gen;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   _create_map_buffer_msg
+ *          Create the message to map buffer.
+ *
+ * @param[in]   appid                   application id
+ * @param[in]   shmname                 shared memory name
+ * @param[in]   bufsize                 buffer size
+ * @param[in]   bufnum                  number of buffer
+ * @return      json generator
+ * @retval      json generator          success
+ * @retval      NULL                    error
+ */
+/*--------------------------------------------------------------------------*/
+static msg_t
+_create_map_buffer_msg(const char *appid, const char *shmname, int bufsize, int bufnum)
+{
+    JsonObject *obj     = NULL;
+    JsonObject *argobj  = NULL;
+    JsonGenerator *gen  = NULL;
+    JsonNode *root      = NULL;
+
+    /* create json object */
+    obj = json_object_new();
+    argobj = json_object_new();
+    if (obj == NULL || argobj == NULL) {
+        _ERR("json_object_new failed");
+        return NULL;
+    }
+
+    /* set message */
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_MAP_BUFFER);
+    json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
+    json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
+
+    json_object_set_string_member(argobj, MSG_PRMKEY_ANIM_NAME, shmname);
+    json_object_set_int_member(argobj, MSG_PRMKEY_WIDTH, bufsize);
+    json_object_set_int_member(argobj, MSG_PRMKEY_HEIGHT, bufnum);
     json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
 
     /* create root object */
@@ -688,6 +741,7 @@ ico_syc_cb_thumb(ico_syc_callback_t callback, void *user_data,
     thumb_info->surface = ico_syc_get_int_member(argobj,
                                                  MSG_PRMKEY_SURFACE);
     thumb_info->name = ico_syc_get_int_member(argobj, MSG_PRMKEY_NAME);
+    thumb_info->type = ico_syc_get_int_member(argobj, MSG_PRMKEY_ATTR);
     thumb_info->width = ico_syc_get_int_member(argobj, MSG_PRMKEY_WIDTH);
     thumb_info->height = ico_syc_get_int_member(argobj, MSG_PRMKEY_HEIGHT);
     thumb_info->stride = ico_syc_get_int_member(argobj, MSG_PRMKEY_STRIDE);
@@ -960,6 +1014,39 @@ ico_syc_change_layer(const char *appid, int surface, int layer)
 
     /* make message */
     msg = _create_change_layer_msg(appid, surface, layer);
+    /* send message */
+    ret = ico_syc_send_msg(msg);
+    /* free send message */
+    ico_syc_free_msg(msg);
+
+    return ret;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_map_buffer
+ *          Prepare the thumbnail set map buffer for mapping to the memory.
+ *
+ * @param[in]   shmname                 shared memory name
+ * @param[in]   bufsize                 buffer size [byte]
+ * @param[in]   bufnum                  number of buffer
+ * @return      result
+ * @retval      0                       success
+ * @retval      not 0                   error
+ */
+/*--------------------------------------------------------------------------*/
+ICO_API int
+ico_syc_map_buffer(const char *shmname, int bufsize, int bufnum)
+{
+    int ret = ICO_SYC_ERR_NONE;
+    msg_t msg;
+    char *appid;
+
+    /* get appid */
+    appid = ico_syc_get_appid();
+
+    /* make message */
+    msg = _create_map_buffer_msg(appid, shmname, bufsize, bufnum);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */
