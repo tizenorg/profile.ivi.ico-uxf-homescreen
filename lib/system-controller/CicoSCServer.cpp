@@ -673,7 +673,6 @@ CicoSCServer::clearRecvCmdQueue(const std::string & appid)
             ++itr;
         }
     }
-    m_recvCmdQueue.clear();
 
     ICO_TRA("CicoSCServer::clearCmdQueue Leave")
 }
@@ -702,7 +701,6 @@ CicoSCServer::clearSendMsgQueue(const std::string & appid)
             ++itr;
         }
     }
-    m_sendMsgQueue.clear();
 
     ICO_TRA("CicoSCServer::clearMsgQueue Leave")
 }

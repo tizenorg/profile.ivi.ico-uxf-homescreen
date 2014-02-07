@@ -25,6 +25,7 @@
 #include "CicoLibString.h"
 #include "CicoHSServer.h"
 #include "CicoHSAppControl.h"
+#include "CicoSound.h"
 using namespace std;
 
 /*============================================================================*/
@@ -1645,6 +1646,9 @@ CicoHomeScreen::StartHomeScreen(int orientation)
     /*config copy*/
     this->config = new CicoGKeyFileConfig();
     this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE);
+
+    /* init home screen soud */
+    CicoSound::GetInstance()->Initialize(this->config);
 
     /*Get application info*/
     CreateAppInfoList();

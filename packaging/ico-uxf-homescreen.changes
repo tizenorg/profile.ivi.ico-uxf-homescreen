@@ -1,3 +1,7 @@
+* Fri Feb 07 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/20140129.180846@4c051ac
+- 0.9.13 release
+-- bugfix: TIVI-2637 Sometimes app list doesn't disappear after launching app
+
 * Fri Jan 24 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/release/20140109.181708@cae10ac
 - 0.9.12 release
 -- revise: live thumbnail display processing is changed into GPU un-depending
