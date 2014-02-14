@@ -1,0 +1,261 @@
+/*
+ * Copyright (c) 2014, TOYOTA MOTOR CORPORATION.
+ *
+ * This program is licensed under the terms and conditions of the
+ * Apache License, version 2.0.  The full text of the Apache License is at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
+
+collections {
+   group {
+      name: "main";
+      
+      styles {
+         style {
+            name: "content_style_left";
+            base: "font="Monospace" font_size=36 color=#000000FF shadow_color=#80808032 style=shadow wrap=mixed";
+         }
+         style {
+            name: "content_style_center";
+            base: "font="Monospace" font_size=36 color=#000000FF shadow_color=#80808032 align=center style=shadow wrap=mixed";
+         }
+      }
+      
+      parts {
+         part {
+            name:"background";
+            type: RECT;
+            description {
+               min: 640 300;
+               max: 640 300;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 0 0;
+               rel2.relative: 1.0 1.0;
+               rel2.offset: 0 0;
+               color: 255 255 255 255;
+            }
+         }
+         part {
+            name:"icon_bg";
+            type: RECT;
+            description {
+               min: 50 50;
+               max: 50 50;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 5 5;
+               rel1.to: "background";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: 0 0;
+               rel2.to: "background";
+               color: 192 192 192 255;
+            }
+         }
+         part {
+               name: "icon";
+               type: SWALLOW;
+               description {
+                  min: 50 50;
+                  max: 50 50;
+                  state: "default" 0.0;
+                  align: 0.0 0.0;
+                  rel1.relative: 0.0 0.0;
+                  rel1.offset: 0 0;
+                  rel1.to: "icon_bg";
+                  rel2.relative: 1.0 1.0;
+                  rel2.offset: 0 0;
+                  rel2.to: "icon_bg";
+            }
+         }
+         part {
+            name:"title_bg";
+            type: RECT;
+            description {
+               min: 550 50;
+               max: 580 50;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 55 5;
+               rel1.to: "background";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: -5 0;
+               rel2.to: "background";
+               color: 192 192 192 255;
+            }
+         }
+         part {
+            name: "title_text";
+            type: TEXT;
+            scale: 1;
+            effect: FAR_SOFT_SHADOW;
+            description {
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 0 0;
+               rel1.to: "title_bg";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: 0 0;
+               rel2.to: "title_bg";
+               color: 0 0 0 255;
+               color2: 128 128 128 50;
+               color3: 128 128 128 25;
+               text {
+                  size: 30;
+                  font: "Sans";
+                  style: "bold";
+                  text: "onscreen title";
+                  align: 0.5 0.5;
+               }
+            }
+         }
+         part {
+            name:"content_bg";
+            type: RECT;
+            description {
+               min: 630 140;
+               max: 630 140;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 5 55;
+               rel1.to: "background";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: -5 -5;
+               rel2.to: "background";
+               color:  224 224 224 255;
+            }
+         }
+         part {
+            name: "content_text_left";
+            type: TEXTBLOCK;
+            scale: 1;
+            effect: FAR_SOFT_SHADOW;
+            description {
+               min: 600 135;
+               max: 600 135;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 15 0;
+               rel1.to: "content_bg";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: 0 0;
+               rel2.to: "content_bg";
+               color: 0 0 0 255;
+               color2: 128 128 128 50;
+               color3: 128 128 128 25;
+               text {
+                  style: "content_style_left";
+                  text: "Oh, wet Alex, a jar, a fag! Up, disk, curve by! Man Oz, Iraq, Arizona, my Bev? Ruck's id-pug, a far Ajax, elate? Who?  The quick brown fox jumps over the lazy dog.";
+                  align: 0.0 0.0;
+               }
+            }
+         }
+         part {
+            name: "content_text_center";
+            type: TEXTBLOCK;
+            scale: 1;
+            effect: FAR_SOFT_SHADOW;
+            description {
+               min: 600 135;
+               max: 600 135;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 15 0;
+               rel1.to: "content_bg";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: 0 0;
+               rel2.to: "content_bg";
+               color: 0 0 0 255;
+               color2: 128 128 128 50;
+               color3: 128 128 128 25;
+               text {
+                  style: "content_style_center";
+                  text: "01234567890";
+                  align: 0.0 0.0;
+               }
+            }
+         }
+         part {
+            name:"button_bg";
+            type: RECT;
+            description {
+               min: 630 95;
+               max: 630 95;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 5 200;
+               rel1.to: "background";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: 0 0;
+               rel2.to: "background";
+               color:  224 224 224 255;
+            }
+         }
+         part {
+            name:"button_barder";
+            type: RECT;
+            description {
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.2 0.0;
+               rel1.offset: 5 5;
+               rel1.to: "button_bg";
+               rel2.relative: 0.8 1.0;
+               rel2.offset: -5 -5;
+               rel2.to: "button_bg";
+               color:  0 0 0 255;
+            }
+         }
+         part {
+            name:"button";
+            type: RECT;
+            description {
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 5 5;
+               rel1.to: "button_barder";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: -5 -5;
+               rel2.to: "button_barder";
+               color:  224 224 224 255;
+            }
+         }
+         part {
+            name: "button_text";
+            type: TEXT;
+            scale: 1;
+            effect: FAR_SOFT_SHADOW;
+            description {
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 0 0;
+               rel1.to: "button";
+               rel2.relative: 1.0 1.0;
+               rel2.offset: 0 0;
+               rel2.to: "button";
+               color: 0 0 0 255;
+               color2: 128 128 128 50;
+               color3: 128 128 128 25;
+               text {
+                  size: 40;
+                  font: "Sans";
+                  style: "bold";
+                  text: "OK";
+                  align: 0.5 0.5;
+               }
+            }
+         }
+      }
+   }
+}

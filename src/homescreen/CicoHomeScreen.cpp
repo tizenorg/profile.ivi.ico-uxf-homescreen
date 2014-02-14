@@ -864,8 +864,20 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
         else if (strncmp(win_info->appid,
                          hs_instance->GetOsPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
-            /*On Screen*/
+
+            // On Screen
             hs_instance->os_app_info->AddWindowInfo(win_info);
+
+            // show onscreen window
+            ico_syc_show(win_info->appid, win_info->surface, NULL);
+
+            // change the layer of onscreen window
+            ico_syc_change_layer(win_info->appid, win_info->surface,
+                                 HS_LAYER_ONSCREEN);
+
+            // hide onscreen layer
+            ico_syc_hide_layer(HS_LAYER_ONSCREEN);
+
         }
         else    {
             /*Application*/

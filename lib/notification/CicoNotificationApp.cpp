@@ -59,7 +59,8 @@ CicoNotificationApp::Add(CicoNotification noti)
     }
 
     int retid = 0;
-    notification_error_e err = notification_insert(noti.Unpack(), &retid);
+    notification_error_e err = NOTIFICATION_ERROR_NONE;
+    err = notification_insert(noti.GetNotiHandle(), &retid);
     if (NOTIFICATION_ERROR_NONE != err) {
         ICO_ERR("notification_insert() failed(%d).", err);
         return false;
@@ -89,7 +90,8 @@ CicoNotificationApp::Update(CicoNotification noti)
         return false;
     }
 
-    notification_error_e err = notification_update(noti.Unpack());
+    notification_error_e err = NOTIFICATION_ERROR_NONE;
+    err = notification_update(noti.GetNotiHandle());
     if (NOTIFICATION_ERROR_NONE != err) {
         ICO_ERR("notification_update() failed(%d).", err);
         return false;
@@ -125,7 +127,7 @@ CicoNotificationApp::Delete(CicoNotification noti)
     }
 
     notification_error_e err = notification_delete_by_priv_id(pkgname,
-                                                              noti.GetType(), 
+                                                              noti.GetType(),
                                                               m_privateid);
     if (NOTIFICATION_ERROR_NONE != err) {
         ICO_ERR("notification_delete_by_priv_id() failed(%d).", err);

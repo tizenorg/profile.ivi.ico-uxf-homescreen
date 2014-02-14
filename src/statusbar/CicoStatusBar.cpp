@@ -214,7 +214,7 @@ CicoStatusBar::NotificationCallback(void *data,
                     sb->UpdateNotificationPanel(noti.GetTitle(),
                                                 noti.GetIconPath(), 
                                                 NULL);
-#if 1
+#if 0
                     int grpid = 0;
                     int privid = 0;
                     notification_get_id(notification_list_get_data(getlist),

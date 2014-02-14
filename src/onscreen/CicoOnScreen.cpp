@@ -12,41 +12,40 @@
  * @date    Jan-07-2014
  */
 #include "CicoOnScreen.h"
+#include <Ecore.h>
+#include <Ecore_Wayland.h>
 
 using namespace std;
 
-/*============================================================================*/
-/* static members                                                             */
-/*============================================================================*/
+//==========================================================================
+// static members
+//==========================================================================
 CicoOnScreen * CicoOnScreen::os_instance=NULL;
 struct popup_data CicoOnScreen::ico_appdata;
-struct lemolo_noti_data CicoOnScreen::ico_notidata;
 
-/*============================================================================*/
-/* functions                                                                  */
-/*============================================================================*/
+//==========================================================================
+// functions
+//==========================================================================
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::CicoOnScreen
  *          Constractor
  *
  * @param[in]   none
  * @return      none
-
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 CicoOnScreen::CicoOnScreen(void)
 {
     ICO_TRA("CicoOnScreen::CicoOnScreen Enter");
 
     InitializePopupData();
-    InitializeNotificationData();
 
     ICO_TRA("CicoOnScreen::CicoOnScreen Leave");
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::~CicoOnScreen
  *          Destractor
@@ -54,14 +53,14 @@ CicoOnScreen::CicoOnScreen(void)
  * @param[in]   none
  * @return      none
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 CicoOnScreen::~CicoOnScreen(void)
 {
 //    ICO_TRA("CicoOnScreen::~CicoOnScreen Enter");
 //    ICO_TRA("CicoOnScreen::~CicoOnScreen Leave");
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::InitializePopupData
  *          Initialize popup struct data
@@ -69,50 +68,22 @@ CicoOnScreen::~CicoOnScreen(void)
  * @param[in]   none
  * @return      none
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 void
 CicoOnScreen::InitializePopupData(void)
 {
     ICO_TRA("CicoOnScreen::InitializePopupData Enter");
 
     ico_appdata.window = NULL;
-    ico_appdata.evas = NULL;
-    ico_appdata.background = NULL;
     ico_appdata.icon = NULL;
-    ico_appdata.title = NULL;
-    ico_appdata.content = NULL;
-    ico_appdata.icon_bg = NULL;
-    ico_appdata.title_bg = NULL;
-    ico_appdata.content_bg = NULL;
+    ico_appdata.noti = NULL;
     ico_appdata.show_flag = FALSE;
+    ico_appdata.noti = NULL;
 
     ICO_TRA("CicoOnScreen::InitializePopupData Leave");
 }
 
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoOnScreen::InitializePopupData
- *          Initialize notification struct data
- *
- * @param[in]   none
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-void
-CicoOnScreen::InitializeNotificationData(void)
-{
-    ICO_TRA("CicoOnScreen::InitializeNotificationData Enter");
-
-    ico_notidata.title = NULL;
-    ico_notidata.content = NULL;
-    ico_notidata.icon = NULL;
-    ico_notidata.text = NULL;
-    ico_notidata.service_handle = NULL;
-
-    ICO_TRA("CicoOnScreen::InitializeNotificationData Leave");
-}
-
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::StartOnScreen
  *          Start on screen
@@ -121,39 +92,29 @@ CicoOnScreen::InitializeNotificationData(void)
  * @return      none
  * @return true on success, false on error
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 bool
-CicoOnScreen::StartOnScreen(int orientation)
+CicoOnScreen::StartOnScreen(void)
 {
     ICO_TRA("CicoOnScreen::StartOnScreen Enter");
 
-    /* save instance pointer */
+    ico_syc_connect(EventCallBack, NULL);
+
+    // save instance pointer
     os_instance = this;
 
-#if 0
-    /* config copy*/
-    this->config = new CicoGKeyFileConfig();
-    this->config->Initialize(ICO_ONSCREEN_CONFIG_FILE);
-
-    /* Get screen size */
-    CicoOSWindowController::GetFullScreenSize(orientation,
-                                              &full_width,&full_height);
-
-    ICO_DBG("full screen size x=%d y=%d",full_width,full_height);
-#endif
-
-    /* Initialize */
+    // Initialize
     ecore_evas_init();
     InitializePopup();
 
-    /* set notification callback function */
+    // set notification callback function
     notiservice_.SetCallback(NotificationCallback, this);
 
     ICO_TRA("CicoOnScreen::StartOnScreen Leave(true)");
     return true;
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::Finalize
  *          Finalize
@@ -161,13 +122,13 @@ CicoOnScreen::StartOnScreen(int orientation)
  * @param[in]   none
  * @return      none
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 void
 CicoOnScreen::Finalize(void)
 {
     ICO_TRA("CicoOnScreen::Finalize Enter");
 
-    /* Free window handle */
+    // Free window handle
     if (ico_appdata.window != NULL) {
         ecore_evas_free(ico_appdata.window);
     }
@@ -175,7 +136,7 @@ CicoOnScreen::Finalize(void)
     ICO_TRA("CicoOnScreen::Finalize Leave");
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::ShowPopup
  *          Show popup window
@@ -183,36 +144,94 @@ CicoOnScreen::Finalize(void)
  * @param[in]   none
  * @return      none
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 void
-CicoOnScreen::ShowPopup(void)
+CicoOnScreen::ShowPopup(CicoNotification &noti)
 {
     ICO_TRA("CicoOnScreen::ShowPopup Enter");
 
-    evas_object_show(ico_appdata.background);
+	ico_appdata.noti = new CicoNotification(noti.GetNotiHandle());
 
-    /* Icon show */
-    evas_object_show(ico_appdata.icon_bg);
-    if (ico_notidata.icon != NULL) {
-        evas_object_image_file_set(ico_appdata.icon, ico_notidata.icon, NULL);
-        evas_object_image_fill_set(ico_appdata.icon, 0, 0, 50, 50);
-        evas_object_show(ico_appdata.icon);
+	// get caller pachage name
+	const char *pkgname = noti.GetPkgname();
+
+	// get priv_id
+	int priv_id = noti.GetPrivId();
+
+	// Get title
+	const char *title = noti.GetTitle();
+
+	// Get content
+	const char *content = noti.GetContent();
+
+	// Get execute option
+	const char *text = NULL;
+	bundle *service_handle = NULL;
+	(void)noti.GetExecuteOption(NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH,
+								&text, &service_handle);
+
+	// Get icon path
+	const char *icon = noti.GetIconPath();
+	ICO_DBG("Received: %s : %i : %s : %s : %s : %x",
+			pkgname, priv_id, title, content,
+			text, (int)service_handle);
+
+    if (icon) {
+        if (NULL != ico_appdata.icon) {
+            evas_object_image_file_set(ico_appdata.icon, icon, NULL);
+            evas_object_show(ico_appdata.icon);
+        }
     }
 
-    /* Title show */
-    evas_object_show(ico_appdata.title_bg);
-    evas_object_textblock_text_markup_set(ico_appdata.title, ico_notidata.title);
-    evas_object_show(ico_appdata.title);
+    if (title) {
+        if (!edje_object_part_text_set(ico_appdata.theme, "title_text", title)) {
+            ICO_WRN("could not set the text. Maybe part 'text' does not exist?");
+        }
+    }
 
-    /* Content show */
-    evas_object_show(ico_appdata.content_bg);
-    evas_object_textblock_text_markup_set(ico_appdata.content, ico_notidata.content);
-    evas_object_show(ico_appdata.content);
+    if (content) {
+        if (strlen(content) <= 25) {
+            ICO_DBG("content text center");
+            if (!edje_object_part_text_set(ico_appdata.theme, "content_text_center", content)) {
+                ICO_WRN("could not set the text. Maybe part 'text' does not exist?");
+            }
+            if (!edje_object_part_text_set(ico_appdata.theme, "content_text_left", "")) {
+                ICO_WRN("could not set the text. Maybe part 'text' does not exist?");
+            }
+        }
+        else {
+            ICO_DBG("content text left");
+            if (!edje_object_part_text_set(ico_appdata.theme, "content_text_left", content)) {
+                ICO_WRN("could not set the text. Maybe part 'text' does not exist?");
+            }
+            if (!edje_object_part_text_set(ico_appdata.theme, "content_text_center", "")) {
+                ICO_WRN("could not set the text. Maybe part 'text' does not exist?");
+            }
+        }
+    }
+
+    if (text) {
+        if (!edje_object_part_text_set(ico_appdata.theme, "button_text", text)) {
+            ICO_WRN("could not set the text. Maybe part 'text' does not exist?");
+        }
+    }
+    else {
+        if (!edje_object_part_text_set(ico_appdata.theme, "button_text", "OK")) {
+            ICO_WRN("could not set the text. Maybe part 'text' does not exist?");
+        }
+    }
+
+    evas_object_show(ico_appdata.theme);
+
+    // TODO show onscreen layer
+    ico_syc_show_layer(6);
+
+    ecore_evas_show(ico_appdata.window);
 
     ICO_TRA("CicoOnScreen::ShowPopup Leave");
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::HidePopup
  *          Hide popup window
@@ -224,33 +243,34 @@ CicoOnScreen::ShowPopup(void)
  * @param[in]   event_info  Event information
  * @return      none
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 void
-CicoOnScreen::HidePopup(void *data, Evas *e, Evas_Object *obj, void *event_info)
+CicoOnScreen::HidePopup(void)
 {
     ICO_TRA("CicoOnScreen::HidePopup Enter");
 
-    /* Background(popup frame) hide */
-    evas_object_hide(ico_appdata.background);
+    // TODO hide onscreen layer
+    ico_syc_hide_layer(6);
 
-    /* Icon hide */
-    evas_object_hide(ico_appdata.icon_bg);
-    evas_object_hide(ico_appdata.icon);
+    // Background(popup frame) hide
+    evas_object_hide(ico_appdata.theme);
 
-    /* Title hide */
-    evas_object_hide(ico_appdata.title_bg);
-    evas_object_hide(ico_appdata.title);
-
-    /* Content hide */
-    evas_object_hide(ico_appdata.content_bg);
-    evas_object_hide(ico_appdata.content);
+	if (NULL != ico_appdata.noti) {
+        notification_error_e err = NOTIFICATION_ERROR_NONE;
+		err = notification_delete(ico_appdata.noti->GetNotiHandle());
+        if (NOTIFICATION_ERROR_NONE != err) {
+            ICO_ERR("notification_delete faile(%d).");
+        }
+		delete ico_appdata.noti;
+		ico_appdata.noti = NULL;
+	}
 
     ico_appdata.show_flag = FALSE;
 
     ICO_TRA("CicoOnScreen::HidePopup Leave");
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::InitializePopup
  *          Initialize popup window
@@ -258,19 +278,13 @@ CicoOnScreen::HidePopup(void *data, Evas *e, Evas_Object *obj, void *event_info)
  * @param[in]   none
  * @return      none
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 void
 CicoOnScreen::InitializePopup(void)
 {
-    Evas_Textblock_Style* ts;
-    static const char *style_buf =
-        "DEFAULT='font=Sans font_size=30 color=#000 align=center text_class=entry'"
-        "newline='br'"
-        "b='+ font=Sans:style=bold'";
-
     ICO_TRA("CicoOnScreen::InitializePopup Enter");
 
-    /* Window setup */
+    // Window setup
     ico_appdata.window = ecore_evas_new(NULL, 0, 0, WIDTH, HEIGHT, "frame=0");
     if (ico_appdata.window == NULL) {
         ICO_ERR("ecore_evas_new() error");
@@ -280,74 +294,64 @@ CicoOnScreen::InitializePopup(void)
     }
     ecore_evas_show(ico_appdata.window);
 
-    /* Background setup */
-    ico_appdata.evas = ecore_evas_get(ico_appdata.window);
-    ico_appdata.background = evas_object_rectangle_add(ico_appdata.evas);
-    evas_object_color_set(ico_appdata.background, 255, 255, 255, 255);
-    evas_object_move(ico_appdata.background, POPUP_FRAME_ST_X, POPUP_FRAME_ST_Y);
-    evas_object_resize(ico_appdata.background, POPUP_FRAME_WIDTH, POPUP_FRAME_HEIGHT);
+    ico_appdata.theme = edje_object_add(ecore_evas_get(ico_appdata.window));
+    if (NULL == ico_appdata.theme) {
+        ICO_ERR("could not create edje object!");
+        return;
+    }
 
-    /* Icon Background setup */
-    ico_appdata.icon_bg = evas_object_rectangle_add(ico_appdata.evas);
-    evas_object_color_set(ico_appdata.icon_bg, 192, 192, 192, 255);
-    evas_object_move(ico_appdata.icon_bg, POPUP_ICON_ST_X, POPUP_ICON_ST_Y);
-    evas_object_resize(ico_appdata.icon_bg, POPUP_ICON_WIDTH, POPUP_ICON_HEIGHT);
+    if (!edje_object_file_set(ico_appdata.theme, "/usr/apps/org.tizen.ico.onscreen/res/themes/onscreen.edj", "main")) {
+        Edje_Load_Error err = edje_object_load_error_get(ico_appdata.theme);
+        const char *errmsg = edje_load_error_str(err);
+        ICO_ERR("could not load 'main' from onscreen.edj: %s",
+                errmsg);
+        evas_object_del(ico_appdata.theme);
+        ico_appdata.theme = NULL;
+        return;
+    }
 
-    /* Icon setup */
-    ico_appdata.icon = evas_object_image_add(ico_appdata.evas);
-    evas_object_move(ico_appdata.icon, POPUP_ICON_ST_X, POPUP_ICON_ST_Y);
-    evas_object_resize(ico_appdata.icon, POPUP_ICON_WIDTH, POPUP_ICON_HEIGHT);
+    // icon setup
+    ico_appdata.icon = evas_object_image_filled_add(ecore_evas_get(ico_appdata.window));
+    edje_object_part_swallow(ico_appdata.theme, "icon", ico_appdata.icon);
 
-    /* Title Background setup */
-    ico_appdata.title_bg = evas_object_rectangle_add(ico_appdata.evas);
-    evas_object_color_set(ico_appdata.title_bg, 192, 192, 192, 255);
-    evas_object_move(ico_appdata.title_bg, POPUP_TITLE_ST_X, POPUP_TITLE_ST_Y);
-    evas_object_resize(ico_appdata.title_bg, POPUP_TITLE_WIDTH, POPUP_TITLE_HEIGHT);
+    /* getting size of screen */
+    /* home screen size is full of display*/
+    int display_width  = 0;
+    int display_height = 0;
+    ecore_wl_screen_size_get(&display_width, &display_height);
 
-    /* text style set */
-    ts = evas_textblock_style_new();
-    evas_textblock_style_set(ts, style_buf);
+    ICO_DBG("display size w/h=%d/%d", display_width, display_height);
+    int popup_x = (display_width / 2) - (POPUP_FRAME_WIDTH / 2);
+    int popup_y = (display_height / 2) - (POPUP_FRAME_HEIGHT/ 2);
+    ICO_DBG("popup postion x/y=%d/%d", popup_x, popup_y);
+    evas_object_move(ico_appdata.theme, popup_x, popup_y);
+    evas_object_resize(ico_appdata.theme, POPUP_FRAME_WIDTH, POPUP_FRAME_HEIGHT);
 
-    /* Title setup */
-    ico_appdata.title = evas_object_textblock_add(ico_appdata.evas);
-    evas_object_textblock_style_set(ico_appdata.title, ts);
-    evas_object_textblock_valign_set(ico_appdata.title, 0.5);
-    evas_object_textblock_text_markup_set(ico_appdata.title, "default");
-    evas_object_move(ico_appdata.title, POPUP_TITLE_ST_X, POPUP_TITLE_ST_Y);
-    evas_object_resize(ico_appdata.title, POPUP_TITLE_WIDTH, POPUP_TITLE_HEIGHT);
+    Evas_Object* obj = NULL;
+    obj = (Evas_Object*)edje_object_part_object_get(ico_appdata.theme,
+                                                    "button_text");
+    if (NULL != obj) {
+        evas_object_event_callback_add(obj,
+                                       EVAS_CALLBACK_MOUSE_UP,
+                                       evasMouseUpCB,
+                                       this);
+    }
 
-    /* Content Background setup */
-    ico_appdata.content_bg = evas_object_rectangle_add(ico_appdata.evas);
-    evas_object_color_set(ico_appdata.content_bg, 224, 224, 224, 255);
-    evas_object_move(ico_appdata.content_bg, POPUP_CONTENT_BG_ST_X, POPUP_CONTENT_BG_ST_Y);
-    evas_object_resize(ico_appdata.content_bg, POPUP_CONTENT_BG_WIDTH, POPUP_CONTENT_BG_HEIGHT);
+    obj = (Evas_Object*)edje_object_part_object_get(ico_appdata.theme,
+                                                    "button");
+    if (NULL != obj) {
+        evas_object_event_callback_add(obj,
+                                       EVAS_CALLBACK_MOUSE_UP,
+                                       evasMouseUpCB,
+                                       this);
+    }
 
-    /* Content setup */
-    ico_appdata.content = evas_object_textblock_add(ico_appdata.evas);
-    evas_object_textblock_style_set(ico_appdata.content, ts);
-    evas_object_textblock_valign_set(ico_appdata.content, 0.5);
-    evas_object_textblock_text_markup_set(ico_appdata.content, "default");
-    evas_object_move(ico_appdata.content, POPUP_CONTENT_BG_ST_X, POPUP_CONTENT_BG_ST_Y);
-    evas_object_resize(ico_appdata.content, POPUP_CONTENT_BG_WIDTH, POPUP_CONTENT_BG_HEIGHT);
-
-    /* set callback event */
-    evas_object_event_callback_add(ico_appdata.icon_bg, EVAS_CALLBACK_MOUSE_UP,
-        HidePopup, NULL);
-    evas_object_event_callback_add(ico_appdata.icon, EVAS_CALLBACK_MOUSE_UP,
-        HidePopup, NULL);
-    evas_object_event_callback_add(ico_appdata.title_bg, EVAS_CALLBACK_MOUSE_UP,
-        HidePopup, NULL);
-    evas_object_event_callback_add(ico_appdata.title, EVAS_CALLBACK_MOUSE_UP,
-        HidePopup, NULL);
-    evas_object_event_callback_add(ico_appdata.content_bg, EVAS_CALLBACK_MOUSE_UP,
-        HidePopup, NULL);
-    evas_object_event_callback_add(ico_appdata.content, EVAS_CALLBACK_MOUSE_UP,
-        HidePopup, NULL);
+    evas_object_show(ico_appdata.theme);
 
     ICO_TRA("CicoOnScreen::InitializePopup Leave(OK)");
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::NotificationCallback
  *          Notification callback function
@@ -357,104 +361,138 @@ CicoOnScreen::InitializePopup(void)
  * @param[in]  type        The type of notification
  * @return     none
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 void
 CicoOnScreen::NotificationCallback(void *data, notification_type_e type,
-        notification_op *op_list, int num_op)
+                                   notification_op *op_list, int num_op)
 {
-    notification_h noti_h = NULL;
-    notification_list_h notification_list = NULL;
-    notification_list_h get_list = NULL;
-//    notification_op_type_e op_type;
-    int op_type;
-    int group_id = 0;
-    int length1 = 0;
-    int length2 = 0;
-    int ret_err = NOTIFICATION_ERROR_NONE;
-    int priv_id = NOTIFICATION_PRIV_ID_NONE;
-    char *pkgname = NULL;
-
     ICO_TRA("CicoOnScreen::NotificationCallback Enter");
 
-    os_instance->InitializeNotificationData();
-
     for (int i = 0; i < num_op; i++) {
-        op_type = (int)op_list[i].type;
+        notification_op_type_e op_type = op_list[i].type;
+        int priv_id = op_list[i].priv_id;
+        notification_h noti_h = op_list[i].noti;
+        ICO_DBG("RECV notification op_type=%d priv_id=%d noti=0x%08x",
+                op_type, priv_id, noti_h);
 
         switch (op_type) {
         case NOTIFICATION_OP_INSERT :
-        case NOTIFICATION_OP_UPDATE :
-            notification_get_list(NOTIFICATION_TYPE_NOTI, -1, &notification_list);
-            if (notification_list) {
-                get_list = notification_list_get_head(notification_list);
+        {
+            ICO_DBG("NOTIFICATION_OP_INSERT(%d)", op_type);
 
-                while(get_list != NULL) {
-                    noti_h = notification_list_get_data(get_list);
-                    CicoNotification noti(noti_h);
-                    if (noti.Empty()) {
-                        break;
-                    }
-
-                    pkgname = (char *)noti.GetPkgname();
-                    if(pkgname == NULL){
-                        notification_get_application(noti_h, &pkgname);
-                    }
-
-                    length1 = strlen(pkgname);
-                    length2 = strlen(LEMOLO_PKGNAME);
-                    length1 = (length1<=length2) ? length1 : length2;
-
-                    if (pkgname != NULL && 
-                        strncmp(pkgname, LEMOLO_PKGNAME, length1) == 0) {
-
-                        /* Get priv_id */
-                        notification_get_id(noti_h, &group_id, &priv_id);
-                        /* Get title */
-                        ico_notidata.title = (char *)noti.GetTitle();
-                        /* Get content */
-                        ico_notidata.content = (char *)noti.GetContent();
-                        /* Get execute option */
-                        notification_get_execute_option(noti_h,
-                            NOTIFICATION_EXECUTE_TYPE_SINGLE_LAUNCH,
-                            (const char **)(&ico_notidata.text),
-                            &ico_notidata.service_handle);
-                        /* Get icon path */
-                        ico_notidata.icon = (char *)noti.GetIconPath();
-#if 0
-                        ico_notidata.icon = ICON_PATH;  // test
-#endif
-                        ICO_DBG("Received: %s : %i : %s : %s : %s : %x",
-                            pkgname, priv_id, ico_notidata.title,
-                            ico_notidata.content,
-                            ico_notidata.text,
-                            (int)ico_notidata.service_handle);
-
-                        /* Show popup window */
-                        if (ico_appdata.show_flag == FALSE) {
-                            ico_appdata.show_flag = TRUE;
-                            os_instance->ShowPopup();
-                        }
-
-                        /* Delete received notification from DB */
-                        ret_err = notification_delete_by_priv_id(pkgname,
-                            NOTIFICATION_TYPE_NOTI, priv_id);
-                        if (ret_err != NOTIFICATION_ERROR_NONE) {
-                            ICO_ERR("notification_delete_by_priv_id:error(%d)", ret_err);
-                            break;
-                        }
-                    }
-
-                    get_list = notification_list_get_next(get_list);
-                }
+            CicoNotification noti(noti_h);
+            if (noti.Empty()) {
+                break;
             }
+
+            // check notification type
+            // TODO config
+            notification_type_e type = noti.GetType();
+            if (NOTIFICATION_TYPE_NOTI != type) {
+                break;
+            }
+
+            // Show popup window
+            if (ico_appdata.show_flag == FALSE) {
+                ico_appdata.show_flag = TRUE;
+                os_instance->ShowPopup(noti);
+            }
+            break;
+        }
+        case NOTIFICATION_OP_UPDATE :
+            ICO_DBG("NOTIFICATION_OP_UPDATE(%d)", op_type);
+            break;
+        case NOTIFICATION_OP_DELETE:
+        {
+            ICO_DBG("NOTIFICATION_OP_DELETE(%d)", op_type);
+
+            if (NULL == ico_appdata.noti) {
+                break;
+            }
+
+            if (priv_id == ico_appdata.noti->GetPrivId()) {
+                delete ico_appdata.noti;
+                ico_appdata.noti = NULL;
+                os_instance->HidePopup();
+            }
+            break;
+        }
+        case NOTIFICATION_OP_DELETE_ALL:
+            ICO_DBG("NOTIFICATION_OP_DELETE_ALL(%d)", op_type);
+            break;
+        case NOTIFICATION_OP_REFRESH:
+            ICO_DBG("NOTIFICATION_OP_REFRESH(%d)", op_type);
+            break;
+        case NOTIFICATION_OP_SERVICE_READY:
+            ICO_DBG("NOTIFICATION_OP_SERVICE_READY(%d)", op_type);
+            break;
+        default :
+            break;
         }
     }
 
-    if (notification_list != NULL) {
-        notification_free_list(notification_list);
-        notification_list = NULL;
+    ICO_TRA("CicoOnScreen::NotificationCallback Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ * @brief   callback function of evas mouse up event
+ *
+ * @param [in] data         The user data passed from the callback
+ *                          registration function
+ * @param [in] e            The handle to the popup window
+ * @param [in] obj          The handle to the Evas object
+ * @param [in] event_info   Event information
+ *
+ */
+//--------------------------------------------------------------------------
+void
+CicoOnScreen::evasMouseUpCB(void *data, Evas *e,
+                            Evas_Object *obj, void *event_info)
+{
+    ICO_TRA("CicoOnScreen::evasMouseUpCB Enter");
+    ICO_DBG("obj name=%s", evas_object_name_get(obj));
+
+    static_cast<CicoOnScreen*>(data)->HidePopup();
+
+    ICO_TRA("CicoOnScreen::evasMouseUpCB Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   callback for system controller
+ *
+ *  @param [in] event       kind of event
+ *  @param [in] detail      detail
+ *  @param [in] user_data   user data
+ */
+//--------------------------------------------------------------------------
+void
+CicoOnScreen::EventCallBack(const ico_syc_ev_e event,
+                            const void *detail, void *user_data)
+{
+    ICO_TRA("CicoOnScreen::EventCallBack Enter(event %d)", event);
+
+    switch (event) {
+    case ICO_SYC_EV_RES_ACQUIRE:
+        ICO_TRA("Received: ico syc event(ICO_SYC_EV_RES_ACQUIRE)");
+        break;
+    case ICO_SYC_EV_RES_DEPRIVE:
+        ICO_TRA("Received: ico syc event(ICO_SYC_EV_RES_DEPRIVE)");
+        break;
+    case ICO_SYC_EV_RES_WAITING:
+        ICO_TRA("Received: ico syc event(ICO_SYC_EV_RES_WAITING)");
+        break;
+    case ICO_SYC_EV_RES_REVERT:
+        ICO_TRA("Received: ico syc event(ICO_SYC_EV_RES_REVERT)");
+        break;
+    case ICO_SYC_EV_RES_RELEASE:
+        ICO_TRA("Received: ico syc event(ICO_SYC_EV_RES_RELEASE)");
+        break;
+    default:
+        break;
     }
 
-    ICO_TRA("CicoOnScreen::NotificationCallback Leave");
+    ICO_TRA("CicoOnScreen::EventCallBack Leave");
 }
 // vim: set expandtab ts=4 sw=4:

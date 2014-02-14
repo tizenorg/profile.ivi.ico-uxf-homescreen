@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.statusbar" version="0.9.13" install-location="internal-only">
+<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.statusbar" version="0.9.14" install-location="internal-only">
 	<label>StatusBar</label>
   	<description>IVI StatusBar Application</description>
 	<ui-application appid="org.tizen.ico.statusbar" exec="/usr/apps/org.tizen.ico.statusbar/bin/StatusBar" nodisplay="true" multiple="false" type="capp" taskmanage="true">

@@ -29,10 +29,14 @@
 #include <aul.h>
 #include <Ecore_Evas.h>
 #include <Evas.h>
+#include <Edje.h>
 
 #include <stdbool.h>
 #include <CicoNotification.h>
 #include <CicoNotificationService.h>
+
+#include "ico_syc_common.h"
+#include "ico_syc_privilege.h"
 
 #include "ico_log.h"
 
@@ -48,6 +52,13 @@
 /* Popup Size */
 #define POPUP_WIDTH         640
 #define POPUP_HEIGHT        300
+
+/* Popup Frame Size */
+#define POPUP_FRAME_THICK   10
+#define POPUP_FRAME_WIDTH   (POPUP_WIDTH+POPUP_FRAME_THICK)
+#define POPUP_FRAME_HEIGHT  (POPUP_HEIGHT+POPUP_FRAME_THICK)
+
+#if 0
 #define POPUP_ST_X          ((WIDTH-POPUP_WIDTH)/2)
 #define POPUP_ST_Y          ((HEIGHT-POPUP_HEIGHT)/2)
 
@@ -86,11 +97,14 @@
 #define ICO_ORIENTATION_HORIZONTAL (2)
 
 #define LEMOLO_PKGNAME       "org.tizen.dialer"
+#endif
 
 #define FALSE                0
 #define TRUE                 1
 
+#if 0
 #define ICON_PATH      (char *)"/usr/share/icons/default/small/org.tizen.dialer.png"
+#endif
 
 /*============================================================================*/
 /* Define data types                                                          */
@@ -98,24 +112,10 @@
 struct popup_data
 {
     Ecore_Evas  *window;
-    Evas        *evas;
-    Evas_Object *background;
     Evas_Object *icon;
-    Evas_Object *title;
-    Evas_Object *content;
-    Evas_Object *icon_bg;
-    Evas_Object *title_bg;
-    Evas_Object *content_bg;
+    Evas_Object *theme;
     int         show_flag;
-};
-
-struct lemolo_noti_data
-{
-    char *title;             /* if exist then box-type else band-type */
-    char *content;           /* Mandatory */
-    char *icon;              /* Mandatory(box-type), Optional(band-type) */
-    char *text;
-    bundle *service_handle;
+    CicoNotification *noti;
 };
 
 /*============================================================================*/
@@ -123,26 +123,36 @@ struct lemolo_noti_data
 /*============================================================================*/
 class CicoOnScreen
 {
-  public:
+public:
     CicoOnScreen(void);
     ~CicoOnScreen(void);
-    bool StartOnScreen(int orientation);
+    bool StartOnScreen(void);
     void Finalize(void);
-    static void NotificationCallback(void *data, notification_type_e type,
-        notification_op *op_list, int num_op);
 
-  private:
-    void ShowPopup(void);
-    static void HidePopup(void *data, Evas *e, Evas_Object *obj, void *event_info);
+    void HidePopup(void);
+    static void NotificationCallback(void *data,
+                                     notification_type_e type,
+                                     notification_op *op_list,
+                                     int num_op);
+
+private:
+    void ShowPopup(CicoNotification &noti);
     void InitializePopup(void);
-    void InitializeNotificationData(void);
     void InitializePopupData(void);
+
+    static void evasMouseUpCB(void *data,
+                              Evas *e,
+                              Evas_Object *obj,
+                              void *event_info);
+
+    static void EventCallBack(const ico_syc_ev_e event,
+                              const void *detail,
+                              void *user_data);
 
     static CicoOnScreen *os_instance;
     static struct popup_data ico_appdata;
-    static struct lemolo_noti_data ico_notidata;
 
-  protected:
+protected:
     CicoNotificationService notiservice_;
 };
 #endif  // __CICO_ON_SCREEN_H__

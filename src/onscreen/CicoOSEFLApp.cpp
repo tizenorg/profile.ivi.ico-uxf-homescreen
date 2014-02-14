@@ -61,14 +61,9 @@ CicoOSEFLApp::onCreate(void *user_data)
     ICO_TRA("CicoOSEFLApp::onCreate Enter");
 
     try {
-#if 0
-        // load system config
-        CicoSystemConfig::getInstance()->load(
-                ICO_OS_LIFECYCLE_CONTROLLER_SETTING_PATH);
-#endif
         // start onscreen
         m_onscreen = new CicoOnScreen();
-        bool ret = m_onscreen->StartOnScreen(ICO_ORIENTATION_VERTICAL);
+        bool ret = m_onscreen->StartOnScreen();
         if(ret != true){
             ICO_TRA("CicoOSEFLApp::onCreate Leave(false)");
             return false;

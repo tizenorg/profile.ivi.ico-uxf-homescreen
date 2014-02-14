@@ -1,3 +1,7 @@
+* Fri Feb 14 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen/20140214.023123@397e77f
+- 0.9.14 release
+-- add: TIVI-1751 Home Screen needs to use system notifications framework
+
 * Fri Feb 07 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/20140129.180846@4c051ac
 - 0.9.13 release
 -- bugfix: TIVI-2637 Sometimes app list doesn't disappear after launching app

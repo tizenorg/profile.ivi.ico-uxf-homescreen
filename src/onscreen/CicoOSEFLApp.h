@@ -33,7 +33,7 @@ class CicoOSEFLApp : public CicoEFLApp {
 public:
     // default constructor
     CicoOSEFLApp();
-    
+
     // destructor
     virtual ~CicoOSEFLApp();
 

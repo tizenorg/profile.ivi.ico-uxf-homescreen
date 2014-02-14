@@ -47,17 +47,17 @@ public:
 
     // set callback function
     bool SetCallback(void (*detailed_changed_cb)
-                     (void *data, 
-                      notification_type_e type, 
-                      notification_op *op_list, 
-                      int num_op), 
+                     (void *data,
+                      notification_type_e type,
+                      notification_op *op_list,
+                      int num_op),
                      void *user_data);
 
     // unset callback function
     bool UnsetCallback(void (*detailed_changed_cb)
-                       (void *data, 
-                        notification_type_e type, 
-                        notification_op *op_list, 
+                       (void *data,
+                        notification_type_e type,
+                        notification_op *op_list,
                         int num_op));
 
 private:

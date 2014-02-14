@@ -20,10 +20,9 @@
 #include <Eina.h>
 #include "ico_log.h"
 #include "CicoOSEFLApp.h"
-//#include "CicoHSCmdOpts.h"
-//#include "CicoGKeyFileConfig.h"
+#include "CicoGKeyFileConfig.h"
 
-#if 0
+#define ICO_CONFIG_FILE      "onscreen.conf"
 #define ICO_CONFIG_LOG       "log"
 #define ICO_CONFIG_LOG_NAME  "filename"
 #define ICO_CONFIG_LOG_LEVEL "loglevel"
@@ -39,22 +38,21 @@ void
 setupLog(void)
 {
     /* init configuration */
-    CicoGKeyFileConfig hsConfig;
-    hsConfig.Initialize(ICO_HOMESCREEN_CONFIG_FILE);
+    CicoGKeyFileConfig osConfig;
+    osConfig.Initialize(ICO_CONFIG_FILE);
 
     // ico log open
     std::string name;
-    name = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
-                                     ICO_CONFIG_LOG_NAME,
-                                     "HomeScreen");
+    name = osConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                    ICO_CONFIG_LOG_NAME,
+                                    "OnScreen");
     ico_log_open(name.c_str());
-
 
     // ico log level
     int log_level = 0;
-    std::string level = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
-                                                  ICO_CONFIG_LOG_LEVEL,
-                                                  "all");
+    std::string level = osConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                                 ICO_CONFIG_LOG_LEVEL,
+                                                 "all");
 
     if (NULL != strstr(level.c_str(), "performance")) {
         log_level |= ICO_LOG_LVL_PRF;
@@ -84,9 +82,9 @@ setupLog(void)
         log_level |= ICO_LOG_LVL_ERR;
     }
 
-    std::string flush = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
-                                                  ICO_CONFIG_LOG_FLUSH,
-                                                  "on");
+    std::string flush = osConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                                 ICO_CONFIG_LOG_FLUSH,
+                                                 "on");
     if (NULL != strstr(flush.c_str(), "on")) {
         log_level |= ICO_LOG_FLUSH;
     }
@@ -102,19 +100,18 @@ setupLog(void)
     }
 
     // eocre log print
-    std::string ecore = hsConfig.ConfigGetString(ICO_CONFIG_LOG,
-                                                  ICO_CONFIG_LOG_ECORE,
-                                                  "on");
+    std::string ecore = osConfig.ConfigGetString(ICO_CONFIG_LOG,
+                                                 ICO_CONFIG_LOG_ECORE,
+                                                 "on");
     if (NULL != strstr(ecore.c_str(), "on")) {
         eina_init();
         eina_log_level_set(EINA_LOG_LEVEL_DBG);
     }
 }
-#endif
 
 //--------------------------------------------------------------------------
 /**
- *  @brief   onscreen main 
+ *  @brief   onscreen main
  *           homescreen main. initialize UXF, app manager, and ecore.
  *
  *  @param [in] argc    counts of argment
@@ -129,19 +126,11 @@ main(int argc, char *argv[])
 {
     try {
         printf("=== start OnScreen main entry\n");
- 
+
         // setupLog
-#if 0
         setupLog();
-#else
-        ico_log_open("org.tizen.ico.app-onscreen"); // temporary
-#endif
         ICO_INF( "START_MODULE OnScreen" );
 
-#if 0
-        // perse command options
-        CicoHSCmdOpts::getInstance()->parse(argc, argv);
-#endif
         // start onscreen
         CicoOSEFLApp osEFLApp;
         int ret = osEFLApp.start(argc, argv);

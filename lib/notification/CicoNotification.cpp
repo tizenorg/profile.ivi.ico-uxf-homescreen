@@ -21,28 +21,74 @@
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  default constructor
+ *  @brief  constructor
+ *
+ *  @param [in] type    type of notification
  */
 //--------------------------------------------------------------------------
-CicoNotification::CicoNotification()
-    : m_notification(NULL), 
-      m_type(NOTIFICATION_TYPE_NONE)
+CicoNotification::CicoNotification(notification_type_e type)
+    : m_notification(NULL),
+      m_type(type),
+      m_privId(NOTIFICATION_PRIV_ID_NONE),
+      m_groupId(NOTIFICATION_GROUP_ID_NONE)
 {
+    // create notfication handler
+    m_notification = notification_create(type);
+    if (NULL != m_notification) {
+        // initialize group id and private id variables
+        notification_error_e err = NOTIFICATION_ERROR_NONE;
+        err = notification_get_id(m_notification, &m_groupId, &m_privId);
+        if (NOTIFICATION_ERROR_NONE != err) {
+            ICO_ERR("notification_get_id() failed(%d).", err);
+            m_privId  = NOTIFICATION_PRIV_ID_NONE;
+            m_groupId = NOTIFICATION_GROUP_ID_NONE;
+        }
+    }
+    else {
+        ICO_ERR("notification_create() failed.");
+        m_notification = NULL;
+        m_type = NOTIFICATION_TYPE_NONE;
+    }
 }
 
 //--------------------------------------------------------------------------
 /**
  *  @brief  constructor
  *
- *  @return notification handle
+ *  @param [in] noti    notification handle
  */
 //--------------------------------------------------------------------------
-CicoNotification::CicoNotification(notification_h noti) 
-    : m_notification(noti),
-      m_type(NOTIFICATION_TYPE_NONE)
+CicoNotification::CicoNotification(notification_h noti)
+    : m_notification(NULL),
+      m_type(NOTIFICATION_TYPE_NONE),
+      m_privId(NOTIFICATION_PRIV_ID_NONE),
+      m_groupId(NOTIFICATION_GROUP_ID_NONE)
 {
-    notification_type_e type;
-    notification_get_type(m_notification, &type);
+    // clone notfication handler
+    notification_error_e err = NOTIFICATION_ERROR_NONE;
+    err = notification_clone(noti, &m_notification);
+    if (NOTIFICATION_ERROR_NONE == err) {
+        notification_error_e err = NOTIFICATION_ERROR_NONE;
+
+        // initialize type variable
+        err = notification_get_type(m_notification, &m_type);
+        if (NOTIFICATION_ERROR_NONE != err) {
+            ICO_ERR("notification_get_id() failed(%d).", err);
+            m_type = NOTIFICATION_TYPE_NONE;
+        }
+
+        // initialize group id and private id variables
+        err = notification_get_id(m_notification, &m_groupId, &m_privId);
+        if (NOTIFICATION_ERROR_NONE != err) {
+            ICO_ERR("notification_get_id() failed(%d).", err);
+            m_privId  = NOTIFICATION_PRIV_ID_NONE;
+            m_groupId = NOTIFICATION_GROUP_ID_NONE;
+        }
+    }
+    else {
+        ICO_ERR("notification_clone() failed(%d).", err);
+        m_notification = NULL;
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -52,91 +98,23 @@ CicoNotification::CicoNotification(notification_h noti)
 //--------------------------------------------------------------------------
 CicoNotification::~CicoNotification()
 {
-#if 0
     if (NULL != m_notification) {
         notification_free(m_notification);
         m_notification = NULL;
     }
-#endif
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  initialize notification
- *
- *  @return type of notification
- */
-//--------------------------------------------------------------------------
-bool
-CicoNotification::Initialize(notification_type_e type)
-{
-    if (NULL != m_notification) {
-        return true;
-    }
-
-    m_notification = notification_create(type);
-    if (NULL == m_notification) {
-        ICO_ERR("notification_create() failed.");
-        return false;
-    }
-
-    m_type = type;
-    return true;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  terminate notification
- */
-//--------------------------------------------------------------------------
-bool
-CicoNotification::Terminate(void)
-{
-/*
-    if (NULL != m_notification) {
-        notification_error_e err;
-        err = notification_free(m_notification);
-        if (NOTIFICATION_ERROR_NONE != err) {
-            ICO_ERR("notification_free() failed.");
-            return false;
-        }
-        m_notification = NULL;
-    }
-*/
-    return true;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  unpack notification stracture
+ *  @brief  get notification handle
  *
  *  @return notification handle
  */
 //--------------------------------------------------------------------------
 notification_h
-CicoNotification::Unpack(void) const
+CicoNotification::GetNotiHandle(void) const
 {
     return m_notification;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  clone notification stracture
- *
- *  @return notification handle
- */
-//--------------------------------------------------------------------------
-notification_h
-CicoNotification::Clone(void)
-{
-    notification_h ret_noti;
-    notification_error_e err = NOTIFICATION_ERROR_NONE;
-    err = notification_clone(m_notification, &ret_noti);
-    if (NOTIFICATION_ERROR_NONE != err) {
-        ICO_ERR("notification_clone() failed(%d).", err);
-        return NULL;
-    }
-    return ret_noti;
 }
 
 //--------------------------------------------------------------------------
@@ -165,6 +143,22 @@ notification_type_e
 CicoNotification::GetType(void) const
 {
     return m_type;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get private id
+ *
+ *  @return notification private id
+ *  @retval true        success
+ *  @retval false       notification handle is null or
+ *                      notification_set_pkgname() failed
+ */
+//--------------------------------------------------------------------------
+int
+CicoNotification::GetPrivId(void)
+{
+    return m_privId;
 }
 
 //--------------------------------------------------------------------------
@@ -201,7 +195,7 @@ CicoNotification::SetPkgname(const char *pkgname)
 /**
  *  @brief  get package name of notification
  *
- *  @return name package
+ *  @return package name
  */
 //--------------------------------------------------------------------------
 const char *
@@ -397,5 +391,77 @@ CicoNotification::GetIconPath(void)
     }
 
     return iconpath;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  set execute option
+ *
+ *  @param [in] type            notification execute type
+ *  @param [in] text            basic text for button
+ *  @param [in] key             value for localizaed text
+ *  @param [in] service_handle  appsvc bundle data
+ *
+ *  @return result
+ *  @retval true        success
+ *  @retval false       notification handle is null or
+ *                      notification_set_execute_option() failed
+ */
+//--------------------------------------------------------------------------
+bool
+CicoNotification::SetExecuteOption(notification_execute_type_e type,
+                                   const char *text,
+                                   const char *key,
+                                   bundle *service_handle)
+{
+    if (NULL == m_notification) {
+        ICO_ERR("notification handle is null");
+        return false;
+    }
+
+    notification_error_e err = NOTIFICATION_ERROR_NONE;
+    err = notification_set_execute_option(m_notification, type,
+                                          text, key, service_handle);
+    if (NOTIFICATION_ERROR_NONE != err) {
+        ICO_ERR("notification_get_execute_option() failed(%d).", err);
+        return false;
+    }
+
+    return true;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get execute option
+ *
+ *  @param [in]  type           notification execute type
+ *  @param [out] text           text for button
+ *  @param [out] service_handle appsvc bundle data
+ *
+ *  @return result
+ *  @retval true        success
+ *  @retval false       notification handle is null or
+ *                      notification_get_execute_option() failed
+ */
+//--------------------------------------------------------------------------
+bool
+CicoNotification::GetExecuteOption(notification_execute_type_e type,
+                                   const char **text,
+                                   bundle **service_handle)
+{
+    if (NULL == m_notification) {
+        ICO_ERR("notification handle is null");
+        return false;
+    }
+
+    notification_error_e err = NOTIFICATION_ERROR_NONE;
+    err = notification_get_execute_option(m_notification, type,
+                                          text, service_handle);
+    if (NOTIFICATION_ERROR_NONE != err) {
+        ICO_ERR("notification_get_execute_option() failed(%d).", err);
+        return false;
+    }
+
+    return true;
 }
 // vim:set expandtab ts=4 sw=4:

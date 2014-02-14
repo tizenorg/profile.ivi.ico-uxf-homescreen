@@ -51,17 +51,17 @@ class CicoNotificationServiceInterface
 public:
     // set callback fucntion
     virtual bool SetCallback(void (*detailed_changed_cb)
-                             (void *data, 
-                              notification_type_e type, 
-                              notification_op *op_list, 
+                             (void *data,
+                              notification_type_e type,
+                              notification_op *op_list,
                               int num_op),
                              void *user_data) = 0;
 
     // unset callback fucntion
     virtual bool UnsetCallback(void (*detailed_changed_cb)
-                               (void *data, 
-                                notification_type_e type, 
-                                notification_op *op_list, 
+                               (void *data,
+                                notification_type_e type,
+                                notification_op *op_list,
                                 int num_op)) = 0;
 };
 #endif // __CICO_NOTIFICATION_INTERFACE_H__

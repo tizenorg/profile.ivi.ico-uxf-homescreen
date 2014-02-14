@@ -9,6 +9,7 @@ noinst_LTLIBRARIES =\
 libico_notification_la_LDFLAGS = -version-info 0:9:0 
 libico_notification_la_SOURCES =	\
 	CicoNotification.cpp			\
+	CicoNotificationList.cpp		\
 	CicoNotificationApp.cpp			\
 	CicoNotificationService.cpp
 

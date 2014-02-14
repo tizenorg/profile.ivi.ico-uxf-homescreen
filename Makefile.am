@@ -2,4 +2,5 @@ SUBDIRS=	\
 	lib     \
 	src     \
 	tool    \
-	tests
+	tests   \
+	tool/notification

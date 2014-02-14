@@ -17,6 +17,7 @@ OnScreen_CFLAGS= 					\
     $(AUL_CFLAGS) 					\
     $(UWS_CFLAGS) 					\
 	$(NOTIFICATION_CFLAGS)          \
+    $(WESTONPLUGIN_CFLAGS) 			\
     -I../../include 				\
     -I../../lib/common              \
     -I../../lib/notification
@@ -28,6 +29,7 @@ OnScreen_CXXFLAGS= 				\
     $(AUL_CFLAGS) 					\
     $(UWS_CFLAGS) 					\
 	$(NOTIFICATION_CFLAGS)          \
+    $(WESTONPLUGIN_CFLAGS) 			\
     -I../../include 				\
     -I../../lib/common              \
     -I../../lib/notification
@@ -40,17 +42,30 @@ OnScreen_LDADD = 					\
     $(OPT_LIBS) 					\
     $(AUL_LIBS) 					\
     $(UWS_LIBS) 					\
-	$(NOTIFICATION_LIBS)
+	$(NOTIFICATION_LIBS)		\
+	../../lib/apps-framework/.libs/libico-appfw.so
+
+SUFFIXES = .edc .edj
+
+BUILT_SOURCES = \
+	onscreen.edj
+
+.edc.edj:
+	edje_cc $< -id ../../res/org.tizen.ico.onscreen/res/images \
+		       -fd ../../res/org.tizen.ico.onscreen/res/images \
+	           -sd ../../res/org.tizen.ico.onscreen/res/sounds -o $@
 
 CLEANFILES = $(BUILT_SOURCES)
 
 install-exec-hook:
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/bin
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/config
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/themes
 	mkdir -p $(INSTALL_ROOT)/usr/share/packages
 	install -m 0755 OnScreen $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/bin
 	install -m 0644 $(top_srcdir)/data/share/packages/org.tizen.ico.onscreen.xml $(INSTALL_ROOT)/usr/share/packages
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.onscreen/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/config
+	install -m 0644 *.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/themes
 
 uninstall:
 	rm -rf $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen
