@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -21,12 +21,25 @@
 #include <fcntl.h>
 #include <cstring>
 
+#include "ico_syc_type.h"
 #include "CicoSCWlWinMgrIF.h"
 #include "CicoLog.h"
+#include "CicoSystemConfig.h"
+#include "CicoConf.h"
+#include "CicoSCWindowController.h"
 
 //==========================================================================
 //  static variables
 //==========================================================================
+struct ico_window_mgr *CicoSCWlWinMgrIF::m_winmgr = NULL;
+struct ivi_application *CicoSCWlWinMgrIF::m_ivi_app = NULL;
+struct ivi_controller *CicoSCWlWinMgrIF::m_ivi_ctrl = NULL;
+struct wl_output *CicoSCWlWinMgrIF::m_wloutput = NULL;
+
+int CicoSCWlWinMgrIF::m_id_surface = 0;
+
+struct creation_surface_wait    *CicoSCWlWinMgrIF::m_wait_surface_creation = NULL;
+struct creation_surface_wait    *CicoSCWlWinMgrIF::m_free_surface_creation = NULL;
 
 //--------------------------------------------------------------------------
 /**
@@ -34,18 +47,21 @@
  */
 //--------------------------------------------------------------------------
 CicoSCWlWinMgrIF::CicoSCWlWinMgrIF()
-    : m_winmgr(NULL), m_wloutput(NULL)
 {
     // ico_window_mgr listener
-    m_listener.window_created   = wlCreatedCB;
-    m_listener.window_name      = wlNameCB;
-    m_listener.window_destroyed = wlDestroyedCB;
-    m_listener.window_visible   = wlVisibleCB;
-    m_listener.window_configure = wlConfigureCB;
     m_listener.window_active    = wlActiveCB;
-    m_listener.layer_visible    = wlLayerVisibleCB;
-    m_listener.app_surfaces     = wlAppSurfacesCB;
     m_listener.map_surface      = wlMapSurfaceCB;
+
+    // genivi ivi_application listener
+    m_ivi_app_listener.error = wlIviAppErrorCB;
+    m_ivi_app_listener.wl_shell_info = wlIviAppNativeShellInfoCB;
+
+    // genivi ivi_controller listener
+    m_ivi_ctrl_listener.screen = wlIviCtrlScreenCB;
+    m_ivi_ctrl_listener.layer = wlIviCtrlLayerCB;
+    m_ivi_ctrl_listener.surface = wlIviCtrlSurfaceCB;
+    m_ivi_ctrl_listener.error = wlIviCtrlErrorCB;
+    m_ivi_ctrl_listener.native_handle = wlIviCtrlNativeHandleCB;
 
     // wayland output listener
     m_wlOutputListener.geometry = wlOutputGeometryCB;
@@ -98,17 +114,45 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
 
 
         m_winmgr = (struct ico_window_mgr *)wlProxy;
-        ico_window_mgr_add_listener(m_winmgr, 
+        ico_window_mgr_add_listener(m_winmgr,
                                     &m_listener,
                                     this);
-#if 0
-        ico_window_mgr_set_user_data(m_winmgr, NULL/*TODO*/);
-#endif
-
-        ICO_DBG("called: ico_window_mgr_declare_manager");
-        ico_window_mgr_declare_manager(m_winmgr,
-                                       ICO_WINDOW_MGR_DECLARE_MANAGER_MANAGER);
-
+    }
+    else if (0 == strcmp(interface, ICO_WL_IVI_APPLICATION_IF)) {
+        // get interface instance
+        ICO_DBG("called: wl_registry_bind for ivi_application");
+        void *wlProxy = wl_registry_bind(registry,
+                                         name,
+                                         &ivi_application_interface,
+                                         1);
+        if (NULL == wlProxy) {
+            ICO_WRN("interface(%s) wl_registry_bind failed.",
+                    interface);
+            ICO_TRA("CicoSCWlWinMgrIF::initInterface Leave(binding failed)");
+            return;
+        }
+        m_ivi_app = (struct ivi_application *)wlProxy;
+        ivi_application_add_listener(m_ivi_app,
+                                     &m_ivi_app_listener,
+                                     this);
+    }
+    else if (0 == strcmp(interface, ICO_WL_IVI_CONTROLLER_IF)) {
+        // get interface instance
+        ICO_DBG("called: wl_registry_bind for ivi_controller");
+        void *wlProxy = wl_registry_bind(registry,
+                                         name,
+                                         &ivi_controller_interface,
+                                         1);
+        if (NULL == wlProxy) {
+            ICO_WRN("interface(%s) wl_registry_bind failed.",
+                    interface);
+            ICO_TRA("CicoSCWlWinMgrIF::initInterface Leave(binding failed)");
+            return;
+        }
+        m_ivi_ctrl = (struct ivi_controller *)wlProxy;
+        ivi_controller_add_listener(m_ivi_ctrl,
+                                    &m_ivi_ctrl_listener,
+                                    this);
     }
     else if (0 == strcmp(interface, ICO_WL_OUTPUT_IF)) {
         // get interface instance
@@ -125,12 +169,9 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
         }
 
         m_wloutput = (struct wl_output*)wlProxy;
-        wl_output_add_listener(m_wloutput, 
+        wl_output_add_listener(m_wloutput,
                                &m_wlOutputListener,
                                this);
-#if 0
-        wl_output_set_user_data(m_wloutput, NULL/*TODO*/);
-#endif
     }
     else {
         ICO_WRN("unmatch interface");
@@ -146,48 +187,53 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_declare_manager
- *  
- *  @param [in] manager type of manager
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::declareManager(int32_t manager)
-{
-    // declare manager request to Multi Window Manager
-    ICO_DBG("called: ico_window_mgr_declare_manager(manager=%d)", manager);
-    ico_window_mgr_declare_manager(m_winmgr, manager);
-}
-
-//--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_set_window_layer
- *  
+/**
+ *  @brief   wrapper function of ilm_layerAddSurface
+ *
  *  @param [in] surfaceid       wayland surface id
- *  @param [in] layer           number of layer
+ *  @param [in] layer           layer id
+ *  @param [in] oldlayer        old layer id(if 0xffffffff, no old layer)
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer)
+CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t oldlayer)
 {
     // set window layer request to Multi Window Manager
-    ICO_DBG("called: ico_window_mgr_set_window_layer"
-            "(surfaceid=0x%08X layer=%d)", surfaceid, layer);
-    ico_window_mgr_set_window_layer(m_winmgr, surfaceid, layer);
+    ICO_DBG("CicoSCWlWinMgrIF::setWindowLayer: "
+            "surfaceid=0x%08X layer=%d->%d", surfaceid, oldlayer, layer);
+
+    // remove original layer
+    if (oldlayer <= 0x7fffffff) {
+        ICO_TRA("CicoSCWlWinMgrIF::setWindowLayer: remove surface %08x "
+                "from layer(%d)", surfaceid, oldlayer);
+        (void) ilm_layerRemoveSurface(oldlayer, surfaceid);
+    }
+    else    {
+        ICO_TRA("CicoSCWlWinMgrIF::setWindowLayer: surface %08x has no old layer(%d)",
+                surfaceid, oldlayer);
+    }
+
+    // add new layer
+    if (ilm_layerAddSurface(layer, surfaceid) != ILM_SUCCESS)   {
+        ICO_ERR("CicoSCWlWinMgrIF::setWindowLayer ilm_layerAddSurface(%d,%08x) Error",
+                layer, surfaceid);
+    }
+    if (ilm_commitChanges() != ILM_SUCCESS) {
+        ICO_ERR("CicoSCWlWinMgrIF::setWindowLayer ilm_commitChanges Error");
+    }
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_set_positionsize
- *  
+/**
+ *  @brief   wrapper function of ilm_surfaceSetDestinationRectangle
+ *
  *  @param [in] surfaceid       wayland surface id
  *  @param [in] layer           number of layer
  *  @param [in] x
  *  @param [in] y
  *  @param [in] width
  *  @param [in] height
- *  @param [in] flags
+ *  @param [in] flags           (unused)
  */
 //--------------------------------------------------------------------------
 void
@@ -196,21 +242,26 @@ CicoSCWlWinMgrIF::setPositionsize(uint32_t surfaceid, uint32_t node,
                                   int32_t height, int32_t flags)
 {
     // set position size request to Multi Window Manager
-    ICO_DBG("called: ico_window_mgr_set_positionsize"
+    ICO_DBG("called: ilm_surfaceSetDestinationRectangle"
             "(surfaceid=0x%08X node=%d x=%d y=%d w=%d h=%d flags=%d)",
             surfaceid, node, x, y, width, height, flags);
-    ico_window_mgr_set_positionsize(m_winmgr, surfaceid, node,
-                                    x, y, width, height, flags);
+    if ((ilm_surfaceSetDestinationRectangle(surfaceid, x, y, width, height)
+            != ILM_SUCCESS) ||
+        (ilm_commitChanges() != ILM_SUCCESS))   {
+        ICO_ERR("CicoSCWlWinMgrIF::setPositionsize ilm_surfaceSetDestinationRectangle"
+                "(%08x,%d,%d,%d,%d) Error",
+                surfaceid, x, y, width, height);
+    }
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_set_visible
- *  
+/**
+ *  @brief   wrapper function of ilm_surfaceSetVisibility
+ *
  *  @param [in] surfaceid       wayland surface id
  *  @param [in] visible         visible state
  *  @param [in] raise           raise state
- *  @param [in] flags           option on change visible
+ *  @param [in] flags           (unused)
  */
 //--------------------------------------------------------------------------
 void
@@ -218,39 +269,24 @@ CicoSCWlWinMgrIF::setVisible(uint32_t surfaceid, int32_t visible,
                              int32_t raise, int32_t flags)
 {
     // set visible request to Multi Window Manager
-    ICO_DBG("called: ico_window_mgr_set_visible"
+    ICO_DBG("called: ilm_surfaceSetVisibility"
             "(surfaceid=0x%08X visible=%d raise=%d anima=%d)",
             surfaceid, visible, raise, flags);
-    ico_window_mgr_set_visible(m_winmgr, surfaceid, visible, raise, flags);
+    if ((visible == ICO_SYC_WIN_VISIBLE_SHOW) || (visible == ICO_SYC_WIN_VISIBLE_HIDE)) {
+        ilm_surfaceSetVisibility(surfaceid, visible);
+    }
+    if ((raise == ICO_SYC_WIN_RAISE_RAISE) || (raise == ICO_SYC_WIN_RAISE_LOWER))   {
+        // TODO: need raise/lower control
+    }
+    if (ilm_commitChanges() != ILM_SUCCESS) {
+        ICO_ERR("CicoSCWlWinMgrIF::setVisible: ilm_commitChanges() Error");
+    }
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_visible_animation
- *  
- *  @param [in] surfaceid       wayland surface id
- *  @param [in] visible         visible state
- *  @param [in] raise           raise state
- *  @param [in] flags           option on change visible
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::visibleAnimation(uint32_t surfaceid, int32_t visible,
-                                   int32_t x, int32_t y,
-                                   int32_t width, int32_t height)
-{
-    // visible animation request to Multi Window Manager
-    ICO_DBG("called: ico_window_mgr_visible_animation"
-            "(surfaceid=0x%08X visible=%d x=%d y=%d w=%d h=%d)",
-            surfaceid, visible, x, y, width, height);
-    ico_window_mgr_visible_animation(m_winmgr, surfaceid, visible,
-                                     x, y, width, height);
-}
-
-//--------------------------------------------------------------------------
-/** 
+/**
  *  @brief   wrapper function of ico_window_mgr_set_animation
- *  
+ *
  *  @param [in] surfaceid       wayland surface id
  *  @param [in] type            transition type
  *  @param [in] animation       name of animation
@@ -268,41 +304,28 @@ CicoSCWlWinMgrIF::setAnimation(uint32_t surfaceid, int32_t type,
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_set_attributes
- *  
+/**
+ *  @brief   wrapper function of ilm_SetKeyboardFocusOn
+ *
  *  @param [in] surfaceid       wayland surface id
- *  @param [in] attributes      attributes of surface
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::setAttributes(uint32_t surfaceid, uint32_t attributes)
-{
-    ICO_DBG("called: ico_window_mgr_set_attributes"
-            "(surfaceid=0x%08X attributes=%d)", surfaceid, attributes);
-    ico_window_mgr_set_attributes(m_winmgr, surfaceid, attributes);
-}
-
-//--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_set_active
- *  
- *  @param [in] surfaceid       wayland surface id
- *  @param [in] active          flags od active device
+ *  @param [in] active          flags or active device(unused)
  */
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::setActive(uint32_t surfaceid, int32_t active)
 {
-    ICO_DBG("called: ico_window_mgr_set_active"
+    ICO_DBG("called: ilm_SetKeyboardFocusOn"
             "(surfaceid=0x%08X active=%d)", surfaceid, active);
-    ico_window_mgr_set_active(m_winmgr, surfaceid, active);
+    if ((ilm_SetKeyboardFocusOn(surfaceid) != ILM_SUCCESS) ||
+        (ilm_commitChanges() != ILM_SUCCESS))   {
+        ICO_ERR("CicoSCWlWinMgrIF::setActive ilm_SetKeyboardFocusOn(%08x) Error", surfaceid);
+    }
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_set_layer_visible
- *  
+/**
+ *  @brief   wrapper function of ilm_layerSetVisibility
+ *
  *  @param [in] surfaceid       wayland surface id
  *  @param [in] layer           id of layer
  *  @param [in] visible         visible state
@@ -311,64 +334,62 @@ CicoSCWlWinMgrIF::setActive(uint32_t surfaceid, int32_t active)
 void
 CicoSCWlWinMgrIF::setLayerVisible(uint32_t layer, int32_t visible)
 {
-    ICO_DBG("called: ico_window_mgr_set_layer_visible"
+    ICO_DBG("called: ilm_layerSetVisibility"
             "(layer=%d visible=%d)", layer, visible);
-    ico_window_mgr_set_layer_visible(m_winmgr, layer, visible);
+    if ((ilm_layerSetVisibility(layer, visible) != ILM_SUCCESS) ||
+        (ilm_commitChanges() != ILM_SUCCESS))   {
+        ICO_ERR("CicoSCWlWinMgrIF::setLayerVisible ilm_layerSetVisibility(%d,%d) Error",
+                layer, visible);
+    }
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_get_surfaces
- *  
- *  @param [in] appid           id of application
- *  @param [in] pid             id of process
+/**
+ *  @brief   wrapper function of ilm_takeSurfaceScreenshot
+ *
+ *  @param [in] surface     id of wayland surface
+ *  @param [in] filepath    surface image pixel file path
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::getSurfaces(const char *appid, int pid)
+CicoSCWlWinMgrIF::setmapGet(int surfaceid, const char *filepath)
 {
-    ICO_DBG("called: ico_window_mgr_get_surfaces(appid=%d,pid=%d)",
-            appid ? appid : " ", pid);
-    ico_window_mgr_get_surfaces(m_winmgr, appid ? appid : " ", pid);
+    ICO_DBG("called: ilm_takeSurfaceScreenshot(filepath=%s,, surface=0x%08x)",
+            filepath ? filepath : "(null)", surfaceid);
+    if ((ilm_takeSurfaceScreenshot(filepath, surfaceid) != ILM_SUCCESS) ||
+        (ilm_commitChanges() != ILM_SUCCESS))   {
+        ICO_ERR("CicoSCWlWinMgrIF::setmapGet ilm_takeSurfaceScreenshot(%s,%x) Error",
+                filepath ? filepath : "(null)", surfaceid);
+    }
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wrapper function of ico_window_mgr_set_map_buffer
- *  
- *  @param[in]  shmname     shared memory name(POSIX I/F)
- *  @param[in]  bufsize     buffer size in byte
- *  @param[in]  bufnum      number of buffers
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::setmapBuffer(const char *shmname, int bufsize, int bufnum)
-{
-    ICO_DBG("called: ico_window_mgr_set_map_buffer(shmname=%s, bufsize=%d, bufnum=%d)",
-            shmname ? shmname : "(null)", bufsize, bufnum);
-    ico_window_mgr_set_map_buffer(m_winmgr, shmname, bufsize, bufnum);
-}
-
-//--------------------------------------------------------------------------
-/** 
+/**
  *  @brief   wrapper function of ico_window_mgr_map_surface
- *  
+ *
  *  @param [in] surface     id of wayland surface
  *  @param [in] framerate   interval of changed notify[frame per second]
+ *  @param [in] filepath    surface image pixel file path
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::mapSurface(uint32_t surfaceid, int32_t framerate)
+CicoSCWlWinMgrIF::mapSurface(uint32_t surfaceid, int32_t framerate, const char *filepath)
 {
-    ICO_DBG("called: ico_window_mgr_map_surface"
-            "(surfaceid=0x%08X framerate=%d)", surfaceid, framerate);
-    ico_window_mgr_map_surface(m_winmgr, surfaceid, framerate);
+    ICO_DBG("called: ico_window_mgr_map_surface(surfaceid=0x%08X framerate=%d file=%s)",
+            surfaceid, framerate, filepath ? filepath : "(null)");
+    // currently GENIVI genivi-shell not support contents change, so use ico_window_mgr
+    if ((filepath != NULL) && (*filepath != 0) && (*filepath != ' '))   {
+        ico_window_mgr_map_surface(m_winmgr, surfaceid, framerate, filepath);
+    }
+    else    {
+        ico_window_mgr_map_surface(m_winmgr, surfaceid, framerate, " ");
+    }
 }
 
 //--------------------------------------------------------------------------
-/** 
+/**
  *  @brief   wrapper function of ico_window_mgr_unmap_surface
- *  
+ *
  *  @param [in] surface     id of wayland surface
  */
 //--------------------------------------------------------------------------
@@ -377,127 +398,65 @@ CicoSCWlWinMgrIF::unmapSurface(uint32_t surfaceid)
 {
     ICO_DBG("called: ico_window_mgr_unmap_surface"
             "(surfaceid=0x%08X)", surfaceid);
+    // currently GENIVI genivi-shell not support contents change, so use ico_window_mgr
     ico_window_mgr_unmap_surface(m_winmgr, surfaceid);
 }
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wayland surface create callback
- *  
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] winname         surface window name(title)
- *  @param [in] pid             wayland client process Id
- *  @param [in] appid           wayland client application Id
- *  @param [in] layertype       surface layer type
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::createdCB(void                  *data,
-                            struct ico_window_mgr *ico_window_mgr,
-                            uint32_t              surfaceid,
-                            const char            *winname,
-                            int32_t               pid,
-                            const char            *appid,
-                            int32_t               layertype)
-{
-    ICO_WRN("CicoSCWlWinMgrIF::createdCB called.");
-}
-
-//--------------------------------------------------------------------------
 /**
- *  @brief  wayland change surface name callback
+ *  @brief   get creation surface window name(title) and pid
  *
- * @param [in] data            user data(unused)
- * @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- * @param [in] surfaceid       ico_window_mgr surface Id
- * @param [in] winname         surface window name(title)
+ *  @param [in]  id_surface surface id
+ *  @param [out] pid        application process id
  */
 //--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::nameCB(void                  *data,
-                         struct ico_window_mgr *ico_window_mgr,
-                         uint32_t              surfaceid,
-                         const char            *winname)
+const char *
+CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(uint32_t id_surface, int *pid)
 {
-    ICO_WRN("CicoSCWlWinMgrIF::nameCB called.");
+    struct creation_surface_wait    *tp = m_wait_surface_creation;
+
+    while (tp)   {
+        if (tp->id_surface == id_surface)   {
+            ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(%x) pid=%d title=<%s>",
+                    id_surface, tp->pid, tp->title);
+            *pid = tp->pid;
+            return tp->title;
+        }
+        tp = tp->next;
+    }
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(%x) dose not exist", id_surface);
+    return NULL;
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wayland surface destroy callback
+ *  @brief   remove surface window
  *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
+ *  @param [in]  id_surface surface id
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::destroyedCB(void                  *data,
-                              struct ico_window_mgr *ico_window_mgr,
-                              uint32_t              surfaceid)
+CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(uint32_t id_surface)
 {
-    ICO_WRN("CicoSCWlWinMgrIF::destroyedCB called.");
-}
+    struct creation_surface_wait    *tp = m_wait_surface_creation;
+    struct creation_surface_wait    *bp = NULL;
 
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland surface visible callback
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] visible         surface visible
- *                              (1=visible/0=invisible/other=no change)
- *  @param [in] raise           surface raise
- *                              (1=raise/0=lower/other=no change)
- *  @param [in] hint            client request
- *                              (1=client request(not changed)/0=changed)
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::visibleCB(void                  *data,
-                            struct ico_window_mgr *ico_window_mgr,
-                            uint32_t              surfaceid,
-                            int32_t               visible,
-                            int32_t               raise,
-                            int32_t               hint)
-{
-    ICO_WRN("CicoSCWlWinMgrIF::visibleCB called.");
-}
+    while (tp)   {
+        if (tp->id_surface == id_surface)   {
+            if (bp) {
+                bp->next = tp->next;
+            }
+            else    {
+                m_wait_surface_creation = tp->next;
+            }
+            tp->next = m_free_surface_creation;
+            m_free_surface_creation = tp;
 
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland surface configure callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] node            surface node Id
- *  @param [in] layertype       surface layer type
- *  @param [in] layer           surface layer Id
- *  @param [in] x               surface upper-left X coordinate
- *  @param [in] y               surface upper-left Y coordinate
- *  @param [in] width           surface width
- *  @param [in] height          surface height
- *  @param [in] hint            client request
- *                              (1=client request(not changed)/0=changed)
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::configureCB(void                  *data,
-                              struct ico_window_mgr *ico_window_mgr,
-                              uint32_t              surfaceid,
-                              uint32_t              node,
-                              int32_t               layertype,
-                              uint32_t              layer,
-                              int32_t               x,
-                              int32_t               y,
-                              int32_t               width,
-                              int32_t               height,
-                              int32_t               hint)
-{
-    ICO_WRN("CicoSCWlWinMgrIF::configureCB called.");
+            ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(%x) removed", id_surface);
+            return;
+        }
+    }
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(%x) dose not exist", id_surface);
 }
 
 //--------------------------------------------------------------------------
@@ -507,58 +466,17 @@ CicoSCWlWinMgrIF::configureCB(void                  *data,
  *  @param [in] data            user data(unused)
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] active          surface active
- *                              (1=active/0=not active)
+ *  @param [in] select          select device(unused)
+ *                              (0=not active/1=pointer/2=touch)
  */
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::activeCB(void                  *data,
                            struct ico_window_mgr *ico_window_mgr,
                            uint32_t              surfaceid,
-                           int32_t               active)
+                           int32_t               select)
 {
     ICO_WRN("CicoSCWlWinMgrIF::activeCB called.");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland layer visible callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] layer           layer Id
- *  @param [in] visible         layer visible
- *                              (1=visible/0=invisible/other=no change)
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::layerVisibleCB(void                  *data,
-                                 struct ico_window_mgr *ico_window_mgr,
-                                 uint32_t              layer,
-                                 int32_t               visible)
-{
-    ICO_WRN("CicoSCWlWinMgrIF::layerVisibleCB called.");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  query application surface callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] appid           application Id
- *  @param [in] pid             process Id
- *  @param [in] surface         surface Id array
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::appSurfacesCB(void                  *data,
-                                struct ico_window_mgr *ico_window_mgr,
-                                const char            *appid,
-                                int32_t               pid,
-                                struct wl_array       *surfaces)
-{
-    ICO_WRN("CicoSCWlWinMgrIF::appSurfacesCB called.");
 }
 
 //--------------------------------------------------------------------------
@@ -570,7 +488,6 @@ CicoSCWlWinMgrIF::appSurfacesCB(void                  *data,
  *  @param [in] event           event
  *  @param [in] surfaceid       surface Id
  *  @param [in] type            surface buffer type(EGL buffer/Shared memory)
- *  @param [in] target          surface buffer target(EGL buffer name)
  *  @param [in] width           surface width
  *  @param [in] height          surface height
  *  @param [in] stride          surface buffer(frame buffer) stride
@@ -583,7 +500,6 @@ CicoSCWlWinMgrIF::mapSurfaceCB(void                  *data,
                                int32_t               event,
                                uint32_t              surfaceid,
                                uint32_t              type,
-                               uint32_t              target,
                                int32_t               width,
                                int32_t               height,
                                int32_t               stride,
@@ -644,6 +560,23 @@ CicoSCWlWinMgrIF::outputModeCB(void             *data,
                                int32_t          refresh)
 {
     ICO_WRN("CicoSCWlWinMgrIF::outputModeCB called.");
+};
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   wayland genivi ivi-surface create callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_controller  wayland ivi-controller plugin interface
+ *  @param [in] id_surface      surface id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::createSurfaceCB(void                  *data,
+                                  struct ivi_controller *ivi_controller,
+                                  uint32_t id_surface)
+{
+    ICO_WRN("CicoSCWlWinMgrIF::createSurfaceCB called.");
 }
 
 //==========================================================================
@@ -651,184 +584,21 @@ CicoSCWlWinMgrIF::outputModeCB(void             *data,
 //==========================================================================
 
 //--------------------------------------------------------------------------
-/** 
- *  @brief   wayland surface create callback
- *  
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] winname         surface window name(title)
- *  @param [in] pid             wayland client process Id
- *  @param [in] appid           wayland client application Id
- *  @param [in] layertype       surface layer type
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlCreatedCB(void                  *data,
-                              struct ico_window_mgr *ico_window_mgr,
-                              uint32_t              surfaceid,
-                              const char            *winname,
-                              int32_t               pid,
-                              const char            *appid,
-                              int32_t               layertype)
-{
-//    ICO_TRA("CicoSCWlWinMgrIF::wlCreatedCB Enter");
-    if (NULL == data) {
-        ICO_WRN("wlCreatedCB : data is null");
-        return;
-    }
-    static_cast<CicoSCWlWinMgrIF*>(data)->createdCB(data, ico_window_mgr,
-                                                    surfaceid, winname,
-                                                    pid, appid, layertype);
-//    ICO_TRA("CicoSCWlWinMgrIF::wlCreatedCB Leave");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland change surface name callback
- *
- * @param [in] data            user data(unused)
- * @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- * @param [in] surfaceid       ico_window_mgr surface Id
- * @param [in] winname         surface window name(title)
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlNameCB(void                  *data,
-                           struct ico_window_mgr *ico_window_mgr,
-                           uint32_t              surfaceid,
-                           const char            *winname)
-{
-//    ICO_TRA("CicoSCWlWinMgrIF::wlNameCB Enter");
-
-    if (NULL == data) {
-        ICO_WRN("wlNameCB: data is null");
-        return;
-    }
-    static_cast<CicoSCWlWinMgrIF*>(data)->nameCB(data, ico_window_mgr,
-                                                 surfaceid, winname);
-//    ICO_TRA("CicoSCWlWinMgrIF::wlNameCB Leave");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland surface destroy callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlDestroyedCB(void                  *data,
-                                struct ico_window_mgr *ico_window_mgr,
-                                uint32_t              surfaceid)
-{
-//    ICO_TRA("CicoSCWlWinMgrIF::wlDestroyedCB Enter");
-
-    if (NULL == data) {
-        ICO_WRN("wlDestroyedCB: data is null");
-        return;
-    }
-    static_cast<CicoSCWlWinMgrIF*>(data)->destroyedCB(data, ico_window_mgr,
-                                                      surfaceid);
-//    ICO_TRA("CicoSCWlWinMgrIF::wlDestroyedCB Leave");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland surface visible callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] visible         surface visible
- *                              (1=visible/0=invisible/other=no change)
- *  @param [in] raise           surface raise
- *                              (1=raise/0=lower/other=no change)
- *  @param [in] hint            client request
- *                              (1=client request(not changed)/0=changed)
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlVisibleCB(void                  *data,
-                              struct ico_window_mgr *ico_window_mgr,
-                              uint32_t              surfaceid,
-                              int32_t               visible,
-                              int32_t               raise,
-                              int32_t               hint)
-{
-//    ICO_TRA("CicoSCWlWinMgrIF::wlVisibleCB Enter");
-
-    if (NULL == data) {
-        ICO_WRN("wlVisibleCB: data is null");
-        return;
-    }
-    static_cast<CicoSCWlWinMgrIF*>(data)->visibleCB(data, ico_window_mgr,
-                                                    surfaceid, visible,
-                                                    raise, hint);
-//    ICO_TRA("CicoSCWlWinMgrIF::wlVisibleCB Leave");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland surface configure callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] node            surface node Id
- *  @param [in] layertype       surface layer type
- *  @param [in] layer           surface layer Id
- *  @param [in] x               surface upper-left X coordinate
- *  @param [in] y               surface upper-left Y coordinate
- *  @param [in] width           surface width
- *  @param [in] height          surface height
- *  @param [in] hint            client request
- *                              (1=client request(not changed)/0=changed)
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlConfigureCB(void                  *data,
-                                struct ico_window_mgr *ico_window_mgr,
-                                uint32_t              surfaceid,
-                                uint32_t              node,
-                                int32_t               layertype,
-                                uint32_t              layer,
-                                int32_t               x,
-                                int32_t               y,
-                                int32_t               width,
-                                int32_t               height,
-                                int32_t               hint)
-{
-//    ICO_TRA("CicoSCWlWinMgrIF::wlConfigureCB Enter");
-
-    if (NULL == data) {
-        ICO_WRN("wlConfigureCB: data is null");
-        return;
-    }
-    static_cast<CicoSCWlWinMgrIF*>(data)->configureCB(data, ico_window_mgr,
-                                                      surfaceid, node, layertype,
-                                                      layer, x, y, width, height,
-                                                      hint);
-//    ICO_TRA("CicoSCWlWinMgrIF::wlConfigureCB Leave");
-}
-//--------------------------------------------------------------------------
 /**
  *  @brief  wayland surface active callback
  *
  *  @param [in] data            user data(unused)
  *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
  *  @param [in] surfaceid       ico_window_mgr surface Id
- *  @param [in] active          surface active
- *                              (1=active/0=not active)
+ *  @param [in] select          select device(unused)
+ *                              (0=not active/1=pointer/2=touch)
  */
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::wlActiveCB(void                  *data,
                              struct ico_window_mgr *ico_window_mgr,
                              uint32_t              surfaceid,
-                             int32_t               active)
+                             int32_t               select)
 {
 //    ICO_TRA("CicoSCWlWinMgrIF::wlActiveCB Enter");
 
@@ -837,65 +607,8 @@ CicoSCWlWinMgrIF::wlActiveCB(void                  *data,
         return;
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->activeCB(data, ico_window_mgr,
-                                                   surfaceid, active);
+                                                   surfaceid, select);
 //    ICO_TRA("CicoSCWlWinMgrIF::wlActiveCB Leave");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland layer visible callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] layer           layer Id
- *  @param [in] visible         layer visible
- *                              (1=visible/0=invisible/other=no change)
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlLayerVisibleCB(void                  *data,
-                                   struct ico_window_mgr *ico_window_mgr,
-                                   uint32_t              layer,
-                                   int32_t               visible)
-{
-//    ICO_TRA("CicoSCWlWinMgrIF::wlLayerVisibleCB Enter");
-
-    if (NULL == data) {
-        ICO_WRN("wlLayerVisibleCB: data is null");
-        return;
-    }
-    static_cast<CicoSCWlWinMgrIF*>(data)->layerVisibleCB(data, ico_window_mgr,
-                                                         layer, visible);
-//    ICO_TRA("CicoSCWlWinMgrIF::wlLayerVisibleCB Leave");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  query application surface callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
- *  @param [in] appid           application Id
- *  @param [in] pid             process Id
- *  @param [in] surface         surface Id array
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlAppSurfacesCB(void                  *data,
-                                  struct ico_window_mgr *ico_window_mgr,
-                                  const char            *appid,
-                                  int32_t               pid,
-                                  struct wl_array       *surfaces)
-{
-//    ICO_TRA("CicoSCWlWinMgrIF::wlAppSurfacesCB Enter");
-
-    if (NULL == data) {
-        ICO_WRN("wlAppSurfacesCB: data is null");
-        return;
-    }
-    static_cast<CicoSCWlWinMgrIF*>(data)->appSurfacesCB(data, ico_window_mgr,
-                                                        appid, pid, surfaces);
-//    ICO_TRA("CicoSCWlWinMgrIF::wlAppSurfacesCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -907,7 +620,6 @@ CicoSCWlWinMgrIF::wlAppSurfacesCB(void                  *data,
  *  @param [in] event           event
  *  @param [in] surfaceid       surface Id
  *  @param [IN] type            buffer type(fixed ICO_WINDOW_MGR_MAP_TYPE_EGL)
- *  @param [IN] target          EGL buffer name
  *  @param [in] width           surface width
  *  @param [in] height          surface height
  *  @param [in] stride          surface buffer(frame buffer) stride
@@ -920,7 +632,6 @@ CicoSCWlWinMgrIF::wlMapSurfaceCB(void                  *data,
                                  int32_t               event,
                                  uint32_t              surfaceid,
                                  uint32_t              type,
-                                 uint32_t              target,
                                  int32_t               width,
                                  int32_t               height,
                                  int32_t               stride,
@@ -934,7 +645,7 @@ CicoSCWlWinMgrIF::wlMapSurfaceCB(void                  *data,
     }
     static_cast<CicoSCWlWinMgrIF*>(data)->mapSurfaceCB(data, ico_window_mgr,
                                                        event, surfaceid,
-                                                       type, target,
+                                                       type,
                                                        width, height,
                                                        stride, format);
 //    ICO_TRA("CicoSCWlWinMgrIF::wlMapSurfaceCB Leave");
@@ -1014,5 +725,278 @@ CicoSCWlWinMgrIF::wlOutputModeCB(void             *data,
     static_cast<CicoSCWlWinMgrIF*>(data)->outputModeCB(data, wl_output, flags,
                                                        width, height, refresh);
 //    ICO_TRA("CicoSCWlWinMgrIF::wlOutputModeCB Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland ivi-shell ivi-application protocol error callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_application wayland ivi-application interface
+ *  @param [in] error_code      error code
+ *  @param [in] error_text      error message
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlIviAppErrorCB(void *data,
+                                 struct ivi_application *ivi_application,
+                                 int32_t error_code, const char *error_text)
+{
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppErrorCB: Enter(%d,%s)",
+            error_code, error_text ? error_text : "(null)");
+
+    if (NULL == data) {
+        ICO_WRN("CicoSCWlWinMgrIF::wlIviAppErrorCB: data is null");
+        return;
+    }
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppErrorCB: Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland ivi-shell ivi-application protocol create wl_surface callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_application wayland ivi-application interface
+ *  @param [in] pid             application process id
+ *  @param [in] title           surface title name
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
+                                            struct ivi_application *ivi_application,
+                                            int32_t pid, const char *title)
+{
+    struct creation_surface_wait    *tp;
+    struct creation_surface_wait    *bp;
+    uint32_t        nowtime;
+
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Enter(%d,<%s>)",
+            pid, title ? title : "(null)");
+
+    if (NULL == data) {
+        ICO_WRN("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: data is null");
+        return;
+    }
+
+    // bind wl_surface to ivi_surface
+    ivi_controller_get_native_handle(m_ivi_ctrl, pid, title ? title : "");
+
+    // save pid and title(window name)
+    nowtime = (time(NULL) >> 2) & 0x3fffffff;
+    tp = m_wait_surface_creation;
+    while (tp)  {
+        if ((tp->pid == pid) && (tp->title[0] == 0))    break;
+        tp = tp->next;
+    }
+    if (! tp)   {
+        tp = m_free_surface_creation;
+        if (tp)  {
+            m_free_surface_creation = tp->next;
+        }
+        else    {
+            tp = m_wait_surface_creation;
+            bp = NULL;
+            while (tp)  {
+                if (((nowtime >= tp->create_time)
+                         && ((nowtime - tp->create_time) > 15)) ||
+                    ((nowtime < tp->create_time)
+                         && ((nowtime + 0x40000000 - tp->create_time) > 15)))   {
+                    if (bp) {
+                        bp->next = tp->next;
+                    }
+                    else    {
+                        m_wait_surface_creation = tp->next;
+                    }
+                    break;
+                }
+                bp = tp;
+                tp = tp->next;
+            }
+            if (! tp)   {
+                tp = (struct creation_surface_wait *)
+                       malloc(sizeof(struct creation_surface_wait));
+                if (! tp)    {
+                    ICO_ERR("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: out of memory");
+                    return;
+                }
+            }
+        }
+        memset(tp, 0, sizeof(struct creation_surface_wait));
+        tp->next = m_wait_surface_creation;
+        m_wait_surface_creation = tp;
+    }
+    tp->pid = pid;
+    strncpy(tp->title, title, ICO_SYC_MAX_WINNAME_LEN-1);
+    tp->create_time = nowtime;
+
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland ivi-shell ivi-controller protocol create screen callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_controller  wayland ivi-controller interface
+ *  @param [in] id_screen       screen id
+ *  @param [in] screen          screen information
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlIviCtrlScreenCB(void *data,
+                                    struct ivi_controller *ivi_controller,
+                                    uint32_t id_screen,
+                                    struct ivi_controller_screen *screen)
+{
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlScreenCB: Enter(%x)", id_screen);
+
+    if (NULL == data) {
+        ICO_WRN("CicoSCWlWinMgrIF::wlIviCtrlScreenCB: data is null");
+        return;
+    }
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlScreenCB: Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland ivi-shell ivi-controller protocol create layer callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_controller  wayland ivi-controller interface
+ *  @param [in] id_layer        layer id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlIviCtrlLayerCB(void *data,
+                                   struct ivi_controller *ivi_controller,
+                                   uint32_t id_layer)
+{
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlLayerCB: Enter(%x)", id_layer);
+
+    if (NULL == data) {
+        ICO_WRN("CicoSCWlWinMgrIF::wlIviCtrlLayerCB: data is null");
+        return;
+    }
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlLayerCB: Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland ivi-shell ivi-controller protocol create surface callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_controller  wayland ivi-controller interface
+ *  @param [in] id_surface      surface id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void *data,
+                                     struct ivi_controller *ivi_controller,
+                                     uint32_t id_surface)
+{
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: Enter(%x)", id_surface);
+
+    if (NULL == data) {
+        ICO_WRN("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: data is null");
+        return;
+    }
+
+    static_cast<CicoSCWlWinMgrIF*>(data)->createSurfaceCB(data, ivi_controller, id_surface);
+
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland ivi-shell ivi-controller protocol error callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_controller  wayland ivi-controller interface
+ *  @param [in] error_code      error code
+ *  @param [in] error_text      error message
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlIviCtrlErrorCB(void *data,
+                                   struct ivi_controller *ivi_controller,
+                                   int32_t object_id, int32_t object_type,
+                                   int32_t error_code, const char *error_text)
+{
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlErrorCB: Enter(%d[%d],%d,<%s>)",
+            object_id, object_type, error_code, error_text ? error_text : "(null)");
+
+    if (NULL == data) {
+        ICO_WRN("CicoSCWlWinMgrIF::wlIviCtrlErrorCB: data is null");
+        return;
+    }
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlErrorCB: Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland ivi-shell ivi-controller protocol error callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_controller  wayland ivi-controller interface
+ *  @param [in] error_code      error code
+ *  @param [in] error_text      error message
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
+                                          struct ivi_controller *ivi_controller,
+                                          struct wl_surface *surface)
+{
+    uint32_t                        id_surface;
+    struct creation_surface_wait    *tp;
+
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Enter(surface=%08x)", (int)surface);
+
+    if (NULL == data) {
+        ICO_WRN("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: data is null");
+        return;
+    }
+
+    // check same surface
+    tp = m_wait_surface_creation;
+    while (tp)  {
+        if (tp->surface == surface) {
+            ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Leave(same surface)");
+            return;
+        }
+        tp = tp->next;
+    }
+
+    // create ivi-surface and bind to wl_surface
+    m_id_surface ++;
+    if (m_id_surface >= 0x00ffffff)     m_id_surface = 1;
+    id_surface = m_id_surface | 0x40000000;
+
+    if (ivi_application_surface_create(m_ivi_app, id_surface, surface) == NULL) {
+        ICO_ERR("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: "
+                "ivi_application_surface_create(%x) Error", id_surface);
+        if (m_wait_surface_creation)    {
+            tp = m_wait_surface_creation;
+            m_wait_surface_creation = tp->next;
+            tp->next = m_free_surface_creation;
+            m_free_surface_creation = tp;
+        }
+    }
+    else    {
+        tp = m_wait_surface_creation;
+        while (tp)  {
+            if (tp->id_surface == 0)    {
+                tp->id_surface = id_surface;
+                tp->surface = surface;
+                break;
+            }
+            tp = tp->next;
+        }
+        if (! tp)   {
+            ICO_ERR("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: waiting surface dose not exist");
+        }
+    }
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Leave(id_surface=%08x)", id_surface);
 }
 // vim:set expandtab ts=4 sw=4:

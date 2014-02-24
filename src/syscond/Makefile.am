@@ -28,6 +28,7 @@ IcoSysconDaemon_CPPFLAGS = 	\
 	@MURPHYRESOURCE_CFLAGS@				\
 	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
+	$(GENIVI_CFLAGS)					\
 	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
     -I../../lib/system-controller		\
@@ -53,6 +54,7 @@ IcoSysconDaemon_LDADD = \
 	@MURPHYRESOURCE_LIBS@			\
 	@EDBUS_LIBS@					\
 	$(UWS_LIBS)						\
+	$(GENIVI_LIBS)					\
 	$(WESTONPLUGIN_LIBS)
 
 CLEANFILES = $(BUILT_SOURCES)

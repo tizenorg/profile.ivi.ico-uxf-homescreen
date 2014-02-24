@@ -21,15 +21,6 @@
 #include <ico_window_mgr.h>
 
 /*============================================================================*/
-/* static members                                                             */
-/*============================================================================*/
-static int _CicoHSMenuTile_initialized = 0;
-struct _CicoHSMenuTile_glfunc CicoHSMenuTile::glfunc;
-char *CicoHSMenuTile::thumbmapbuffer = NULL;
-
-static void SetYinvert(Evas_Object *obj);
-
-/*============================================================================*/
 /* functions                                                                  */
 /*============================================================================*/
 /*--------------------------------------------------------------------------*/
@@ -51,69 +42,7 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
                                int page, int subpage,
                                int position, int width, int height)
 {
-    int     shmfd;
-
     ICO_TRA("CicoHSMenuTile::CicoHSMenuTile Enter");
-    if (_CicoHSMenuTile_initialized == 0)  {
-        // Initialize and setting OpenGL/EGL functions
-        ICO_DBG("CicoHSMenuTile::CicoHSMenuTile: initialize OpenGL/EGL functions");
-        _CicoHSMenuTile_initialized = 1;
-
-        CicoHSMenuTile::glfunc.egl_display
-            = eglGetDisplay((EGLNativeDisplayType)ecore_wl_display_get());
-        if (CicoHSMenuTile::glfunc.egl_display) {
-            CicoHSMenuTile::glfunc.create_image
-                = (PFNEGLCREATEIMAGEKHRPROC)eglGetProcAddress("eglCreateImageKHR");
-            CicoHSMenuTile::glfunc.image_target_texture_2d
-                = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC)
-                                        eglGetProcAddress("glEGLImageTargetTexture2DOES");
-            CicoHSMenuTile::glfunc.destroy_image
-                = (PFNEGLDESTROYIMAGEKHRPROC)eglGetProcAddress("eglDestroyImageKHR");
-            if ((! CicoHSMenuTile::glfunc.create_image) ||
-                (! CicoHSMenuTile::glfunc.image_target_texture_2d) ||
-                (! CicoHSMenuTile::glfunc.destroy_image))   {
-                ICO_WRN("CicoHSMenuTile::CicoHSMenuTile: can not get EGL functions");
-                _CicoHSMenuTile_initialized = 2;
-            }
-        }
-        else    {
-            _CicoHSMenuTile_initialized = 2;
-            ICO_WRN("CicoHSMenuTile::CicoHSMenuTile: can not initialize OpenGL/EGL");
-        }
-
-        // create shared memory buffer for non EGL surface
-        CicoHSMenuTile::thumbmapbuffer = NULL;
-        shmfd = shm_open(ICO_HS_SHMBUFFER_NAME, O_RDWR|O_CREAT, 0600);
-        if (shmfd == -1)    {
-            ICO_ERR("CicoHSMenuTile::CicoHSMenuTile: can not open shared memory buffer");
-            _CicoHSMenuTile_initialized = -2;
-        }
-        else    {
-            if (ftruncate(shmfd, ICO_HS_SHMBUFFER_SIZE * ICO_HS_SHMBUFFER_NUM) == -1)   {
-                ICO_ERR("CicoHSMenuTile::CicoHSMenuTile: can not truncate shared memory buffer");
-                _CicoHSMenuTile_initialized = -2;
-            }
-            else    {
-                CicoHSMenuTile::thumbmapbuffer = (char *)
-                                mmap(NULL, ICO_HS_SHMBUFFER_SIZE * ICO_HS_SHMBUFFER_NUM,
-                                     PROT_READ|PROT_WRITE, MAP_SHARED, shmfd, 0);
-                if (CicoHSMenuTile::thumbmapbuffer == NULL) {
-                    ICO_ERR("CicoHSMenuTile::CicoHSMenuTile: can not map shared memory buffer");
-                    _CicoHSMenuTile_initialized = -2;
-                }
-                else    {
-                    memset(CicoHSMenuTile::thumbmapbuffer, 0,
-                           ICO_HS_SHMBUFFER_SIZE * ICO_HS_SHMBUFFER_NUM);
-                    ico_syc_map_buffer(ICO_HS_SHMBUFFER_NAME,
-                                       ICO_HS_SHMBUFFER_SIZE, ICO_HS_SHMBUFFER_NUM);
-                }
-            }
-            close(shmfd);
-            if (CicoHSMenuTile::thumbmapbuffer == NULL) {
-                shm_unlink(ICO_HS_SHMBUFFER_NAME);
-            }
-        }
-    }
 
     if (appid != NULL) {
         strncpy(this->appid, appid, ICO_HS_MAX_PROCESS_NAME);
@@ -129,9 +58,6 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
             appid, this->icon_image_path);
     thumb.surface = 0;
     thumb.fbcount = 0;
-    thumb.name = 0;
-    thumb.image = NULL;
-    thumb.texture = 0;
     thumb.pixel_data = NULL;
     this->page = page;
     this->subpage = subpage;
@@ -140,6 +66,10 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
     this->height = height;
     pos_x = GetPositionX();
     pos_y = GetPositionY();
+
+    (void) mkdir(ICO_HS_THUMB_ICODIR, 0755);
+    (void) mkdir(ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR, 0755);
+
     ICO_TRA("CicoHSMenuTile::CicoHSMenuTile Leave");
 }
 
@@ -248,20 +178,16 @@ CicoHSMenuTile::HideTermIcon(void)
 void
 CicoHSMenuTile::FreeObject(void)
 {
+    char    sWork[80];
+
     ICO_DBG("CicoHSMenuTile::FreeObject(appid=%08x<%s>)", (int)this->appid, appid);
 
     if (thumb.surface)  {
+        sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                thumb.surface);
+        (void) unlink(sWork);
         ico_syc_unmap_thumb(thumb.surface);
         thumb.surface = 0;
-    }
-    if (thumb.image)    {
-        CicoHSMenuTile::glfunc.destroy_image(
-                            CicoHSMenuTile::glfunc.egl_display, thumb.image);
-        thumb.image = NULL;
-    }
-    if (thumb.texture)  {
-        glDeleteTextures(1, &thumb.texture);
-        thumb.texture = 0;
     }
     if (tile != NULL){
         evas_object_del(tile);
@@ -595,32 +521,32 @@ CicoHSMenuTile::ValidMenuIcon(void)
 void
 CicoHSMenuTile::ValidThumbnail(int surface)
 {
+    char    sWork[80];
+
     ICO_DBG("CicoHSMenuTile::ValidThumbnail(appid=%08x<%s>) run=%d surf=%08x",
             (int)this->appid, appid, app_running, surface);
 
     if ((! app_running) || (surface == 0))  {
         if (thumb.surface != 0) {
+            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                    thumb.surface);
+            (void) unlink(sWork);
             ico_syc_unmap_thumb(thumb.surface);
             // delete image and texture
             if ((surface == 0) && (thumb.pixel_data))   {
                 free(thumb.pixel_data);
                 thumb.pixel_data = NULL;
             }
-            if (thumb.image)    {
-                CicoHSMenuTile::glfunc.destroy_image(
-                                    CicoHSMenuTile::glfunc.egl_display, thumb.image);
-                thumb.image = NULL;
-            }
-            if (thumb.texture)  {
-                glDeleteTextures(1, &thumb.texture);
-                thumb.texture = 0;
-            }
         }
         thumb.surface = surface;
         if (surface)    {
             app_running = true;
-            ico_syc_map_thumb(thumb.surface, menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
-                                                         ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE);
+            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                    thumb.surface);
+            (void) unlink(sWork);
+            ico_syc_map_thumb(thumb.surface,
+                              menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
+                                          ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
             if (! small_icon)   {
                 small_icon = evas_object_image_filled_add(menu_evas);
                 evas_object_image_file_set(small_icon, icon_image_path, NULL);
@@ -674,17 +600,17 @@ CicoHSMenuTile::ValidThumbnail(int surface)
 void
 CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 {
-    EGLint              attribs[9];
     Evas_Object         *old_icon = icon;
     struct ico_uifw_image_buffer *pixelbuf = NULL;
-    Evas_Native_Surface nsurf;
     int                 svx, svy;
     int                 unmap;
+    int                 fd;
+    char                sWork[80];
 
     ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%08x<%s>) info=%08x surf=%08x",
             (int)this->appid, appid, (int)info, info ? info->surface : 0);
 
-    if ((info == NULL) || (info->surface == 0) || (info->name == 0))    {
+    if ((info == NULL) || (info->surface == 0)) {
         unmap = 1;
     }
     else    {
@@ -694,212 +620,124 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                 ICO_DBG("CicoHSMenuTile::SetThumbnail: surface change(%08x->%08x)",
                         thumb.surface, info->surface);
                 ico_syc_unmap_thumb(thumb.surface);
+                sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                        thumb.surface);
+                (void) unlink(sWork);
             }
             thumb.surface = info->surface;
+            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                    thumb.surface);
+            (void) unlink(sWork);
             ico_syc_map_thumb(thumb.surface,
                               menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
-                                          ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE);
+                                          ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
+        }
+        else    {
+            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                    thumb.surface);
         }
         thumb.type = info->type;
-        thumb.name = info->name;
         thumb.width = info->width;
         thumb.height = info->height;
         thumb.stride = info->stride;
         thumb.format = info->format;
 #if 0       /* too many log */
         ICO_DBG("CicoHSMenuTile::SetThumbnail: make thumbnail %s(%08x) "
-                "type=%d name=%d w/h/s=%d/%d/%d tile w/h=%d/%d",
-                appid, thumb.surface, thumb.type, thumb.name,
+                "type=%d w/h/s=%d/%d/%d tile w/h=%d/%d",
+                appid, thumb.surface, thumb.type,
                 thumb.width, thumb.height, thumb.stride, width, height);
 #endif
-        // delete image and texture
-        if (thumb.image)    {
-            CicoHSMenuTile::glfunc.destroy_image(
-                            CicoHSMenuTile::glfunc.egl_display, thumb.image);
-            thumb.image = NULL;
-        }
-        if (thumb.texture)  {
-            glDeleteTextures(1, &thumb.texture);
-            thumb.texture = 0;
-        }
-
         if ((info->width <= 1) || (info->height <= 1))  {
             ICO_DBG("CicoHSMenuTile::SetThumbnail: small surface(%d,%d) skip",
                     info->width, info->height);
         }
         else    {
-            // create image and texture
-            if (_CicoHSMenuTile_initialized > 0)  {
-                svx = thumb_reduce_x;
-                svy = thumb_reduce_y;
-                if (thumb.width > (thumb.height + 64))  {
-                    thumb_reduce_x = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
-                    thumb_reduce_y = height / ICO_HS_MENUTILE_THUMBNAIL_REDUCE_RATE;
-                }
-                else if (thumb.width < (thumb.height - 64)) {
-                    thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
-                    thumb_reduce_x = width / ICO_HS_MENUTILE_THUMBNAIL_REDUCE_RATE;
-                }
-                else    {
-                    thumb_reduce_x = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
-                    thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
-                }
-                if (! thumb_tile)   {
-                    thumb_tile = evas_object_image_filled_add(menu_evas);
-                    evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
-                                                   height - thumb_reduce_y * 2);
-                    evas_object_move(thumb_tile, pos_x + thumb_reduce_x,
-                                     pos_y + thumb_reduce_y);
-                    evas_object_event_callback_add(thumb_tile, EVAS_CALLBACK_MOUSE_DOWN,
-                                                   CicoHSMenuTouch::TouchDownMenu, appid);
-                    evas_object_event_callback_add(thumb_tile, EVAS_CALLBACK_MOUSE_UP,
-                                                   CicoHSMenuTouch::TouchUpMenu, appid);
-                    ICO_DBG("CicoHSMenuTile::SetThumbnail: create thumb_tile %s "
-                            "tile=(%d+%d,%d+%d)", appid,
-                            pos_x, thumb_reduce_x, pos_y, thumb_reduce_y);
-                    if (small_icon) {
-                        evas_object_move(small_icon,
-                                         pos_x + thumb_reduce_x
-                                             - ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2,
-                                         pos_y + height - thumb_reduce_y - height
-                                             / ICO_HS_MENUTILE_THUMBNAIL_REDUCTION
-                                             + ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2);
-                        evas_object_raise(small_icon);
-                    }
-                    evas_object_raise(term_icon);
-                }
-                else if ((svx != thumb_reduce_x) || (svy != thumb_reduce_y))    {
-                    evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
-                                                   height - thumb_reduce_y * 2);
-                    evas_object_move(thumb_tile, pos_x + thumb_reduce_x,
-                                     pos_y + thumb_reduce_y);
-                    if (small_icon) {
-                        evas_object_move(small_icon,
-                                         pos_x + thumb_reduce_x
-                                             - ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2,
-                                         pos_y + height - thumb_reduce_y - height
-                                             / ICO_HS_MENUTILE_THUMBNAIL_REDUCTION
-                                             + ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2);
-                    }
-                }
-                if (thumb.type == ICO_WINDOW_MGR_MAP_TYPE_EGL)  {
-                    /* Intel GPU depend     */
-                    attribs[0] = EGL_WIDTH;
-                    attribs[1] = thumb.width;
-                    attribs[2] = EGL_HEIGHT;
-                    attribs[3] = thumb.height;
-                    attribs[4] = EGL_DRM_BUFFER_FORMAT_MESA;
-                    attribs[5] = EGL_DRM_BUFFER_FORMAT_ARGB32_MESA; /* support only ARGB */
-                    attribs[6] = EGL_DRM_BUFFER_STRIDE_MESA;
-                    attribs[7] = thumb.stride / 4;
-                    attribs[8] = EGL_NONE;
-
-                    thumb.image = CicoHSMenuTile::glfunc.create_image(
-                                        CicoHSMenuTile::glfunc.egl_display, EGL_NO_CONTEXT,
-                                        EGL_DRM_BUFFER_MESA,
-                                        (EGLClientBuffer)thumb.name, attribs);
-                    if (thumb.image)    {
-                        icon = thumb_tile;
-#if 0                   /* too many logs    */
-                        ICO_DBG("CicoHSMenuTile::SetThumbnail: create image = %08x",
-                                (int)thumb.image);
-#endif
-                        /* create texture from image    */
-                        thumb.texture = 0;
-                        glGenTextures(1, &thumb.texture);
-                        glBindTexture(GL_TEXTURE_2D, thumb.texture);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-                        CicoHSMenuTile::glfunc.image_target_texture_2d(
-                                                                GL_TEXTURE_2D, thumb.image);
-#if 0                   /* too many logs    */
-                        ICO_DBG("CicoHSMenuTile::SetThumbnail: create texture = %08x",
-                                (int)thumb.texture);
-#endif
-                        /* draw texture to screen       */
-                        memset(&nsurf, 0, sizeof(nsurf));
-                        nsurf.version = EVAS_NATIVE_SURFACE_VERSION;
-                        nsurf.type = EVAS_NATIVE_SURFACE_OPENGL;
-                        nsurf.data.opengl.texture_id = thumb.texture;
-
-                        thumb.fbcount ++;
-                        if (thumb.fbcount <= 0) thumb.fbcount = 1;
-                        nsurf.data.opengl.framebuffer_id = thumb.fbcount;
-
-                        nsurf.data.opengl.internal_format = GL_BGRA_EXT;
-                        nsurf.data.opengl.format = GL_BGRA_EXT;
-                        nsurf.data.opengl.x = 0;
-                        nsurf.data.opengl.y = 0;
-                        nsurf.data.opengl.w = thumb.width;
-                        nsurf.data.opengl.h = thumb.height / 4;
-
-                        evas_object_image_native_surface_set(thumb_tile, &nsurf);
-
-                        // set Y invert to native OpenGL object (Evas bug fix)
-                        SetYinvert(thumb_tile);
-
-                        evas_object_image_data_update_add(thumb_tile,
-                                                          0, 0, thumb.width, thumb.height);
-                        evas_object_image_size_set(thumb_tile, thumb.width, thumb.height);
-                        evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
-                                                       height - thumb_reduce_y * 2);
-                        evas_object_move(thumb_tile,
-                                         pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
-                    }
-                    else    {
-                        ICO_ERR("CicoHSMenuTile::SetThumbnail: can not create image");
-                        unmap = 1;
-                    }
-                }
-                else    {
-                    if ((CicoHSMenuTile::thumbmapbuffer != NULL) &&
-                        (thumb.name <= ICO_HS_SHMBUFFER_NUM))   {
-                        /* glReadPixels image   */
-#if 0                   /* too many logs    */
-                        ICO_DBG("CicoHSMenuTile::SetThumbnail: %s pixel(idx=%d) "
-                                "tile=(%d+%d,%d+%d)", appid, thumb.name,
-                                pos_x, thumb_reduce_x, pos_y, thumb_reduce_y);
-#endif
-                        pixelbuf = (struct ico_uifw_image_buffer *)
-                                       ((char *)(CicoHSMenuTile::thumbmapbuffer) +
-                                           ICO_HS_SHMBUFFER_SIZE * (thumb.name-1));
-                        if (! thumb.pixel_data) {
-                            thumb.pixel_data = (char *)
-                                malloc(ICO_HS_SHMBUFFER_SIZE - ICO_UIFW_IMAGE_HEADER_SIZE);
-                        }
-                        if (thumb.pixel_data)   {
-                            int bufsize = thumb.width * thumb.height * 4;
-                            if (bufsize >
-                                (ICO_HS_SHMBUFFER_SIZE - ICO_UIFW_IMAGE_HEADER_SIZE))   {
-                                bufsize = ICO_HS_SHMBUFFER_SIZE - ICO_UIFW_IMAGE_HEADER_SIZE;
-                            }
-                            memcpy(thumb.pixel_data, pixelbuf->image, bufsize);
-                            evas_object_image_data_update_add(
-                                    thumb_tile, 0, 0, thumb.width, thumb.height);
-                            icon = thumb_tile;
-                            evas_object_image_size_set(thumb_tile, thumb.width, thumb.height);
-                            evas_object_image_data_set(thumb_tile, thumb.pixel_data);
-                            evas_object_image_filled_set(thumb_tile, EINA_TRUE);
-                            evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
+            // create thumbnail image
+            svx = thumb_reduce_x;
+            svy = thumb_reduce_y;
+            if (thumb.width > (thumb.height + 64))  {
+                thumb_reduce_x = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
+                thumb_reduce_y = height / ICO_HS_MENUTILE_THUMBNAIL_REDUCE_RATE;
+            }
+            else if (thumb.width < (thumb.height - 64)) {
+                thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
+                thumb_reduce_x = width / ICO_HS_MENUTILE_THUMBNAIL_REDUCE_RATE;
+            }
+            else    {
+                thumb_reduce_x = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
+                thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
+            }
+            if (! thumb_tile)   {
+                thumb_tile = evas_object_image_filled_add(menu_evas);
+                evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
                                                height - thumb_reduce_y * 2);
-                            evas_object_move(thumb_tile,
-                                             pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
-                        }
-                        else    {
-                            ICO_ERR("CicoHSMenuTile::SetThumbnail: can not malloc pixel buffer");
-                            unmap = 1;
-                        }
-                    }
-                    else    {
-                        ICO_ERR("CicoHSMenuTile::SetThumbnail: not pixel buffer");
-                        unmap = 1;
-                    }
+                evas_object_move(thumb_tile, pos_x + thumb_reduce_x,
+                                 pos_y + thumb_reduce_y);
+                evas_object_event_callback_add(thumb_tile, EVAS_CALLBACK_MOUSE_DOWN,
+                                               CicoHSMenuTouch::TouchDownMenu, appid);
+                evas_object_event_callback_add(thumb_tile, EVAS_CALLBACK_MOUSE_UP,
+                                               CicoHSMenuTouch::TouchUpMenu, appid);
+                ICO_DBG("CicoHSMenuTile::SetThumbnail: create thumb_tile %s "
+                        "tile=(%d+%d,%d+%d)", appid,
+                        pos_x, thumb_reduce_x, pos_y, thumb_reduce_y);
+                if (small_icon) {
+                    evas_object_move(small_icon,
+                                     pos_x + thumb_reduce_x
+                                         - ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2,
+                                     pos_y + height - thumb_reduce_y - height
+                                         / ICO_HS_MENUTILE_THUMBNAIL_REDUCTION
+                                         + ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2);
+                    evas_object_raise(small_icon);
+                }
+                evas_object_raise(term_icon);
+            }
+            else if ((svx != thumb_reduce_x) || (svy != thumb_reduce_y))    {
+                evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
+                                               height - thumb_reduce_y * 2);
+                evas_object_move(thumb_tile, pos_x + thumb_reduce_x,
+                                 pos_y + thumb_reduce_y);
+                if (small_icon) {
+                    evas_object_move(small_icon,
+                                     pos_x + thumb_reduce_x
+                                         - ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2,
+                                     pos_y + height - thumb_reduce_y - height
+                                         / ICO_HS_MENUTILE_THUMBNAIL_REDUCTION
+                                         + ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2);
+                }
+            }
+            /* read surface image pixel         */
+            int bufsize = ((thumb.width * thumb.height * 4 + 4096 - 1) / 4096) * 4095;
+            if ((! thumb.pixel_data) || (bufsize > thumb.pixel_bufsize))    {
+                if (thumb.pixel_data)   free(thumb.pixel_data);
+                thumb.pixel_data = (char *)malloc(bufsize);
+                thumb.pixel_bufsize = bufsize;
+            }
+            if (thumb.pixel_data)   {
+                fd = open(sWork, O_RDONLY, 0644);
+                if ((fd < 0) ||
+                    (read(fd, thumb.pixel_data, bufsize) <= 0)) {
+                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)", sWork);
+                    unmap = 1;
+                }
+                if (fd >= 0)    {
+                    close(fd);
+                    (void) unlink(sWork);
+                }
+                if (unmap == 0) {
+                    evas_object_image_data_update_add(
+                                    thumb_tile, 0, 0, thumb.width, thumb.height);
+                    icon = thumb_tile;
+                    evas_object_image_size_set(thumb_tile, thumb.width, thumb.height);
+                    evas_object_image_data_set(thumb_tile, thumb.pixel_data);
+                    evas_object_image_filled_set(thumb_tile, EINA_TRUE);
+                    evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
+                                       height - thumb_reduce_y * 2);
+                    evas_object_move(thumb_tile,
+                                     pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
                 }
             }
             else    {
-                ICO_DBG("CicoHSMenuTile::SetThumbnail: OpenGL/EGL initialize error");
+                ICO_ERR("CicoHSMenuTile::SetThumbnail: can not malloc pixel buffer");
                 unmap = 1;
             }
         }
@@ -907,23 +745,16 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 
     if (unmap > 0)  {
         ICO_DBG("CicoHSMenuTile::SetThumbnail: unmap thumbnail %08x", thumb.surface);
+        if (thumb.surface)  {
+            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                    thumb.surface);
+            (void) unlink(sWork);
+            ico_syc_unmap_thumb(thumb.surface);
+            thumb.surface = 0;
+        }
         if (thumb.pixel_data)   {
             free(thumb.pixel_data);
             thumb.pixel_data = NULL;
-        }
-        if (thumb.surface)  {
-            ico_syc_unmap_thumb(thumb.surface);
-            // delete image and texture
-            if (thumb.image)    {
-                CicoHSMenuTile::glfunc.destroy_image(
-                                CicoHSMenuTile::glfunc.egl_display, thumb.image);
-                thumb.image = NULL;
-            }
-            if (thumb.texture)  {
-                glDeleteTextures(1, &thumb.texture);
-                thumb.texture = 0;
-            }
-            thumb.surface = 0;
         }
         icon = tile;
     }
@@ -962,314 +793,15 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 void
 CicoHSMenuTile::ShowMenu(bool show)
 {
+    char    sWork[80];
     menu_show = show;
     if ((thumb_tile) && (thumb.surface != 0)) {
+        sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+                thumb.surface);
+        (void) unlink(sWork);
         ico_syc_map_thumb(thumb.surface,
                           menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
-                                      ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE);
-    }
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   SetYinvert (static function)
-*           set Y invert of OpenGL native object
- *
- * @param[in]   obj         target OpenGL native object
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-static void
-SetYinvert(Evas_Object *obj)
-{
-    // inport from evas-1.7.8/src/lib/canvas/evas_object_image.c _Evas_Object_Image
-    struct local_Evas_Object_Image
-    {
-       uint32_t         magic;
-
-       struct {
-          int                  spread;
-          Evas_Coord_Rectangle fill;
-          struct {
-             short         w, h, stride;
-          } image;
-          struct {
-             short         l, r, t, b;
-             unsigned char fill;
-             double        scale;
-          } border;
-
-          Evas_Object   *source;
-          Evas_Map      *defmap;
-          const char    *file;
-          const char    *key;
-          int           frame;
-          Evas_Colorspace cspace;
-
-          unsigned char smooth_scale : 1;
-          unsigned char has_alpha :1;
-          unsigned char opaque :1;
-          unsigned char opaque_valid :1;
-       } cur, prev;
-
-       int              pixels_checked_out;
-       int              load_error;
-       Eina_List        *pixel_updates;
-
-       struct {
-          unsigned char scale_down_by;
-          double        dpi;
-          short         w, h;
-          struct {
-             short      x, y, w, h;
-          } region;
-          Eina_Bool  orientation : 1;
-       } load_opts;
-
-       struct {
-          Evas_Object_Image_Pixels_Get_Cb get_pixels;
-          void                            *get_pixels_data;
-       } func;
-
-       Evas_Video_Surface video;
-#if 0                               /* delete at evas-1.7.8-15.1    */
-       unsigned int video_caps;
-#endif
-       const char       *tmpf;
-       int              tmpf_fd;
-
-       Evas_Image_Scale_Hint   scale_hint;
-       Evas_Image_Content_Hint content_hint;
-
-       void             *engine_data;
-
-       unsigned char    changed : 1;
-       unsigned char    dirty_pixels : 1;
-       unsigned char    filled : 1;
-       unsigned char    proxyrendering : 1;
-       unsigned char    preloading : 1;
-       unsigned char    video_rendering : 1;
-       unsigned char    video_surface : 1;
-       unsigned char    video_visible : 1;
-       unsigned char    created : 1;
-       unsigned char    proxyerror : 1;
-    };
-
-    // inport from evas-1.7.8/src/lib/include/evas_common.h  _RGBA_Image_Loadopts
-    struct local_RGBA_Image_Loadopts
-    {
-       int              scale_down_by; // if > 1 then use this
-       double           dpi; // if > 0.0 use this
-       unsigned int     w, h; // if > 0 use this
-       unsigned int     degree;//if>0 there is some info related with rotation
-       struct {
-          unsigned int  x, y, w, h;
-       } region;
-
-       Eina_Bool        orientation;
-    };
-    // inport from evas-1.7.8/src/modules/engines/gl_common/evas_gl_common.h  _Evas_GL_Image
-    struct local_Evas_GL_Image
-    {
-       void *gc;
-       void *im;
-       void *tex;
-       struct local_RGBA_Image_Loadopts load_opts;
-       int              references;
-       // if im->im == NULL, it's a render-surface so these here are used
-       int              w, h;
-       struct {
-          int           space;
-          void          *data;
-          unsigned char no_free : 1;
-       } cs;
-
-       struct {
-          void          *data;
-          struct {
-             void (*bind)   (void *data, void *image);
-             void (*unbind) (void *data, void *image);
-             void (*free)   (void *data, void *image);
-             void *data;
-          } func;
-          int           yinvert;
-          int           target;
-          int           mipmap;
-          unsigned char loose : 1;
-       } native;
-
-       int scale_hint, content_hint;
-       int csize;
-
-       Eina_List        *filtered;
-
-       unsigned char    dirty : 1;
-       unsigned char    cached : 1;
-       unsigned char    alpha : 1;
-       unsigned char    tex_only : 1;
-    };
-    // inport evas-1.7.8/src/lib/include/evas_private.h  _Evas_Object
-    struct local_Evas_Object
-    {
-       EINA_INLIST;
-
-       uint32_t                 magic;
-
-       const char               *type;
-       void                     *layer;
-
-       struct {
-          Evas_Map              *map;
-          Evas_Object           *clipper;
-          Evas_Object           *mask;
-          Evas_Object           *map_parent;
-          double                scale;
-          Evas_Coord_Rectangle  geometry;
-          Evas_Coord_Rectangle  bounding_box;
-          struct {
-             struct {
-                Evas_Coord      x, y, w, h;
-                unsigned char   r, g, b, a;
-                Eina_Bool       visible : 1;
-                Eina_Bool       dirty : 1;
-             } clip;
-          } cache;
-          short                 layer;
-          struct {
-             unsigned char      r, g, b, a;
-          } color;
-          Eina_Bool             usemap : 1;
-          Eina_Bool             valid_map : 1;
-          Eina_Bool             visible : 1;
-          Eina_Bool             have_clipees : 1;
-          Eina_Bool             anti_alias : 1;
-          Evas_Render_Op        render_op : 4;
-
-          Eina_Bool             valid_bounding_box : 1;
-          Eina_Bool             cached_surface : 1;
-          Eina_Bool             parent_cached_surface : 1;
-       } cur, prev;
-
-       struct {
-          void                  *surface; // surface holding map if needed
-          int                   surface_w, surface_h; // current surface w & h alloc
-       } map;
-
-       Evas_Map                 *cache_map;
-       char                     *name;
-
-       void                     *interceptors;
-
-       struct {
-          Eina_List             *elements;
-       } data;
-
-       Eina_List                *grabs;
-
-       void                     *callbacks;
-
-       struct {
-          Eina_List             *clipees;
-          Eina_List             *changes;
-       } clip;
-
-       void *func;
-
-       void                     *object_data;
-       struct {
-          Evas_Smart            *smart;
-          Evas_Object           *parent;
-       } smart;
-
-       struct {
-          Eina_List             *proxies;
-          void                  *surface;
-          int                   w,h;
-          Eina_Bool             redraw;
-       } proxy;
-
-    #if 0 // filtering disabled
-       Evas_Filter_Info           *filter;
-    #endif
-
-       void                     *size_hints;
-
-       void                     *spans;
-
-       int                      last_mouse_down_counter;
-       int                      last_mouse_up_counter;
-       int                      mouse_grabbed;
-
-       int                      last_event;
-       Evas_Callback_Type       last_event_type;
-
-       struct {
-            int                 in_move, in_resize;
-       } doing;
-
-      /* ptr array + data blob holding all interfaces private data for
-       * this object */
-       void                     **interface_privates;
-
-       unsigned int             ref;
-
-       unsigned char            delete_me;
-
-       unsigned char            recalculate_cycle;
-       Eina_Clist               calc_entry;
-
-       Evas_Object_Pointer_Mode pointer_mode : 2;
-       Eina_Bool                store : 1;
-       Eina_Bool                pass_events : 1;
-       Eina_Bool                freeze_events : 1;
-       Eina_Bool                repeat_events : 1;
-       struct  {
-          Eina_Bool             pass_events : 1;
-          Eina_Bool             pass_events_valid : 1;
-          Eina_Bool             freeze_events : 1;
-          Eina_Bool             freeze_events_valid : 1;
-       } parent_cache;
-       Eina_Bool                restack : 1;
-       Eina_Bool                is_active : 1;
-       Eina_Bool                precise_is_inside : 1;
-       Eina_Bool                is_static_clip : 1;
-
-       Eina_Bool                render_pre : 1;
-       Eina_Bool                rect_del : 1;
-       Eina_Bool                mouse_in : 1;
-       Eina_Bool                pre_render_done : 1;
-       Eina_Bool                intercepted : 1;
-       Eina_Bool                focused : 1;
-       Eina_Bool                in_layer : 1;
-       Eina_Bool                no_propagate : 1;
-       Eina_Bool                changed : 1;
-       Eina_Bool                changed_move : 1;
-       Eina_Bool                changed_color : 1;
-       Eina_Bool                changed_map : 1;
-       Eina_Bool                changed_pchange : 1;
-       Eina_Bool                del_ref : 1;
-
-       Eina_Bool                is_frame : 1;
-       Eina_Bool                child_has_map : 1;
-    };
-
-    struct local_Evas_Object_Image  *image_obj;
-    struct local_Evas_GL_Image      *im;
-
-    image_obj = (struct local_Evas_Object_Image *)
-                (((struct local_Evas_Object *)obj)->object_data);
-
-    im = (struct local_Evas_GL_Image *)image_obj->engine_data;
-
-    // Evas old version check and revise
-    if (((int)im & 0xffff0000) == 0)    {
-        // Evas old version
-        image_obj = (struct local_Evas_Object_Image *)(((int *)image_obj) + 1);
-        im = (struct local_Evas_GL_Image *)image_obj->engine_data;
-    }
-    if (((int)im & 0xffff0000) != 0)    {
-        if (im->native.yinvert == 0)
-            im->native.yinvert = 1;
+                                      ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
     }
 }
 // vim: set expandtab ts=4 sw=4:

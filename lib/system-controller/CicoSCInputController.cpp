@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -115,11 +115,6 @@ CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
         opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
         delInputApp(cmd->appid, opt->device, opt->input);
         break;
-    case MSG_CMD_SEND_INPUT:
-        opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
-        sendInputEvent(cmd->appid, opt->surfaceid, opt->evtype,
-                       opt->deviceno, opt->evtime, opt->evcode, opt->evvalue);
-        break;
     case MSG_CMD_SET_REGION:
         set_opt = static_cast<CicoSCCmdInputDevSettingOpt*>(cmd->opt);
         setInputRegion(cmd->appid, set_opt->winname, set_opt->x, set_opt->y,
@@ -191,39 +186,6 @@ CicoSCInputController::delInputApp(const string &appid,
     CicoSCWlInputMgrIF::delInputApp(appid.c_str(), device.c_str(), input);
 
     ICO_TRA("CicoSCInputController::delInputApp Leave(EOK)");
-    return ICO_SYC_EOK;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  send input device event
- *
- *  @param [in] appid     application id
- *  @param [in] surfaceid surface id
- *  @param [in] type      device type
- *  @param [in] deviceno  input device number
- *  @param [in] time      event time
- *  @param [in] code      event code
- *  @param [in] value     event value
- */
-//--------------------------------------------------------------------------
-int
-CicoSCInputController::sendInputEvent(const string &appid,
-                                      int          surfaceid,
-                                      int          type,
-                                      int          deviceno,
-                                      int          time,
-                                      int          code,
-                                      int          value)
-{
-    ICO_TRA("CicoSCInputController::sendInputEvent Enter"
-            "(appid=%s surfaceid=0x%08X type=%d dev_no=%d time=%d code=%d value=%d)",
-            appid.c_str(), surfaceid, type, deviceno, time, code, value);
-
-    CicoSCWlInputMgrIF::sendInputEvent(appid.c_str(), surfaceid,
-                                       type, deviceno, time, code, value);
-
-    ICO_TRA("CicoSCInputController::sendInputEvent Leave(EOK)");
     return ICO_SYC_EOK;
 }
 

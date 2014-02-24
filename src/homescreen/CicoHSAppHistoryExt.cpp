@@ -375,9 +375,7 @@ void CicoHSAppHistoryExt::activeApp(const char* appid)
 {
     ICO_DBG("start %s", appid);
     if (true == m_waitSelApp.empty()) {
-#if 1
         moveHistoryHead(appid);
-#endif
         ICO_DBG("end current none");
         return;
     }
@@ -388,11 +386,9 @@ void CicoHSAppHistoryExt::activeApp(const char* appid)
         return;
     }
     ICO_DBG("end  no match select app(%s)", m_waitSelApp.c_str());
-#if 1
     if (true == moveHistoryHead(appid)) {
         m_waitSelApp.clear();
     }
-#endif
     return;
 }
 
@@ -470,7 +466,7 @@ bool CicoHSAppHistoryExt::moveHistoryHead(const string& app)
 }
 
 /**
- * @breief update appid 
+ * @breief update appid
  * @param pid
  * @param appid  update appid store string
  * @param aulstt value is AUL_R_OK then no update
@@ -690,16 +686,6 @@ bool CicoHSAppHistoryExt::update_pairPidAppid(string& appid)
 void CicoHSAppHistoryExt::update_appid()
 {
     ICO_DBG("start");
-#if 0
-    list<string>::iterator his_appid = m_appHistoryList.begin();
-    while (his_appid != m_appHistoryList.end()) {
-        string appid = *his_appid;
-        if (true == update_pairPidAppid(appid)) {
-            *his_appid = appid;
-        }
-        ++his_appid;
-    }
-#else
     vector<pairPidAppid>::iterator itV = m_vppa.begin();
     vector<int>::iterator itAS = m_aulstt.begin();
     while (itV != m_vppa.end()) {
@@ -719,7 +705,6 @@ void CicoHSAppHistoryExt::update_appid()
         ++itV;
         ++itAS;
     }
-#endif
     ICO_DBG("end");
 }
 
@@ -736,7 +721,7 @@ void CicoHSAppHistoryExt::startupCheckAdd(int pid, const std::string& appid,
     m_vpbpa.push_back(pairBoolPidAppid(false, pairPidAppid(pid, appid)));
     if (true == d) {
         m_subDispApp = appid;
-    } 
+    }
     else {
         m_lastStartupApp = appid;
     }

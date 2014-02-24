@@ -1,9 +1,11 @@
 lib_LTLIBRARIES = libico-appfw.la
 
-COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin
+COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin -lilmCommon -lilmControl -lilmClient
 
 libico_appfw_la_CFLAGS = -I../../include $(OPT_CFLAGS) $(UWS_CFLAGS) \
                           $(AUL_CFLAGS) @ECORE_CFLAGS@ \
+                          -I/usr/include/ilm \
+                          -I/usr/include/layermanager \
                           -I/usr/include/ico-uxf-weston-plugin \
                           -I/usr/include/ico-util
 

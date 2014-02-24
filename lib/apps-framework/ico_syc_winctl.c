@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -10,7 +10,7 @@
  * @brief   Window Control API
  *          for privilege applications
  *
- * @date    Aug-22-2013
+ * @date    Feb-21-2014
  */
 
 #include <string.h>
@@ -39,14 +39,12 @@ static msg_t _create_win_move_msg(const char *appid, int surface,
                                   const ico_syc_win_move_t *move,
                                   const ico_syc_animation_t *animation);
 static msg_t _create_active_win_msg(const char *appid, int surface);
-static msg_t _create_change_layer_msg(const char *appid, int surface,
-                                      int layer);
-static msg_t _create_map_buffer_msg(const char *appid, const char *shmname,
-                                    int bufsize, int bufnum);
-static msg_t _create_map_thumb_msg(const char *appid, int surface, int framerate);
+static msg_t _create_change_layer_msg(const char *appid, int surface, int layer);
+static msg_t _create_map_get_msg(const char *appid, int surface, const char *filepath);
+static msg_t _create_map_thumb_msg(const char *appid, int surface, int framerate,
+                                   const char *filepath);
 static msg_t _create_unmap_thumb_msg(const char *appid, int surface);
-static msg_t _create_layer_msg(const char *appid, int layer, int attr,
-                               int type);
+static msg_t _create_layer_msg(const char *appid, int layer, int type);
 
 /*============================================================================*/
 /* static function                                                            */
@@ -285,20 +283,19 @@ _create_change_layer_msg(const char *appid, int surface, int layer)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   _create_map_buffer_msg
- *          Create the message to map buffer.
+ * @brief   _create_map_get_msg
+ *          Create the message to map get.
  *
  * @param[in]   appid                   application id
- * @param[in]   shmname                 shared memory name
- * @param[in]   bufsize                 buffer size
- * @param[in]   bufnum                  number of buffer
+ * @param[in]   surface                 window's surface id
+ * @param[in]   filepath                pixel image file path
  * @return      json generator
  * @retval      json generator          success
  * @retval      NULL                    error
  */
 /*--------------------------------------------------------------------------*/
 static msg_t
-_create_map_buffer_msg(const char *appid, const char *shmname, int bufsize, int bufnum)
+_create_map_get_msg(const char *appid, int surface, const char *filepath)
 {
     JsonObject *obj     = NULL;
     JsonObject *argobj  = NULL;
@@ -314,13 +311,12 @@ _create_map_buffer_msg(const char *appid, const char *shmname, int bufsize, int 
     }
 
     /* set message */
-    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_MAP_BUFFER);
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_MAP_GET);
     json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
     json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
 
-    json_object_set_string_member(argobj, MSG_PRMKEY_ANIM_NAME, shmname);
-    json_object_set_int_member(argobj, MSG_PRMKEY_WIDTH, bufsize);
-    json_object_set_int_member(argobj, MSG_PRMKEY_HEIGHT, bufnum);
+    json_object_set_int_member(argobj, MSG_PRMKEY_SURFACE, surface);
+    json_object_set_string_member(argobj, MSG_PRMKEY_ANIM_NAME, filepath);
     json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
 
     /* create root object */
@@ -342,13 +338,14 @@ _create_map_buffer_msg(const char *appid, const char *shmname, int bufsize, int 
  * @param[in]   appid                   application id
  * @param[in]   surface                 window's surface id
  * @param[in]   framerate               notify cycle [frames par sec]
+ * @param[in]   filepath                pixel image file path
  * @return      json generator
  * @retval      json generator          success
  * @retval      NULL                    error
  */
 /*--------------------------------------------------------------------------*/
 static msg_t
-_create_map_thumb_msg(const char *appid, int surface, int framerate)
+_create_map_thumb_msg(const char *appid, int surface, int framerate, const char *filepath)
 {
     JsonObject *obj     = NULL;
     JsonObject *argobj  = NULL;
@@ -370,6 +367,12 @@ _create_map_thumb_msg(const char *appid, int surface, int framerate)
 
     json_object_set_int_member(argobj, MSG_PRMKEY_SURFACE, surface);
     json_object_set_int_member(argobj, MSG_PRMKEY_RATE, framerate);
+    if ((filepath != NULL) && (*filepath != 0) && (*filepath != ' '))   {
+        json_object_set_string_member(argobj, MSG_PRMKEY_ANIM_NAME, filepath);
+    }
+    else    {
+        json_object_set_string_member(argobj, MSG_PRMKEY_ANIM_NAME, " ");
+    }
     json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
 
     /* create root object */
@@ -437,7 +440,6 @@ _create_unmap_thumb_msg(const char *appid, int surface)
  *
  * @param[in]   appid                   application id
  * @param[in]   layer                   window's layer id
- * @param[in]   attr                    attribute
  * @param[in]   type                    type of command
  * @return      json generator
  * @retval      json generator          success
@@ -445,7 +447,7 @@ _create_unmap_thumb_msg(const char *appid, int surface)
  */
 /*--------------------------------------------------------------------------*/
 static msg_t
-_create_layer_msg(const char *appid, int layer, int attr, int type)
+_create_layer_msg(const char *appid, int layer, int type)
 {
     JsonObject *obj     = NULL;
     JsonObject *argobj  = NULL;
@@ -740,7 +742,6 @@ ico_syc_cb_thumb(ico_syc_callback_t callback, void *user_data,
 
     thumb_info->surface = ico_syc_get_int_member(argobj,
                                                  MSG_PRMKEY_SURFACE);
-    thumb_info->name = ico_syc_get_int_member(argobj, MSG_PRMKEY_NAME);
     thumb_info->type = ico_syc_get_int_member(argobj, MSG_PRMKEY_ATTR);
     thumb_info->width = ico_syc_get_int_member(argobj, MSG_PRMKEY_WIDTH);
     thumb_info->height = ico_syc_get_int_member(argobj, MSG_PRMKEY_HEIGHT);
@@ -1024,19 +1025,18 @@ ico_syc_change_layer(const char *appid, int surface, int layer)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_syc_map_buffer
- *          Prepare the thumbnail set map buffer for mapping to the memory.
+ * @brief   ico_syc_map_get
+ *          Get the surface thumbnail pixel image to the file.
  *
- * @param[in]   shmname                 shared memory name
- * @param[in]   bufsize                 buffer size [byte]
- * @param[in]   bufnum                  number of buffer
+ * @param[in]   surface                 window's surface id
+ * @param[in]   filepath                surface image pixel file path
  * @return      result
  * @retval      0                       success
  * @retval      not 0                   error
  */
 /*--------------------------------------------------------------------------*/
 ICO_API int
-ico_syc_map_buffer(const char *shmname, int bufsize, int bufnum)
+ico_syc_map_get(int surface, const char *filepath)
 {
     int ret = ICO_SYC_ERR_NONE;
     msg_t msg;
@@ -1046,7 +1046,7 @@ ico_syc_map_buffer(const char *shmname, int bufsize, int bufnum)
     appid = ico_syc_get_appid();
 
     /* make message */
-    msg = _create_map_buffer_msg(appid, shmname, bufsize, bufnum);
+    msg = _create_map_get_msg(appid, surface, filepath);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */
@@ -1058,17 +1058,18 @@ ico_syc_map_buffer(const char *shmname, int bufsize, int bufnum)
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   ico_syc_map_thumb
- *          Prepare the thumbnail data for mapping to the memory.
+ *          Prepare the thumbnail data
  *
  * @param[in]   surface                 window's surface id
  * @param[in]   framerate               notify cycle [ms]
+ * @param[in]   filepath                pixel image file path
  * @return      result
  * @retval      0                       success
  * @retval      not 0                   error
  */
 /*--------------------------------------------------------------------------*/
 ICO_API int
-ico_syc_map_thumb(int surface, int framerate)
+ico_syc_map_thumb(int surface, int framerate, const char *filepath)
 {
     int ret = ICO_SYC_ERR_NONE;
     msg_t msg;
@@ -1078,7 +1079,7 @@ ico_syc_map_thumb(int surface, int framerate)
     appid = ico_syc_get_appid();
 
     /* make message */
-    msg = _create_map_thumb_msg(appid, surface, framerate);
+    msg = _create_map_thumb_msg(appid, surface, framerate, filepath);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */
@@ -1142,7 +1143,7 @@ ico_syc_show_layer(int layer)
     appid = ico_syc_get_appid();
 
     /* make message */
-    msg = _create_layer_msg(appid, layer, 0, _CMD_SHOW_LAYER);
+    msg = _create_layer_msg(appid, layer, _CMD_SHOW_LAYER);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */
@@ -1173,7 +1174,7 @@ ico_syc_hide_layer(int layer)
     appid = ico_syc_get_appid();
 
     /* make message */
-    msg = _create_layer_msg(appid, layer, 0, _CMD_HIDE_LAYER);
+    msg = _create_layer_msg(appid, layer, _CMD_HIDE_LAYER);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */

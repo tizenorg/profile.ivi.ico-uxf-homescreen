@@ -52,6 +52,7 @@ libico_system_controller_la_CPPFLAGS =	\
 	@MURPHYRESOURCE_CFLAGS@				\
 	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
+	$(GENIVI_CFLAGS)					\
 	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
 	-I../common							\
@@ -75,6 +76,7 @@ libico_system_controller_la_LIBADD =	\
 	@MURPHYRESOURCE_LIBS@				\
 	@EDBUS_LIBS@						\
 	$(UWS_LIBS)							\
+	$(GENIVI_LIBS)						\
 	$(WESTONPLUGIN_LIBS)
 
 AM_LDFLAGS = -module -avoid-version -rpath $(libdir)

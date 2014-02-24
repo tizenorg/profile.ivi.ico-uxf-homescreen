@@ -494,7 +494,9 @@ _create_msg(const void *data, size_t len)
         break;
     case MSG_CMD_ADD_INPUT:
     case MSG_CMD_DEL_INPUT:
+#if 0           /* SystemController 0.9.21(with GENIVI ivi-shell) not support send_input */
     case MSG_CMD_SEND_INPUT:
+#endif
         gen = NULL;
         break;
     case MSG_CMD_CHANGE_USER:

@@ -23,9 +23,9 @@
 #include "CicoHSControlBarWindow.h"
 #include "CicoHSAppHistoryExt.h"
 
-#define ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH 80
-#define ICO_HS_SWIPE_TOUCH_SWIPE_HEIGHT 80
-#define ICO_HS_SWIPE_TOUCH_DISTANCE_XY 200
+#define ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH 60
+#define ICO_HS_SWIPE_TOUCH_SWIPE_HEIGHT 60
+#define ICO_HS_SWIPE_TOUCH_DISTANCE_XY 100
 #define ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE 80
 #define ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_MOVE_Y 80
 #define ICO_HS_SWIPE_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS 2.0d
@@ -53,11 +53,8 @@ class CicoHSSwipeTouch
     static int touch_state_b_y;
     static int touch_state_a_x;
     static int touch_state_a_y;
-    static int touch_lasttime;
 
-    static Ecore_Timer *timer;
     static int touch_down;
-    static bool long_act;
     static bool set_xy_pos;
     static int num_windows;
     static CicoHSSwipeInputWindow* swipe_windows[ICO_HS_MAX_SWIPEWINDOWS];

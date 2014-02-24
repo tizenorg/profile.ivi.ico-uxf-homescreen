@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -60,15 +60,6 @@ public:
     int delInputApp(const std::string &appid,
                     const std::string &device,
                     int               input);
-
-    // send input device event
-    int sendInputEvent(const std::string &appid,
-                       int               surfaceid,
-                       int               type,
-                       int               deviceno,
-                       int               time,
-                       int               code,
-                       int               value);
 
     // set input region information
     int setInputRegion(const std::string &appid,

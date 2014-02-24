@@ -19,6 +19,7 @@
 using namespace std;
 
 #include "CicoSCWindow.h"
+#include "CicoSCWlWinMgrIF.h"
 #include "CicoLog.h"
 
 //--------------------------------------------------------------------------
@@ -27,7 +28,7 @@ using namespace std;
  */
 //--------------------------------------------------------------------------
 CicoSCWindow::CicoSCWindow()
-    : surfaceid(-1), name(""), appid(""), pid(-1), layertype(-1),
+    : surfaceid(-1), name(""), appid(""), pid(-1),
       nodeid(-1), displayid(-1), layerid(-1), zone(""), zoneid(-1),
       subwindow(0), eventmask(0), x(-1), y(-1), width(-1), height(-1),
       visible(false), raise(false), active(false)
@@ -43,8 +44,9 @@ CicoSCWindow::CicoSCWindow()
 //--------------------------------------------------------------------------
 CicoSCWindow::~CicoSCWindow()
 {
-//    ICO_TRA("CicoSCWindow::~CicoSCWindow Enter");
-//    ICO_TRA("CicoSCWindow::~CicoSCWindow Leave");
+    ICO_TRA("CicoSCWindow::~CicoSCWindow Enter");
+    CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(surfaceid);
+    ICO_TRA("CicoSCWindow::~CicoSCWindow Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -58,11 +60,11 @@ CicoSCWindow::dump(void)
     ICO_DBG("CicoSCWindow: surfaceid=0x%08X name=%s appid=%s pid=%d "
             "nodeid=%d displayid=%d layerid=%d zone=%s zoneid=%d "
             "subwindow=%d eventmask=%d x=%d y=%d width=%d height=%d "
-            "visible=%s raise=%s active=%s layertype=%x",
+            "visible=%s raise=%s active=%s",
             surfaceid, name.c_str(), appid.c_str(), pid, nodeid, displayid,
             layerid, zone.c_str(), zoneid, subwindow, eventmask,
             x, y, width, height,
             visible ? "true" : "false", raise ? "true" : "false",
-            active ? "true" : "false", layertype);
+            active ? "true" : "false");
 }
 // vim:set expandtab ts=4 sw=4:

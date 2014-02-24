@@ -149,6 +149,8 @@ CicoSCLifeCycleController::CicoSCLifeCycleController()
     ailRenewFlagOff();
     initAIL();
     initAUL();
+
+    CicoSCLifeCycleController::ms_myInstance = this;
 }
 
 /**
@@ -157,6 +159,7 @@ CicoSCLifeCycleController::CicoSCLifeCycleController()
 CicoSCLifeCycleController::~CicoSCLifeCycleController()
 {
     delete m_RC;
+    CicoSCLifeCycleController::ms_myInstance = NULL;
 }
 
 CicoSCLifeCycleController*

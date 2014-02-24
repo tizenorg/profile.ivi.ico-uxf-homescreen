@@ -66,6 +66,7 @@ CicoSCServer::CicoSCServer()
       m_inputCtrl(NULL) , m_userMgr(NULL), m_resourceMgr(NULL),
       m_policyMgr(NULL), m_dispatchProcessing(false)
 {
+    CicoSCServer::ms_myInstance = this;
 }
 
 //--------------------------------------------------------------------------
@@ -78,6 +79,7 @@ CicoSCServer::~CicoSCServer()
     if (NULL != m_uwsContext) {
         ico_uws_close(m_uwsContext);
     }
+    CicoSCServer::ms_myInstance = NULL;
 }
 
 //--------------------------------------------------------------------------

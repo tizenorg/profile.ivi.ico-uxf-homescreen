@@ -33,6 +33,11 @@ public:
     // destructor
     virtual ~CicoSCLayer();
 
+    // surface
+    void addSurface(int surfaceid, bool top);
+    void removeSurface(int surfaceid);
+    const int *getSurfaces(int *retsurfaces);
+
     // dump log this class member variables
     void dump(void);
 
@@ -49,6 +54,10 @@ public:
     int     width;        //!< The number of the lateral pixels
     int     height;       //!< The number of vertical pixels
     int     displayid;    //!< display ID
+
+    int     *surfaceids;  //!< surface ID list
+    int     numsurfaces;  //!< current number of surfaces
+    int     maxsurfaces;  //!< max number of surfaces
     bool    menuoverlap;  //!< overlap menu window flag
 };
 #endif  // __CICO_SC_LAYER_H__

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full tWlExt of the Apache License is at
@@ -92,15 +92,6 @@ protected:
     void delInputApp(const std::string &appid,
                      const std::string &device,
                      int               input);
-
-    // wrapper function ico_input_mgr_control_send_input_event
-    void sendInputEvent(const std::string &appid,
-                        int               surfaceid,
-                        int               type,
-                        int               deviceno,
-                        int               time,
-                        int               code,
-                        int               value);
 
     // wrapper function ico_exinput_set_input_region
     void setInputRegion(const std::string &target,

@@ -24,11 +24,6 @@
 #include <Ecore_Evas.h>
 #include <Edje.h>
 
-#include <EGL/egl.h>
-#include <GLES2/gl2.h>
-#include <GLES2/gl2ext.h>
-#include <EGL/eglext.h>
-
 #include "ico_syc_common.h"
 #include "ico_syc_winctl.h"
 #include "ico_window_mgr.h"
@@ -89,28 +84,19 @@
 #define ICO_HS_MENUTILE_THUMBNAIL_REDUCTION     4
 
 /*shared memory buffer*/
-#define ICO_HS_SHMBUFFER_NAME       "/HomeScreen_ShmBuffer"
-#define ICO_HS_SHMBUFFER_SIZE       (1920*1080*4+ICO_UIFW_IMAGE_HEADER_SIZE)
-#define ICO_HS_SHMBUFFER_NUM        (3)
+#define ICO_HS_THUMB_ICODIR       "/tmp/ico"
+#define ICO_HS_THUMB_FILEDIR       "/thumbnail"
 
-struct _CicoHSMenuTile_glfunc {
-    EGLDisplay  egl_display;            // EGL display
-    PFNEGLCREATEIMAGEKHRPROC            create_image;               // create image
-    PFNGLEGLIMAGETARGETTEXTURE2DOESPROC image_target_texture_2d;    // set image target
-    PFNEGLDESTROYIMAGEKHRPROC           destroy_image;              // destroy image
-};
 struct _CicoHSMenuTile_thumb {
     int         surface;                // surface id
     int         type;                   // frame buffer type
-    int         name;                   // EGL buffer name
     int         width;                  // frame buffer width
     int         height;                 // frame buff height
     int         stride;                 // frame buffer stride
     int         format;                 // frame buffer format(only EGL_TEXTURE_RGBA)
     int         fbcount;                // frame buffer change counter
-    EGLImageKHR image;                  // frame buffer image
-    GLuint      texture;                // texture id
     char        *pixel_data;            // glReadPixels data buffer
+    int         pixel_bufsize;          // data buffer size
 };
 
 class CicoHSMenuTile
@@ -142,9 +128,6 @@ class CicoHSMenuTile
     void ShowMenu(bool show);
 
   private:
-    static struct _CicoHSMenuTile_glfunc glfunc;
-    static char *thumbmapbuffer;
-
     char appid[ICO_HS_MAX_PROCESS_NAME];
     char icon_image_path[ICO_HS_MAX_PATH_BUFF_LEN];
     int page;

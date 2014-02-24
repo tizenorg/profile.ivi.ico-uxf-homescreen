@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -10,7 +10,7 @@
  * @brief   header file of Window Control API
  *          for privilege applications
  *
- * @date    July-31-2013
+ * @date    Feb-21-2014
  */
 
 #ifndef _ICO_SYC_WINCTL_H_
@@ -137,32 +137,32 @@ int ico_syc_change_layer(const char *appid, int surface, int layer);
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_syc_map_buffer
- *          Set map buffer for surface image mapping to the memory.
+ * @brief   ico_syc_map_get
+ *          Get surface image pixel to the file.
  *
- * @param[in]   shmname                 shared memory name
- * @param[in]   bufsize                 buffer size [byte]
- * @param[in]   bufnum                  number of buffer
+ * @param[in]   surface                 window's surface id
+ * @param[in]   filepath                pixel image file path
  * @return      result
  * @retval      0                       success
  * @retval      not 0                   error
  */
 /*--------------------------------------------------------------------------*/
-int ico_syc_map_buffer(const char *shmname, int bufsize, int bufnum);
+int ico_syc_map_get(int surface, const char *filepath);
 
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   ico_syc_map_thumb
- *          Map the thumbnail data for mapping to the memory.
+ *          Map the thumbnail data
  *
  * @param[in]   surface                 window's surface id
  * @param[in]   framerate               notify cycle [frames par sec]
+ * @param[in]   filepath                pixel image file path
  * @return      result
  * @retval      0                       success
  * @retval      not 0                   error
  */
 /*--------------------------------------------------------------------------*/
-int ico_syc_map_thumb(int surface, int framerate);
+int ico_syc_map_thumb(int surface, int framerate, const char *filepath);
 
 /*--------------------------------------------------------------------------*/
 /**

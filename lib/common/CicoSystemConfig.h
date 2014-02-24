@@ -70,8 +70,10 @@ public:
 
     const CicoSCNodeConf* findNodeConfbyName(const string & name);
     const CicoSCDisplayConf* findDisplayConfbyName(const string & name);
+    const CicoSCDisplayConf* findDisplayConfbyId(int id);
     const CicoSCLayerConf* findLayerConfbyName(const string & displayName,
                                                const string & layerName);
+	const CicoSCLayerConf*  findLayerConfbyIdx(int displayid, int idx);
     const CicoSCDisplayZoneConf* findDisplayZoneConfbyName(const string & displayName,
                                                        const string & zoneName);
     const CicoSCSoundConf* findSoundConfbyName(const string & name);
@@ -110,6 +112,9 @@ public:
                           const string & switchName);
     int getAppKindIdbyName(const string & name);
     int getCategoryIdbyName(const string & name);
+    int getDisplayIdbyNo(int no);
+	void setDisplaySize(int id, int width, int height);
+
     const CicoSCResourceConf* getResourceConf() const
     {
         return m_resourceConf;

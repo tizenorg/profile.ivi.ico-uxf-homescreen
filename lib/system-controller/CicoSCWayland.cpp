@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -29,9 +29,11 @@ using namespace std;
 
 #include <wayland-client.h>
 #include <ico_window_mgr-client-protocol.h>
+#include <ilm_control.h>
 
 #include "CicoSCWayland.h"
 #include "CicoSCWlWinMgrIF.h"
+#include "CicoSCWindowController.h"
 #include "CicoLog.h"
 #include "ico_syc_error.h"
 
@@ -54,6 +56,8 @@ CicoSCWayland::CicoSCWayland()
     // wayland callbacks
     m_wlListener.global        = wlGlobalCB;
     m_wlListener.global_remove = NULL;
+
+    CicoSCWayland::ms_myInstance = this;
 }
 
 //--------------------------------------------------------------------------
@@ -63,6 +67,7 @@ CicoSCWayland::CicoSCWayland()
 //--------------------------------------------------------------------------
 CicoSCWayland::~CicoSCWayland()
 {
+    CicoSCWayland::ms_myInstance = NULL;
 }
 
 //--------------------------------------------------------------------------
@@ -93,6 +98,7 @@ int
 CicoSCWayland::initialize(void)
 {
     ICO_TRA("CicoSCWayland::initialize Enter");
+
     for (int i = 0; i < (5000/50); ++i)  {
         m_wlDisplay = wl_display_connect(NULL);
         if (NULL != m_wlDisplay) {
@@ -152,11 +158,21 @@ CicoSCWayland::initialize(void)
     ICO_DBG("called: wl_display_flush(wlDisplay=0x%08x)", (int)m_wlDisplay);
     wl_display_flush(m_wlDisplay);
 
+    // initialize genivi ivi-shell
+    if (ilm_init() != ILM_SUCCESS)  {
+        ICO_ERR("ilm_init failed.");
+        ICO_TRA("CicoSCWayland::initialize Leave(EIO)");
+        return ICO_SYC_EIO;
+    }
+
     ICO_DBG("called: wl_display_get_fd(wlDisplay=0x%08x)", (int)m_wlDisplay);
     m_wlFd = wl_display_get_fd(m_wlDisplay);
     ICO_DBG("CicoSCWayland::initialize: Wayland/Weston fd=%d", m_wlFd);
 
     ICO_DBG("CicoSCWayland::initialize: Wayland/Weston connect OK");
+
+    // initialize genivi callbacks
+    CicoSCWindowController::initializeGeniviNotifications();
 
     ICO_TRA("CicoSCWayland::initialize: Leave(EOK)");
     return ICO_SYC_EOK;
@@ -199,6 +215,10 @@ CicoSCWayland::dispatchDisplay(void)
     if (-1 == wlret) {
         int error =  wl_display_get_error(m_wlDisplay);
         ICO_ERR("wl_display_dispatch failed. error(%d)", error);
+
+        if (error == EINVAL)    {
+            exit(9);
+        }
     }
 }
 

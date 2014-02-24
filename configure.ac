@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.9.14], [])
+AC_INIT([org.tizen.ico.homescreen], [0.9.21], [])
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
@@ -78,6 +78,11 @@ UWS_CFLAGS="-I/usr/include/ico-util"
 UWS_LIBS="-lico-util"
 AC_SUBST(UWS_CFLAGS)
 AC_SUBST(UWS_LIBS)
+
+GENIVI_CFLAGS="-I/usr/include/ilm -I/usr/include/layermanager"
+GENIVI_LIBS="-lilmCommon -lilmControl -lilmClient"
+AC_SUBST(GENIVI_CFLAGS)
+AC_SUBST(GENIVI_LIBS)
 
 SLPPKGMGR_CFLAGS="$SLPPKGMGR_CFLAGS"
 SLPPKGMGR_LIBS="$SLPPKGMGR_LIBS"

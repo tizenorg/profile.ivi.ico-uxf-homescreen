@@ -84,6 +84,7 @@ static void
 tst_send_input(const char *appid, int surface, int ev_type,
                int deviceno, int ev_time, int ev_code, int ev_value)
 {
+#if 0           /* SystemController 0.9.21(with GENIVI ivi-shell) not support send_input */
     int ret;
     char *func = "ico_syc_send_input";
 
@@ -94,7 +95,7 @@ tst_send_input(const char *appid, int surface, int ev_type,
         return;
     }
     print_ok("%s", func);
-
+#endif
     return;
 }
 

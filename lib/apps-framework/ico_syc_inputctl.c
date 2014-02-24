@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -10,7 +10,7 @@
  * @brief   Input Control API
  *          for privilege applications
  *
- * @date    July-31-2013
+ * @date    Feb-21-2014
  */
 
 #include "ico_syc_msg_cmd_def.h"
@@ -25,8 +25,6 @@ static msg_t _create_add_input_msg(const char *appid, const char *device,
                                   int input, int fix, int keycode);
 static msg_t _create_del_input_msg(const char *appid,
                                   const char *device, int input);
-static msg_t _create_send_input_msg(const char *appid, int surface, int type,
-                                   int deviceno, int time, int code, int value);
 
 /*============================================================================*/
 /* static function                                                            */
@@ -135,64 +133,6 @@ _create_del_input_msg(const char *appid, const char *device, int input)
     return gen;
 }
 
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   _create_send_input_msg
- *          Create the message to send input event.
- *
- * @param[in]   appid                   application id
- * @param[in]   surface                 window's surface id
- * @param[in]   type                    device type of input event
- * @param[in]   deviceno                input device number
- * @param[in]   time                    input event time(ms)
- * @param[in]   code                    input event code
- * @param[in]   value                   input event value
- * @return      json generator
- * @retval      json generator          success
- * @retval      NULL                    error
- */
-/*--------------------------------------------------------------------------*/
-static msg_t
-_create_send_input_msg(const char *appid, int surface, int type,
-                       int deviceno, int time, int code, int value)
-{
-    JsonObject *obj     = NULL;
-    JsonObject *argobj  = NULL;
-    JsonGenerator *gen  = NULL;
-    JsonNode *root      = NULL;
-
-    /* create json object */
-    obj = json_object_new();
-    argobj = json_object_new();
-    if (obj == NULL || argobj == NULL) {
-        _ERR("json_object_new failed");
-        return NULL;
-    }
-
-    /* set message */
-    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_SEND_INPUT);
-    json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
-    json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
-
-    json_object_set_int_member(argobj, MSG_PRMKEY_SURFACE, surface);
-    json_object_set_int_member(argobj, MSG_PRMKEY_EV_TYPE, type);
-    json_object_set_int_member(argobj, MSG_PRMKEY_DEVICE, deviceno);
-    json_object_set_int_member(argobj, MSG_PRMKEY_EV_TIME, time);
-    json_object_set_int_member(argobj, MSG_PRMKEY_EV_CODE, code);
-    json_object_set_int_member(argobj, MSG_PRMKEY_EV_VAL, value);
-    json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
-
-    /* create root object */
-    root = json_node_new(JSON_NODE_OBJECT);
-    json_node_take_object(root, obj);
-
-    /* create generator object */
-    gen = json_generator_new();
-    json_generator_set_root(gen, root);
-
-    return gen;
-}
-
 /*============================================================================*/
 /* public interface function                                                  */
 /*============================================================================*/
@@ -263,47 +203,6 @@ ico_syc_delete_input(const char *appid, const char *device, int input)
 
     /* make message */
     msg = _create_del_input_msg(appid, device, input);
-    /* send message */
-    ret = ico_syc_send_msg(msg);
-    /* free send message */
-    ico_syc_free_msg(msg);
-
-    return ret;
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ico_syc_send_input
- *          Send the input event to the application.
- *
- * @param[in]   appid                   application id
- * @param[in]   surface                 window's surface id
- * @param[in]   type                    device type of input event
- * @param[in]   deviceno                input device number
- * @param[in]   time                    input event time
- * @param[in]   code                    input event code
- * @param[in]   value                   input event value
- * @return      result
- * @retval      0                       success
- * @retval      not 0                   error
- * @see         ico_syc_input_type_e
- */
-/*--------------------------------------------------------------------------*/
-ICO_API int
-ico_syc_send_input(const char *appid, int surface, int type,
-                   int deviceno, int time, int code, int value)
-{
-    int ret = ICO_SYC_ERR_NONE;
-    msg_t msg;
-
-    /* check argument */
-    if (appid == NULL) {
-        _ERR("invalid parameter (appid is NULL)");
-        return ICO_SYC_ERR_INVALID_PARAM;
-    }
-
-    /* make message */
-    msg = _create_send_input_msg(appid, surface, type, deviceno, time, code, value);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */

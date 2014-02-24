@@ -16,6 +16,7 @@
 
 #include <ico_log.h>
 #include <ico_window_mgr-client-protocol.h>
+#include "ico_syc_sysdef.h"
 
 #define ICO_OK 0
 #define ICO_ERROR -1
@@ -96,22 +97,19 @@
 #define ICO_HS_CONFIG_HISTORY       "app_history"
 
 /*misc*/
-#define HS_DISPLAY_HOMESCREEN   0           /* HomeScreen target display Id     */
+#define HS_DISPLAY_HOMESCREEN   ICO_SYC_DISPLAY_CENTER  /* HomeScreen target display Id */
 
 /*Layer dicralation*/
-#define HS_LAYER_BACKGROUND     0         /* layer of BackGround */
-#define HS_LAYER_APPLICATION    1         /* layer of Application */
-#define HS_LAYER_METERAPP       2         /* layer of Meter Display Application */
-#define HS_LAYER_HOMESCREEN     3         /* layer of HomeScreen menu */
-#define HS_LAYER_CONTROLBAR     4         /* layer of Control/Status bar */
-#define HS_LAYER_FULLSCREEN     5         /* layer of FullScreen Application */
-#define HS_LAYER_ONSCREEN       6         /* layer of OnScreen   */
-#define HS_LAYER_TOUCHPANEL     ICO_WINDOW_MGR_LAYERTYPE_TOUCH
-                                          /* layer of TouchPanel input */
-#define HS_LAYER_CURSOR         ICO_WINDOW_MGR_LAYERTYPE_CURSOR
-                                            /* layer of Cursor   */
+#define HS_LAYER_BACKGROUND     ICO_SYC_LAYER_BACKGROUND    /* layer of BackGround */
+#define HS_LAYER_APPLICATION    ICO_SYC_LAYER_APPLICATION   /* layer of Application */
+#define HS_LAYER_HOMESCREEN     ICO_SYC_LAYER_HOMESCREEN    /* layer of HomeScreen menu */
+#define HS_LAYER_CONTROLBAR     ICO_SYC_LAYER_CONTROLBAR    /* layer of Control/Status bar */
+#define HS_LAYER_FULLSCREEN     ICO_SYC_LAYER_FULLSCREEN    /* layer of FullScreen Application */
+#define HS_LAYER_ONSCREEN       ICO_SYC_LAYER_ONSCREEN      /* layer of OnScreen   */
+#define HS_LAYER_TOUCHPANEL     ICO_SYC_LAYER_TOUCHPANEL    /* layer of TouchPanel input */
+#define HS_LAYER_CURSOR         ICO_SYC_LAYER_CURSOR        /* layer of Cursor   */
 
-#define HS_LAYER_2NDDISP_APP    3         // second display application layer
+#define HS_LAYER_2NDDISP_APP    ICO_SYC_LAYER_MATERAPP      /* second display application layer */
 
 /* config history name */
 #define ICO_HS_CONFIG_HSTRY_KEY1      "timer"

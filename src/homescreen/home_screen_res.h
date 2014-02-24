@@ -15,25 +15,11 @@
 #ifndef HOME_SCREEN_RES_H
 #define HOME_SCREEN_RES_H
 
-#if 0
-/* file_path */
-//#define default_path "./"
-#define edj_path "/usr/apps/%s/res/edj/"
-#define image_path "/usr/apps/%s/res/images/"
-#define sound_path "/usr/apps/%s/res/sounds/"
-#define manifest_path "/usr/apps/%s/res/config/"
-#define local_top_path "/home/tizen/HomeScreen"
-#define local_edj_path "%s/src/"
-#define local_image_path "%s/res/images/"
-#define local_sound_path "%s/res/sounds/"
-#define local_manifest_path "%s/res/apps/org.tizen.ico.homescreen/"
-#endif
-
 #define fname_api_all_off   "api_all_off.png"
 #define fname_api_all_on    "api_all_on.png"
 
 #define fname_backboard     "back_b_01.png"
-#define fname_back_bg       "back_b_01.png" 
+#define fname_back_bg       "back_b_01.png"
 
 /* file name (appli list) */
 #define fname_api01_off     "api_s_01_off.png"

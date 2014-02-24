@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -42,6 +42,9 @@ class CicoSCResourceManager;
 class CicoSCWindowController : public CicoSCWlWinMgrIF
 {
 public:
+    // get instance of CicoSCWindowController
+    static CicoSCWindowController* getInstance();
+
     // default constructor
     CicoSCWindowController();
 
@@ -110,9 +113,9 @@ public:
 
     int active(int surfaceid, int target);
 
-    int setmapBuffer(const char *shmname, int bufsize, int bufnum);
+    int setmapGet(int surfaceid, const char *filepath);
 
-    int mapSurface(int surfaceid, int framerate);
+    int mapSurface(int surfaceid, int framerate, const char *filepath);
 
     int unmapSurface(int surfaceid);
 
@@ -120,64 +123,26 @@ public:
 
     int setAttributes(int surfaceid);
 
+    static void initializeGeniviNotifications(void);
+
+    static void wlGeniviLayerNotification(t_ilm_layer layer,
+                                          struct ilmLayerProperties *LayerProperties,
+                                          t_ilm_notification_mask mask);
+
+    static void wlGeniviSurfaceNotification(t_ilm_surface surface,
+                                            struct ilmSurfaceProperties *SurfaceProperties,
+                                            t_ilm_notification_mask mask);
     //
-    virtual void createdCB(void *data,
-                           struct ico_window_mgr *ico_window_mgr,
-                           uint32_t surfaceid,
-                           const char *winname,
-                           int32_t pid,
-                           const char *appid,
-                           int32_t layertype);
-
-    virtual void nameCB(void *data,
-                        struct ico_window_mgr *ico_window_mgr,
-                        uint32_t surfaceid,
-                        const char *winname);
-
-    virtual void destroyedCB(void *data,
-                             struct ico_window_mgr *ico_window_mgr,
-                             uint32_t surfaceid);
-
-    virtual void visibleCB(void *data,
-                           struct ico_window_mgr *ico_window_mgr,
-                           uint32_t surfaceid,
-                           int32_t visible,
-                           int32_t raise,
-                           int32_t hint);
-
-    virtual void configureCB(void *data,
-                             struct ico_window_mgr *ico_window_mgr,
-                             uint32_t surfaceid,
-                             uint32_t node,
-                             int32_t layertype,
-                             uint32_t layer,
-                             int32_t x,
-                             int32_t y,
-                             int32_t width,
-                             int32_t height,
-                             int32_t hint);
-
     virtual void activeCB(void *data,
                           struct ico_window_mgr *ico_window_mgr,
                           uint32_t surfaceid,
-                          int32_t active);
-
-    virtual void layerVisibleCB(void *data,
-                                struct ico_window_mgr *ico_window_mgr,
-                                uint32_t layer,
-                                int32_t visible);
-
-    virtual void appSurfacesCB(void *data,
-                               struct ico_window_mgr *ico_window_mgr,
-                               const char *appid,
-                               struct wl_array *surfaces);
+                          int32_t select);
 
     virtual void mapSurfaceCB(void *data,
                               struct ico_window_mgr *ico_window_mgr,
                               int32_t event,
                               uint32_t surfaceid,
                               uint32_t type,
-                              uint32_t target,
                               int32_t width,
                               int32_t height,
                               int32_t stride,
@@ -200,6 +165,10 @@ public:
                               int32_t width,
                               int32_t height,
                               int32_t refresh);
+
+    virtual void createSurfaceCB(void           *data,
+                                 struct ivi_controller *ivi_controller,
+                                 uint32_t id_surface);
 
 private:
     // assignment operator
@@ -224,6 +193,9 @@ private:
                               int        animationTime);
 
 private:
+    /// my instance
+    static CicoSCWindowController *ms_myInstance;
+
     // resource manager instance
     CicoSCResourceManager *m_resMgr;
 
@@ -233,9 +205,8 @@ private:
     // display object list
     vector<CicoSCDisplay*> m_displayList;
 
-    // total of physical display 
+    // total of physical display
     unsigned int m_physicalDisplayTotal;
-
 };
 #endif  // __CICO_SC_WINDOW_CONTROLLER_H__
 // vim:set expandtab ts=4 sw=4:

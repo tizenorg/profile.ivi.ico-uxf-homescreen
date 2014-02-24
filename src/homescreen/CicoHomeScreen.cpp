@@ -741,9 +741,6 @@ CicoHomeScreen::ShowApplicationWindow(ico_syc_win_info_t *win_info)
     ico_syc_animation_t animation;
     animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
-#if 0
-    ico_syc_show(win_info->appid, win_info->surface, &animation);
-#else
     const string& lastStartupApp = m_appHis->getLastStartupAppid();
     if (true == lastStartupApp.empty()) {
         ICO_DBG("show (empty) %s", win_info->appid);
@@ -751,17 +748,9 @@ CicoHomeScreen::ShowApplicationWindow(ico_syc_win_info_t *win_info)
     }
     else {
         bool bShow = false;
-#if 0
-        const string& subDispApp = m_appHis->getSubDispAppid();
-#endif
         if (0 == lastStartupApp.compare(win_info->appid)) {
             bShow = true;
         }
-#if 0
-        if (0 == subDispApp.compare(win_info->appid)) {
-            bShow = true;
-        }
-#endif
         if (true == bShow) {
             ICO_DBG("show (last) %s", win_info->appid);
             ico_syc_show(win_info->appid, win_info->surface, &animation);
@@ -771,7 +760,6 @@ CicoHomeScreen::ShowApplicationWindow(ico_syc_win_info_t *win_info)
             ico_syc_hide(win_info->appid, win_info->surface, &animation);
         }
     }
-#endif
     ICO_TRA("CicoHomeScreen::ShowApplicationWindow Leave");
 }
 
@@ -1545,18 +1533,20 @@ CicoHomeScreen::CreateSwipeInputWindow(void)
     swipe_input_windows[0] = new CicoHSSwipeInputWindow();
     swipe_input_windows[0]->
             CreateSwipeInputWindow(ICO_HS_WINDOW_POS_X,
-                                   ICO_HS_WINDOW_POS_Y + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
+                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
                                    ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2), "left");
+                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2),
+                                   "left");
     swipe_input_windows[0]->ShowWindow();
 
     /* right side window    */
     swipe_input_windows[1] = new CicoHSSwipeInputWindow();
     swipe_input_windows[1]->
             CreateSwipeInputWindow(full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   ICO_HS_WINDOW_POS_Y + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
+                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
                                    ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2), "right");
+                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2),
+                                   "right");
     swipe_input_windows[1]->ShowWindow();
 
 #if 0       /* currently not support(not fix specification) */
@@ -1611,17 +1601,17 @@ CicoHomeScreen::DeleteSwipeInputWindow(void)
  */
 /*--------------------------------------------------------------------------*/
 static Eina_Bool launchApps(void* data)
-{   
-    ICO_DBG("start"); 
+{
+    ICO_DBG("start");
     launcApps_data_t* x = (launcApps_data_t*) data;
     if ((NULL == x) || (NULL == x->hs)) {
         ICO_DBG("end fail");
         return ECORE_CALLBACK_CANCEL;
     }
-    
+
     vector<pairAppidSubd> apps;
     x->hs->readStartupApp(apps);
-    
+
     int sz = apps.size();
     for (int i =sz; i > 0; i--) {
         string appid = apps[i-1].first;
@@ -2434,7 +2424,7 @@ CicoHomeScreen::HideApp(const std::string& app)
  *          move app
  *
  * @param  app appid
- * @param  zone zone 
+ * @param  zone zone
  */
 /*--------------------------------------------------------------------------*/
 void

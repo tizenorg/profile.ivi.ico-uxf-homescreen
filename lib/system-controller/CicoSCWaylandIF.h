@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -54,10 +54,14 @@ protected:
     static const char * ICO_WL_WIN_MGR_IF;
     /// interface name of wayland input manager control
     static const char * ICO_WL_INPUT_MGR_CTRL_IF;
-    /// interface name of wayland exinput 
+    /// interface name of wayland exinput
     static const char * ICO_WL_EXINPUT_IF;
     /// interface name of wayland input manager device
     static const char * ICO_WL_INPUT_MGR_DEV_IF;
+    /// interface name of genivi ivi_application
+    static const char * ICO_WL_IVI_APPLICATION_IF;
+    /// interface name of genivi ivi_controller
+    static const char * ICO_WL_IVI_CONTROLLER_IF;
     /// interface name of wayland output
     static const char * ICO_WL_OUTPUT_IF;
 

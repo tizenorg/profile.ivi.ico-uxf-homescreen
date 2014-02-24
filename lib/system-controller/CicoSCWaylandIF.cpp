@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -23,6 +23,8 @@ const char * CicoSCWaylandIF::ICO_WL_WIN_MGR_IF        = "ico_window_mgr";
 const char * CicoSCWaylandIF::ICO_WL_INPUT_MGR_CTRL_IF = "ico_input_mgr_control";
 const char * CicoSCWaylandIF::ICO_WL_EXINPUT_IF        = "ico_exinput";
 const char * CicoSCWaylandIF::ICO_WL_INPUT_MGR_DEV_IF  = "ico_input_mgr_device";
+const char * CicoSCWaylandIF::ICO_WL_IVI_APPLICATION_IF= "ivi_application";
+const char * CicoSCWaylandIF::ICO_WL_IVI_CONTROLLER_IF = "ivi_controller";
 const char * CicoSCWaylandIF::ICO_WL_OUTPUT_IF         = "wl_output";
 
 

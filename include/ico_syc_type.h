@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -10,7 +10,7 @@
  * @brief   header file of System Controller
  *          for privilege and general applications
  *
- * @date    Aug-6-2013
+ * @date    Feb-21-2014
  */
 
 #ifndef _ICO_SYC_TYPE_H_
@@ -65,7 +65,7 @@ typedef enum _event_id {
  * @ICO_SYC_WIN_NOCHANGE: no change value
  */
 typedef enum _win_value {
-    ICO_SYC_WIN_NOCHANGE    = ICO_WINDOW_MGR_V_NOCHANGE
+    ICO_SYC_WIN_NOCHANGE    = 99999999
 } ico_syc_win_value_e;
 
 /*
@@ -85,9 +85,9 @@ typedef enum _thumb_format {
  * @ICO_SYC_WIN_RAISE_NOCHANGE: order of showing surface is not change
  */
 typedef enum _window_raise {
-    ICO_SYC_WIN_RAISE_RAISE     = ICO_WINDOW_MGR_RAISE_RAISE,
-    ICO_SYC_WIN_RAISE_LOWER     = ICO_WINDOW_MGR_RAISE_LOWER,
-    ICO_SYC_WIN_RAISE_NOCHANGE  = ICO_WINDOW_MGR_V_NOCHANGE
+    ICO_SYC_WIN_RAISE_RAISE     = 1,
+    ICO_SYC_WIN_RAISE_LOWER     = 0,
+    ICO_SYC_WIN_RAISE_NOCHANGE  = 9
 } ico_syc_win_raise_e;
 
 /*
@@ -97,25 +97,32 @@ typedef enum _window_raise {
  * @ICO_SYC_WIN_VISIBLE_NOCHANGE: show/hide status is not change
  */
 typedef enum _window_visible {
-    ICO_SYC_WIN_VISIBLE_SHOW        = ICO_WINDOW_MGR_VISIBLE_SHOW,
-    ICO_SYC_WIN_VISIBLE_HIDE        = ICO_WINDOW_MGR_VISIBLE_HIDE,
-    ICO_SYC_WIN_VISIBLE_NOCHANGE    = ICO_WINDOW_MGR_V_NOCHANGE
+    ICO_SYC_WIN_VISIBLE_SHOW     = 1,
+    ICO_SYC_WIN_VISIBLE_HIDE     = 0,
+    ICO_SYC_WIN_VISIBLE_NOCHANGE = 9
 } ico_syc_win_visible_e;
 
 /*
- * type of window active
- * @ICO_SYC_WIN_ACTIVE_NONE: surface is not active
- * @ICO_SYC_WIN_ACTIVE_POINTER: pointing device is active
- * @ICO_SYC_WIN_ACTIVE_KEYBOARD: keyboard is active
- * @ICO_SYC_WIN_ACTIVE_SELECTED: pointing device that is operated
- *                               by touch panel or mouse is still active
+ * window change hint
+ * @ICO_SYC_WIN_HINT_HINT: hint information(no change)
+ * @ICO_SYC_WIN_HINT_CHANGE: real changed
  */
-typedef enum _window_active {
-    ICO_SYC_WIN_ACTIVE_NONE     = ICO_WINDOW_MGR_ACTIVE_NONE,
-    ICO_SYC_WIN_ACTIVE_POINTER  = ICO_WINDOW_MGR_ACTIVE_POINTER,
-    ICO_SYC_WIN_ACTIVE_KEYBOARD = ICO_WINDOW_MGR_ACTIVE_KEYBOARD,
-    ICO_SYC_WIN_ACTIVE_SELECTED = ICO_WINDOW_MGR_ACTIVE_SELECTED
-} ico_syc_win_act_e;
+typedef enum _window_change_hint {
+    ICO_SYC_WIN_HINT_HINT     = 1,
+    ICO_SYC_WIN_HINT_CHANGE   = 0
+} ico_syc_win_change_hint_e;
+
+/*
+ * type of window active select
+ * @ICO_SYC_WIN_ACTIVE_NONE: no device(surface not active)
+ * @ICO_SYC_WIN_ACTIVE_POINTER: active by pointing device(mouse)
+ * @ICO_SYC_WIN_ACTIVE_TOUCH: active by touchpanel device
+ */
+typedef enum _window_active_select {
+    ICO_SYC_WIN_ACTIVE_NONE     = 0,
+    ICO_SYC_WIN_ACTIVE_POINTER  = 1,
+    ICO_SYC_WIN_ACTIVE_TOUCH = 2
+} ico_syc_win_act_select_e;
 
 /*
  * layer show/hide status
@@ -123,9 +130,36 @@ typedef enum _window_active {
  * @ICO_SYC_LAYER_VISIBLE_HIDE: hide the layer
  */
 typedef enum _layer_visible {
-    ICO_SYC_LAYER_VISIBLE_SHOW  = 0,
-    ICO_SYC_LAYER_VISIBLE_HIDE  = 1
+    ICO_SYC_LAYER_VISIBLE_SHOW  = 1,
+    ICO_SYC_LAYER_VISIBLE_HIDE  = 0,
+    ICO_SYC_LAYER_VISIBLE_NOCHANGE  = 9
 } ico_syc_layer_visible_e;
+
+/*
+ * surface animation on/off
+ * @ICO_SYC_ANIMATION_ON: surface animation
+ * @ICO_SYC_ANIMATION_OFF: no surface animation
+ */
+typedef enum _surface_animation {
+    ICO_SYC_ANIMATION_ON  = 1,
+    ICO_SYC_ANIMATION_OFF  = 0
+} ico_syc_surface_animation;
+
+/*
+ * type of window aspect
+ * @ICO_SYC_WIN_ASPECT_FIXED: fixed aspect
+ * @ICO_SYC_WIN_ASPECT_ALIGN_LEFT: left align
+ * @ICO_SYC_WIN_ASPECT_ALIGN_RIGHT: right align
+ * @ICO_SYC_WIN_ASPECT_ALIGN_TOP: top align
+ * @ICO_SYC_WIN_ASPECT_ALIGN_BOTTOM: bottom align
+ */
+typedef enum _window_aspect {
+    ICO_SYC_WIN_ASPECT_FIXED     = 16,
+    ICO_SYC_WIN_ASPECT_ALIGN_LEFT  = 1,
+    ICO_SYC_WIN_ASPECT_ALIGN_RIGHT  = 2,
+    ICO_SYC_WIN_ASPECT_ALIGN_TOP  = 4,
+    ICO_SYC_WIN_ASPECT_ALIGN_BOTTOM  = 8,
+} ico_syc_win_aspect_e;
 
 /**
  *  system state
@@ -194,7 +228,6 @@ typedef struct _thumb_info {
     char *appid;    /* application id */
     int  surface;   /* window's surface id */
     int  type;      /* buffer type(ICO_WINDOW_MGR_MAP_TYPE_EGL/SHM/PIXEL)*/
-    int  name;      /* EGL buffer name/shared memory buffer index(+1) */
     int  width;     /* window width */
     int  height;    /* window height */
     int  stride;    /* byte par line of frame buffer */
@@ -288,7 +321,6 @@ typedef struct _state_info {
 typedef void (*ico_syc_callback_t) (const ico_syc_ev_e event,
                                     const void *detail,
                                     void *user_data);
-
 #ifdef __cplusplus
 }
 #endif

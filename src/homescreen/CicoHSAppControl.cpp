@@ -116,23 +116,7 @@ CicoHSAppControl::handleCommand(const CicoHSCommand * cmd)
         TerminateApp(it->m_appid);
         break;
     case MSG_CMD_WIN_CHANGE:
-# if 0
-        while( it != opt->arg.end() ) {
-            if ((it->m_appid).empty() == true) {
-                ret =  GetAppId(it->m_pid, it->m_appid);
-                if (ret != 0) {
-                    ++it;
-                    continue;
-                }
-            }
-            // change application window
-            WinChangeApp(it->m_appid, it->m_zone, it->m_visible);
-            ++it;
-        }
-#else
         WinChgControl(opt->arg);
-#endif
-
         break;
     default:
         ICO_WRN("Unknown Command(0x%08X)", cmd->cmdid);
@@ -165,7 +149,7 @@ CicoHSAppControl::GetAppId(int pid, string& appid)
         ICO_TRA("aul items not find");
         return -1;
     }
-    appid = aul->m_appid; 
+    appid = aul->m_appid;
     return 0;
 
     ICO_TRA("CicoHSAppControl::GetAppId Leave");

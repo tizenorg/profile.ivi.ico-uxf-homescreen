@@ -52,7 +52,7 @@ public:
     /// destructor
     virtual ~CicoHSCmdAppCtlOpt() {}
 
-#if 0
+#if 0           /* for debug    */
     /// dump log this class member variables
     void dump(void)
     {
@@ -86,7 +86,7 @@ public:
     void dump(void);
 
     // get arg
-    bool getArg(const boost::property_tree:: ptree& pt, std::vector<CicoHSCommandArg>& vArg); 
+    bool getArg(const boost::property_tree:: ptree& pt, std::vector<CicoHSCommandArg>& vArg);
 
     // get arg array
     bool getArgArray(const boost::property_tree:: ptree& pt, std::vector<CicoHSCommandArg>& vArg);
@@ -110,8 +110,8 @@ private:
 public:
     unsigned long       cmdid;  //!< id of command
     std::string         appid;  //!< id of application
-    int                 pid;    //!< id of pid 
-    int                 seq_no; //!< id of sequence number 
+    int                 pid;    //!< id of pid
+    int                 seq_no; //!< id of sequence number
     CicoHSCommandOption *opt;   //!< command option instance
 };
 #endif  // __CICO_HS_COMMAND_H__

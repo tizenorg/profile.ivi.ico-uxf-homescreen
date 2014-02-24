@@ -297,7 +297,7 @@ tst_map_thumb(int surface, int framerate)
     int ret;
     char *func = "ico_syc_map_thumb";
 
-    ret = ico_syc_map_thumb(surface, framerate);
+    ret = ico_syc_map_thumb(surface, framerate, " ");
     if (ret != 0) {
         print_ng("%s (ret: %d)", func, ret);
         return;

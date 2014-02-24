@@ -1327,6 +1327,28 @@ CicoSystemConfig::findDisplayConfbyName(const string & name)
  *  @param  [in]
  */
 //--------------------------------------------------------------------------
+const CicoSCDisplayConf*
+CicoSystemConfig::findDisplayConfbyId(int id)
+{
+    vector<CicoSCDisplayConf*>::iterator itr;
+    itr = m_displayConfList.begin();
+    for (; itr != m_displayConfList.end(); ++itr) {
+        const CicoSCDisplayConf* conf = NULL;
+        conf = const_cast<CicoSCDisplayConf*>(*itr);
+        if (id == conf->id) {
+            return conf;
+        }
+    }
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
 const CicoSCLayerConf*
 CicoSystemConfig::findLayerConfbyName(const string & displayName,
                                         const string & layerName)
@@ -1347,6 +1369,35 @@ CicoSystemConfig::findLayerConfbyName(const string & displayName,
         }
     }
 
+    return NULL;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+const CicoSCLayerConf*
+CicoSystemConfig::findLayerConfbyIdx(int displayid, int idx)
+{
+    const CicoSCDisplayConf* displayConf = NULL;
+    displayConf = findDisplayConfbyId(displayid);
+    if (NULL == displayConf) {
+        return NULL;
+    }
+
+    vector<CicoSCLayerConf*>::const_iterator itr;
+    itr = displayConf->layerConfList.begin();
+    for (; itr != displayConf->layerConfList.end(); ++itr) {
+        const CicoSCLayerConf* conf = NULL;
+        conf = const_cast<CicoSCLayerConf*>(*itr);
+		if (idx <= 0)	{
+            return conf;
+        }
+		idx --;
+    }
     return NULL;
 }
 
@@ -1691,6 +1742,54 @@ CicoSystemConfig::getDisplayIdbyName(const string & name)
     }
 
     return conf->id;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+int
+CicoSystemConfig::getDisplayIdbyNo(int no)
+{
+    vector<CicoSCDisplayConf*>::iterator itr;
+    itr = m_displayConfList.begin();
+    for (; itr != m_displayConfList.end(); ++itr) {
+        const CicoSCDisplayConf* conf = NULL;
+        conf = const_cast<CicoSCDisplayConf*>(*itr);
+        if (no == conf->no) {
+            return conf->id;
+        }
+    }
+    return -1;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+void
+CicoSystemConfig::setDisplaySize(int id, int width, int height)
+{
+    vector<CicoSCDisplayConf*>::iterator itr;
+    itr = m_displayConfList.begin();
+    for (; itr != m_displayConfList.end(); ++itr) {
+        CicoSCDisplayConf* conf = NULL;
+        conf = const_cast<CicoSCDisplayConf*>(*itr);
+        if (id == conf->id) {
+    		ICO_TRA("CicoSystemConfig::setDisplaySize(%d,%d,%d) change size from %d,%d",
+					id, width, height, conf->width, conf->height);
+			conf->width = width;
+			conf->height = height;
+            return;
+        }
+    }
+    ICO_ERR("CicoSystemConfig::setDisplaySize(%d,%d,%d) Error", id, width, height);
 }
 
 //--------------------------------------------------------------------------

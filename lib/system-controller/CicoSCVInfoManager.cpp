@@ -56,6 +56,8 @@ CicoSCVInfoManager::CicoSCVInfoManager()
     ms_dbusTypes[ICO_TYPE_STRING]  = DBUS_TYPE_STRING;
 
     ms_ecoreEvType = ecore_event_type_new();
+
+    CicoSCVInfoManager::ms_myInstance = this;
 }
 
 //--------------------------------------------------------------------------
@@ -65,6 +67,7 @@ CicoSCVInfoManager::CicoSCVInfoManager()
 //--------------------------------------------------------------------------
 CicoSCVInfoManager::~CicoSCVInfoManager()
 {
+    CicoSCVInfoManager::ms_myInstance = NULL;
 }
 
 //--------------------------------------------------------------------------

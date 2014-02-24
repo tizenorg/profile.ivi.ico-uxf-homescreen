@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -10,7 +10,7 @@
  * @brief   header file of Input Control API
  *          for privilege applications
  *
- * @date    July-31-2013
+ * @date    Feb-21-2014
  */
 
 #ifndef _ICO_SYC_INPUTCTL_H_
@@ -86,28 +86,6 @@ int ico_syc_add_input(const char *appid, const char *device,
  */
 /*--------------------------------------------------------------------------*/
 int ico_syc_delete_input(const char *appid, const char *device, int input);
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   ico_syc_send_input
- *          Send the input event to the application.
- *
- * @param[in]   appid                   application id
- * @param[in]   surface                 window's surface id
- * @param[in]   type                    device type of input event
- * @param[in]   deviceno                input device number
- * @param[in]   time                    input event time(ms), if 0 auto generate
- * @param[in]   code                    input event code
- * @param[in]   value                   input event value
- * @return      result
- * @retval      0                       success
- * @retval      not 0                   error
- * @see         ico_syc_input_type_e
- */
-/*--------------------------------------------------------------------------*/
-int ico_syc_send_input(const char *appid, int surface, int type,
-                       int deviceno, int time, int code, int value);
-
 
 #ifdef __cplusplus
 }

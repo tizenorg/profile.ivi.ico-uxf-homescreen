@@ -120,6 +120,8 @@ CicoSCUserManager::CicoSCUserManager()
     chkAndAddSlash(m_flagPath);
     m_flagPath += ICO_SYC_CHGUSR_FLAG_FIL;
     ICO_TRA("end");
+
+    CicoSCUserManager::ms_myInstance = this;
 }
 
 //--------------------------------------------------------------------------
@@ -151,6 +153,8 @@ CicoSCUserManager::~CicoSCUserManager()
     }
     m_userList.clear();
     m_vppa.clear();
+
+    CicoSCUserManager::ms_myInstance = NULL;
 
     ICO_TRA("CicoSCUserManager::~CicoSCUserManager Leave");
 }

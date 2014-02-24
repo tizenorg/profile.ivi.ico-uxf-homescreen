@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full tWlExt of the Apache License is at
@@ -179,37 +179,6 @@ CicoSCWlInputMgrIF::delInputApp(const string &appid,
             appid.c_str(), device.c_str(), input);
     ico_input_mgr_control_del_input_app(m_inputmgr, appid.c_str(),
                                         device.c_str(), input);
-    // flush display
-    CicoSCWayland::getInstance()->flushDisplay();
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wrapper function ico_input_mgr_control_send_input_event
- *
- *  @param [in] appid     application id
- *  @param [in] surfaceid surface id
- *  @param [in] type      device type
- *  @param [in] deviceno  input device number
- *  @param [in] time      event time
- *  @param [in] code      event code
- *  @param [in] value     event value
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlInputMgrIF::sendInputEvent(const string &appid,
-                                   int          surfaceid,
-                                   int          type,
-                                   int          deviceno,
-                                   int          time,
-                                   int          code,
-                                   int          value)
-{
-    ICO_DBG("called: ico_input_mgr_control_send_input_event"
-            "(appid=<%s> surfaceid=0x%08X type=%d deviceno=%d time=%d code=%d value=%d)",
-            appid.c_str(), surfaceid, type, deviceno, time, code, value);
-    ico_input_mgr_control_send_input_event(m_inputmgr, appid.c_str(), surfaceid,
-                                           type, deviceno, time, code, value);
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 }

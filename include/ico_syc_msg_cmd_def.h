@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -132,14 +132,13 @@ extern "C" {
 #define MSG_CMD_NAME                0x00010009
 #define MSG_CMD_MAP_THUMB           0x00010011
 #define MSG_CMD_UNMAP_THUMB         0x00010012
-#define MSG_CMD_MAP_BUFFER          0x00010013
+#define MSG_CMD_MAP_GET             0x00010013
 #define MSG_CMD_SHOW_LAYER          0x00010020
 #define MSG_CMD_HIDE_LAYER          0x00010021
 #define MSG_CMD_CHANGE_LAYER_ATTR   0x00010022
 /* input controller */
 #define MSG_CMD_ADD_INPUT           0x00020001
 #define MSG_CMD_DEL_INPUT           0x00020002
-#define MSG_CMD_SEND_INPUT          0x00020003
 /* user controller */
 #define MSG_CMD_CHANGE_USER         0x00030001
 #define MSG_CMD_GET_USERLIST        0x00030002

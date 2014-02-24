@@ -56,7 +56,6 @@ public:
     std::string       name;         ///< window name
     std::string       appid;        ///< application id
     int               pid;          ///< process id
-    int               layertype;    ///< layer type
 
     int               nodeid;       ///< node id
     int               displayid;    ///< display id
