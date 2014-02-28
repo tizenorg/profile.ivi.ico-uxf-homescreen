@@ -61,7 +61,7 @@ CicoSCLayer::addSurface(int surfaceid, bool top)
 {
     int     idx, idx2;
     int     *wksurfaceids;
-    ICO_DBG("CicoSCLayer::addSurface(%d,%d)", surfaceid, top);
+    ICO_DBG("CicoSCLayer::addSurface(%08x,%d)", surfaceid, top);
 
     idx2 = 0;
     for (idx = 0; idx < numsurfaces; idx++, idx2++) {
@@ -108,7 +108,7 @@ void
 CicoSCLayer::removeSurface(int surfaceid)
 {
     int     idx, idx2;
-    ICO_DBG("CicoSCLayer::removeSurface(%d)", surfaceid);
+    ICO_DBG("CicoSCLayer::removeSurface(%08x)", surfaceid);
 
     idx2 = 0;
     for (idx = 0; idx < numsurfaces; idx++, idx2++) {
@@ -120,6 +120,34 @@ CicoSCLayer::removeSurface(int surfaceid)
         }
     }
     numsurfaces = idx2;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  is_topSurface
+ */
+//--------------------------------------------------------------------------
+bool
+CicoSCLayer::is_topSurface(int surfaceid)
+{
+    if ((numsurfaces > 0) && (surfaceids[numsurfaces-1] == surfaceid))  {
+        return true;
+    }
+    return false;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  is_buttomSurface
+ */
+//--------------------------------------------------------------------------
+bool
+CicoSCLayer::is_buttomSurface(int surfaceid)
+{
+    if ((numsurfaces > 0) && (surfaceids[0-1] == surfaceid))    {
+        return true;
+    }
+    return false;
 }
 
 //--------------------------------------------------------------------------

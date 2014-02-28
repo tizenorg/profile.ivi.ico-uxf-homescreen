@@ -110,7 +110,7 @@
 #define STID_DISPLAY0_CATEGORY9         12009
 #define STID_DISPLAY0_CATEGORY10        12010
 #define STID_DISPLAY0_CATEGORY11        12011
-#if 1 // MK21031223 _MK_MK_
+#if 1
 #define STID_DISP0_ZONE2_CATEGORY       12100
 #define STID_DISP0_ZONE2_CATEGORY1      12101
 #define STID_DISP0_ZONE2_CATEGORY2      12102
@@ -135,7 +135,7 @@
 #define STID_DISP0_ZONE3_CATEGORY9      12209
 #define STID_DISP0_ZONE3_CATEGORY10     12210
 #define STID_DISP0_ZONE3_CATEGORY11     12211
-#endif // MK20131223 _MK_MK_
+#endif
 
 // display1 category state id
 #define STID_DISPLAY1_CATEGORY          13000
@@ -238,18 +238,18 @@
 #define EVID_DISPLAY_ZONE_ACQUIRE      10000
 #define EVID_DISPLAY_ZONE_RELEASE      10999
 
-#if 1  // MK20131223 _MK_MK_
+#if 1
 #define ZONEID_CENTER_FULL             1
 #define ZONEID_CENTER_UPPER            2
 #define ZONEID_CENTER_LOWER            3
-#endif // MK20131223 _MK_MK_
+#endif
 
 
 #define EVID_DISPLAY0_CATEGORY         12000
-#if 1  // MK20131223 _MK_MK_
+#if 1
 #define EVID_DISP0_ZONE2_CATEGORY      12100
 #define EVID_DISP0_ZONE3_CATEGORY      12200
-#endif // MK20131223 _MK_MK_
+#endif
 #define EVID_DISPLAY1_CATEGORY         13000
 
 #define EVID_ONSCREEN                  14000

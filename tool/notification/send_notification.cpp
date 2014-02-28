@@ -1,5 +1,8 @@
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
+#include <string>
+#include <functional>
+#include <algorithm>
 #include "notification.h"
 using namespace std;
 
@@ -139,9 +142,20 @@ insert_notification(notification_type_e type,
 int
 main(int argc, char **argv)
 {
-    cout << "Notification TestProgram Start=========" <<endl;
+    const char* msgTyp = "TYPE_NOTI";
+    notification_type_e nType = NOTIFICATION_TYPE_NOTI;
     
-    insert_notification(NOTIFICATION_TYPE_NOTI,
+    if (argc == 2) {
+        string sargv1(argv[1]);
+        if (0 == sargv1.compare("--ongoing")) {
+            msgTyp = "TYPE_ONGOING";
+            nType = NOTIFICATION_TYPE_ONGOING;
+        }
+    }
+
+    cout << "Notification TestProgram Start("<<msgTyp<<")=========" <<endl;
+    
+    insert_notification(nType,
                         NOTIFICATION_GROUP_ID_DEFAULT,
                         NOTIFICATION_PRIV_ID_NONE,
                         "org.tizen.dialer",
@@ -149,7 +163,7 @@ main(int argc, char **argv)
                         "0123456789012345678901234",
                         "/usr/share/icons/default/small/org.tizen.dialer.png");
 
-    insert_notification(NOTIFICATION_TYPE_NOTI,
+    insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
                         "GV3ySIINq7.GhostCluster",
@@ -157,7 +171,7 @@ main(int argc, char **argv)
                         "test_content",
                         "/opt/share/icons/default/small/GV3ySIINq7.GhostCluster.png");
 
-    insert_notification(NOTIFICATION_TYPE_NOTI,
+    insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
                         "ODBQpKvkS1.Settings",
@@ -165,7 +179,7 @@ main(int argc, char **argv)
                         "test_content",
                         "/opt/share/icons/default/small/ODBQpKvkS1.Settings.png");
 
-    insert_notification(NOTIFICATION_TYPE_NOTI,
+    insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
                         "lYjFlj49Q4.saythis",
@@ -173,14 +187,13 @@ main(int argc, char **argv)
                         "test_content",
                         "/opt/share/icons/default/small/lYjFlj49Q4.saythis.png");
 
-    insert_notification(NOTIFICATION_TYPE_NOTI,
+    insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
                         "t8j6HTRpuz.MediaPlayer",
                         "test_title",
                         "test_content",
                         "/opt/share/icons/default/small/t8j6HTRpuz.MediaPlayer.png");
-
 
     cout << "Notification_TestProgram End!=========" <<endl;
     return 0;

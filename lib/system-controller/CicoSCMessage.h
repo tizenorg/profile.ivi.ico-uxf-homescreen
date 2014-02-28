@@ -38,7 +38,7 @@ public:
     CicoSCMessage();
 
     // destructor
-    ~CicoSCMessage();
+    virtual ~CicoSCMessage();
 
     // get message id
     unsigned int getId(void);
@@ -77,7 +77,7 @@ public:
     void setHandle(CicoSCUwsHandle* handle);
 
     // get message data
-    const char* getData(void);
+    virtual const char* getData(void);
 
     // set application id of destination
     void setSendToAppid(const std::string & appid);
@@ -92,7 +92,7 @@ private:
     // copy constructor
     CicoSCMessage(const CicoSCMessage &object);
 
-private:
+protected:
     static unsigned int ms_counter;     //!< message id counter
     int                 m_id;           //!< message id
     CicoSCUwsHandle     *m_uwsHandle;   //!< communication handler

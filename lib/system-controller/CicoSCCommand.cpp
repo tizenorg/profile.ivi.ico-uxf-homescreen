@@ -30,6 +30,7 @@ using namespace boost::property_tree;
 #include "CicoLog.h"
 #include "ico_syc_error.h"
 #include "ico_syc_msg_cmd_def.h"
+#include "ico_syc_mrp_resource_private.h"
 
 //--------------------------------------------------------------------------
 /**
@@ -360,6 +361,14 @@ CicoSCCommand::parseUserMgrOpt(const ptree & root)
  *        "zone":    (string) window zone,
  *        "name":    (string) window's surface name,
  *        "id":      (string) window id
+ *        "ECU":
+ *        "display":
+ *        "layer":
+ *        "layout":
+ *        "area":
+ *        "dispatchApp":
+ *        "role":
+ *        "resourceId":
  *      },
  *      "sound": {
  *        "zone":    (string) sound zone,
@@ -388,6 +397,31 @@ CicoSCCommand::parseResCtrlOpt(const ptree & root)
         options->dispzone  = getStrValue(root, "res.window.zone");
         options->winname   = getStrValue(root, "res.window.name");
         options->surfaceid = getIntValue(root, "res.window.id");
+        bool bEx = true;
+        options->ECU       = getStrValue(root, "res.window.ECU");
+        if (true == options->ECU.empty()) {
+            bEx = false;
+        }
+        options->display   = getStrValue(root, "res.window.display");
+        if (true == options->display.empty()) {
+            bEx = false;
+        }
+        options->layer     = getStrValue(root, "res.window.layer");
+        if (true == options->layer.empty()) {
+            bEx = false;
+        }
+        options->layout    = getStrValue(root, "res.window.layout");
+        if (true == options->layout.empty()) {
+            bEx = false;
+        }
+        options->area      = getStrValue(root, "res.window.area");
+        if (true == options->area.empty()) {
+            bEx = false;
+        }
+        options->dispatchApp= getStrValue(root, "res.window.dispatchApp");
+        options->role      = getStrValue(root, "res.window.role");
+        options->resourceID= getIntValue(root, "res.window.resourceId");
+        options->dispresEx = bEx;
     }
 
     if (true == isExistObject(root, "res.sound")) {
@@ -404,7 +438,7 @@ CicoSCCommand::parseResCtrlOpt(const ptree & root)
         options->input    = getIntValue(root, "res.input.event");
     }
 
-    options->type = getIntValue(root, "type");
+    options->type = getIntValue(root, "res.type");
 }
 
 //--------------------------------------------------------------------------

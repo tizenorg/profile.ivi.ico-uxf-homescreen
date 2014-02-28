@@ -37,6 +37,8 @@ public:
     void addSurface(int surfaceid, bool top);
     void removeSurface(int surfaceid);
     const int *getSurfaces(int *retsurfaces);
+    bool is_topSurface(int surfaceid);
+    bool is_buttomSurface(int surfaceid);
 
     // dump log this class member variables
     void dump(void);

@@ -26,8 +26,14 @@
 /*============================================================================*/
 /* define static function prototype                                           */
 /*============================================================================*/
-static ico_syc_res_window_t *_create_res_window(char *zone,
-                                                char *name, char *id);
+static ico_syc_res_window_t *_create_res_window(const char *ECU,
+                                                const char *display,
+                                                const char *layer,
+                                                const char *layout,
+                                                const char *area,
+                                                const char *dispatchApp,
+                                                const char *role,
+                                                uint32_t resourceId);
 static ico_syc_res_sound_t *_create_res_sound(char *zone, char *name, char *id,
                                               int adjust);
 static ico_syc_res_input_t *_create_res_input(char *name, int event);
@@ -69,11 +75,16 @@ static msg_t _create_unset_region_msg(const char *appid,
  */
 /*--------------------------------------------------------------------------*/
 static ico_syc_res_window_t *
-_create_res_window(char *zone, char *name, char *id)
+    _create_res_window(const char *ECU, const char *display, const char *layer,
+                       const char *layout, const char *area,
+                       const char *dispatchApp, const char *role,
+                       uint32_t resourceId)
 {
     ico_syc_res_window_t *info  = NULL;
 
-    if (zone == NULL || name == NULL) {
+    if ((NULL == ECU) || (NULL == display) || (NULL == layer) ||
+        (NULL == layout) || (NULL == area) || (NULL == dispatchApp) ||
+        (NULL == role)) {
         _ERR("invalid parameter (zone, name is NULL)");
         return NULL;
     }
@@ -86,11 +97,14 @@ _create_res_window(char *zone, char *name, char *id)
     }
 
     /* set element */
-    info->zone = strdup(zone);
-    info->name = strdup(name);
-    if (id != NULL) {
-        info->id = strdup(id);
-    }
+    info->ECU         = strdup(ECU);
+    info->display     = strdup(display);
+    info->layer       = strdup(layer);
+    info->layout      = strdup(layout);
+    info->area        = strdup(area);
+    info->dispatchApp = strdup(dispatchApp);
+    info->role        = strdup(role);
+    info->resourceId  = resourceId;
 
     return info;
 }
@@ -183,18 +197,22 @@ _create_res_input(char *name, int event)
  */
 /*--------------------------------------------------------------------------*/
 static void
-_free_res_window(ico_syc_res_window_t *window)
+_free_res_window(ico_syc_res_window_t *w)
 {
-    if (window == NULL) {
+    if (w == NULL) {
         return;
     }
 
     /* free element */
-    if (window->zone != NULL) free(window->zone);
-    if (window->name != NULL) free(window->name);
-    if (window->id != NULL) free(window->id);
+    if (NULL != w->ECU)         free(w->ECU);
+    if (NULL != w->display)     free(w->display);
+    if (NULL != w->layer)       free(w->layer);
+    if (NULL != w->layout)      free(w->layout);
+    if (NULL != w->area)        free(w->area);
+    if (NULL != w->dispatchApp) free(w->dispatchApp);
+    if (NULL != w->role)        free(w->role);
     /* free */
-    free(window);
+    free(w);
 
     return;
 }
@@ -266,7 +284,7 @@ _free_res_input(ico_syc_res_input_t *input)
  */
 /*--------------------------------------------------------------------------*/
 static struct ico_syc_res_context *
-_create_context(char *appid, const ico_syc_res_window_t *window,
+_create_context(char *appid, const ico_syc_res_window_t *w,
                 const ico_syc_res_sound_t *sound,
                 const ico_syc_res_input_t *input,
                 int type)
@@ -284,9 +302,11 @@ _create_context(char *appid, const ico_syc_res_window_t *window,
     strcpy(context->appid, appid);
 
     /* set window info */
-    if (window != NULL) {
-        context->window = _create_res_window(window->zone, window->name,
-                                             window->id);
+    if (w != NULL) {
+        context->window = _create_res_window(w->ECU, w->display, w->layer,
+                                             w->layout, w->area,
+                                             w->dispatchApp, w->role,
+                                             w->resourceId);
     }
     /* set sound info */
     if (sound != NULL) {
@@ -299,7 +319,7 @@ _create_context(char *appid, const ico_syc_res_window_t *window,
     }
 
     /* set resource type */
-    if (window != NULL || sound != NULL) {
+    if (w != NULL || sound != NULL) {
         context->type = type;
     }
 
@@ -318,11 +338,11 @@ _create_context(char *appid, const ico_syc_res_window_t *window,
  */
 /*--------------------------------------------------------------------------*/
 static JsonObject *
-_create_window_msg(ico_syc_res_window_t *window)
+_create_window_msg(ico_syc_res_window_t *w)
 {
     JsonObject *info    = NULL;
 
-    if (window == NULL) {
+    if (w == NULL) {
         _ERR("invalid parameter (window is NULL)");
         return NULL;
     }
@@ -335,9 +355,14 @@ _create_window_msg(ico_syc_res_window_t *window)
     }
 
     /* set member */
-    json_object_set_string_member(info, MSG_PRMKEY_RES_ZONE, window->zone);
-    json_object_set_string_member(info, MSG_PRMKEY_RES_NAME, window->name);
-    json_object_set_string_member(info, MSG_PRMKEY_RES_ID, window->id);
+    json_object_set_string_member(info, MSG_PRMKEY_ECU, w->ECU);
+    json_object_set_string_member(info, MSG_PRMKEY_DISPLAY, w->display);
+    json_object_set_string_member(info, MSG_PRMKEY_LAYER, w->layer);
+    json_object_set_string_member(info, MSG_PRMKEY_LAYOUT, w->layout);
+    json_object_set_string_member(info, MSG_PRMKEY_AREA, w->area);
+    json_object_set_string_member(info, MSG_PRMKEY_DISPATCHAPP, w->dispatchApp);
+    json_object_set_string_member(info, MSG_PRMKEY_ROLE, w->role);
+    json_object_set_int_member(info, MSG_PRMKEY_RESOURCEID, w->resourceId);
 
     return info;
 }
@@ -714,6 +739,9 @@ ico_syc_cb_res(ico_syc_callback_t callback, void *user_data,
     ico_syc_res_info_t *res_info    = NULL;
     char *zone, *name, *id;
     int adjust, input_ev;
+    char *ECU, *display, *layer, *layout, *area, *dispatchApp, *role;
+    uint32_t resourceId;
+
 
     /* alloc memory */
     res_info = calloc(1, sizeof(ico_syc_res_info_t));
@@ -753,11 +781,18 @@ ico_syc_cb_res(ico_syc_callback_t callback, void *user_data,
     /* window resource */
     if (json_object_has_member(resobj, MSG_PRMKEY_RES_WINDOW) == TRUE) {
         info = json_object_get_object_member(resobj, MSG_PRMKEY_RES_WINDOW);
-        zone = ico_syc_get_str_member(info, MSG_PRMKEY_RES_ZONE);
-        name = ico_syc_get_str_member(info, MSG_PRMKEY_RES_NAME);
-        id = ico_syc_get_str_member(info, MSG_PRMKEY_RES_ID);
-
-        res_info->window = _create_res_window(zone, name, id);
+        ECU         = ico_syc_get_str_member(info, MSG_PRMKEY_ECU);
+        display     = ico_syc_get_str_member(info, MSG_PRMKEY_DISPLAY);
+        layer       = ico_syc_get_str_member(info, MSG_PRMKEY_LAYER);
+        layout      = ico_syc_get_str_member(info, MSG_PRMKEY_LAYOUT);
+        area        = ico_syc_get_str_member(info, MSG_PRMKEY_AREA);
+        dispatchApp = ico_syc_get_str_member(info, MSG_PRMKEY_DISPATCHAPP);
+        role        = ico_syc_get_str_member(info, MSG_PRMKEY_ROLE);
+        resourceId  = (uint32_t)
+                      ico_syc_get_int_member(info, MSG_PRMKEY_RESOURCEID);
+        res_info->window = _create_res_window(ECU, display, layer, layout,
+                                              area, dispatchApp, role,
+                                              resourceId);
     }
 
     /* sound resource */

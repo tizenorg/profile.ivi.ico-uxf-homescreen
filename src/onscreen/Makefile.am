@@ -8,7 +8,8 @@ noinst_PROGRAMS   = \
 OnScreen_SOURCES = \
 	on_screen_main.cpp \
 	CicoOSEFLApp.cpp   \
-	CicoOnScreen.cpp
+	CicoOnScreen.cpp   \
+	CicoOSPopWindow.cpp
 
 OnScreen_CFLAGS= 					\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\

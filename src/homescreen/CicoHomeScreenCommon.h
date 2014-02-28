@@ -104,12 +104,12 @@
 #define HS_LAYER_APPLICATION    ICO_SYC_LAYER_APPLICATION   /* layer of Application */
 #define HS_LAYER_HOMESCREEN     ICO_SYC_LAYER_HOMESCREEN    /* layer of HomeScreen menu */
 #define HS_LAYER_CONTROLBAR     ICO_SYC_LAYER_CONTROLBAR    /* layer of Control/Status bar */
-#define HS_LAYER_FULLSCREEN     ICO_SYC_LAYER_FULLSCREEN    /* layer of FullScreen Application */
+#define HS_LAYER_INTERRUPTAPP   ICO_SYC_LAYER_INTERRUPTAPP  /* layer of Interrupt Application */
 #define HS_LAYER_ONSCREEN       ICO_SYC_LAYER_ONSCREEN      /* layer of OnScreen   */
 #define HS_LAYER_TOUCHPANEL     ICO_SYC_LAYER_TOUCHPANEL    /* layer of TouchPanel input */
 #define HS_LAYER_CURSOR         ICO_SYC_LAYER_CURSOR        /* layer of Cursor   */
 
-#define HS_LAYER_2NDDISP_APP    ICO_SYC_LAYER_MATERAPP      /* second display application layer */
+#define HS_LAYER_2NDDISP_APP    ICO_SYC_LAYER_MATERMAIN     /* second display application layer */
 
 /* config history name */
 #define ICO_HS_CONFIG_HSTRY_KEY1      "timer"

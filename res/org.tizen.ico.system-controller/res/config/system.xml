@@ -30,31 +30,47 @@
                 <type>2</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="2" name="SoftKeyboard">
-                <type>101</type>
-                <menuoverlap>false</menuoverlap>
-            </layer>
-            <layer id="3" name="HomeScreen">
+            <layer id="2" name="HomeScreen">
                 <type>3</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="4" name="ControlBar">
+            <layer id="3" name="ControlBar">
                 <type>3</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="5" name="InterruptApp">
+            <layer id="4" name="InterruptApp">
                 <type>4</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="6" name="OnScreen">
-                <type>5</type>
-                <menuoverlap>true</menuoverlap>
+            <layer id="5" name="OnScreen">
+                <layouts>
+                    <layout id="1" name="Whole">
+                        <areas>
+                            <area id="1" name="Full">
+                                <type>5</type>
+                                <menuoverlap>true</menuoverlap>
+                            </area>
+                        </areas>
+                    </layout>
+                    <layout id="2" name="Half">
+                        <areas>
+                            <area id="1" name="Upper">
+                                <type>5</type>
+                                <menuoverlap>true</menuoverlap>
+                            </area>
+                            <area id="2" name="Lower">
+                                <type>5</type>
+                                <menuoverlap>true</menuoverlap>
+                            </area>
+                        </areas>
+                    </layout>
+                </layouts>
             </layer>
-            <layer id="7" name="Touch">
+            <layer id="6" name="Touch">
                 <type>102</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
-            <layer id="8" name="Cursor">
+            <layer id="7" name="Cursor">
                 <type>103</type>
                 <menuoverlap>false</menuoverlap>
             </layer>
@@ -424,6 +440,25 @@
         <type>UINT32</type>
     </vinfo>
 </vehicle_info>
+
+<on_screen_roles>
+    <role id="DEFAULT"     state="14003"/>
+    <role id="alert"       state="14001"/>
+    <role id="attention"   state="14002"/>
+    <role id="guide"       state="14003"/>
+    <role id="help"        state="14003"/>
+    <role id="incoming"    state="14002"/>
+    <role id="information" state="14002"/>
+    <role id="message"     state="14003"/>
+    <role id="warning"     state="14001"/>
+</on_screen_roles>
+
+<on_screen_position>
+    <x>0</x>
+    <y>0</y>
+    <w>1080</w>
+    <h>1920</h>
+</on_screen_position>
 
 </systemconfig>
 <!-- vim:set expandtab ts=4 sw=4: -->

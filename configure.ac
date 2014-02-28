@@ -79,7 +79,7 @@ UWS_LIBS="-lico-util"
 AC_SUBST(UWS_CFLAGS)
 AC_SUBST(UWS_LIBS)
 
-GENIVI_CFLAGS="-I/usr/include/ilm -I/usr/include/layermanager"
+GENIVI_CFLAGS="-I/usr/include/ilm"
 GENIVI_LIBS="-lilmCommon -lilmControl -lilmClient"
 AC_SUBST(GENIVI_CFLAGS)
 AC_SUBST(GENIVI_LIBS)

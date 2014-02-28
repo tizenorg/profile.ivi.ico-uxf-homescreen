@@ -172,7 +172,7 @@ CicoSCWayland::initialize(void)
     ICO_DBG("CicoSCWayland::initialize: Wayland/Weston connect OK");
 
     // initialize genivi callbacks
-    CicoSCWindowController::initializeGeniviNotifications();
+    CicoSCWindowController::getInstance()->initializeGeniviLMS();
 
     ICO_TRA("CicoSCWayland::initialize: Leave(EOK)");
     return ICO_SYC_EOK;

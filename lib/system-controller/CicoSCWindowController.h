@@ -24,6 +24,8 @@ using namespace std;
 
 #include "CicoSCWlWinMgrIF.h"
 
+#define ICO_SC_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"
+
 //==========================================================================
 //  Forward declaration
 //==========================================================================
@@ -123,15 +125,11 @@ public:
 
     int setAttributes(int surfaceid);
 
-    static void initializeGeniviNotifications(void);
+    void initializeGeniviLMS(void);
 
     static void wlGeniviLayerNotification(t_ilm_layer layer,
                                           struct ilmLayerProperties *LayerProperties,
                                           t_ilm_notification_mask mask);
-
-    static void wlGeniviSurfaceNotification(t_ilm_surface surface,
-                                            struct ilmSurfaceProperties *SurfaceProperties,
-                                            t_ilm_notification_mask mask);
     //
     virtual void activeCB(void *data,
                           struct ico_window_mgr *ico_window_mgr,
@@ -148,6 +146,24 @@ public:
                               int32_t stride,
                               uint32_t format);
 
+    virtual void updateSurfaceCB(void *data,
+                                 struct ico_window_mgr *ico_window_mgr,
+                                 uint32_t surfaceid,
+                                 int visible,
+                                 int srcwidth,
+                                 int srcheight,
+                                 int x,
+                                 int y,
+                                 int width,
+                                 int height);
+
+    virtual void destroySurfaceCB(void *data,
+                                  struct ico_window_mgr *ico_window_mgr,
+                                  uint32_t surfaceid);
+
+    virtual void updateWinnameCB(uint32_t surfaceid,
+                                 const char *winname);
+//
     virtual void outputGeometryCB(void *data,
                                   struct wl_output *wl_output,
                                   int32_t x,
@@ -170,6 +186,10 @@ public:
                                  struct ivi_controller *ivi_controller,
                                  uint32_t id_surface);
 
+    const CicoSCWindow* findWindowObj(int32_t pid, uint32_t surfaceid) const;
+
+    const CicoSCResourceManager* getResourceManager(void) const;
+
 private:
     // assignment operator
     CicoSCWindowController& operator=(const CicoSCWindowController &object);
@@ -185,6 +205,8 @@ private:
 
     // fine display zone by id
     const CicoSCDisplayZone * findDisplayZone(int zoneid);
+
+    void raiselower(CicoSCWindow *window, bool raise);
 
     int notifyResourceManager(int        surfaceid,
                               const char *zone,

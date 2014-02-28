@@ -856,15 +856,23 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             // On Screen
             hs_instance->os_app_info->AddWindowInfo(win_info);
 
-            // show onscreen window
-            ico_syc_show(win_info->appid, win_info->surface, NULL);
-
             // change the layer of onscreen window
             ico_syc_change_layer(win_info->appid, win_info->surface,
                                  HS_LAYER_ONSCREEN);
 
-            // hide onscreen layer
-            ico_syc_hide_layer(HS_LAYER_ONSCREEN);
+            const CicoSCPositionOSConf* oPOSC =
+                CicoSystemConfig::getInstance()->positionOSConf();
+            ico_syc_win_move_t move;
+            move.zone   = NULL;
+            move.layer  = HS_LAYER_ONSCREEN;
+            move.pos_x  = oPOSC->m_x;
+            move.pos_y  = oPOSC->m_y;
+            move.width  = oPOSC->m_w;
+            move.height = oPOSC->m_h;
+            ico_syc_animation_t animation;
+            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
+            animation.time = ICO_HS_MENU_ANIMATION_DURATION;
+            ico_syc_move(win_info->appid, win_info->surface, &move, &animation);
 
         }
         else    {

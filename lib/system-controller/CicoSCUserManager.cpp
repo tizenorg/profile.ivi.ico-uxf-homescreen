@@ -816,7 +816,7 @@ CicoSCUserManager::loadLastInfo()
     int ret = stat(dir.c_str(), &st);
     if (0 != ret) {
         // lastinfo directory does not exist
-        ICO_ERR("lastinfo directory dose not exist)");
+        ICO_WRN("lastinfo directory dose not exist)");
         ICO_TRA("CicoSCUserManager::loadLastInfo Leave(dir dose not exist)");
         return;
     }

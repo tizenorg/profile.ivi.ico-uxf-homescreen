@@ -61,6 +61,16 @@ extern "C" {
 #define TST_ID_A        (char *)"id A"
 #define TST_ID_B        (char *)"id B"
 
+#define TST_ECU         (char *)"ECU A"
+#define TST_display     (char *)"display A"
+#define TST_layer       (char *)"layer A"
+#define TST_layout      (char *)"layout A"
+#define TST_area        (char *)"area A"
+#define TST_dispatchApp (char *)"dispatchApp A"
+#define TST_role        (char *)"role A"
+#define TST_resourceId  55555
+
+
 #define TST_ADJUST      1
 #define TST_INPUT_EV    2
 #define TST_RES_TYPE    0

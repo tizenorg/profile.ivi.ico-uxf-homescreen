@@ -28,7 +28,7 @@
 using namespace std;
 using namespace boost;
 using namespace boost::property_tree;
-    
+
 //==========================================================================
 //  Forward declaration
 //==========================================================================
@@ -47,6 +47,8 @@ class CicoSCDefaultConf;
 class CicoSCResourceConf;
 class CicoSCUserConf;
 class CicoSCVehicleInfoConf;
+class CicoSCRoleConf;
+class CicoSCPositionOSConf;
 #endif
 
 //==========================================================================
@@ -54,7 +56,7 @@ class CicoSCVehicleInfoConf;
  *  @brief  This class has function of access to system config information
  */
 //==========================================================================
-class CicoSystemConfig 
+class CicoSystemConfig
 {
 public:
     static CicoSystemConfig* getInstance(void);
@@ -70,10 +72,19 @@ public:
 
     const CicoSCNodeConf* findNodeConfbyName(const string & name);
     const CicoSCDisplayConf* findDisplayConfbyName(const string & name);
+    const CicoSCDisplayConf* findDisplayConfbyName(const string& ECU,
+                                                   const string& name);
     const CicoSCDisplayConf* findDisplayConfbyId(int id);
+
     const CicoSCLayerConf* findLayerConfbyName(const string & displayName,
                                                const string & layerName);
-	const CicoSCLayerConf*  findLayerConfbyIdx(int displayid, int idx);
+    const CicoSCLayerConf* findLayerConfbyName(const string& ECU,
+                                               const string& display,
+                                               const string& layer,
+                                               const string& layout,
+                                               const string& area);
+    const CicoSCLayerConf*  findLayerConfbyIdx(int displayid, int idx);
+
     const CicoSCDisplayZoneConf* findDisplayZoneConfbyName(const string & displayName,
                                                        const string & zoneName);
     const CicoSCSoundConf* findSoundConfbyName(const string & name);
@@ -94,11 +105,16 @@ public:
 
     const CicoSCDefaultConf* getDefaultConf(void);
 
-
     int getNodeIdbyName(const string & name);
     int getDisplayIdbyName(const string & name);
+    int getDisplayIdbyNo(int no);
     int getLayerIdfbyName(const string & displayName,
                           const string & layerName);
+    int getLayerIdfbyName(const string& ECU,
+                          const string& display,
+                          const string& layer,
+                          const string& layout,
+                          const string& area);
     int getDizplayZoneIdbyName(const string & displayName,
                                const string & zoneName);
     int getDizplayZoneIdbyFullName(const string & zoneFullName);
@@ -112,22 +128,27 @@ public:
                           const string & switchName);
     int getAppKindIdbyName(const string & name);
     int getCategoryIdbyName(const string & name);
-    int getDisplayIdbyNo(int no);
-	void setDisplaySize(int id, int width, int height);
-
     const CicoSCResourceConf* getResourceConf() const
     {
         return m_resourceConf;
     };
     const CicoSCCategoryConf* getCategoryObjbyCaategoryID(int id);
 
-    const CicoSCUserConf* getUserConf() const 
+    const CicoSCUserConf* getUserConf() const
     {
         return m_userConf;
     };
 
     CicoSCVehicleInfoConf* getVehicleInfoConf(void);
-
+    short getRoleStt(const string& key);
+    const CicoSCRoleConf* getRoleConf() const
+    {
+        return m_roleConf;
+    };
+    const CicoSCPositionOSConf* positionOSConf() const
+    {
+        return m_positionOSConf;
+    };
 private:
     // default constructor
     CicoSystemConfig();
@@ -143,6 +164,16 @@ private:
 
     void createNodeConfList(const ptree & root);
     void createDisplayConfList(const ptree & root);
+    void createLayoutConfContainedArea(const ptree::value_type& layout,
+                                       const optional<int>& layer_id,
+                                       const optional<string>& layer_name,
+                                       const optional<int>& layout_id,
+                                       const optional<string>& layout_name,
+                                       CicoSCDisplayConf* displayConf);
+    void createLayerConfContainedLayout(const ptree::value_type& layer,
+                                        const optional<int>& layer_id,
+                                        const optional<string>& layer_name,
+                                        CicoSCDisplayConf* displayConf);
     void createLayerConf(const ptree::value_type & child,
                          CicoSCDisplayConf* displayConf);
     void createDisplayZoneConf(const ptree::value_type & child,
@@ -163,6 +194,8 @@ private:
     void createVehicleInfoConf(const ptree & root);
 
     int calcGeometryExpr(const string & expr, CicoSCDisplayConf* conf);
+    void createRoleConf(const ptree& root);
+    void createPositionOSConf(const ptree& root);
 
 private:
     static CicoSystemConfig* ms_myInstance;
@@ -183,6 +216,8 @@ private:
     CicoSCResourceConf *m_resourceConf;
     CicoSCUserConf *m_userConf;
     CicoSCVehicleInfoConf *m_vehicleInfoConf;
+    CicoSCRoleConf *m_roleConf;
+    CicoSCPositionOSConf *m_positionOSConf;
 };
 #endif  // __CICO_SYSTEM_CONFIG_H__
 // vim:set expandtab ts=4 sw=4:

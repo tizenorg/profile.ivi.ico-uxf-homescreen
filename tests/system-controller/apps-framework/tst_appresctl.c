@@ -64,11 +64,19 @@ _check_res_info(const char *ev_name, ico_syc_res_info_t *info)
     sound = info->sound;
     input = info->input;
     if (window != NULL) {
-        printf("\t(window zone[%s], name[%s], id[%s]\n",
-                window->zone, window->name, window->id);
-        if (strcmp(window->zone, TST_ZONE_A) != 0
-            || strcmp(window->name, TST_NAME_A) != 0
-            || strcmp(window->id, TST_ID_A) != 0) {
+        ico_syc_res_window_t *w = window;
+        printf("\t(window ECU[%s].display[%s].layer[%s].layout[%s].area[%s], app[%s], role[%s], resId[%d]",
+               w->ECU, w->display, w->layer, w->layout, w->area,
+               w->dispatchApp, w->role, w->resourceId);
+
+        if ((0 != strcmp(w->ECU,         TST_ECU)) ||
+            (0 != strcmp(w->display,     TST_display)) ||
+            (0 != strcmp(w->layer,       TST_layer)) ||
+            (0 != strcmp(w->layout,      TST_layout)) ||
+            (0 != strcmp(w->area,        TST_area)) ||
+            (0 != strcmp(w->dispatchApp, TST_dispatchApp)) ||
+            (0 != strcmp(w->role,        TST_role)) ||
+            (w->resourceId != TST_resourceId)) {
             check_flag = 1;
         }
     }
@@ -253,9 +261,14 @@ Eina_Bool ico_syc_appresctl_test(void *data)
     int attr            = 1;
 
     /* set window resource info */
-    window.zone         = "center";
-    window.name         = "window A";
-    window.id           = "id A";
+    window.ECU         = "Center";
+    window.display     = "Center";
+    window.layer       = "OnScreen";
+    window.layout      = "Full";
+    window.area        = "Full";
+    window.dispatchApp = "zzzzzzzz";
+    window.role        = "Message";
+    window.resourceId  = 8888;
     /* set sound resource info */
     sound.zone          = "all";
     sound.name          = "sound B";

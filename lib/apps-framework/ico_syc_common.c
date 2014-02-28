@@ -290,6 +290,9 @@ static int _get_event_from_cmd(int command)
     case MSG_CMD_RELEASE_RES:
         event = ICO_SYC_EV_RES_RELEASE;
         break;
+    case MSG_CMD_WINDOW_ID_RES:
+        event = ICO_SYC_EV_RES_WINDOW_ID;
+        break;
     case MSG_CMD_SET_REGION:
         event = ICO_SYC_EV_INPUT_SET;
         break;
@@ -379,6 +382,7 @@ _exec_callback(void *user_data)
         case ICO_SYC_EV_RES_WAITING:
         case ICO_SYC_EV_RES_REVERT:
         case ICO_SYC_EV_RES_RELEASE:
+        case ICO_SYC_EV_RES_WINDOW_ID:
             ico_syc_cb_res(syc_callback, user_data, event,
                            recv_data->data, recv_data->len);
             break;
@@ -744,7 +748,8 @@ ico_syc_service(void)
  *                                      ICO_SYC_EV_RES_DEPRIVE
  *                                      ICO_SYC_EV_RES_WAITING
  *                                      ICO_SYC_EV_RES_REVERT
- *                                      ICO_SYC_EV_RES_RELEASE)
+ *                                      ICO_SYC_EV_RES_RELEASE
+ *                                      ICO_SYC_EV_RES_WINDOW_ID)
  *
  * @param[in]   callback                callback function
  * @param[in]   user_data               pased data on called callback function

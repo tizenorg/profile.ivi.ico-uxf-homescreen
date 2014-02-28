@@ -51,6 +51,8 @@ CicoSCWlWinMgrIF::CicoSCWlWinMgrIF()
     // ico_window_mgr listener
     m_listener.window_active    = wlActiveCB;
     m_listener.map_surface      = wlMapSurfaceCB;
+    m_listener.update_surface   = wlUpdateSurfaceCB;
+    m_listener.destroy_surface  = wlDestroySurfaceCB;
 
     // genivi ivi_application listener
     m_ivi_app_listener.error = wlIviAppErrorCB;
@@ -202,11 +204,23 @@ CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t ol
     ICO_DBG("CicoSCWlWinMgrIF::setWindowLayer: "
             "surfaceid=0x%08X layer=%d->%d", surfaceid, oldlayer, layer);
 
+    if (oldlayer == layer)  {
+        ICO_DBG("CicoSCWlWinMgrIF::setWindowLayer: new layer same as old, NOP");
+        return;
+    }
+
     // remove original layer
     if (oldlayer <= 0x7fffffff) {
         ICO_TRA("CicoSCWlWinMgrIF::setWindowLayer: remove surface %08x "
                 "from layer(%d)", surfaceid, oldlayer);
-        (void) ilm_layerRemoveSurface(oldlayer, surfaceid);
+        if (ilm_layerRemoveSurface(oldlayer, surfaceid) != ILM_SUCCESS) {
+            ICO_ERR("CicoSCWlWinMgrIF::setWindowLayer ilm_layerRemoveSurface(%d,%08x) "
+                    "Error", oldlayer, surfaceid);
+        }
+        // must need ilm_commitChanges() after ilm_layerRemoveSurface()
+        if (ilm_commitChanges() != ILM_SUCCESS) {
+            ICO_ERR("CicoSCWlWinMgrIF::setWindowLayer ilm_commitChanges Error");
+        }
     }
     else    {
         ICO_TRA("CicoSCWlWinMgrIF::setWindowLayer: surface %08x has no old layer(%d)",
@@ -233,24 +247,39 @@ CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t ol
  *  @param [in] y
  *  @param [in] width
  *  @param [in] height
- *  @param [in] flags           (unused)
  */
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::setPositionsize(uint32_t surfaceid, uint32_t node,
-                                  int32_t x, int32_t y, int32_t width,
-                                  int32_t height, int32_t flags)
+                                  int32_t x, int32_t y, int32_t width, int32_t height)
 {
     // set position size request to Multi Window Manager
     ICO_DBG("called: ilm_surfaceSetDestinationRectangle"
-            "(surfaceid=0x%08X node=%d x=%d y=%d w=%d h=%d flags=%d)",
-            surfaceid, node, x, y, width, height, flags);
-    if ((ilm_surfaceSetDestinationRectangle(surfaceid, x, y, width, height)
-            != ILM_SUCCESS) ||
-        (ilm_commitChanges() != ILM_SUCCESS))   {
+            "(surfaceid=0x%08X node=%d x=%d y=%d w=%d h=%d)",
+            surfaceid, node, x, y, width, height);
+
+    t_ilm_uint  Dimansion[2];
+    Dimansion[0] = width;
+    Dimansion[1] = height;
+    t_ilm_uint  Position[2];
+    Position[0] = x;
+    Position[1] = y;
+
+    if (ilm_surfaceSetDimension(surfaceid, Dimansion) != ILM_SUCCESS)   {
+        ICO_ERR("CicoSCWlWinMgrIF::setPositionsize "
+                "ilm_surfaceSetDimension(%08x) Error", surfaceid);
+    }
+    else if (ilm_surfaceSetPosition(surfaceid, Position) != ILM_SUCCESS)    {
+        ICO_ERR("CicoSCWlWinMgrIF::setPositionsize "
+                "ilm_surfaceSetPosition(%08x) Error", surfaceid);
+    }
+    else if (ilm_surfaceSetDestinationRectangle(surfaceid, x, y, width, height)
+            != ILM_SUCCESS) {
         ICO_ERR("CicoSCWlWinMgrIF::setPositionsize ilm_surfaceSetDestinationRectangle"
-                "(%08x,%d,%d,%d,%d) Error",
-                surfaceid, x, y, width, height);
+                "(%08x,%d,%d,%d,%d) Error", surfaceid, x, y, width, height);
+    }
+    else if (ilm_commitChanges() != ILM_SUCCESS)    {
+        ICO_ERR("CicoSCWlWinMgrIF::setPositionsize ilm_commitChanges() Error");
     }
 }
 
@@ -260,26 +289,19 @@ CicoSCWlWinMgrIF::setPositionsize(uint32_t surfaceid, uint32_t node,
  *
  *  @param [in] surfaceid       wayland surface id
  *  @param [in] visible         visible state
- *  @param [in] raise           raise state
- *  @param [in] flags           (unused)
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::setVisible(uint32_t surfaceid, int32_t visible,
-                             int32_t raise, int32_t flags)
+CicoSCWlWinMgrIF::setVisible(uint32_t surfaceid, int32_t visible)
 {
     // set visible request to Multi Window Manager
-    ICO_DBG("called: ilm_surfaceSetVisibility"
-            "(surfaceid=0x%08X visible=%d raise=%d anima=%d)",
-            surfaceid, visible, raise, flags);
+    ICO_DBG("called: ilm_surfaceSetVisibility(surfaceid=0x%08X visible=%d)",
+            surfaceid, visible);
     if ((visible == ICO_SYC_WIN_VISIBLE_SHOW) || (visible == ICO_SYC_WIN_VISIBLE_HIDE)) {
         ilm_surfaceSetVisibility(surfaceid, visible);
-    }
-    if ((raise == ICO_SYC_WIN_RAISE_RAISE) || (raise == ICO_SYC_WIN_RAISE_LOWER))   {
-        // TODO: need raise/lower control
-    }
-    if (ilm_commitChanges() != ILM_SUCCESS) {
-        ICO_ERR("CicoSCWlWinMgrIF::setVisible: ilm_commitChanges() Error");
+        if (ilm_commitChanges() != ILM_SUCCESS) {
+            ICO_ERR("CicoSCWlWinMgrIF::setVisible: ilm_commitChanges() Error");
+        }
     }
 }
 
@@ -510,6 +532,69 @@ CicoSCWlWinMgrIF::mapSurfaceCB(void                  *data,
 
 //--------------------------------------------------------------------------
 /**
+ *  @brief   surface update event callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       surface Id
+ *  @param [in] visible         visibility
+ *  @param [in] srcwidth        application buffer width
+ *  @param [in] srcheight       application buffer height
+ *  @param [in] x               X
+ *  @param [in] y               Y
+ *  @param [in] width           width
+ *  @param [in] height          height
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::updateSurfaceCB(void                  *data,
+                                  struct ico_window_mgr *ico_window_mgr,
+                                  uint32_t              surfaceid,
+                                  int                   visible,
+                                  int                   srcwidth,
+                                  int                   srcheight,
+                                  int                   x,
+                                  int                   y,
+                                  int                   width,
+                                  int                   height)
+{
+    ICO_WRN("CicoSCWlWinMgrIF::updateSurfaceCB called.");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland surface destroy callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       surface Id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::destroySurfaceCB(void                  *data,
+                                   struct ico_window_mgr *ico_window_mgr,
+                                   uint32_t              surfaceid)
+{
+    ICO_WRN("CicoSCWlWinMgrIF::destroySurfaceCB called.");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland update surface name callback
+ *
+ *  @param [in] surfaceid       surface Id
+ *  @param [in] winname         surface name (title)
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::updateWinnameCB(uint32_t surfaceid,
+                                  const char *winname)
+{
+    ICO_WRN("CicoSCWlWinMgrIF::updateWinnameCB called.");
+}
+
+//--------------------------------------------------------------------------
+/**
  *  @brief   wayland display attribute callback
  *
  *  @param [in] data            user data(unused)
@@ -649,6 +734,74 @@ CicoSCWlWinMgrIF::wlMapSurfaceCB(void                  *data,
                                                        width, height,
                                                        stride, format);
 //    ICO_TRA("CicoSCWlWinMgrIF::wlMapSurfaceCB Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   surface update event callback
+ *
+ *  @param [in] data            user data
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       surface Id
+ *  @param [in] visible         visibility
+ *  @param [in] srcwidth        application buffer width
+ *  @param [in] srcheight       application buffer height
+ *  @param [in] x               X
+ *  @param [in] y               Y
+ *  @param [in] width           width
+ *  @param [in] height          height
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlUpdateSurfaceCB(void                  *data,
+                                    struct ico_window_mgr *ico_window_mgr,
+                                    uint32_t              surfaceid,
+                                    int                   visible,
+                                    int                   srcwidth,
+                                    int                   srcheight,
+                                    int                   x,
+                                    int                   y,
+                                    int                   width,
+                                    int                   height)
+{
+//    ICO_TRA("CicoSCWlWinMgrIF::wlUpdateSurfaceCB Enter");
+
+    if (NULL == data) {
+        ICO_WRN("wlUpdateSurfaceCB: data is null");
+        return;
+    }
+    static_cast<CicoSCWlWinMgrIF*>(data)->updateSurfaceCB(data, ico_window_mgr,
+                                                          surfaceid, visible,
+                                                          srcwidth, srcheight,
+                                                          x, y, width, height);
+//    ICO_TRA("CicoSCWlWinMgrIF::wlUpdateSurfaceCB Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief   surface destroy event callback
+ *
+ *  @param [in] data            user data
+ *  @param [in] ico_window_mgr  wayland ico_window_mgr plugin interface
+ *  @param [in] surfaceid       surface Id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::wlDestroySurfaceCB(void                  *data,
+                                     struct ico_window_mgr *ico_window_mgr,
+                                     uint32_t             surfaceid)
+{
+//    ICO_TRA("CicoSCWlWinMgrIF::wlDestroySurfaceCB Enter");
+
+    if (NULL == data) {
+        ICO_WRN("wlDestroySurfaceCB: data is null");
+        return;
+    }
+    wlIviCtrlRemoveSurface(surfaceid);
+
+    static_cast<CicoSCWlWinMgrIF*>(data)->destroySurfaceCB(data, ico_window_mgr,
+                                                           surfaceid);
+//    ICO_TRA("CicoSCWlWinMgrIF::wlDestroySurfaceCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -829,6 +982,10 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
     tp->pid = pid;
     strncpy(tp->title, title, ICO_SYC_MAX_WINNAME_LEN-1);
     tp->create_time = nowtime;
+
+    if (tp->id_surface) {
+        static_cast<CicoSCWlWinMgrIF*>(data)->updateWinnameCB(tp->id_surface, tp->title);
+    }
 
     ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave");
 }

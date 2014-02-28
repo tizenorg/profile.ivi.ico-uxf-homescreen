@@ -1036,32 +1036,32 @@
   },
 
   "state":{
-    "name":"OnScreen",
+    "name":"OnScreen_Priority",
     "value":14000,
     "state":{
       "name":"OnScreen_Invisible",
       "value":14999,
-      "event":{"name":"EV14000", "value":14000, "transition":14001, "guardCondition":[{"operator":"=", "value":1}]},
-      "event":{"name":"EV14000", "value":14000, "transition":14002, "guardCondition":[{"operator":"=", "value":2}]},
-      "event":{"name":"EV14000", "value":14000, "transition":14003, "guardCondition":[{"operator":"=", "value":3}]}
+      "event":{"name":"EV14001", "value":14001, "transition":14001},
+      "event":{"name":"EV14002", "value":14002, "transition":14002},
+      "event":{"name":"EV14003", "value":14003, "transition":14003}
     },
     "state":{
-      "name":"OnScreen_Warning",
+      "name":"OnScreen_PriorityLevel1",
       "value":14001,
-      "event":{"name":"EV14001", "value":14001, "transition":14999}
+      "event":{"name":"EV14999", "value":14999, "transition":14999}
     },
     "state":{
-      "name":"OnScreen_Attention",
+      "name":"OnScreen_PriorityLevel2",
       "value":14002,
-      "event":{"name":"EV14001", "value":14001, "transition":14999},
-      "event":{"name":"EV14000", "value":14000, "transition":14001, "guardCondition":[{"operator":"=", "value":1}]}
+      "event":{"name":"EV14001", "value":14001, "transition":14001},
+      "event":{"name":"EV14999", "value":14999, "transition":14999}
     },
     "state":{
-      "name":"OnScreen_Message",
+      "name":"OnScreen_PriorityLevel3",
       "value":14003,
-      "event":{"name":"EV14001", "value":14001, "transition":14999},
-      "event":{"name":"EV14000", "value":14000, "transition":14001, "guardCondition":[{"operator":"=", "value":1}]},
-      "event":{"name":"EV14000", "value":14000, "transition":14002, "guardCondition":[{"operator":"=", "value":2}]}
+      "event":{"name":"EV14001", "value":14001, "transition":14001},
+      "event":{"name":"EV14002", "value":14002, "transition":14002},
+      "event":{"name":"EV14999", "value":14999, "transition":14999}
     }
   },
 

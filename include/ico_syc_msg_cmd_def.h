@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -68,6 +68,16 @@ extern "C" {
 #define MSG_PRMKEY_STRIDE       (char *)"stride"
 #define MSG_PRMKEY_FORMAT       (char *)"format"
 #define MSG_PRMKEY_RATE         (char *)"framerate"
+
+#define MSG_PRMKEY_ECU          (char *)"ECU"
+#define MSG_PRMKEY_DISPLAY      (char *)"display"
+/* #define MSG_PRMKEY_LAYER        (char *)"layer" */
+#define MSG_PRMKEY_LAYOUT       (char *)"layout"
+#define MSG_PRMKEY_AREA         (char *)"area"
+#define MSG_PRMKEY_DISPATCHAPP  (char *)"dispatchApp"
+#define MSG_PRMKEY_ROLE         (char *)"role"
+#define MSG_PRMKEY_RESOURCEID   (char *)"resourceId"
+
 /* user controller */
 #define MSG_PRMKEY_USER         (char *)"user"
 #define MSG_PRMKEY_PASSWD       (char *)"password"
@@ -150,6 +160,7 @@ extern "C" {
 #define MSG_CMD_DEPRIVE_RES         0x00040003
 #define MSG_CMD_WAITING_RES         0x00040004
 #define MSG_CMD_REVERT_RES          0x00040005
+#define MSG_CMD_WINDOW_ID_RES       0x00040006
 /* input device setting */
 #define MSG_CMD_SET_REGION          0x00050001
 #define MSG_CMD_UNSET_REGION        0x00050002
