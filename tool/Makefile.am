@@ -9,7 +9,8 @@ AM_CFLAGS = $(GCC_CFLAGS) -I../include -I/usr/include/ico-util $(wayland_ivi_cli
 AM_LDFLAGS = -module -avoid-version -rpath $(libdir) $(GLIB_LIBS)
 
 bin_PROGRAMS =		\
-	ico_change_loginuser
+	ico_change_loginuser \
+	ico_clear_screen
 
 check_LTLIBRARIES = $(TESTS)
 check_PROGRAMS = ico_clear_screen ico_login_user

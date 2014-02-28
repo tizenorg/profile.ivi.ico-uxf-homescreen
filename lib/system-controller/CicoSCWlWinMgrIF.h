@@ -65,6 +65,23 @@ public:
                               int32_t stride,
                               uint32_t format);
 
+    virtual void updateSurfaceCB(void *data,
+                                 struct ico_window_mgr *ico_window_mgr,
+                                 uint32_t surfaceid,
+                                 int visible,
+                                 int srcwidth,
+                                 int srcheight,
+                                 int x,
+                                 int y,
+                                 int width,
+                                 int height);
+
+    virtual void destroySurfaceCB(void *data,
+                                  struct ico_window_mgr *ico_window_mgr,
+                                  uint32_t surfaceid);
+
+    virtual void updateWinnameCB(uint32_t surfaceid,
+                                 const char *winname);
     //
     virtual void outputGeometryCB(void             *data,
                                   struct wl_output *wl_output,
@@ -108,12 +125,10 @@ protected:
 
     // wrapper function ico_window_mgr_set_positionsize
     void setPositionsize(uint32_t surfaceid, uint32_t node,
-                         int32_t x, int32_t y, int32_t width,
-                         int32_t height, int32_t flags);
+                         int32_t x, int32_t y, int32_t width, int32_t height);
 
     // wrapper function ico_window_mgr_set_visible
-    void setVisible(uint32_t surfaceid, int32_t  visible,
-                    int32_t  raise, int32_t  flags);
+    void setVisible(uint32_t surfaceid, int32_t visible);
 
     // wrapper function of ico_window_mgr_set_animation
     void setAnimation(uint32_t surfaceid, int32_t type,
@@ -153,6 +168,20 @@ private:
                                int32_t stride,
                                uint32_t format);
 
+    static void wlUpdateSurfaceCB(void *data,
+                                  struct ico_window_mgr *ico_window_mgr,
+                                  uint32_t surfaceid,
+                                  int layer,
+                                  int srcwidth,
+                                  int srcheight,
+                                  int x,
+                                  int y,
+                                  int width,
+                                  int height);
+
+    static void wlDestroySurfaceCB(void *data,
+                                   struct ico_window_mgr *ico_window_mgr,
+                                   uint32_t surfaceid);
     //
     static void wlOutputGeometryCB(void             *data,
                                    struct wl_output *wl_output,
@@ -226,6 +255,9 @@ protected:
 
     // Wayland's genivi ivi_controller instance
     static struct ivi_controller *m_ivi_ctrl;
+
+    // Wayland's genivi ivi_controller_surface instance
+    static struct ivi_controller_surface *m_ivi_ctrl_surf;
 
     // wayland output instance
     static struct wl_output *m_wloutput;

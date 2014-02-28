@@ -170,6 +170,8 @@ public:
     CicoSCCmdResCtrlOpt()
         : dispres(false), dispzone(""), layerid(-1), winname(""), surfaceid(-1),
           animation(""), animationTime(0),
+          ECU(""), display(""), layer(""), layout(""), area(""), dispatchApp(""),
+          role(""), resourceID(-1),
           soundres(false), soundzone(""), soundname(""), adjust(0),
           inputres(false), device(""), input(0), type(0) {}
 
@@ -190,6 +192,12 @@ public:
                 soundzone.c_str(), soundname.c_str(),
                 soundid, adjust, inputres ? "true" : "false",
                 device.c_str(), input, type);
+        ICO_DBG("ResCtrlOptEx: "
+                "dispresEx=%s ECU=%s display=%s layer=%s layout=%s area=%s "
+                "dispatchApp=%s role=%s resourceID=%d",
+                dispresEx? "true": "false", ECU.c_str(), display.c_str(),
+                layer.c_str(), layout.c_str(), area.c_str(), dispatchApp.c_str(),
+                role.c_str(), resourceID);
     }
 
     bool        dispres;         //!< flag of display resource
@@ -199,6 +207,15 @@ public:
     int         surfaceid;       //!< id of surface
     std::string animation;       //!< name of animation
     int         animationTime;   //!< time of animation[ms]
+    bool        dispresEx;       //!< Expansion flag
+    std::string ECU;             //!< name to identify ECU
+    std::string display;         //!< name to identify Display in ECU
+    std::string layer;           //!< name to identify Layer in Display
+    std::string layout;          //!< name to identify Layout in Layer
+    std::string area;            //!< name to Output position in Layout
+    std::string dispatchApp;     //!< dispatch of application
+    std::string role;            //!< role of notice
+    int         resourceID;      //!< ID number of resource
 
     bool        soundres;        //!< flag of sound resource
     std::string soundzone;       //!< name of sound zone

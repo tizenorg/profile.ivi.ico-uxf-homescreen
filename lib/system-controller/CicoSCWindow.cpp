@@ -30,8 +30,8 @@ using namespace std;
 CicoSCWindow::CicoSCWindow()
     : surfaceid(-1), name(""), appid(""), pid(-1),
       nodeid(-1), displayid(-1), layerid(-1), zone(""), zoneid(-1),
-      subwindow(0), eventmask(0), x(-1), y(-1), width(-1), height(-1),
-      visible(false), raise(false), active(false)
+      subwindow(0), eventmask(0), srcwidth(0), srcheight(0), x(-1), y(-1),
+      width(-1), height(-1), visible(false), raise(false), active(false)
 {
 //    ICO_TRA("CicoSCWindow::CicoSCWindow Enter");
 //    ICO_TRA("CicoSCWindow::CicoSCWindow Leave");

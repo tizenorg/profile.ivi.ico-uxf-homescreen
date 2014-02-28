@@ -83,6 +83,16 @@ typedef struct  _resource_request {
     int  surfaceid;       /* window id */
     char *animation;      /* name of animation */
     int  animationTime;   /* time of animation[ms] */
+    bool  bEx;            /* Expansion flag */
+    char *ECU;            /* name to identify ECU */
+    char *display;        /* name to identify Display in ECU */
+    char *layer;          /* name to identify Layer in Display */
+    char *layout;         /* name to identify layout in Layer */
+    char *area;           /* name to Output position in Layout */
+    char *dispatchApp;    /* origin of application */
+    char *role;           /* role of notice kind */
+    int   role_stt;       /* state number change from role */
+    int   resourceId;     /* ID number of resource */
 
     char *soundzone;      /* area of playing sound */
     int  soundzoneid;     /* area of playing sound */

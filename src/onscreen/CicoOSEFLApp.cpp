@@ -104,7 +104,6 @@ CicoOSEFLApp::onTerminate(void *user_data)
 {
     ICO_TRA("CicoOSEFLApp::onTerminate Enter");
 
-    m_onscreen->Finalize();
     delete m_onscreen;
 
     ICO_TRA("CicoOSEFLApp::onTerminate Leave");

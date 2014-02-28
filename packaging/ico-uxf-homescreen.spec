@@ -33,9 +33,13 @@ BuildRequires: pkgconfig(murphy-resource)
 BuildRequires: pkgconfig(notification)
 BuildRequires: boost-devel
 BuildRequires: mesa-devel
+BuildRequires: weston-ivi-shell
+BuildRequires: weston-ivi-shell-devel
 BuildRequires: genivi-shell
+BuildRequires: genivi-shell-devel
 BuildRequires: ico-uxf-utilities-devel >= 0.9.07
 Requires: weston >= 1.4
+Requires: weston-ivi-shell
 Requires: genivi-shell
 Requires: ico-uxf-weston-plugin >= 0.9.21
 Requires: ico-uxf-utilities >= 0.9.07

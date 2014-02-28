@@ -473,7 +473,7 @@ CicoSCPolicyManager::acquireDisplayResource(int type, int zoneid, int priority)
     bool chg = false;
 
     if (RESID_TYPE_BASIC == type) {
-#if 1  // MK20131223 _MK_MK_
+#if 1
         unsigned short category_ev = EVID_DISPLAY0_CATEGORY;
         if (ZONEID_CENTER_UPPER == zoneid) {
             category_ev = EVID_DISP0_ZONE2_CATEGORY;
@@ -491,7 +491,7 @@ CicoSCPolicyManager::acquireDisplayResource(int type, int zoneid, int priority)
             sendSMEvent(category_ev, priority);
             chg = true;
         }
-#else  // MK20131223 _MK_MK_
+#else
         bool zoneChg = testSMEvent(EVID_DISPLAY_ZONE_ACQUIRE, zoneid);
         bool cateChg = testSMEvent(EVID_DISPLAY0_CATEGORY, priority);
         ICO_DBG("zoneChg=%d cateChg=%d", zoneChg, cateChg);
@@ -500,7 +500,7 @@ CicoSCPolicyManager::acquireDisplayResource(int type, int zoneid, int priority)
             sendSMEvent(EVID_DISPLAY0_CATEGORY, priority);
             chg = true;
         }
-#endif  // MK20131223 _MK_MK_
+#endif
 #if 0   //-- { debug dump
         else {
             std::map<int, const CicoState*>::iterator itr;

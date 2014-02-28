@@ -87,6 +87,11 @@ typedef enum _privilege {
 
 #define ICO_SYC_CONFIG_APPATTR  "app_attr.conf" //TODO
 
+#define ICO_SYC_ROLE_CONF_DEF -1
+#define ICO_SYC_ROLE_CONF_DEF_STR "DEFAULT"
+#define ICO_SYC_ROLE_CONF_RST 14999
+#define ICO_SYC_ROLE_CONF_RST_STR "RESET"
+
 //==========================================================================
 /**
  *  @brief  This class holds display information of system config
@@ -126,7 +131,8 @@ class CicoSCLayerConf
 public:
     /// default constructor
     CicoSCLayerConf()
-        : id(-1), name(""), type(-1), menuoverlap(false) {}
+        : id(-1), name(""), type(-1), menuoverlap(false),
+        layout_id(-1), layout_name(""), area_id(-1), area_name("") {}
 
     /// destructor
     virtual ~CicoSCLayerConf() {}
@@ -134,8 +140,15 @@ public:
     /// dump log this class member variables
     void dumpConf(void)
     {
-        ICO_DBG("  layer: id=%d name=%s type=%d menuoverlap=%s",
-                id, name.c_str(), type, menuoverlap ? "true" : "false");
+        if(-1 != layout_id) {
+            ICO_DBG("  layer: %d, \"%s\" type=%d menuoverlap=%s layout: %d, \"%s\" area: %d, \"%s\"",
+                    id, name.c_str(), type, menuoverlap ? "true" : "false",
+                    layout_id, layout_name.c_str(), area_id, area_name.c_str());
+        }
+        else{
+            ICO_DBG("  layer: %d, \"%s\" type=%d menuoverlap=%s",
+                    id, name.c_str(), type, menuoverlap ? "true" : "false");
+        }
     }
 
 public:
@@ -143,6 +156,10 @@ public:
     std::string name;        ///< layer name
     int         type;        ///< layer type
     bool        menuoverlap; ///< menu overlap flag
+    int         layout_id;   ///< layoyt id
+    std::string layout_name; ///< layout name
+    int         area_id;     ///< area id
+    std::string area_name;   ///< area name
 };
 
 //==========================================================================
@@ -694,5 +711,62 @@ public:
     std::map<int, CicoSCVIPropertyConf*> properties;
 };
 
+//==========================================================================
+/**
+ *  @brief  This class Role of system config
+ */
+//==========================================================================
+class CicoSCRoleConf
+{
+public:
+    /// constructor
+    CicoSCRoleConf()
+        : m_def(ICO_SYC_ROLE_CONF_DEF), m_rst(ICO_SYC_ROLE_CONF_RST) {}
+    /// destructor
+    virtual ~CicoSCRoleConf() {}
+    /// dump log this class member variables
+    void dumpConf(void)
+    {
+        ICO_DBG("Role info: default=%d, reset=%d, size=%d",
+                (int)m_def, (int)m_rst, (int)m_stt.size());
+        std::map<std::string, short>::iterator itr;
+        itr = m_stt.begin();
+        for(; itr != m_stt.end(); ++itr) {
+            ICO_DBG("              key=\"%s\", stt=%d", itr->first.c_str(),
+                    (int)itr->second);
+        }
+    }
+
+
+public:
+    short  m_def;
+    short  m_rst;
+    std::map<std::string, short>  m_stt;
+};
+
+//==========================================================================
+/**
+ *  @brief  This class position onscreen window x,y
+ */
+//==========================================================================
+class CicoSCPositionOSConf
+{
+public:
+    /// constructor
+    CicoSCPositionOSConf()
+        : m_x(0), m_y(0), m_w(1080), m_h(1920) {}
+    /// destructor
+    virtual ~CicoSCPositionOSConf() {}
+    /// dump log this class member variables
+    void dumpConf(void)
+    {
+        ICO_DBG("OnScreen Window position : x:%d, y:%d, w:%d, h:%d", m_x, m_y, m_w, m_h);
+    }
+public:
+    int     m_x;
+    int     m_y;
+    int     m_w;
+    int     m_h;
+};
 #endif  // __CICO_CONF_H__
 // vim:set expandtab ts=4 sw=4:

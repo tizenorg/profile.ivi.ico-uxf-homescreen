@@ -30,9 +30,13 @@ using namespace std;
 #include "CicoSCPolicyManager.h"
 #include "CicoSCLifeCycleController.h"
 #include "CicoAilItems.h"
+#include "CicoSCWindow.h"
 #include "CicoSCWindowController.h"
 #include "CicoSCInputController.h"
 #include "CicoSCPolicyDef.h"
+#include "CicoSCMessage.h"
+#include "CicoSCMessageRes.h"
+#include "CicoSCServer.h"
 
 struct CompDisplayResourceRequest
 {
@@ -161,6 +165,7 @@ CicoSCResourceManager::CicoSCResourceManager()
             }
         }
     }
+    m_rrtHO = (resource_request_t*)NULL;
 }
 
 CicoSCResourceManager::~CicoSCResourceManager()
@@ -213,7 +218,6 @@ CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
 
     // request command from application or internal
     int reqtype = internal ? REQTYPE_AUTO : REQTYPE_APP;
-
     if ((MSG_CMD_CREATE_RES == cmd.cmdid) ||
         (MSG_CMD_ACQUIRE_RES == cmd.cmdid)) {
         
@@ -225,6 +229,11 @@ CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
                 acquireDisplayResource(req, false);
             }
             else {
+                // cmdid is MSG_CMD_ACQUIRE_RES
+                if (true == isTypeOnScreen(*req)) {
+                    acquireOnScreenDisplayResource(req);
+                }
+                else 
                 if ((true == m_policyMgr->getRegulation()) &&
                     (false == isMatchDisplayed())) {
                     updateDispResRegulationPreProc(req);
@@ -271,7 +280,12 @@ CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
             resource_request_t *req = newResourceRequest(RESID_KIND_DISPLAY,
                                                          reqtype,
                                                          cmd);
-            releaseDisplayResource(req);
+            if (true == isTypeOnScreen(*req)) {
+                releaseOnScreenDisplayResource(req);
+            }
+            else {
+                releaseDisplayResource(req);
+            }
         }
         if (true == opt->soundres) {
             resource_request_t *req = newResourceRequest(RESID_KIND_SOUND,
@@ -843,9 +857,16 @@ CicoSCResourceManager::newResourceRequest(int resid,
     req->released = 0;
 
     /* set resource id */
-    req->resid = RESID_TYPE_BASIC;
-    if (1 == opt->type) {
+    switch (opt->type) {
+    case ICO_SYC_RES_INTERRUPT:
         req->resid = RESID_TYPE_INTERRUPT;
+        break;
+    case ICO_SYC_RES_ONSCREEN:
+        req->resid = RESID_TYPE_ONSCREEN;
+        break;
+    default: // include case ICO_SYC_RES_BASIC:
+        req->resid = RESID_TYPE_BASIC;
+        break;
     }
     req->resid |= resid;
 
@@ -865,9 +886,18 @@ CicoSCResourceManager::newResourceRequest(int resid,
         req->layerid    = opt->layerid;
         req->winname    = strdup(opt->winname.c_str());
         req->surfaceid  = opt->surfaceid;
-        req->id         = opt->surfaceid;;
+        req->id         = opt->surfaceid;
         req->animation  = strdup(opt->animation.c_str());
         req->animationTime = opt->animationTime;
+        req->bEx        = opt->dispresEx;
+        req->ECU        = strdup(opt->ECU.c_str());  // name to identify ECU
+        req->display    = strdup(opt->display.c_str());  // name to identify Display in ECU
+        req->layer      = strdup(opt->layer.c_str());  // name to identify Layer in Display
+        req->layout     = strdup(opt->layout.c_str());  // name to identify layout in Layer
+        req->area       = strdup(opt->area.c_str());  // name to Output position in Layout
+        req->dispatchApp= strdup(opt->dispatchApp.c_str());  // dispatch of application
+        req->role       = strdup(opt->role.c_str());  // role of notice
+        req->resourceId = opt->resourceID;  // ID number of resource
     }
     else if (resid == RESID_KIND_SOUND) {
         req->soundzone   = strdup(opt->soundzone.c_str());
@@ -901,7 +931,13 @@ CicoSCResourceManager::delResourceRequest(resource_request_t *req)
     if (NULL != req->soundzone) free(req->soundzone);
     if (NULL != req->soundname) free(req->soundname);
     if (NULL != req->device)    free(req->device);
- 
+    if (NULL != req->ECU)         free(req->ECU); // name to identify ECU
+    if (NULL != req->display)     free(req->display); // name to identify Display in ECU
+    if (NULL != req->layer)       free(req->layer); // name to identify Layer in Display
+    if (NULL != req->layout)      free(req->layout); // name to identify layout in Layer
+    if (NULL != req->area)        free(req->area); // name to Output position in Layout
+    if (NULL != req->dispatchApp) free(req->dispatchApp); // origin of application
+    if (NULL != req->role)        free(req->role); // role of notice
     free(req);
 }
 
@@ -967,7 +1003,7 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
                     req->appid, req->pid, req->surfaceid);
             // show request window
             m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
-#if 0 // MKMK
+#if 0
             m_winCtrl->activeCB(NULL, NULL, req->surfaceid, -1);
 #endif
             ICO_TRA("CicoSCResourceManager::updateDisplayResource Leave");
@@ -1979,11 +2015,305 @@ CicoSCResourceManager::isMatchDisplayed(void)
                 }
                 if ((itr2->second->surfaceid == surfaceid)) {
                     ret = true;
-                    break;
+                    break;  // break of for itr2
                 }
             }
+        }
+        if (true == ret) {
+            break;  // break of for itr
         }
     }
     return ret;
 }
+
+bool
+CicoSCResourceManager::acquireOnScreenDisplayResource(resource_request_t *newreq)
+{
+    ICO_TRA("Enter (%08x)", newreq);
+    if (NULL == newreq) {
+        ICO_TRA("Leave param is NULL pointer");
+        return false;
+    }
+    CicoSystemConfig *sysConf = CicoSystemConfig::getInstance();
+
+    if (0 == newreq->role_stt) {
+        newreq->role_stt = sysConf->getRoleStt(newreq->role);
+    }
+    m_OnScreenItems.push_back(newreq);
+
+    const resource_request_t* rrtHO = getNoticeOfHighOder();
+    if (NULL == rrtHO) {
+        ICO_TRA("Leave %s, %d is not notice", newreq->role, newreq->resourceId);
+        return false;
+    }
+#if 1
+    const CicoSCWindow* nwo = m_winCtrl->findWindowObj(newreq->pid,
+                                                       newreq->resourceId);
+#endif
+    const CicoSCWindow* bwo = NULL; // before window oject
+    const CicoSCWindow* awo = NULL; // after window object
+
+    if (NULL != m_rrtHO) {
+        bwo = m_winCtrl->findWindowObj(m_rrtHO->pid, m_rrtHO->resourceId);
+    }
+    if (NULL != rrtHO) {
+        awo = m_winCtrl->findWindowObj(rrtHO->pid, rrtHO->resourceId);
+    }
+    if ((NULL == m_rrtHO) && (NULL != rrtHO)) { // none -> on notice
+        ICO_TRA("_____ OPEN Layer \"%s\":%d", rrtHO->role, rrtHO->resourceId);
+        if (NULL != awo) {
+            m_winCtrl->showLayer(awo->displayid, awo->layerid);
+        }
+        else {
+            ICO_WRN("ON SCREEN none layer");
+        }
+    }
+#if 1
+    if ((NULL != nwo) && (awo != nwo) && (bwo != nwo)) {
+        ICO_TRA("_____ HIDW new REQUEST %x:%s:%d", newreq, newreq->role,
+                newreq->resourceId);
+        m_winCtrl->hide(nwo->surfaceid, NULL, 0);
+    }
+#endif
+    if (rrtHO != m_rrtHO) { // change Hige Oder notice
+        if (NULL != m_rrtHO) {
+            ICO_TRA("_____ HIDE surface %x:%s:%d", m_rrtHO, m_rrtHO->role,
+                    m_rrtHO->resourceId);
+            if (NULL != bwo) {
+                m_winCtrl->hide(bwo->surfaceid, NULL, 0);
+            }
+            else {
+                ICO_WRN("ON SCREEN none Hide control");
+            }
+            resCB(ICO_SYC_EV_RES_WAITING, *m_rrtHO);
+        }
+        ICO_TRA("_____ SHOW surface %x:%s:%d", rrtHO, rrtHO->role, rrtHO->resourceId);
+        if (NULL != awo) {
+            m_winCtrl->show(awo->surfaceid, NULL, 0);
+        }
+        else {
+            ICO_WRN("ON SCREEN none show control");
+        }
+        resCB(ICO_SYC_EV_RES_ACQUIRE, *rrtHO);
+        ICO_TRA("_____ change %x -> %x", m_rrtHO, rrtHO);
+        m_rrtHO = rrtHO;
+    }
+//-    if (m_rrtHO != newreq) {
+//-        resCB(ICO_SYC_EV_RES_WAITING, *newreq);
+//-    }
+    else {
+        ICO_TRA("_____ no change %x", m_rrtHO);
+        if (NULL != awo) {
+            m_winCtrl->show(awo->surfaceid, NULL, 0);
+            m_winCtrl->raise(awo->surfaceid, NULL, 0);
+        }
+        if (m_rrtHO != newreq) {
+            resCB(ICO_SYC_EV_RES_WAITING, *newreq);
+        }
+    }
+    ICO_TRA("Leave");
+    return true;
+}
+
+bool
+CicoSCResourceManager::releaseOnScreenDisplayResource(resource_request_t *req)
+{
+    ICO_TRA("Enter %08x", req);
+    if (NULL == req) {
+        ICO_TRA("Leave param is NULL pointer");
+        return false;
+    }
+    resource_request_t* tgt = NULL;
+    list<resource_request_t*>::iterator itr = m_OnScreenItems.begin();
+    for (; itr != m_OnScreenItems.end(); ++itr) {
+        if ((req->pid == (*itr)->pid) &&
+            (req->resourceId == (*itr)->resourceId)) {
+            tgt = (*itr);
+            break;  // break of for itr
+        }
+    }
+
+    if (NULL != tgt) {
+        ICO_TRA("_____ erase list %x", tgt);
+        m_OnScreenItems.erase(itr);
+    }
+
+    const resource_request_t* rrtHO = getNoticeOfHighOder();
+
+    const CicoSCWindow* bwo = NULL; // before window oject
+    const CicoSCWindow* awo = NULL; // after window object
+    if (NULL != m_rrtHO) {
+        bwo = m_winCtrl->findWindowObj(m_rrtHO->pid, m_rrtHO->resourceId);
+    }
+    if (NULL != rrtHO) {
+        awo = m_winCtrl->findWindowObj(rrtHO->pid, rrtHO->resourceId);
+    }
+
+    if ((NULL == rrtHO) && (NULL == m_rrtHO)) {
+        ICO_WRN("ON SCREEN Resource NG");
+        if (NULL != tgt) {
+            resCB(ICO_SYC_EV_RES_RELEASE, *tgt);
+            delResourceRequest(tgt);
+        }
+        delResourceRequest(req);
+        ICO_TRA("Leave ON SCREEN Resource NG");
+        return false;
+    }
+
+    if (rrtHO != m_rrtHO) {
+        if (NULL != m_rrtHO) {
+            if (NULL != bwo) {
+                m_winCtrl->hide(bwo->surfaceid, NULL, 0);
+                if (m_rrtHO != tgt) {
+                    ICO_DBG("_____ NG Control OnScreen Resource %x(%d, %d), %x", 
+                            m_rrtHO, m_rrtHO->pid, m_rrtHO->resourceId, tgt);
+                    resCB(ICO_SYC_EV_RES_WAITING, *m_rrtHO);
+                }
+            }
+            else {
+                ICO_WRN("ON SCREEN Hide control NG");
+            }
+        }
+        if (NULL != rrtHO) {
+            if (NULL != awo) {
+                m_winCtrl->show(awo->surfaceid, NULL, 0);
+                m_winCtrl->raise(awo->surfaceid, NULL, 0);
+                resCB(ICO_SYC_EV_RES_ACQUIRE, *rrtHO);
+            }
+            else {
+                ICO_WRN("ON SCREEN Hide control NG");
+            }
+        }
+        else {
+            if (NULL != bwo) {
+                m_winCtrl->hideLayer(bwo->displayid, bwo->layerid);
+            }
+            else {
+                ICO_WRN("ON SCREEN layer hide control NG");
+            }
+        }
+        m_rrtHO = rrtHO;
+    }
+    else {
+        ICO_TRA("_____ no change");
+    }
+    // memory free
+    if (NULL != tgt) {
+        resCB(ICO_SYC_EV_RES_RELEASE, *tgt);
+        delResourceRequest(tgt);
+    }
+    delResourceRequest(req);
+    ICO_TRA("Leave");
+    return true;
+}
+
+bool
+CicoSCResourceManager::resCB(const ico_syc_ev_e ev, const resource_request_t& p) const
+{
+    ICO_TRA("Enter %d", (int)ev);
+    if ((NULL == p.appid) || (0 == strlen(p.appid))) {
+        ICO_TRA("Leave false");
+        return false;
+    }
+    if (false == p.bEx) {
+        ICO_TRA("Leave false");
+        return false;
+    }
+    int nEv = -1;
+    if (ICO_SYC_EV_RES_ACQUIRE == ev) {
+        nEv = MSG_CMD_ACQUIRE_RES;
+    }
+    else if (ICO_SYC_EV_RES_DEPRIVE == ev) {
+        nEv = MSG_CMD_DEPRIVE_RES;
+    }
+    else if (ICO_SYC_EV_RES_WAITING == ev) {
+        nEv = MSG_CMD_WAITING_RES;
+    }
+    else if (ICO_SYC_EV_RES_REVERT == ev) {
+        nEv = MSG_CMD_REVERT_RES;
+    }
+    else if (ICO_SYC_EV_RES_RELEASE == ev) {
+        nEv = MSG_CMD_RELEASE_RES;
+    }
+    else if (ICO_SYC_EV_RES_WINDOW_ID == ev) {
+        nEv = MSG_CMD_WINDOW_ID_RES;
+    }
+    else {
+        ICO_TRA("Leave false ev(%d) is not supp.",(int)ev);
+        return false;
+    }
+
+    bool r;
+    r = resCB(p.appid, nEv, p.ECU, p.display, p.layer, p.layout, p.area,
+              p.dispatchApp, p.role, p.resourceId);
+    ICO_TRA("Leave %s", r? "true":"false");
+    return r;
+}
+
+bool
+CicoSCResourceManager::resCB(const char* sendToAppid, const int ev,
+                             const char* ECU, const char* display,
+                             const char* layer, const char* layout,
+                             const char* area, const char* dispatchApp,
+                             const char* role, uint32_t resourceId) const
+{
+    ICO_TRA("Enter");
+    if (NULL == sendToAppid) {
+        ICO_TRA("Leave false");
+        return false;
+    }
+    CicoSCMessageRes* msg = new CicoSCMessageRes();
+    msg->addRootObject("command", ev);
+    if (NULL != ECU) {
+        msg->addWinObject("ECU", ECU);
+    }
+    if (NULL != display) {
+        msg->addWinObject("display", display);
+    }
+    if (NULL != layer) {
+        msg->addWinObject("layer", layer);
+    }
+    if (NULL != layout) {
+        msg->addWinObject("layout", layout);
+    }
+    if (NULL != area) {
+        msg->addWinObject("area", area);
+    }
+    if (NULL != dispatchApp) {
+        msg->addWinObject("dispatchApp", dispatchApp);
+    }
+    if (NULL != role) {
+        msg->addWinObject("role", role);
+    }
+    msg->addWinObject("resourceId", resourceId);
+    CicoSCServer *cscs = CicoSCServer::getInstance();
+    int r = cscs->sendMessage(sendToAppid, (CicoSCMessage*)msg);
+    if (ICO_SYC_EOK != r) {
+        ICO_TRA("Leave false(%d)", r);
+        return false;
+    }
+    ICO_TRA("Leave true");
+    return true;
+}
+
+const resource_request_t* CicoSCResourceManager::getNoticeOfHighOder()
+{
+    ICO_TRA("Enter (%d)", (int)m_OnScreenItems.size());
+    const CicoSCRoleConf* rC = CicoSystemConfig::getInstance()->getRoleConf();
+    m_policyMgr->sendSMEvent(rC->m_rst); // RESET OnScreen State
+    const resource_request_t* r = NULL;
+    list<resource_request_t*>::iterator itr = m_OnScreenItems.begin();
+    for (; itr != m_OnScreenItems.end(); ++itr) {
+        short hEv = (*itr)->role_stt;
+        if ((ICO_SYC_ROLE_CONF_DEF == hEv) || (0 == hEv)) {
+            continue;  // continue of for itr
+        }
+        if (true == m_policyMgr->sendSMEvent(hEv)) {
+            r = (*itr);
+        }
+    }
+    ICO_TRA("Leave %x", r);
+    return r;
+}
+
 // vim:set expandtab ts=4 sw=4:

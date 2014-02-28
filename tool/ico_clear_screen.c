@@ -28,12 +28,14 @@ sigterm_catch(int signo)
 {
     signal_flag = 1;
 
+#if 0
     if (_display->ico_window_mgr)   {
         ico_window_mgr_set_visible(_display->ico_window_mgr, ICO_WINDOW_MGR_V_MAINSURFACE,
                                    ICO_WINDOW_MGR_VISIBLE_HIDE, ICO_WINDOW_MGR_V_NOCHANGE,
                                    ICO_WINDOW_MGR_FLAGS_ANIMATION |
                                      ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE);
     }
+#endif
 }
 
 void
@@ -139,6 +141,7 @@ opengl_create_window(struct display *display, struct wl_surface *surface,
 
     opengl_swap_buffer(display->display, dpy, egl_surface);
 
+#if 0
     ico_window_mgr_set_animation(display->ico_window_mgr, ICO_WINDOW_MGR_V_MAINSURFACE,
                                  ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE|
                                    ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
@@ -154,6 +157,7 @@ opengl_create_window(struct display *display, struct wl_surface *surface,
                                ICO_WINDOW_MGR_VISIBLE_SHOW, ICO_WINDOW_MGR_RAISE_RAISE,
                                ICO_WINDOW_MGR_FLAGS_ANIMATION |
                                  ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE);
+#endif
     return(egl_surface);
 }
 

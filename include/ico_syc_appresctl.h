@@ -37,7 +37,8 @@ struct ico_syc_res_context;
  */
 typedef enum _resource_type {
     ICO_SYC_RES_BASIC       = 0,
-    ICO_SYC_RES_INTERRUPT   = 1
+    ICO_SYC_RES_INTERRUPT   = 1,
+    ICO_SYC_RES_ONSCREEN    = 2
 } ico_syc_res_type_e;
 
 /*

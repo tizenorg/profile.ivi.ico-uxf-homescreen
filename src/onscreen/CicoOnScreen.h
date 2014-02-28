@@ -21,9 +21,10 @@
     #define __UNUSED__
 #endif
 
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
-#include <string.h>
+#include <cstring>
+#include <list>
 
 #include <app.h>
 #include <aul.h>
@@ -39,84 +40,15 @@
 #include "ico_syc_privilege.h"
 
 #include "ico_log.h"
+#include "CicoOSPopWindow.h"
 
 /*============================================================================*/
 /* Define fixed parameters                                                    */
 /*============================================================================*/
-/* Window Size */
-#define STATUS_BAR_HEIGHT    64
-#define CTRL_BAR_HEIGHT      128
-#define WIDTH                1080
-#define HEIGHT               (1920 - STATUS_BAR_HEIGHT - CTRL_BAR_HEIGHT)
-
-/* Popup Size */
-#define POPUP_WIDTH         640
-#define POPUP_HEIGHT        300
-
-/* Popup Frame Size */
-#define POPUP_FRAME_THICK   10
-#define POPUP_FRAME_WIDTH   (POPUP_WIDTH+POPUP_FRAME_THICK)
-#define POPUP_FRAME_HEIGHT  (POPUP_HEIGHT+POPUP_FRAME_THICK)
-
-#if 0
-#define POPUP_ST_X          ((WIDTH-POPUP_WIDTH)/2)
-#define POPUP_ST_Y          ((HEIGHT-POPUP_HEIGHT)/2)
-
-/* Popup Frame Size */
-#define POPUP_FRAME_THICK   10
-#define POPUP_FRAME_WIDTH   (POPUP_WIDTH+POPUP_FRAME_THICK)
-#define POPUP_FRAME_HEIGHT  (POPUP_HEIGHT+POPUP_FRAME_THICK)
-#define POPUP_FRAME_ST_X    (POPUP_ST_X-POPUP_FRAME_THICK/2)
-#define POPUP_FRAME_ST_Y    (POPUP_ST_Y-POPUP_FRAME_THICK/2)
-
-/* Popup Icon Size */
-#define POPUP_ICON_WIDTH    50
-#define POPUP_ICON_HEIGHT   50
-#define POPUP_ICON_ST_X     POPUP_ST_X
-#define POPUP_ICON_ST_Y     POPUP_ST_Y
-
-/* Popup Title Size */
-#define POPUP_TITLE_WIDTH   (POPUP_WIDTH-POPUP_ICON_WIDTH)
-#define POPUP_TITLE_HEIGHT  POPUP_ICON_HEIGHT
-#define POPUP_TITLE_ST_X    (POPUP_ST_X+POPUP_ICON_WIDTH)
-#define POPUP_TITLE_ST_Y    POPUP_ST_Y
-
-/* Popup Content BG Size */
-#define POPUP_CONTENT_BG_WIDTH  POPUP_WIDTH
-#define POPUP_CONTENT_BG_HEIGHT (POPUP_HEIGHT-POPUP_TITLE_HEIGHT)
-#define POPUP_CONTENT_BG_ST_X   POPUP_ST_X
-#define POPUP_CONTENT_BG_ST_Y   (POPUP_ST_Y+POPUP_TITLE_HEIGHT)
-
-/* Popup Content Size */
-#define POPUP_CONTENT_WIDTH  POPUP_WIDTH
-#define POPUP_CONTENT_HEIGHT POPUP_TITLE_HEIGHT
-#define POPUP_CONTENT_ST_X   POPUP_ST_X
-#define POPUP_CONTENT_ST_Y   (POPUP_ST_Y+POPUP_TITLE_HEIGHT+(POPUP_HEIGHT-POPUP_CONTENT_HEIGHT)/2)
-
-#define ICO_ORIENTATION_VERTICAL (1) 
-#define ICO_ORIENTATION_HORIZONTAL (2)
-
-#define LEMOLO_PKGNAME       "org.tizen.dialer"
-#endif
-
-#define FALSE                0
-#define TRUE                 1
-
-#if 0
-#define ICON_PATH      (char *)"/usr/share/icons/default/small/org.tizen.dialer.png"
-#endif
 
 /*============================================================================*/
 /* Define data types                                                          */
 /*============================================================================*/
-struct popup_data
-{
-    Ecore_Evas  *window;
-    Evas_Object *icon;
-    Evas_Object *theme;
-    int         show_flag;
-    CicoNotification *noti;
-};
 
 /*============================================================================*/
 /* Define class                                                               */
@@ -127,33 +59,31 @@ public:
     CicoOnScreen(void);
     ~CicoOnScreen(void);
     bool StartOnScreen(void);
-    void Finalize(void);
 
-    void HidePopup(void);
     static void NotificationCallback(void *data,
                                      notification_type_e type,
                                      notification_op *op_list,
                                      int num_op);
-
-private:
-    void ShowPopup(CicoNotification &noti);
-    void InitializePopup(void);
-    void InitializePopupData(void);
-
-    static void evasMouseUpCB(void *data,
-                              Evas *e,
-                              Evas_Object *obj,
-                              void *event_info);
+protected:
+    bool requestShowSC();
 
     static void EventCallBack(const ico_syc_ev_e event,
                               const void *detail,
                               void *user_data);
+    bool entryWindowId(uint32_t resourceId);
+    bool releaseWindow(uint32_t resourceId);
+    bool insertNoti(notification_h noti_h);
+    bool deleteNoti(int priv_id);
 
     static CicoOnScreen *os_instance;
-    static struct popup_data ico_appdata;
 
 protected:
     CicoNotificationService notiservice_;
+    std::list<CicoOSPopWindow*> m_mngWin;
+    std::list<CicoOSPopWindow*> m_waitMngWin;
+    CicoOSPopWindow*            m_request;
+    bool                        m_del;
+    CicoOSPopWindow*            m_reserve;
 };
 #endif  // __CICO_ON_SCREEN_H__
 // vim:set expandtab ts=4 sw=4:

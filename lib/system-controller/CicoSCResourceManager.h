@@ -23,6 +23,7 @@
 using namespace std;
 
 #include "ico_syc_mrp_resource_private.h"
+#include "ico_syc_appresctl.h"
 
 //==========================================================================
 //  Forward declaration
@@ -121,7 +122,17 @@ private:
     void dumpWaitingDispResReq(void);
 
     bool isMatchDisplayed(void);
-
+    bool acquireOnScreenDisplayResource(resource_request_t *req);
+    bool releaseOnScreenDisplayResource(resource_request_t *req);
+    const resource_request_t* getNoticeOfHighOder();
+    bool resCB(const ico_syc_ev_e ev, const resource_request_t& p) const;
+    bool resCB(const char* sendToAppid, const int ev, const char* ECU,
+               const char* display, const char* layer, const char* layout,
+               const char* area, const char* dispatchApp, const char* role,
+               uint32_t resourceId) const;
+    bool isTypeBaseic(const resource_request_t& p);
+    bool isTypeInterrupt(const resource_request_t& p);
+    bool isTypeOnScreen(const resource_request_t& p);
 private:
     CicoSCPolicyManager       *m_policyMgr;
     CicoSCWindowController    *m_winCtrl;
@@ -135,6 +146,8 @@ private:
     std::list<resource_request_t*> m_waitingDispResReq;
     map<int, list<resource_request_t*> > m_soundReqQueue;
     map<int, list<resource_request_t*> > m_inputReqQueue;
+    std::list<resource_request_t*> m_OnScreenItems;
+    const resource_request_t*  m_rrtHO; // resource_request_t of High Oder
 
     // show/hide animation name at regulation on or off
     const std::string m_animaName;
@@ -142,5 +155,45 @@ private:
     // show/hide animation time at regulation on or off
     int m_animaTime;
 };
+
+//==========================================================================
+/**
+ *  @brief  check type is basic
+ *  @param  p resorce request info
+ *  @ret   bool
+ *  @retval true: basic
+ *  @retval false: not basic
+ */
+inline bool CicoSCResourceManager::isTypeBaseic(const resource_request_t& p)
+{
+    return (RESID_TYPE_BASIC == (p.resid & RESID_TYPE_MASK));
+}
+
+//==========================================================================
+/**
+ *  @brief  check type is interrupt
+ *  @param  p resorce request info
+ *  @ret   bool
+ *  @retval true: interrupt
+ *  @retval false: not interrupt
+ */
+inline bool CicoSCResourceManager::isTypeInterrupt(const resource_request_t& p)
+{
+    return (RESID_TYPE_INTERRUPT == (p.resid & RESID_TYPE_MASK));
+}
+
+//==========================================================================
+/**
+ *  @brief  check type is onscreen
+ *  @param  p resorce request info
+ *  @ret   bool
+ *  @retval true: onscreen
+ *  @retval false: not onscreen
+ */
+//==========================================================================
+inline bool CicoSCResourceManager::isTypeOnScreen(const resource_request_t& p)
+{
+    return (RESID_TYPE_ONSCREEN == (p.resid & RESID_TYPE_MASK));
+}
 #endif  // __CICO_SC_RESOURCE_MANAGER_H__
 // vim:set expandtab ts=4 sw=4:

@@ -63,9 +63,11 @@ public:
     std::string       zone;         ///< display zone name
     int               zoneid;       ///< display zone id
     int               subwindow;    ///< main window(0) or sub window(!0)
-    unsigned int      eventmask;    ///< Event to receive through this window
-    int               x;            ///< Upper left X coord of the window
-    int               y;            ///< Upper left Y coord of the window
+    unsigned int      eventmask;    ///< event to receive through this window
+    int               srcwidth;     ///< width of application frame buffer
+    int               srcheight;    ///< height of application frame buffer
+    int               x;            ///< upper left X coord of the window
+    int               y;            ///< upper left Y coord of the window
     int               width;        ///< width of window
     int               height;       ///< height of window
     bool              visible;      ///< visibility

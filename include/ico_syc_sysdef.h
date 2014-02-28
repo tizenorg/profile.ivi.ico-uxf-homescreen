@@ -33,12 +33,14 @@ extern "C" {
 #define ICO_SYC_LAYER_APPLICATION   1       /* layer of Application     */
 #define ICO_SYC_LAYER_HOMESCREEN    2       /* layer of HomeScreen menu */
 #define ICO_SYC_LAYER_CONTROLBAR    3       /* layer of Control/Status bar */
-#define ICO_SYC_LAYER_FULLSCREEN    4       /* layer of FullScreen Application */
-#define ICO_SYC_LAYER_ONSCREEN      5       /* layer of OnScreen        */
+#define ICO_SYC_LAYER_INTERRUPTAPP  4       /* layer of Interrupt Application */
+#define ICO_SYC_LAYER_ONSCREEN      5       /* lay er of OnScreen        */
 #define ICO_SYC_LAYER_TOUCHPANEL    6       /* layer of TouchPanel input */
 #define ICO_SYC_LAYER_CURSOR        7       /* layer of Cursor          */
 
-#define ICO_SYC_LAYER_MATERAPP      3       /* layer of Meter application */
+#define ICO_SYC_LAYER_MATERMAIN     1001    /* layer of Meter Main display Application */
+#define ICO_SYC_LAYER_MATERSUB      1002    /* layer of Meter Sub display Application */
+#define ICO_SYC_LAYER_MATERSUBSUB   1003    /* layer of Meter Sub display SubApplication */
 
 #ifdef __cplusplus
 }

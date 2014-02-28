@@ -51,9 +51,9 @@ public:
     string appid;
 };
 
-//==========================================================================    
+//==========================================================================
 //  private static variable
-//==========================================================================    
+//==========================================================================
 CicoSCServer* CicoSCServer::ms_myInstance = NULL;
 
 //--------------------------------------------------------------------------
@@ -76,10 +76,10 @@ CicoSCServer::CicoSCServer()
 //--------------------------------------------------------------------------
 CicoSCServer::~CicoSCServer()
 {
+    CicoSCServer::ms_myInstance = NULL;
     if (NULL != m_uwsContext) {
         ico_uws_close(m_uwsContext);
     }
-    CicoSCServer::ms_myInstance = NULL;
 }
 
 //--------------------------------------------------------------------------
@@ -235,7 +235,7 @@ CicoSCServer::teardown(void)
         }
         m_sendMsgQueue.clear();
     }
-    
+
     {
         std::list<CicoSCCommand*>::iterator itr;
         itr = m_recvCmdQueue.begin();
@@ -479,12 +479,14 @@ CicoSCServer::sendMessageToHomeScreen(CicoSCMessage* msg)
     // if user change processing(homescree is not running)
     if (true == m_userMgr->isStoppingNow()) {
         ICO_DBG("homescreen not running");
+        delete msg;
         return ICO_SYC_ENOENT;
     }
 
     const CicoSCUser *loginUser = m_userMgr->getLoginUser();
     if (NULL == loginUser) {
         ICO_WRN("homescreen unknown");
+        delete msg;
         return ICO_SYC_ENOENT;
     }
     return sendMessage(loginUser->homescreen, msg);
@@ -568,7 +570,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
 //        ICO_TRA("CicoSCServer::receiveEventCB Leave");
         return;
     case ICO_UWS_EVT_ERROR:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_ERROR(id=0x%08x, err=%d)", 
+        ICO_DBG(">>>RECV ICO_UWS_EVT_ERROR(id=0x%08x, err=%d)",
                 (int)id, detail->_ico_uws_error.code);
 //        ICO_TRA("CicoSCServer::receiveEventCB Leave");
         return;
@@ -588,15 +590,15 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
 
     switch (event) {
     case ICO_UWS_EVT_OPEN:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_OPEN(id=0x%08x)", (int)id); 
-        break;
+        ICO_DBG(">>>RECV ICO_UWS_EVT_OPEN(id=0x%08x)", (int)id);
+        break;  // break of switch event
     case ICO_UWS_EVT_CLOSE:
         ICO_DBG(">>>RECV ICO_UWS_EVT_CLOSE(id=0x%08x)", (int)id);
         delete handler;
-        break;
+        break;  // break of switch event
     case ICO_UWS_EVT_RECEIVE:
     {
-        ICO_DBG(">>>RECV ICO_UWS_EVT_RECEIVE(id=0x%08x, msg=%s, len=%d)", 
+        ICO_DBG(">>>RECV ICO_UWS_EVT_RECEIVE(id=0x%08x, msg=%s, len=%d)",
                 (int)id, (char *)detail->_ico_uws_message.recv_data,
                 detail->_ico_uws_message.recv_len);
 
@@ -609,7 +611,7 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
             if (0 == cmd->appid.length()) {
                 ICO_WRN("command argument invalid appid null");
                 delete cmd;
-                break;
+                break;  // break of switch event
             }
             handler->appid = cmd->appid;
             handler->serviceFlag = true;
@@ -624,29 +626,29 @@ CicoSCServer::receiveEventCB(const struct ico_uws_context *context,
 
             notifyConnected(handler->appid);
             delete cmd;
-            break;
+            break;  // break of switch event
         }
-        
+
         // Enqueue command
         ICO_DBG("Enqueue command(0x%08x)", cmd->cmdid);
         m_recvCmdQueue.push_back(cmd);
-        break;
+        break;  // break of switch event
     }
     case ICO_UWS_EVT_ADD_FD:
         ICO_DBG(">>>RECV ICO_UWS_EVT_ADD_FD(id=0x%08x, fd=%d)",
                 (int)id, detail->_ico_uws_fd.fd);
         handler->fd = detail->_ico_uws_fd.fd;
         addPollFd(handler);
-        break;
+        break;  // break of switch event
     case ICO_UWS_EVT_DEL_FD:
         ICO_DBG(">>>RECV ICO_UWS_EVT_DEL_FD(id=0x%08x, fd=%d, appid=%s)",
                 (int)id, detail->_ico_uws_fd.fd, handler->appid.c_str());
         clearRecvCmdQueue(handler->appid);
         clearSendMsgQueue(handler->appid);
         delPollFd(handler);
-        break;
+        break;  // break of switch event
     default:
-        break;
+        break;  // break of switch event
     }
 //    ICO_TRA("CicoSCServer::receiveEventCB Leave");
 }
@@ -791,7 +793,7 @@ CicoSCServer::findUwsHandler(const string & appid)
 //--------------------------------------------------------------------------
 bool
 CicoSCServer::isExistUwsHandler(const CicoSCUwsHandler *handler)
-{   
+{
     list<CicoSCUwsHandler*>::iterator itr;
     itr = m_uwsHandlerList.begin();
     for (; itr != m_uwsHandlerList.end(); ++itr) {

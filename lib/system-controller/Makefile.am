@@ -24,6 +24,7 @@ libico_system_controller_la_SOURCES =	\
 	CicoSCServer.cpp					\
 	CicoSCCommand.cpp 					\
 	CicoSCMessage.cpp       			\
+	CicoSCMessageRes.cpp       			\
 	CicoSCUser.cpp						\
 	CicoSCUserManager.cpp				\
 	CicoSCSysResourceController.cpp		\

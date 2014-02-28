@@ -18,7 +18,6 @@
 #include "CicoSCWaylandIF.h"
 #include "CicoLog.h"
 
-
 const char * CicoSCWaylandIF::ICO_WL_WIN_MGR_IF        = "ico_window_mgr";
 const char * CicoSCWaylandIF::ICO_WL_INPUT_MGR_CTRL_IF = "ico_input_mgr_control";
 const char * CicoSCWaylandIF::ICO_WL_EXINPUT_IF        = "ico_exinput";

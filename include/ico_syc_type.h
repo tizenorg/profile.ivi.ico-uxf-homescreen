@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -10,7 +10,7 @@
  * @brief   header file of System Controller
  *          for privilege and general applications
  *
- * @date    Feb-21-2014
+ * @date    Aug-6-2013
  */
 
 #ifndef _ICO_SYC_TYPE_H_
@@ -53,11 +53,12 @@ typedef enum _event_id {
     ICO_SYC_EV_RES_WAITING          = 13, /* waiting resource */
     ICO_SYC_EV_RES_REVERT           = 14, /* reverted resource */
     ICO_SYC_EV_RES_RELEASE          = 15, /* released resource */
-    ICO_SYC_EV_INPUT_SET            = 16, /* set input region */
-    ICO_SYC_EV_INPUT_UNSET          = 17, /* unset input region */
-    ICO_SYC_EV_LASTINFO             = 18, /* notify the last information */
-    ICO_SYC_EV_STATE_CHANGE         = 19, /* notify changed state */
-    ICO_SYC_EV_WIN_NAME             = 20  /* notify window name */
+    ICO_SYC_EV_RES_WINDOW_ID        = 16, /* notice window id  resource */
+    ICO_SYC_EV_INPUT_SET            = 17, /* set input region */
+    ICO_SYC_EV_INPUT_UNSET          = 18, /* unset input region */
+    ICO_SYC_EV_LASTINFO             = 19, /* notify the last information */
+    ICO_SYC_EV_STATE_CHANGE         = 20, /* notify changed state */
+    ICO_SYC_EV_WIN_NAME             = 21  /* notify window name */
 } ico_syc_ev_e;
 
 /*
@@ -97,9 +98,9 @@ typedef enum _window_raise {
  * @ICO_SYC_WIN_VISIBLE_NOCHANGE: show/hide status is not change
  */
 typedef enum _window_visible {
-    ICO_SYC_WIN_VISIBLE_SHOW     = 1,
-    ICO_SYC_WIN_VISIBLE_HIDE     = 0,
-    ICO_SYC_WIN_VISIBLE_NOCHANGE = 9
+    ICO_SYC_WIN_VISIBLE_SHOW        = 1,
+    ICO_SYC_WIN_VISIBLE_HIDE        = 0,
+    ICO_SYC_WIN_VISIBLE_NOCHANGE    = 9
 } ico_syc_win_visible_e;
 
 /*
@@ -255,9 +256,17 @@ typedef struct _user_list {
  * window resource information
  */
 typedef struct _res_win {
-    char *zone;         /* area of showing application window */
-    char *name;         /* window's surface name */
-    char *id;           /* window id */
+/*-    char *zone; */        /* area of showing application window */
+/*-    char *name; */        /* window's surface name */
+/*-    char *id;   */        /* window id */
+    char *ECU;          /* name to identify ECU */
+    char *display;      /* name to identify Display in ECU */
+    char *layer;        /* name to identify Layer in Display */
+    char *layout;       /* name to identify Layout in Layer */
+    char *area;         /* name to Output position in Layout */
+    char *dispatchApp;  /* dispatch of application */
+    char *role;         /* role of notice */
+    uint32_t resourceId;/* ID number of resource(surface id) */
 } ico_syc_res_window_t;
 
 /*
@@ -321,6 +330,7 @@ typedef struct _state_info {
 typedef void (*ico_syc_callback_t) (const ico_syc_ev_e event,
                                     const void *detail,
                                     void *user_data);
+
 #ifdef __cplusplus
 }
 #endif
