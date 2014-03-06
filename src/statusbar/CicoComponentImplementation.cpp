@@ -95,7 +95,7 @@ const int CicoStatusBarClockComponent::CLOCK_COMPONENT_HEIGHT = HOUR10_HEIGHT;
  */
 /*--------------------------------------------------------------------------*/
 CicoStatusBarClockComponent::CicoStatusBarClockComponent()
-    : rate_(1.0) 
+    : rate_(1.0)
 {
 }
 
@@ -189,7 +189,7 @@ CicoStatusBarClockComponent::Initialize(Evas_Object *windowobj, int posx, int po
     PackModule(min1_module);
 
     SetPos(posx, posy);
-    SetSize(AMPM_WIDTH + HOUR10_WIDTH + HOUR1_WIDTH + COLON_WIDTH + 
+    SetSize(AMPM_WIDTH + HOUR10_WIDTH + HOUR1_WIDTH + COLON_WIDTH +
             MIN10_WIDTH + MIN1_WIDTH,
             AMPM_HEIGHT);
     SetRate(1.5);
@@ -216,13 +216,9 @@ CicoStatusBarClockComponent::Update()
 
     time_t nowtime;
     nowtime = std::time(NULL);
-    // Add 9 hour because std::time is JST.
-    nowtime += 9 * 60 * 60;
-    time_t sec = nowtime % 60;
-    nowtime -= sec;
-    time_t min = (nowtime % (60 * 60)) / 60;
-    nowtime -= min * 60;
-    time_t hour = (nowtime % (60 * 60 * 60)) / (60 * 60);
+    std::tm *tm = std::localtime(&nowtime);
+    int min = tm->tm_min;
+    int hour = tm->tm_hour;
 
     std::shared_ptr<CicoImageModule> imagemodule;
     assert(!modulelist_.empty());
@@ -240,7 +236,7 @@ CicoStatusBarClockComponent::Update()
     else {
         if (!imagemodule->SetFilePath(imgfilepath_am)) {
             ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-            return false;   
+            return false;
         }
     }
     imagemodule->SetSize(rate_ * AMPM_WIDTH, rate_ * AMPM_HEIGHT);
@@ -256,7 +252,7 @@ CicoStatusBarClockComponent::Update()
         return false;
     }
     imagemodule->SetSize(rate_ * HOUR10_WIDTH, rate_ * HOUR10_HEIGHT);
-    imagemodule->SetPos(posx_ + rate_ * RELATIVE_HOUR10_POSX, 
+    imagemodule->SetPos(posx_ + rate_ * RELATIVE_HOUR10_POSX,
                         posy_ + rate_ * RELATIVE_HOUR10_POSY);
     imagemodule->Show();
 
@@ -314,7 +310,7 @@ CicoStatusBarClockComponent::Update()
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   set rate of clock component 
+ * @brief   set rate of clock component
  *
  *  @param[in]  rate
  *  @return     true: success   false: failed
@@ -352,7 +348,7 @@ const int CicoNotificationPanelComponent::FONT_SIZE = 50;
  * @brief   default constructor
  *
  *  @param[in]  none
- *  @return     none 
+ *  @return     none
  */
 /*--------------------------------------------------------------------------*/
 CicoNotificationPanelComponent::CicoNotificationPanelComponent()

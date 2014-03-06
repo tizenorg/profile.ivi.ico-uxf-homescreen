@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -38,9 +38,13 @@ struct creation_surface_wait    {
     int32_t     pid;
     uint32_t    id_surface;
     struct wl_surface *surface;
-    uint32_t    create_time;
+    int32_t     busy;
     char        title[ICO_SYC_MAX_WINNAME_LEN];
 };
+#define SCWINMGR_GENIVI_BUSY_NONE       0
+#define SCWINMGR_GENIVI_BUSY_REQSURF    1
+#define SCWINMGR_GENIVI_BUSY_REQBIND    2
+#define SCWINMGR_GENIVI_BUSY_WAIT       3
 
 class CicoSCWlWinMgrIF : public CicoSCWaylandIF {
 public:

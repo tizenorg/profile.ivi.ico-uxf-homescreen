@@ -125,6 +125,7 @@ public:
     const CicoNotification& getNotif() const {
         return (const CicoNotification&)*this;
     }
+    bool    createMainWindow();
 private:
     bool    InitializeWindow(void);
     static void evasMouseUpCB(void *data, Evas *e, Evas_Object *obj,

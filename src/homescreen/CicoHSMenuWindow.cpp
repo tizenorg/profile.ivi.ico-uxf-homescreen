@@ -436,10 +436,15 @@ CicoHSMenuWindow::RenewAppTiles(void)
 {
     ICO_TRA("CicoHSMenuWindow::RenewAppTiles Enter");
 
+    int cnt, cnt2;
     int ret;
 
-    /* free app tiles */
-    FreeAppTiles();
+    /* backup old data */
+    int all_tile_num_org = all_tile_num;
+    CicoHSMenuTile *menu_tile_org[ICO_HS_MENU_MAX_TILE_NUM];
+    for (cnt=0; cnt < all_tile_num_org; cnt++) {
+        menu_tile_org[cnt]=menu_tile[cnt];
+    }
 
     /* initialization */
     InitAppTiles();
@@ -452,6 +457,32 @@ CicoHSMenuWindow::RenewAppTiles(void)
 
     /* update app info list */
     CicoHomeScreen::RenewAppInfoList();
+
+    /* set thumbnail from org */
+    for (cnt=0; cnt < all_tile_num; cnt++) {
+        if (menu_tile[cnt] == NULL) {
+            continue;
+        }
+        for (cnt2=0; cnt2 < all_tile_num_org; cnt2++) {
+            if (menu_tile_org[cnt2] == NULL) {
+                continue;
+            }
+            if (strncmp(menu_tile[cnt]->GetAppId(),
+                        menu_tile_org[cnt2]->GetAppId(), ICO_HS_MAX_PROCESS_NAME) == 0) {
+                menu_tile[cnt]->SetOrgThumbnail( menu_tile_org[cnt2] );
+                break;
+            }
+        }
+    }
+
+    /* free org app tiles */
+    for (cnt2=0; cnt2 < all_tile_num_org; cnt2++) {
+        if (menu_tile_org[cnt2] == NULL) {
+            continue;
+        }
+        menu_tile_org[cnt2]->FreeObject();
+        delete menu_tile_org[cnt2];
+    }
 
     ICO_TRA("CicoHSMenuWindow::RenewAppTiles Leave");
 }

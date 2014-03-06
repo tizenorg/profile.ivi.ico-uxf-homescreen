@@ -147,6 +147,22 @@ typedef enum _surface_animation {
 } ico_syc_surface_animation;
 
 /*
+ * surface animation target
+ * @ICO_SYC_ANIMATION_TYPE_HIDE:
+ * @ICO_SYC_ANIMATION_TYPE_SHOW:
+ * @ICO_SYC_ANIMATION_TYPE_MOVE:
+ * @ICO_SYC_ANIMATION_TYPE_RESIZE:
+ * @ICO_SYC_ANIMATION_TYPE_ALL:
+ */
+typedef enum _surface_animation_type {
+    ICO_SYC_ANIMATION_TYPE_HIDE  = 1,
+    ICO_SYC_ANIMATION_TYPE_SHOW  = 2,
+    ICO_SYC_ANIMATION_TYPE_MOVE  = 4,
+    ICO_SYC_ANIMATION_TYPE_RESIZE  = 8,
+    ICO_SYC_ANIMATION_TYPE_ALL  = 0xff
+} ico_syc_surface_animation_type;
+
+/*
  * type of window aspect
  * @ICO_SYC_WIN_ASPECT_FIXED: fixed aspect
  * @ICO_SYC_WIN_ASPECT_ALIGN_LEFT: left align

@@ -70,8 +70,8 @@ CicoHSWindow::CreateWindow(const char *title,int pos_x,int pos_y,int width,int h
         EINA_LOG_CRIT("CicoHSWindow::Initialize: could not create new_window.");
         return ICO_ERROR;
     }
-    strncpy(this->title,title,ICO_MAX_TITLE_NAME_LEN);
-    ecore_evas_title_set(window,this->title);
+    strncpy(this->title, title, ICO_MAX_TITLE_NAME_LEN);
+    ecore_evas_title_set(window, this->title);
 
     /* alpha channel is enable*/
     ecore_evas_alpha_set(window, alpha);
