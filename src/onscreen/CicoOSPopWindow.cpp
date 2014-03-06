@@ -70,7 +70,7 @@ CicoOSPopWindow::CicoOSPopWindow(notification_h noti) : CicoNotification(noti)
 //--------------------------------------------------------------------------
 CicoOSPopWindow::~CicoOSPopWindow(void)
 {
-//    ICO_TRA("Enter");
+    ICO_TRA("Enter sur:%d, priv_id:%d", m_resourceId, GetPrivId());
     if (NULL != m_window) {
         ecore_evas_free(m_window);
         m_window = NULL;
@@ -84,7 +84,7 @@ CicoOSPopWindow::~CicoOSPopWindow(void)
         ICO_DBG("_____ %d = ico_syc_release_res", r);
     }
 
-//    ICO_TRA("Leave");
+    ICO_TRA("Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -252,14 +252,10 @@ bool
 CicoOSPopWindow::InitializeWindow(void)
 {
     ICO_TRA("Enter");
-    // Window setup
-    m_window = ecore_evas_new(NULL, 0, 0, WIDTH, HEIGHT, "frame=0");
-    if (NULL == m_window) {
-        ICO_ERR("ecore_evas_new() error");
+    if (false == createMainWindow()) {
         ICO_TRA("Leave(ERR)");
         return false;
     }
-    ecore_evas_show(m_window);
     m_theme = edje_object_add(ecore_evas_get(m_window));
     if (NULL == m_theme) {
         ICO_ERR("could not create edje object!");
@@ -304,6 +300,22 @@ CicoOSPopWindow::InitializeWindow(void)
     }
     evas_object_show(m_theme);
     ICO_TRA("Leave(OK)");
+    return true;
+}
+
+bool
+CicoOSPopWindow::createMainWindow()
+{
+    ICO_TRA("Enter");
+    // Window setup
+    m_window = ecore_evas_new(NULL, 0, 0, WIDTH, HEIGHT, "frame=0");
+    if (NULL == m_window) {
+        ICO_ERR("ecore_evas_new() error");
+        ICO_TRA("Leave(ERR)");
+        return false;
+    }
+    ecore_evas_show(m_window);
+    ICO_TRA("Leave");
     return true;
 }
 

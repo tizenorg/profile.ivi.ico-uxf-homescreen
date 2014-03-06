@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at

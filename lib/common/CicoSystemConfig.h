@@ -108,6 +108,7 @@ public:
     int getNodeIdbyName(const string & name);
     int getDisplayIdbyName(const string & name);
     int getDisplayIdbyNo(int no);
+    int getNumberofDisplay(void);
     int getLayerIdfbyName(const string & displayName,
                           const string & layerName);
     int getLayerIdfbyName(const string& ECU,
@@ -218,6 +219,7 @@ private:
     CicoSCVehicleInfoConf *m_vehicleInfoConf;
     CicoSCRoleConf *m_roleConf;
     CicoSCPositionOSConf *m_positionOSConf;
+    int     numDisplay;
 };
 #endif  // __CICO_SYSTEM_CONFIG_H__
 // vim:set expandtab ts=4 sw=4:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -25,6 +25,7 @@ using namespace std;
 #include "CicoSCWlWinMgrIF.h"
 
 #define ICO_SC_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"
+#define ICO_SC_LAYERID_SCREENBASE   1000
 
 //==========================================================================
 //  Forward declaration
@@ -106,6 +107,8 @@ public:
              int         animationTime);
 
     int lower(int surfaceid, const char *animation, int animationTime);
+
+    int setWindowAnimation(int surfaceid, int type, const char *animation, int time);
 
     int setWindowLayer(int surfaceid, int layerid);
 

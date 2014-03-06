@@ -541,7 +541,7 @@ _connect_client(ico_syc_callback_t callback, void *user_data)
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-static void 
+static void
 _disconnect_client(void)
 {
     /* unset callback */
@@ -717,6 +717,26 @@ ico_syc_disconnect(void)
     g_queue_free(recv_free_q);
 
     return;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_isconnect
+ *          Check connect of System Controller.
+ *
+ * @param       none
+ * @return      result
+ * @retval      1                       connected to System Controller
+ * @retval      0                       not connect
+ */
+/*--------------------------------------------------------------------------*/
+ICO_API int
+ico_syc_isconnect(void)
+{
+    if ((uws_context != NULL) && (uws_id != NULL))  {
+        return 1;
+    }
+    return 0;
 }
 
 /*--------------------------------------------------------------------------*/

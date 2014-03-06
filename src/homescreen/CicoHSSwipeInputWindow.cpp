@@ -98,6 +98,9 @@ CicoHSSwipeInputWindow::CreateSwipeInputWindow(int pos_x, int pos_y,
 
     /* background object(transparent)    */
     background = evas_object_image_filled_add(evas);
+#if 0       /* TEST TEST: no need?  */
+    evas_object_color_set(background, 0, 0, 0, 0);
+#endif
 
     /* set mouse/touch callback */
     evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_DOWN,
@@ -106,7 +109,6 @@ CicoHSSwipeInputWindow::CreateSwipeInputWindow(int pos_x, int pos_y,
                                        CicoHSSwipeTouch::TouchUpSwipe, this);
     evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_MOVE,
                                        CicoHSSwipeTouch::TouchMoveSwipe, this);
-
     /* move and show window     */
     evas_object_move(background, 0, 0);
     evas_object_resize(background, width, height);
@@ -156,13 +158,16 @@ CicoHSSwipeInputWindow::SetupSwipeWindow(void)
         move.width = width;
         move.height = height;
         memset(&show, 0, sizeof(show));
-        show.time = ICO_SYC_WIN_SURF_RAISE;
+        show.name = (char *)"none";
 
+        /* set default animation                    */
+        ico_syc_set_animation(appid, surface, ICO_SYC_ANIMATION_TYPE_ALL, &show);
         /* move swipe input window to TouchLayer    */
         ico_syc_change_layer(appid, surface, HS_LAYER_TOUCHPANEL);
         /* move window position and size            */
         ico_syc_move(appid, surface, &move, NULL);
         /* show and raise window                    */
+        show.time = ICO_SYC_WIN_SURF_RAISE;
         ico_syc_show(appid, surface, &show);
 
         /* show touch layer                         */

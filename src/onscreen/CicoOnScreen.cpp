@@ -102,6 +102,7 @@ CicoOnScreen::StartOnScreen(void)
 
     if (NULL == m_reserve) {
         m_reserve = new CicoOSPopWindow(NOTIFICATION_TYPE_NONE);
+        m_reserve->createMainWindow();
     }
 
     // set notification callback function
