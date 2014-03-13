@@ -97,7 +97,8 @@ CicoHSMenuTile::~CicoHSMenuTile(void)
 void
 CicoHSMenuTile::CreateObject(Evas *evas)
 {
-    ICO_DBG("CicoHSMenuTile::CreateObject Enter(appid=%08x<%s>)", (int)this->appid, appid);
+    ICO_DBG("CicoHSMenuTile::CreateObject Enter(appid=<%s> x/y=%d/%d)",
+            appid, pos_x, pos_y);
 
     /*initial vaule*/
     menu_evas = evas;
@@ -182,7 +183,7 @@ CicoHSMenuTile::FreeObject(void)
     ICO_DBG("CicoHSMenuTile::FreeObject(appid=%08x<%s>)", (int)this->appid, appid);
 
     if (thumb.surface)  {
-        sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
+        sprintf(sWork, "%s/%08x.bpm", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
                 thumb.surface);
         (void) unlink(sWork);
         ico_syc_unmap_thumb(thumb.surface);
@@ -527,8 +528,8 @@ CicoHSMenuTile::ValidThumbnail(int surface)
 
     if ((! app_running) || (surface == 0))  {
         if (thumb.surface != 0) {
-            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
-                    thumb.surface);
+            sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
+                    ICO_HS_THUMB_FILEEXT, thumb.surface);
             (void) unlink(sWork);
             ico_syc_unmap_thumb(thumb.surface);
             // delete image and texture
@@ -540,8 +541,8 @@ CicoHSMenuTile::ValidThumbnail(int surface)
         thumb.surface = surface;
         if (surface)    {
             app_running = true;
-            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
-                    thumb.surface);
+            sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
+                    ICO_HS_THUMB_FILEEXT, thumb.surface);
             (void) unlink(sWork);
             ico_syc_map_thumb(thumb.surface,
                               menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
@@ -604,6 +605,28 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
     int                 unmap;
     int                 fd;
     char                sWork[80];
+#if     0           /* for BMP format   */
+#pragma pack(push, 1)
+        struct _bmphead {
+            short   magic;
+            uint32_t fullsize;
+            short   res1;
+            short   res2;
+            int     offset;
+            int     headsize;
+            int     width;
+            int     height;
+            short   planes;
+            short   bitperpixel;
+            int     compress;
+            int     datasize;
+            int     xp;
+            int     yp;
+            int     colors;
+            int     colors2;
+        }   bmphead;
+#pragma pack(pop)
+#endif
 
     ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%08x<%s>) info=%08x surf=%08x",
             (int)this->appid, appid, (int)info, info ? info->surface : 0);
@@ -618,21 +641,20 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                 ICO_DBG("CicoHSMenuTile::SetThumbnail: surface change(%08x->%08x)",
                         thumb.surface, info->surface);
                 ico_syc_unmap_thumb(thumb.surface);
-                sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
-                        thumb.surface);
+                sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
+                        ICO_HS_THUMB_FILEEXT, thumb.surface);
                 (void) unlink(sWork);
             }
             thumb.surface = info->surface;
-            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
-                    thumb.surface);
-            (void) unlink(sWork);
+            sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
+                    ICO_HS_THUMB_FILEEXT, thumb.surface);
             ico_syc_map_thumb(thumb.surface,
                               menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
                                           ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
         }
         else    {
-            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
-                    thumb.surface);
+            sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
+                    ICO_HS_THUMB_FILEEXT, thumb.surface);
         }
         thumb.type = info->type;
         thumb.width = info->width;
@@ -704,35 +726,48 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                 }
             }
             /* read surface image pixel         */
-            int bufsize = ((thumb.width * thumb.height * 4 + 4096 - 1) / 4096) * 4095;
+            int bufsize = ((thumb.width * thumb.height * 4 + 4095) / 4096) * 4096;
             if ((! thumb.pixel_data) || (bufsize > thumb.pixel_bufsize))    {
                 if (thumb.pixel_data)   free(thumb.pixel_data);
                 thumb.pixel_data = (char *)malloc(bufsize);
                 thumb.pixel_bufsize = bufsize;
+                if (thumb.pixel_data)   {
+                    memset(thumb.pixel_data, 0, bufsize);
+                }
             }
             if (thumb.pixel_data)   {
                 fd = open(sWork, O_RDONLY, 0644);
-                if ((fd < 0) ||
-                    (read(fd, thumb.pixel_data, bufsize) <= 0)) {
-                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)", sWork);
-                    unmap = 1;
+                if (fd >= 0)    {
+#if     0           /* for BMP format   */
+                    if (read(fd, &bmphead, sizeof(bmphead)) != sizeof(bmphead)) {
+                        ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)",
+                                sWork);
+                    }
+                    else
+#endif
+                    if (read(fd, thumb.pixel_data, bufsize) <= 0)   {
+                        ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)",
+                                sWork);
+                    }
+                }
+                else    {
+                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
+                            sWork);
                 }
                 if (fd >= 0)    {
                     close(fd);
                     (void) unlink(sWork);
                 }
-                if (unmap == 0) {
-                    evas_object_image_data_update_add(
+                evas_object_image_data_update_add(
                                     thumb_tile, 0, 0, thumb.width, thumb.height);
-                    icon = thumb_tile;
-                    evas_object_image_size_set(thumb_tile, thumb.width, thumb.height);
-                    evas_object_image_data_set(thumb_tile, thumb.pixel_data);
-                    evas_object_image_filled_set(thumb_tile, EINA_TRUE);
-                    evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
-                                       height - thumb_reduce_y * 2);
-                    evas_object_move(thumb_tile,
-                                     pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
-                }
+                icon = thumb_tile;
+                evas_object_image_size_set(thumb_tile, thumb.width, thumb.height);
+                evas_object_image_data_set(thumb_tile, thumb.pixel_data);
+                evas_object_image_filled_set(thumb_tile, EINA_TRUE);
+                evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
+                                   height - thumb_reduce_y * 2);
+                evas_object_move(thumb_tile,
+                                 pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
             }
             else    {
                 ICO_ERR("CicoHSMenuTile::SetThumbnail: can not malloc pixel buffer");
@@ -744,8 +779,8 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
     if (unmap > 0)  {
         ICO_DBG("CicoHSMenuTile::SetThumbnail: unmap thumbnail %08x", thumb.surface);
         if (thumb.surface)  {
-            sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
-                    thumb.surface);
+            sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
+                    ICO_HS_THUMB_FILEEXT, thumb.surface);
             (void) unlink(sWork);
             ico_syc_unmap_thumb(thumb.surface);
             thumb.surface = 0;
@@ -790,8 +825,8 @@ CicoHSMenuTile::ShowMenu(bool show)
     char    sWork[80];
     menu_show = show;
     if ((thumb_tile) && (thumb.surface != 0)) {
-        sprintf(sWork, "%s/%08x.pixel", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
-                thumb.surface);
+        sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
+                ICO_HS_THUMB_FILEEXT, thumb.surface);
         (void) unlink(sWork);
         ico_syc_map_thumb(thumb.surface,
                           menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :

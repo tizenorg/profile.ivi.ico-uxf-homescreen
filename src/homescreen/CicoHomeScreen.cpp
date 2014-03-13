@@ -273,6 +273,7 @@ CicoHomeScreen::ChangeActive(const char * appid, int surface)
     if (0 != wininfo->visible) {
         hs_instance->SetActiveAppInfo(appid);
         hs_instance->setActiveApp(appid);
+        ICO_TRA("CicoHomeScreen::ChangeActive set show");
         ico_syc_show(appid, surface, NULL);
         ico_syc_change_active(appid, surface);
     }
@@ -1183,7 +1184,7 @@ CicoHomeScreen::StartRelations(void)
                                              ICO_HS_APPID_DEFAULT_ONS),
             ICO_HS_MAX_PROCESS_NAME);
 // TODO
-#if 1
+#if 1   /* ToDo     */
     /* start onscreen & statusbar apps */
     os_app_info = GetAppInfo(os_package_name);
     ret = os_app_info->Execute();
@@ -1734,10 +1735,8 @@ CicoHomeScreen::StartHomeScreen(int orientation)
     moveZoneAnimation.name = (char*)config->ConfigGetString("switchzone",
                                                             "animation",
                                                             ICO_HS_ANIMATION_FADE);
-
     moveZoneAnimation.time = config->ConfigGetInteger("switchzone",
                                                       "animatime", 400);
-
     // debug log
     ICO_DBG("moveZoneName=%s animation=%s time=%d",
             moveZoneName, moveZoneAnimation.name, moveZoneAnimation.time);
@@ -1756,19 +1755,19 @@ CicoHomeScreen::StartHomeScreen(int orientation)
     x->hs        = this;
     ecore_timer_add(0.01, launchApps, x);
 
-    /*Create window*/
-    CreateControlBarWindow();
-
-    /*Create window*/
+    /* Create BackGround window */
     CreateBackWindow();
 
-    /*Create window*/
-    CreateMenuWindow();
-
-    /*Create SwipeInput window*/
+    /* Create SwipeInput window */
     CicoHSSwipeTouch::Initialize(hs_instance->ctl_bar_window, hs_instance->m_appHis,
                                  full_width, full_height);
     CreateSwipeInputWindow();
+
+    /* Create ControlBar window */
+    CreateControlBarWindow();
+
+    /* Create Menu window       */
+    CreateMenuWindow();
 
     /*Show Home Screen*/
     ShowHomeScreenLayer();
