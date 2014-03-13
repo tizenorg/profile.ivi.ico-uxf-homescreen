@@ -182,7 +182,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
     set_xy_pos = false;
     sub = touch_state_a_x - touch_state_b_x;
 
-    /* check slide left to right or right to left   */
+    /* check swipe left to right or right to left   */
     if (sub > ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
         if (touch_state_b_x < ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
             /* get current application  */
@@ -331,7 +331,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                                              ICO_SYC_WIN_SURF_NORESCTL;
                             appinfo = CicoHomeScreen::GetAppInfo(curapp.c_str());
                             if (appinfo)    {
-                            animation.name = (char *)"slide.toright";
+                                animation.name = (char *)"slide.toright";
                                 for (idx = 0; ; idx++)  {
                                     wininfo = appinfo->GetWindowInfo(idx);
                                     if (! wininfo)  break;
@@ -367,7 +367,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
     }
 
 #if 0       /* currently not support    */
-    /* check slide buttom to top or top to buttom   */
+    /* check swipe buttom to top or top to buttom   */
     sub = touch_state_a_y - touch_state_b_y;
     if (sub > ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
         if (touch_state_b_y < ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {

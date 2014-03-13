@@ -15,6 +15,8 @@
 #include <ico_log.h>
 #include "CicoStatusBar.h"
 
+using namespace std;
+
 const int CicoStatusBar::STATUSBAR_POSX = 0; 
 const int CicoStatusBar::STATUSBAR_POSY = 0; 
 const int CicoStatusBar::STATUSBAR_HEIGHT = 64;
@@ -34,6 +36,20 @@ const int CicoStatusBar::CLOCK_HEIGHT =
 CicoStatusBar::CicoStatusBar()
     : CicoCommonWindow()
 {
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  default destructor
+ *  @param[in]  none
+ *  @return     none
+ */
+//--------------------------------------------------------------------------
+CicoStatusBar::~CicoStatusBar()
+{
+    while( !noti_list.empty() ) {
+        DeleteNotification( this );
+    }
 }
 
 //--------------------------------------------------------------------------
@@ -142,22 +158,40 @@ CicoStatusBar::UpdateTime()
  */
 /*--------------------------------------------------------------------------*/
 bool
-CicoStatusBar::UpdateNotificationPanel(const char *msg,
-                                       const char *iconpath,
-                                       const char *soundpath)
+CicoStatusBar::UpdateNotificationPanel( CicoStatusBar *sb )
 {
+
+    /*  if timer is active then wait timeout  */
+    if (notitimer_ != NULL) {
+        ICO_TRA("CicoStatusBar::UpdateNotificationPanel Timer not Terminate" );
+        return false;
+    }
+
+    /*  get Notification , if it is empty then return  */
+    CicoNotification* noti = sb->GetNotification(sb);
+    if ( noti == NULL ) {
+        ICO_TRA("CicoStatusBar::UpdateNotificationPanel empty" );
+        return false;
+    }
+    //const char *msg = noti->GetTitle();
+    const char *msg = noti->GetContent();
+    const char *iconpath = noti->GetIconPath();
+    const char *soundpath = NULL;
+
+    /*  show Notification */
     ICO_TRA("CicoStatusBar::UpdateNotificationPanel Enter"
             "(msg=%s icon=%s sound=%s)", msg, iconpath, soundpath);
     if (msg == NULL && iconpath == NULL && soundpath == NULL) {
         ICO_ERR("notification info is NULL.");
+        sb->DeleteNotification(sb);
         return false;
     }
     noticomp_->SetNotification(msg, iconpath, soundpath);
     noticomp_->Show();
-    if (notitimer_ != NULL) {
-        ecore_timer_del(notitimer_);
-        notitimer_ = NULL;
-    }
+
+    /* delete Notification and set disp timer */
+    sb->DeleteNotification(sb);
+
     notitimer_ = ecore_timer_add(3.0, HideNotification, this);
     ICO_TRA("CicoStatusBar::UpdateNotificationPanel Leave");
     return true;
@@ -184,66 +218,22 @@ CicoStatusBar::NotificationCallback(void *data,
             type, num_op);
     CicoStatusBar *sb = reinterpret_cast<CicoStatusBar*>(data);
     notification_op_type_e op_type;
-    notification_list_h notificationlist = NULL;
-    notification_list_h getlist = NULL;
+
     for (int i = 0; i < num_op; i++) {
         op_type = op_list[i].type;
         switch (op_type) {
         case NOTIFICATION_OP_INSERT :
         case NOTIFICATION_OP_UPDATE :
-        {
             ICO_DBG("NOTIFICATION_OP_INSERT/NOTIFICATION_OP_UPDATE");
-            notification_error_e err = NOTIFICATION_ERROR_NONE;
-            ICO_DBG("called: notification_get_list(NOTIFICATION_TYPE_NOTI)");
-            err = notification_get_list(NOTIFICATION_TYPE_NOTI,
-                                        -1, &notificationlist);
-            if (NOTIFICATION_ERROR_NONE != err) {
-                ICO_ERR("notification_get_list() failed(%d).", err);
-                break;
-            }
 
-            if (notificationlist) {
-                ICO_DBG("called: notification_list_get_head(0x%08x)",
-                        notificationlist);
-                getlist = notification_list_get_head(notificationlist);
-                do {
-                    CicoNotification noti(notification_list_get_data(getlist));
-                    if (noti.Empty()) {
-                        break;
-                    }
-                    sb->UpdateNotificationPanel(noti.GetTitle(),
-                                                noti.GetIconPath(), 
-                                                NULL);
-#if 0
-                    int grpid = 0;
-                    int privid = 0;
-                    notification_get_id(notification_list_get_data(getlist),
-                                        &grpid, &privid);
-                    notification_delete_group_by_priv_id(noti.GetPkgname(),
-                                                         noti.GetType(),
-                                                         privid);
-#endif
+            /*  add notification and update SB  */
+            sb->AddNotification( sb, op_list[i].noti );
+            sb->UpdateNotificationPanel( sb );
 
-                    ICO_DBG("called: notification_list_get_next(0x%08x)",
-                            getlist);
-                    getlist = notification_list_get_next(getlist);
-                } while (getlist != NULL);
-            }
-
-            if (notificationlist != NULL) {
-                ICO_DBG("called: notification_free_list(0x%08x)",
-                        notificationlist);
-                notification_error_e err = NOTIFICATION_ERROR_NONE;
-                err = notification_free_list(notificationlist);
-                if (NOTIFICATION_ERROR_NONE != err) {
-                    ICO_ERR("notification_free_list() failed.");
-                }
-                notificationlist = NULL;
-            }
             break;
-        }
         case NOTIFICATION_OP_DELETE:
             ICO_DBG("NOTIFICATION_OP_DELETE");
+            sb->DeleteNotification( sb, op_list[i].priv_id );
             break;
         case NOTIFICATION_OP_DELETE_ALL:
             ICO_DBG("NOTIFICATION_OP_DELETE_ALL");
@@ -277,9 +267,118 @@ CicoStatusBar::HideNotification(void *data)
     sb->noticomp_->Hide();
     ecore_timer_del(sb->notitimer_);
     sb->notitimer_ = NULL;
+
+    /*  update notification ,if Notification exist in the queue   */
+    sb->UpdateNotificationPanel( sb );
+
     ICO_TRA("CicoStatusBar::HideNotification Leave");
     return ECORE_CALLBACK_CANCEL;
 }
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief    add last notification
+ *
+ * @param[in]   sb    StatusBar object
+ * @param[in]   noti_h  notification handle
+ * @return      non
+ */
+/*--------------------------------------------------------------------------*/
+void 
+CicoStatusBar::AddNotification(CicoStatusBar* sb, notification_h noti_h)
+{
+    ICO_TRA("CicoStatusBar::AddNotification() Enter");
+
+    CicoNotification *noti = new CicoNotification( noti_h );
+    if (noti->GetType() != NOTIFICATION_TYPE_ONGOING ) {
+        delete noti;
+        return;
+    }
+    sb->noti_list.push_back(noti);
+
+    ICO_TRA("CicoStatusBar::AddNotification Leave");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief    get first notification
+ *
+ * @param[in]   sb    StatusBar object
+ * @return      CicoNotification class pointer
+ */
+/*--------------------------------------------------------------------------*/
+CicoNotification* 
+CicoStatusBar::GetNotification(CicoStatusBar* sb)
+{
+    ICO_TRA("CicoStatusBar::GetNotification() Enter");
+
+    if ( ! sb->noti_list.empty() ) {
+        CicoNotification *noti = sb->noti_list.front();
+        if ( noti ) {
+            return noti;
+        }
+        else {
+            DeleteNotification(sb);
+        }
+    }
+    ICO_TRA("CicoStatusBar::GetNotification Leave");
+    return NULL;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief    delete first notification
+ *
+ * @param[in]   sb    StatusBar object
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoStatusBar::DeleteNotification(CicoStatusBar *sb)
+{
+    ICO_TRA("CicoStatusBar::DeleteNotification() Enter");
+
+    if ( ! sb->noti_list.empty() ) {
+        CicoNotification *noti = sb->noti_list.front();
+        if ( noti ) {
+            delete noti;
+        }
+        sb->noti_list.pop_front();
+    }
+
+    ICO_TRA("CicoStatusBar::DeleteNotification Leave");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief    delete  notification
+ *
+ * @param[in]   sb    StatusBar object
+ * @param[in]   noti_h  notification handle
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoStatusBar::DeleteNotification(CicoStatusBar *sb, int priv_id)
+{
+    ICO_TRA("CicoStatusBar::DeleteNotification() Enter");
+
+    List_CicoNoti_pt pt = noti_list.begin();
+    for (; pt != noti_list.end(); ++pt) {
+
+        CicoNotification *noti_src = *pt;
+        if ( priv_id == noti_src->GetPrivId() ) {
+
+            delete noti_src;
+            noti_list.erase(pt);
+            break;
+        }
+    }
+
+    ICO_TRA("CicoStatusBar::DeleteNotification Leave");
+}
+
+
 
 //==========================================================================
 //  public functions

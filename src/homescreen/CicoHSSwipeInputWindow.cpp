@@ -98,9 +98,6 @@ CicoHSSwipeInputWindow::CreateSwipeInputWindow(int pos_x, int pos_y,
 
     /* background object(transparent)    */
     background = evas_object_image_filled_add(evas);
-#if 0       /* TEST TEST: no need?  */
-    evas_object_color_set(background, 0, 0, 0, 0);
-#endif
 
     /* set mouse/touch callback */
     evas_object_event_callback_add(background, EVAS_CALLBACK_MOUSE_DOWN,

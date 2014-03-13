@@ -85,6 +85,7 @@
 /*shared memory buffer*/
 #define ICO_HS_THUMB_ICODIR       "/tmp/ico"
 #define ICO_HS_THUMB_FILEDIR       "/thumbnail"
+#define ICO_HS_THUMB_FILEEXT       "pixel"
 
 struct _CicoHSMenuTile_thumb {
     int         surface;                // surface id

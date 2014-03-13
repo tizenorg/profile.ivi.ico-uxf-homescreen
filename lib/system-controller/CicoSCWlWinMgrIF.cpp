@@ -23,6 +23,7 @@
 
 #include "ico_syc_type.h"
 #include "CicoSCWlWinMgrIF.h"
+#include "CicoSCWayland.h"
 #include "CicoLog.h"
 #include "CicoSystemConfig.h"
 #include "CicoConf.h"
@@ -313,6 +314,8 @@ CicoSCWlWinMgrIF::setAnimation(uint32_t surfaceid, int32_t type,
             "(surfaceid=0x%08X type=%d anima=%s time=%d)",
             surfaceid, type, animation, time);
     ico_window_mgr_set_animation(m_winmgr, surfaceid, type, animation, time);
+    // need wayland flush for GENIVI layer management
+    CicoSCWayland::getInstance()->flushDisplay();
 }
 
 //--------------------------------------------------------------------------

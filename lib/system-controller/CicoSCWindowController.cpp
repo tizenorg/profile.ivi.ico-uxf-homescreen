@@ -57,7 +57,7 @@ CicoSCWindowController* CicoSCWindowController::ms_myInstance = NULL;
 /**
  *  @brief  get instance of CicoSCWindowController
  *
- *  @return instance of CicoSCWayland
+ *  @return instance of CicoSCWindowController
  */
 //--------------------------------------------------------------------------
 CicoSCWindowController*

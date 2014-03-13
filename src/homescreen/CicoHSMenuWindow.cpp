@@ -1399,7 +1399,9 @@ CicoHSMenuWindow::Hide(ico_syc_animation_t *animation)
         ChangeNormalMode();
     }
     m_showState = false;
-    ico_syc_hide(appid,surface,animation);
+    if (surface)    {
+        ico_syc_hide(appid, surface, animation);
+    }
 
     // Hide menu tiles
     for (int ii = 0; ii < all_tile_num; ii++) {
@@ -1407,7 +1409,6 @@ CicoHSMenuWindow::Hide(ico_syc_animation_t *animation)
             menu_tile[ii]->ShowMenu(false);
         }
     }
-
     ICO_TRA("CicoHSMenuWindow::Hide Leave");
 }
 

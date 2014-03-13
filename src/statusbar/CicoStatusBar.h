@@ -18,10 +18,15 @@
 #define __CICO_STATUSBAR_H__
 
 #include <memory>
+#include <list>
 #include "CicoComponentImplementation.h"
 #include "CicoCommonWindow.h"
 #include "CicoNotification.h"
 #include "CicoNotificationService.h"
+
+/* CicoNotification queue list */
+typedef  std::list<CicoNotification*> List_CicoNoti;
+typedef  std::list<CicoNotification*>::iterator List_CicoNoti_pt;
 
 //==========================================================================
 /**
@@ -44,9 +49,22 @@ public:
     // update clock
     bool UpdateTime(void);
 
+    // add last Notification queue
+    void AddNotification(CicoStatusBar *sb, notification_h noti_h);
+
+    // get first Notification queue
+    CicoNotification* GetNotification(CicoStatusBar *sb);
+
+    // delete first Notification queue
+    void DeleteNotification(CicoStatusBar *sb);
+
+    // delete Notification queue
+    void DeleteNotification(CicoStatusBar *sb, int priv_id);
+
     // update notification panel
-    bool UpdateNotificationPanel(const char *msg, const char *icopath, 
-                                 const char *soundpath);
+    //bool UpdateNotificationPanel(const char *msg, const char *icopath, 
+    //                             const char *soundpath);
+    bool UpdateNotificationPanel(CicoStatusBar *sb);
 
     // notification callback
     static void NotificationCallback(void *data, notification_type_e type,
@@ -66,6 +84,8 @@ protected:
     static const int CLOCK_HEIGHT;      /// clock height
 
     Ecore_Timer *notitimer_;            /// notification timer
+    List_CicoNoti noti_list;            /// notification Queue
+
     std::shared_ptr<CicoStatusBarClockComponent> clockcomp_;    /// clock component
     std::shared_ptr<CicoNotificationPanelComponent> noticomp_;  /// notification component
     CicoNotificationService notiservice_;   /// notification service
