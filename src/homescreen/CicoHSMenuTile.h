@@ -26,6 +26,7 @@
 
 #include "ico_syc_common.h"
 #include "ico_syc_winctl.h"
+#include "ico_window_mgr.h"
 
 #include "CicoHomeScreenCommon.h"
 
@@ -125,7 +126,6 @@ class CicoHSMenuTile
     void ValidThumbnail(int surface);
     void SetThumbnail(ico_syc_thumb_info_t *info);
     void ShowMenu(bool show);
-    void SetOrgThumbnail(CicoHSMenuTile *orgTile);
 
   private:
     char appid[ICO_HS_MAX_PROCESS_NAME];

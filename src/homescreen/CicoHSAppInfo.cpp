@@ -63,7 +63,7 @@ CicoHSAppInfo::AddWindowInfo(ico_syc_win_info_t *wininfo)
         return ICO_ERROR;
     }
 
-    ICO_TRA("CicoHSAppInfo::AddWindowInfo Enter(appid=%s surface=%x",
+    ICO_TRA("CicoHSAppInfo::AddWindowInfo Enter(appid=%s surface=%d",
             wininfo->appid, wininfo->surface);
 
     // if exist window information, update current window information
@@ -108,7 +108,7 @@ CicoHSAppInfo::AddWindowAttr(ico_syc_win_attr_t *winattr)
         return ICO_ERROR;
     }
 
-    ICO_TRA("CicoHSAppInfo::AddWindowAttr Enter(appid=%s surface=%x",
+    ICO_TRA("CicoHSAppInfo::AddWindowAttr Enter(appid=%s surface=%d",
             winattr->appid, winattr->surface);
 
     // if exist window information, update current window information
@@ -410,7 +410,7 @@ CicoHSAppInfo::SetWindowInfo(ico_hs_window_info *hs_wininfo,
                              ico_syc_win_info_t *wininfo)
 {
     ICO_TRA("CicoHSAppInfo::SetWindowInfo Enter"
-            "(winifo=%p appid=%s winname=%s surface=%x)",
+            "(winifo=%p appid=%s winname=%s surface=%d)",
             hs_wininfo,
             wininfo->appid, wininfo->name, wininfo->surface);
 
@@ -443,7 +443,7 @@ CicoHSAppInfo::SetWindowAttr(ico_hs_window_info *hs_wininfo,
 {
     ICO_TRA("CicoHSAppInfo::SetWindowAttr Enter"
             "(winifo=%p "
-            "appid=%s winname=%s zone=%s surface=%x nodeid=%d layer=%d "
+            "appid=%s winname=%s zone=%s surface=%d nodeid=%d layer=%d "
             "x/y=%d/%d w/h=%d/%d raise=%d visible=%d active=%d)",
             hs_wininfo,
             winattr->appid, winattr->name, winattr->zone,

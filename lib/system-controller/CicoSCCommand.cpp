@@ -256,10 +256,6 @@ CicoSCCommand::parseWinCtrlOpt(const ptree & root)
     options->nodeid        = getIntValue(root, "arg.node");
     options->zone          = getStrValue(root, "arg.zone");
     options->animation     = getStrValue(root, "arg.anim_name");
-    options->animationType = getIntValue(root, "arg.anim_type");
-    if (-1 == options->animationType) {
-        options->animationType = 0xff;
-    }
     options->animationTime = getIntValue(root, "arg.anim_time");
     if (-1 == options->animationTime) {
         options->animationTime = 0;

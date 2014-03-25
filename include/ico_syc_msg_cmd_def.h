@@ -45,7 +45,6 @@ extern "C" {
 #define MSG_PRMKEY_LAYER        (char *)"layer"
 #define MSG_PRMKEY_NODE         (char *)"node"
 #define MSG_PRMKEY_ZONE         (char *)"zone"
-#define MSG_PRMKEY_ANIM_TYPE    (char *)"anim_type"
 #define MSG_PRMKEY_ANIM_NAME    (char *)"anim_name"
 #define MSG_PRMKEY_ANIM_TIME    (char *)"anim_time"
 #define MSG_PRMKEY_ATTR         (char *)"attr"
@@ -137,17 +136,16 @@ extern "C" {
 #define MSG_CMD_SHOW                0x00010003
 #define MSG_CMD_HIDE                0x00010004
 #define MSG_CMD_MOVE                0x00010005
-#define MSG_CMD_ANIMATION           0x00010006
-#define MSG_CMD_CHANGE_ACTIVE       0x00010007
-#define MSG_CMD_CHANGE_LAYER        0x00010008
-#define MSG_CMD_CHANGE_ATTR         0x00010009
-#define MSG_CMD_NAME                0x00010010
-#define MSG_CMD_MAP_THUMB           0x00010020
-#define MSG_CMD_UNMAP_THUMB         0x00010021
-#define MSG_CMD_MAP_GET             0x00010022
-#define MSG_CMD_SHOW_LAYER          0x00010030
-#define MSG_CMD_HIDE_LAYER          0x00010031
-#define MSG_CMD_CHANGE_LAYER_ATTR   0x00010032
+#define MSG_CMD_CHANGE_ACTIVE       0x00010006
+#define MSG_CMD_CHANGE_LAYER        0x00010007
+#define MSG_CMD_CHANGE_ATTR         0x00010008
+#define MSG_CMD_NAME                0x00010009
+#define MSG_CMD_MAP_THUMB           0x00010011
+#define MSG_CMD_UNMAP_THUMB         0x00010012
+#define MSG_CMD_MAP_GET             0x00010013
+#define MSG_CMD_SHOW_LAYER          0x00010020
+#define MSG_CMD_HIDE_LAYER          0x00010021
+#define MSG_CMD_CHANGE_LAYER_ATTR   0x00010022
 /* input controller */
 #define MSG_CMD_ADD_INPUT           0x00020001
 #define MSG_CMD_DEL_INPUT           0x00020002

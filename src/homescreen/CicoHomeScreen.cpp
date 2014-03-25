@@ -313,7 +313,7 @@ void
 CicoHomeScreen::requestChangeZone(CicoHSAppInfo* appinfo)
 {
     int surface = appinfo->GetLastSurface();
-    ICO_TRA("Enter appid=%s, lastsurface=%x", appinfo->GetAppId(), surface);
+    ICO_TRA("Enter appid=%s, lastsurface=%d", appinfo->GetAppId(), surface);
     ico_hs_window_info* wininfo = appinfo->GetWindowInfobySurface(surface);
     if (NULL == wininfo) {
         ICO_TRA("Leave(not found wininfo)");
@@ -1541,9 +1541,9 @@ CicoHomeScreen::CreateSwipeInputWindow(void)
     swipe_input_windows[0] = new CicoHSSwipeInputWindow();
     swipe_input_windows[0]->
             CreateSwipeInputWindow(ICO_HS_WINDOW_POS_X,
-                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY1,
+                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
                                    ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY2*2),
+                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2),
                                    "left");
     swipe_input_windows[0]->ShowWindow();
 
@@ -1551,9 +1551,9 @@ CicoHomeScreen::CreateSwipeInputWindow(void)
     swipe_input_windows[1] = new CicoHSSwipeInputWindow();
     swipe_input_windows[1]->
             CreateSwipeInputWindow(full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY1,
+                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY,
                                    ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY2*2),
+                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY*2),
                                    "right");
     swipe_input_windows[1]->ShowWindow();
 
@@ -1648,8 +1648,6 @@ static Eina_Bool launchApps(void* data)
 int
 CicoHomeScreen::StartHomeScreen(int orientation)
 {
-    int     retry;
-
     ICO_TRA("CicoHomeScreen::StartHomeScreen Enter");
 
     /*save instance pointer */
@@ -1693,11 +1691,6 @@ CicoHomeScreen::StartHomeScreen(int orientation)
 
     ICO_DBG("CicoHomeScreen::StartHomeScreen: start connect to systemcontroller");
     ico_syc_connect(EventCallBack,NULL);
-    for (retry = 0; retry < (2000/10); retry++) {
-        ico_syc_service();
-        if (ico_syc_isconnect())    break;
-        usleep(10*1000);
-    }
     ICO_DBG("CicoHomeScreen::StartHomeScreen: end connect to systemcontroller");
 
     /*initialize system controller*/

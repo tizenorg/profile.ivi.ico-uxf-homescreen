@@ -52,7 +52,7 @@ public:
     /// default constructor
     CicoSCCmdWinCtrlOpt()
         : nodeid(0), displayid(0), layerid(0),
-          zone(""), surfaceid(-1), animationType(0), animation(""), animationTime(0),
+          zone(""), surfaceid(-1), animation(""), animationTime(0),
           x(-1), y(-1), width(-1), height(-1), raise(-1),
           visible(-1), active(-1), framerate(0), stride(-1), format(-1) {}
 
@@ -63,12 +63,12 @@ public:
     void dump(void)
     {
         ICO_DBG("WinCtrlOpt: "
-                "surfaceid=%08X layerid=%d nodeid=%d zone=%s "
-                "animation=%s animaType=%x animaTime=%d "
+                "surfaceid=0x%08X layerid=%d nodeid=%d zone=%s "
+                "animation=%s animationTime=%d "
                 "x=%d y=%d w=%d h=%d raise=%d "
                 "visible=%d active=%d framerate=%d stride=%d format=%d",
                 surfaceid, layerid, nodeid, zone.c_str(),
-                animation.c_str(), animationType, animationTime,
+                animation.c_str(), animationTime,
                 x, y, width, height, raise,
                 visible, active, framerate, stride, format);
     }
@@ -78,7 +78,6 @@ public:
     int         layerid;        //!< id of layer
     std::string zone;           //!< name of display zone
     int         surfaceid;      //!< id of surface
-    int         animationType;  //!< type of animation
     std::string animation;      //!< name of animation
     int         animationTime;  //!< time of animation
     int         x;              //!< x position of window

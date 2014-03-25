@@ -18,6 +18,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <ico_window_mgr.h>
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -600,6 +601,7 @@ void
 CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 {
     Evas_Object         *old_icon = icon;
+    struct ico_uifw_image_buffer *pixelbuf = NULL;
     int                 svx, svy;
     int                 unmap;
     int                 fd;
@@ -773,6 +775,10 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
             }
         }
     }
+    if (pixelbuf != NULL)   {
+        // free shared memory pixel buffer
+        pixelbuf->reftime = pixelbuf->settime;
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -797,46 +803,5 @@ CicoHSMenuTile::ShowMenu(bool show)
                           menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
                                       ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
     }
-}
-
-/*--------------------------------------------------------------------------*/
-/**
- * @brief   CicoHSMenuTile::SetOrgThumbnail
- *          set thumbnail form org tile
- *
- * @param[in]   info    org tile
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-void
-CicoHSMenuTile::SetOrgThumbnail(CicoHSMenuTile *orgTile)
-{
-
-    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Enter(appid=%08x<%s>) run=%d surf=%08x",
-            (int)this->appid, this->appid, app_running, orgTile->thumb.surface );
-
-    /* check surface of orgTile */
-    if ( orgTile == NULL || orgTile->thumb.surface == 0 ) {
-        return;
-    }
-
-    /* set surface */
-    this->ValidThumbnail( orgTile->thumb.surface );
-
-    /* set new thumbnail */
-    ico_syc_thumb_info_t info;
-
-    info.surface = orgTile->thumb.surface;
-    info.type = orgTile->thumb.type;
-    info.width = orgTile->thumb.width;
-    info.height = orgTile->thumb.height;
-    info.stride = orgTile->thumb.stride;
-    info.format = orgTile->thumb.format;
-
-    SetThumbnail( &info );
-
-    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Leave(appid=%08x<%s>) run=%d surf=%08x",
-            (int)this->appid, this->appid, app_running, orgTile->thumb.surface );
-
 }
 // vim: set expandtab ts=4 sw=4:

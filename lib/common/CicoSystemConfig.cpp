@@ -293,7 +293,6 @@ CicoSystemConfig::createDisplayConfList(const ptree & root)
 //        return;
 //    }
 
-    numDisplay = 0;
     ptree displays = root.get_child("systemconfig.displays");
     BOOST_FOREACH (const ptree::value_type& child, displays) {
         optional<int> id = optional<int>(-1);
@@ -355,7 +354,6 @@ CicoSystemConfig::createDisplayConfList(const ptree & root)
         createDisplayZoneConf(child, displayConf);
 
         m_displayConfList.push_back(displayConf);
-        numDisplay ++;
     }
 }
 
@@ -1919,19 +1917,6 @@ CicoSystemConfig::getDisplayIdbyNo(int no)
         }
     }
     return -1;
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief
- *
- *  @param  [in]
- */
-//--------------------------------------------------------------------------
-int
-CicoSystemConfig::getNumberofDisplay(void)
-{
-    return numDisplay;
 }
 
 //--------------------------------------------------------------------------

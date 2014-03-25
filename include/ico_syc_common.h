@@ -56,19 +56,6 @@ void ico_syc_disconnect(void);
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   ico_syc_isconnect
- *          Check connect of System Controller.
- *
- * @param       none
- * @return      result
- * @retval      1                       connected to System Controller
- * @retval      0                       not connect
- */
-/*--------------------------------------------------------------------------*/
-int ico_syc_isconnect(void);
-
-/*--------------------------------------------------------------------------*/
-/**
  * @brief   ico_syc_service
  *          Service for communication to System Controller.
  *
