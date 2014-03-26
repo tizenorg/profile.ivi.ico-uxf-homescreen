@@ -16,7 +16,7 @@
 #ifndef _ICO_SYC_WINCTL_H_
 #define _ICO_SYC_WINCTL_H_
 
-#include <ico_window_mgr-client-protocol.h>
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,6 +43,7 @@ typedef enum _window_show {
 #define ICO_SYC_WIN_SURF_LOWER      0x02000000
 #define ICO_SYC_WIN_SURF_NOCHANGE   0x04000000
 #define ICO_SYC_WIN_SURF_NORESCTL   0x40000000
+#define ICO_SYC_WIN_SURF_ONESHOT    0x10000000
 #define ICO_SYC_WIN_SURF_FLAGS      0xff000000
 typedef struct _animation_info {
     char *name;     /* name of animation (ex. fade,slide,zoom etc..) */

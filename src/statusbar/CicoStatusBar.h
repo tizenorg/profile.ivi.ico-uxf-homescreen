@@ -43,28 +43,26 @@ public:
     // destructor
     ~CicoStatusBar();
 
-    // initialize status bar 
+    // initialize status bar
     bool Initialize(void);
 
     // update clock
     bool UpdateTime(void);
 
     // add last Notification queue
-    void AddNotification(CicoStatusBar *sb, notification_h noti_h);
+    void AddNotification( notification_h noti_h);
 
     // get first Notification queue
-    CicoNotification* GetNotification(CicoStatusBar *sb);
+    CicoNotification* GetNotification();
 
     // delete first Notification queue
-    void DeleteNotification(CicoStatusBar *sb);
+    void DeleteNotification();
 
     // delete Notification queue
-    void DeleteNotification(CicoStatusBar *sb, int priv_id);
+    void DeleteNotification(int priv_id);
 
     // update notification panel
-    //bool UpdateNotificationPanel(const char *msg, const char *icopath, 
-    //                             const char *soundpath);
-    bool UpdateNotificationPanel(CicoStatusBar *sb);
+    bool UpdateNotificationPanel();
 
     // notification callback
     static void NotificationCallback(void *data, notification_type_e type,
@@ -86,8 +84,9 @@ protected:
     Ecore_Timer *notitimer_;            /// notification timer
     List_CicoNoti noti_list;            /// notification Queue
 
-    std::shared_ptr<CicoStatusBarClockComponent> clockcomp_;    /// clock component
-    std::shared_ptr<CicoNotificationPanelComponent> noticomp_;  /// notification component
+    CicoStatusBarClockComponent  *clockcomp_;    /// clock component
+    CicoNotificationPanelComponent *noticomp_;   /// notification component
+
     CicoNotificationService notiservice_;   /// notification service
 };
 #endif  // __CICO_STATUSBAR_H__

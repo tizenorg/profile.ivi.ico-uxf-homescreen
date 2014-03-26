@@ -16,7 +16,7 @@
 #ifndef _ICO_SYC_INPUTCTL_H_
 #define _ICO_SYC_INPUTCTL_H_
 
-#include <ico_input_mgr-client-protocol.h>
+#include <ico-uxf-weston-plugin/ico_input_mgr-client-protocol.h>
 
 #ifdef __cplusplus
 extern "C" {

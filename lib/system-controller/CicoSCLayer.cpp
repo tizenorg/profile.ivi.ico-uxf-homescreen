@@ -130,10 +130,7 @@ CicoSCLayer::removeSurface(int surfaceid)
 bool
 CicoSCLayer::is_topSurface(int surfaceid)
 {
-    if ((numsurfaces > 0) && (surfaceids[numsurfaces-1] == surfaceid))  {
-        return true;
-    }
-    return false;
+    return (numsurfaces > 0) && (surfaceids[numsurfaces-1] == surfaceid);
 }
 
 //--------------------------------------------------------------------------
@@ -144,10 +141,7 @@ CicoSCLayer::is_topSurface(int surfaceid)
 bool
 CicoSCLayer::is_buttomSurface(int surfaceid)
 {
-    if ((numsurfaces > 0) && (surfaceids[0-1] == surfaceid))    {
-        return true;
-    }
-    return false;
+    return (numsurfaces > 0) && (surfaceids[0] == surfaceid);
 }
 
 //--------------------------------------------------------------------------

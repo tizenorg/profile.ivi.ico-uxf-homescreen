@@ -53,8 +53,6 @@ libico_system_controller_la_CPPFLAGS =	\
 	@MURPHYRESOURCE_CFLAGS@				\
 	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
-	$(GENIVI_CFLAGS)					\
-	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
 	-I../common							\
 	-I../misc/state-machine

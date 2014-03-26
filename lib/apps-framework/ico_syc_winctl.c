@@ -627,8 +627,8 @@ ico_syc_cb_win(ico_syc_callback_t callback, void *user_data,
 
     /* free memory */
     g_object_unref(parser);
-    if (win_info->appid != NULL) free(win_info->appid);
-    if (win_info->name != NULL) free(win_info->name);
+    free(win_info->appid);
+    free(win_info->name);
     free(win_info);
 
     return;
@@ -719,9 +719,9 @@ ico_syc_cb_win_attr(ico_syc_callback_t callback, void *user_data,
 
     /* free memory */
     g_object_unref(parser);
-    if (win_attr->appid != NULL) free(win_attr->appid);
-    if (win_attr->name != NULL) free(win_attr->name);
-    if (win_attr->zone != NULL) free(win_attr->zone);
+    free(win_attr->appid);
+    free(win_attr->name);
+    free(win_attr->zone);
     free(win_attr);
 
     return;

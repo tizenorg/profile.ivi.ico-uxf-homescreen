@@ -3,11 +3,13 @@ AM_CPPFLAGS = $(GCC_CXXFLAGS)
 
 noinst_PROGRAMS = \
 	ico_send_notification \
+	ico_send_notification2 \
 	ico_dump_notification \
 	ico_del_notification
 
 check_PROGRAMS =	\
 	ico_send_notification \
+	ico_send_notification2 \
 	ico_dump_notification \
 	ico_dump_notification
 
@@ -22,6 +24,15 @@ ico_send_notification_CXXFLAGS = \
 
 ico_send_notification_LDADD = \
 	$(NOTIFICATION_LIBS)
+	
+ico_send_notification2_SOURCES = \
+	send_notification2.cpp
+
+ico_send_notification2_CXXFLAGS = \
+	$(NOTIFICATION_CFLAGS)
+
+ico_send_notification2_LDADD = \
+	$(NOTIFICATION_LIBS) -lappsvc
 	
 #
 #

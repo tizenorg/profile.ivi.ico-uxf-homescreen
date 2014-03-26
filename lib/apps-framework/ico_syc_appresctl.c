@@ -204,13 +204,13 @@ _free_res_window(ico_syc_res_window_t *w)
     }
 
     /* free element */
-    if (NULL != w->ECU)         free(w->ECU);
-    if (NULL != w->display)     free(w->display);
-    if (NULL != w->layer)       free(w->layer);
-    if (NULL != w->layout)      free(w->layout);
-    if (NULL != w->area)        free(w->area);
-    if (NULL != w->dispatchApp) free(w->dispatchApp);
-    if (NULL != w->role)        free(w->role);
+    free(w->ECU);
+    free(w->display);
+    free(w->layer);
+    free(w->layout);
+    free(w->area);
+    free(w->dispatchApp);
+    free(w->role);
     /* free */
     free(w);
 
@@ -234,9 +234,9 @@ _free_res_sound(ico_syc_res_sound_t *sound)
     }
 
     /* free element */
-    if (sound->zone != NULL) free(sound->zone);
-    if (sound->name != NULL) free(sound->name);
-    if (sound->id != NULL) free(sound->id);
+    free(sound->zone);
+    free(sound->name);
+    free(sound->id);
     /* free */
     free(sound);
 
@@ -260,7 +260,7 @@ _free_res_input(ico_syc_res_input_t *input)
     }
 
     /* free element */
-    if (input->name != NULL) free(input->name);
+    free(input->name);
     /* free */
     free(input);
 

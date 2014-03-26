@@ -23,7 +23,8 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <string.h>
+#include <string>
+#include <cstring>
 
 #include <app.h>
 #include <aul.h>
@@ -47,7 +48,11 @@
 #define STATUS_BAR_HEIGHT    64
 #define CTRL_BAR_HEIGHT      128
 #define WIDTH                1080
+#if 1
+#define HEIGHT               1920
+#else
 #define HEIGHT               (1920 - STATUS_BAR_HEIGHT - CTRL_BAR_HEIGHT)
+#endif
 
 /* Popup Size */
 #define POPUP_WIDTH         640
@@ -119,7 +124,7 @@ public:
     CicoOSPopWindow(notification_h noti);
     virtual ~CicoOSPopWindow();
     bool    showPopup();
-    void    hidePopup();
+    void    hidePopup(bool buttonTouch = false);
     bool    acquireRes();
     bool    releaseRes();
     const CicoNotification& getNotif() const {
@@ -138,6 +143,8 @@ public:
     Evas_Object* m_theme;
     uint32_t     m_resourceId;
     struct ico_syc_res_context* m_context;
+    std::string  m_appsvc_pkgname;
+    bool         m_buttonTouch;
 };
 
 #endif  // __CICO_ONSCREEN_POP_WINDOW_H__

@@ -490,10 +490,8 @@ CicoHSMenuTile::ValidMenuIcon(void)
     if (app_running)    {
         ICO_DBG("CicoHSMenuTile::ValidMenuIcon: %s show icon", appid);
         app_running = false;
-        if (thumb.pixel_data)   {
-            free(thumb.pixel_data);
-            thumb.pixel_data = NULL;
-        }
+        free(thumb.pixel_data);
+        thumb.pixel_data = NULL;
         if (icon == thumb_tile) {
             icon = tile;
             if (thumb_tile) {
@@ -532,8 +530,7 @@ CicoHSMenuTile::ValidThumbnail(int surface)
                     ICO_HS_THUMB_FILEEXT, thumb.surface);
             (void) unlink(sWork);
             ico_syc_unmap_thumb(thumb.surface);
-            // delete image and texture
-            if ((surface == 0) && (thumb.pixel_data))   {
+            if (surface == 0)   {
                 free(thumb.pixel_data);
                 thumb.pixel_data = NULL;
             }
@@ -728,7 +725,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
             /* read surface image pixel         */
             int bufsize = ((thumb.width * thumb.height * 4 + 4095) / 4096) * 4096;
             if ((! thumb.pixel_data) || (bufsize > thumb.pixel_bufsize))    {
-                if (thumb.pixel_data)   free(thumb.pixel_data);
+                free(thumb.pixel_data);
                 thumb.pixel_data = (char *)malloc(bufsize);
                 thumb.pixel_bufsize = bufsize;
                 if (thumb.pixel_data)   {
@@ -785,10 +782,8 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
             ico_syc_unmap_thumb(thumb.surface);
             thumb.surface = 0;
         }
-        if (thumb.pixel_data)   {
-            free(thumb.pixel_data);
-            thumb.pixel_data = NULL;
-        }
+        free(thumb.pixel_data);
+        thumb.pixel_data = NULL;
         icon = tile;
     }
 

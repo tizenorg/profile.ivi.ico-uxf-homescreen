@@ -13,11 +13,13 @@
  */
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
+#include <appsvc/appsvc.h>
 #include "CicoOnScreen.h"
 #include "CicoNotification.h"
 #include "CicoOSPopWindow.h"
 #include "ico_syc_type.h"
 #include "ico_syc_appresctl.h"
+#include "CicoOSClient.h"
 
 using namespace std;
 
@@ -41,22 +43,24 @@ using namespace std;
 CicoOSPopWindow::CicoOSPopWindow(notification_type_e type) : CicoNotification(type)
 {
     ICO_TRA("Enter type(%d)", (int)type);
-    m_window     = NULL;
-    m_icon       = NULL;
-    m_theme      = NULL;
-    m_resourceId = 0;
-    m_context    = NULL;
+    m_window      = NULL;
+    m_icon        = NULL;
+    m_theme       = NULL;
+    m_resourceId  = 0;
+    m_context     = NULL;
+    m_buttonTouch = false;
     ICO_TRA("Leave");
 }
 
 CicoOSPopWindow::CicoOSPopWindow(notification_h noti) : CicoNotification(noti)
 {
     ICO_TRA("Enter");
-    m_window     = NULL;
-    m_icon       = NULL;
-    m_theme      = NULL;
-    m_resourceId = 0;
-    m_context    = NULL;
+    m_window      = NULL;
+    m_icon        = NULL;
+    m_theme       = NULL;
+    m_resourceId  = 0;
+    m_context     = NULL;
+    m_buttonTouch = false;
     ICO_TRA("Leave");
 }
 //--------------------------------------------------------------------------
@@ -82,6 +86,16 @@ CicoOSPopWindow::~CicoOSPopWindow(void)
     if (NULL != m_context) {
         int r = ico_syc_release_res(m_context);
         ICO_DBG("_____ %d = ico_syc_release_res", r);
+    }
+
+    ICO_DBG("_____ %d, %d", (int)m_buttonTouch, (int)m_appsvc_pkgname.empty());
+
+    if ((true == m_buttonTouch) && (false == m_appsvc_pkgname.empty())) {
+        CicoOSClient* cosc = CicoOSClient::getInstance();
+        if (NULL != cosc) {
+            int r = cosc->sendLaunchMessage(m_appsvc_pkgname);
+            ICO_DBG("_____ SendMsg:%d, %s", r, m_appsvc_pkgname.c_str());
+        }
     }
 
     ICO_TRA("Leave");
@@ -129,6 +143,15 @@ CicoOSPopWindow::showPopup()
     ICO_DBG("Received: %s : %i : %s : %s : %s : %x",
             pkgname, priv_id, title, content,
             text, (int)service_handle);
+
+    if (NULL != service_handle) {
+        const char* pn = appsvc_get_pkgname(service_handle);
+        if (NULL != pn) {
+            ICO_DBG("Received: appsvc_get_pkgname:%s", pn);
+            m_appsvc_pkgname = pn;
+            m_buttonTouch = false;
+        }
+    }
 
     if (icon) {
         if (NULL != m_icon) {
@@ -213,11 +236,11 @@ CicoOSPopWindow::acquireRes()
  */
 //--------------------------------------------------------------------------
 void
-CicoOSPopWindow::hidePopup(void)
+CicoOSPopWindow::hidePopup(bool buttonTouch)
 {
-    ICO_TRA("Enter");
+    ICO_TRA("Enter %s", buttonTouch? "true": "false");
+    m_buttonTouch = buttonTouch;
     releaseRes();
-
     ICO_TRA("Leave");
 }
 
@@ -314,6 +337,7 @@ CicoOSPopWindow::createMainWindow()
         ICO_TRA("Leave(ERR)");
         return false;
     }
+    ecore_evas_alpha_set(m_window, EINA_TRUE);
     ecore_evas_show(m_window);
     ICO_TRA("Leave");
     return true;
@@ -339,7 +363,7 @@ CicoOSPopWindow::evasMouseUpCB(void *data, Evas *e, Evas_Object *obj,
     if (NULL != obj) {
         ICO_DBG("_____ obj name=%s", evas_object_name_get(obj));
     }
-    static_cast<CicoOSPopWindow*>(data)->hidePopup();
+    static_cast<CicoOSPopWindow*>(data)->hidePopup(true);
     ICO_TRA("Leave");
 }
 

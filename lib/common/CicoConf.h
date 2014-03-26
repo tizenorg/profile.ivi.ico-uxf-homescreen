@@ -92,6 +92,10 @@ typedef enum _privilege {
 #define ICO_SYC_ROLE_CONF_RST 14999
 #define ICO_SYC_ROLE_CONF_RST_STR "RESET"
 
+#define ICO_SYC_ONSCREEN_WINDOW_START_X 0
+#define ICO_SYC_ONSCREEN_WINDOW_START_Y 0
+#define ICO_SYC_ONSCREEN_WINDOW_WIDTH   1080
+#define ICO_SYC_ONSCREEN_WINDOW_HEIGHT  1920
 //==========================================================================
 /**
  *  @brief  This class holds display information of system config
@@ -102,13 +106,13 @@ class CicoSCNodeConf
 public:
     /// default constructor
     CicoSCNodeConf()
-        : id(-1), name(""), address(""), type(-1) {}
+        : id(-1), type(-1) {}
 
     /// destructor
-    virtual ~CicoSCNodeConf() {}
+    ~CicoSCNodeConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("node: id=%d name=%s address=%s type=%d",
                  id, name.c_str(), address.c_str(), type);
@@ -131,14 +135,13 @@ class CicoSCLayerConf
 public:
     /// default constructor
     CicoSCLayerConf()
-        : id(-1), name(""), type(-1), menuoverlap(false),
-        layout_id(-1), layout_name(""), area_id(-1), area_name("") {}
+        : id(-1), type(-1), menuoverlap(false), layout_id(-1), area_id(-1) {}
 
     /// destructor
-    virtual ~CicoSCLayerConf() {}
+    ~CicoSCLayerConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         if(-1 != layout_id) {
             ICO_DBG("  layer: %d, \"%s\" type=%d menuoverlap=%s layout: %d, \"%s\" area: %d, \"%s\"",
@@ -172,16 +175,16 @@ class CicoSCDisplayZoneConf
 public:
     /// default constructor
     CicoSCDisplayZoneConf()
-        : id(-1), name(""), fullname(""), x(-1), y(-1), w(-1), h(-1),
+        : id(-1), x(-1), y(-1), w(-1), h(-1),
           aspectFixed(false), aspectAlignLeft(false),
           aspectAlignRight(false), aspectAlignTop(false),
           aspectAlignBottom(false) {}
 
     /// destructor
-    virtual ~CicoSCDisplayZoneConf() {}
+    ~CicoSCDisplayZoneConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("  zone: id=%d name=%s fullname=%s x/y=%d/%d "
                 "w/h=%d/%d aspect(fixed=%s l/r=%s/%s t/b=%s/%s",
@@ -224,14 +227,14 @@ class CicoSCDisplayConf
 public:
     /// default constructor
     CicoSCDisplayConf()
-        : id(-1), name(""), node(-1), no(-1),
+        : id(-1), node(-1), no(-1),
           type(-1), width(-1), height(-1), inch(-1) {}
 
     /// destructor
-    virtual ~CicoSCDisplayConf() {}
+    ~CicoSCDisplayConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("display: id=%d name=%s node=%d no=%d "
                 "type=%d width=%d height=%d inch=%d",
@@ -265,13 +268,13 @@ class CicoSCSoundZoneConf
 public:
     /// default constructor
     CicoSCSoundZoneConf()
-        : id(-1), name(""), fullname("") {}
+        : id(-1) {}
 
     /// destructor
-    virtual ~CicoSCSoundZoneConf() {}
+    ~CicoSCSoundZoneConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG(" zone: id=%d name=%s fullname=%s",
                 id, name.c_str(), fullname.c_str());
@@ -293,13 +296,13 @@ class CicoSCSoundConf
 public:
     /// default constructor
     CicoSCSoundConf()
-        : id(-1), name(""), no(-1) {}
+        : id(-1), no(-1) {}
 
     /// destructor
-    virtual ~CicoSCSoundConf() {}
+    ~CicoSCSoundConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("sound: id=%d name=%s no=%d", id, name.c_str(), no);
     }
@@ -321,14 +324,13 @@ class CicoSCCategoryConf
 public:
     /// default constructor
     CicoSCCategoryConf()
-        : id(-1), name(""), type(""),
-          view(-1), sound(-1), input(-1), priority(0), rctrl(-1) {}
+        : id(-1), view(-1), sound(-1), input(-1), priority(0), rctrl(-1) {}
 
     /// destructor
-    virtual ~CicoSCCategoryConf() {}
+    ~CicoSCCategoryConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("category: id=%d name=%s type=%s "
                  "view=%d sound=%d input=%d priority=%d",
@@ -367,13 +369,13 @@ public:
 
     /// default constructor
     CicoSCAppKindConf()
-        : id(-1), name(""), privilege(-1), priority(0){}
+        : id(-1), privilege(-1), priority(0){}
 
     /// destructor
-    virtual ~CicoSCAppKindConf() {}
+    ~CicoSCAppKindConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("appkind: id=%d name=%s priority=%d priority=%d",
                  id, name.c_str(), privilege, priority);
@@ -396,13 +398,13 @@ class CicoSCSwitchConf
 public:
     /// default constructor
     CicoSCSwitchConf()
-        : id(-1), name(""), appid(""), keycode(0){}
+        : id(-1), keycode(0){}
 
     /// destructor
-    virtual ~CicoSCSwitchConf() {}
+    ~CicoSCSwitchConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("  switch: id=%d name=%s appid=%s",
                  id, name.c_str(), appid.c_str());
@@ -425,13 +427,13 @@ class CicoSCInputDevConf
 public:
     /// default constructor
     CicoSCInputDevConf()
-        : id(-1), name("") {}
+        : id(-1) {}
 
     /// destructor
-    virtual ~CicoSCInputDevConf() {}
+    ~CicoSCInputDevConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("inputdev: id=%d name=%s", id, name.c_str());
     }
@@ -452,16 +454,15 @@ class CicoSCDefaultConf
 public:
     /// default constructor
     CicoSCDefaultConf()
-        : topdir(""), confdir(""),
-          node(-1), appkind(-1), category(-1), display(-1), 
+        : node(-1), appkind(-1), category(-1), display(-1), 
           layer(-1), displayzone(-1), sound(-1), soundzone(-1),
           inputdev(-1), inputsw(-1) {};
 
     /// destructor
-    virtual ~CicoSCDefaultConf() {}
+    ~CicoSCDefaultConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("default: topdir=%s confdir=%s "
                 "node=%d appkind=%d category=%d "
@@ -497,13 +498,13 @@ class CicoSCCpuResourceGrp
 public:
     /// default constructor
     CicoSCCpuResourceGrp()
-        :m_id(-1), m_bDoIt(false), m_grpNm("") {}
+        :m_id(-1), m_bDoIt(false) {}
 
     /// destructor
-    virtual ~CicoSCCpuResourceGrp() {}
+    ~CicoSCCpuResourceGrp() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         std::stringstream hightlist;
         {
@@ -546,15 +547,15 @@ class CicoSCResourceConf
 public:
     /// default constructor
     CicoSCResourceConf()
-        :m_bDoIt(false), m_bDoItApp(false), m_bLog(false), m_cpuCGRPPath(""),
+        :m_bDoIt(false), m_bDoItApp(false), m_bLog(false), 
         m_sampling(-1), m_retryCnt(5), m_lowLimitVal(25),
         m_highLimitVal(90) {}
 
     /// destructor
-    virtual ~CicoSCResourceConf() {}
+    ~CicoSCResourceConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("do:%s,%s log:%s, dir:%s, smpl:%d r:%d l:%d h:%d sz:%d",
                 m_bDoIt? "true": "false", m_bDoItApp? "true": "false",
@@ -585,10 +586,10 @@ public:
     /// default constructor
     CicoSCUserConf() :m_parent_dir("/home/app/ico") {}
     /// destructor
-    virtual ~CicoSCUserConf() {}
+    ~CicoSCUserConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("parent dir:%s", m_parent_dir.c_str());
     }
@@ -607,14 +608,13 @@ class CicoSCVIPropertyConf
 public:
     /// default constructor
     CicoSCVIPropertyConf()
-        : name(""), objname(""), property(""), typestr(""),
-          type(ICO_TYPE_UNKNOW) {}
+        : type(ICO_TYPE_UNKNOW) {}
 
     /// destructor
-    virtual ~CicoSCVIPropertyConf() {}
+    ~CicoSCVIPropertyConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("vehicle_info: id=%02d name=%s objname=%s property=%s "
                 "zone=%d typestr=%s type=%d",
@@ -687,10 +687,10 @@ public:
     CicoSCVehicleInfoConf() : retryCnt(0), waitTime(0) {}
 
     /// destructor
-    virtual ~CicoSCVehicleInfoConf() {}
+    ~CicoSCVehicleInfoConf() {}
 
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("vehicle info: retry=%d waitTime=%d", retryCnt, waitTime);
         std::map<int, CicoSCVIPropertyConf*>::iterator itr;
@@ -723,9 +723,9 @@ public:
     CicoSCRoleConf()
         : m_def(ICO_SYC_ROLE_CONF_DEF), m_rst(ICO_SYC_ROLE_CONF_RST) {}
     /// destructor
-    virtual ~CicoSCRoleConf() {}
+    ~CicoSCRoleConf() {}
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("Role info: default=%d, reset=%d, size=%d",
                 (int)m_def, (int)m_rst, (int)m_stt.size());
@@ -753,12 +753,12 @@ class CicoSCPositionOSConf
 {
 public:
     /// constructor
-    CicoSCPositionOSConf()
-        : m_x(0), m_y(0), m_w(1080), m_h(1920) {}
+    CicoSCPositionOSConf(int x, int y, int w, int h)
+        : m_x(x), m_y(y), m_w(w), m_h(h) {}
     /// destructor
-    virtual ~CicoSCPositionOSConf() {}
+    ~CicoSCPositionOSConf() {}
     /// dump log this class member variables
-    void dumpConf(void)
+    void dumpConf()
     {
         ICO_DBG("OnScreen Window position : x:%d, y:%d, w:%d, h:%d", m_x, m_y, m_w, m_h);
     }

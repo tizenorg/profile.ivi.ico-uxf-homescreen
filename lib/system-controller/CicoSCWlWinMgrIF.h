@@ -18,11 +18,11 @@
 #define __CICO_SC_WL_WINMGR_IF_H__
 
 #include <wayland-client.h>
-#include <ilm_client.h>
-#include <ilm_control.h>
-#include <ico_window_mgr-client-protocol.h>
-#include <ivi-controller-client-protocol.h>
-#include <ivi-application-client-protocol.h>
+#include <ilm/ilm_client.h>
+#include <ilm/ilm_control.h>
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
+#include <weston/ivi-controller-client-protocol.h>
+#include <weston/ivi-application-client-protocol.h>
 
 #include "ico_syc_type.h"
 #include "CicoSCWaylandIF.h"
@@ -204,11 +204,6 @@ private:
                                int32_t          width,
                                int32_t          height,
                                int32_t          refresh);
-
-    static void wlIviAppErrorCB(void                    *data,
-                                struct ivi_application  *ivi_application,
-                                int32_t                 error_code,
-                                const char              *error_text);
 
     static void wlIviAppNativeShellInfoCB(void          *data,
                                           struct ivi_application *ivi_application,

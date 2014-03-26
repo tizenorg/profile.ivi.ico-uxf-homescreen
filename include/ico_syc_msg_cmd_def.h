@@ -174,6 +174,8 @@ extern "C" {
 /* notify state changed to homescreen */
 #define MSG_CMD_NOTIFY_CHANGED_STATE    0x00060001
 
+#define DEF_WS_CLI_HS_PORT          "ws://127.0.0.1:10001"
+#define DEF_WS_CLI_HS_PROTOCOL      "ico_hs_protocol"
 /* application operation */
 #define MSG_CMD_APP_START           1000
 #define MSG_CMD_APP_STOP            1001

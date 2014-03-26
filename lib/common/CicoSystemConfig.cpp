@@ -1381,10 +1381,10 @@ CicoSystemConfig::calcGeometryExpr(const string & expr,
 const CicoSCNodeConf*
 CicoSystemConfig::findNodeConfbyName(const string & name)
 {
-    vector<CicoSCNodeConf*>::iterator itr;
+    vector<CicoSCNodeConf*>::const_iterator itr;
     itr = m_nodeConfList.begin();
     for (; itr != m_nodeConfList.end(); ++itr) {
-        const CicoSCNodeConf* conf = const_cast<CicoSCNodeConf*>(*itr);
+        const CicoSCNodeConf* conf = (*itr);
         if (name == conf->name) {
             return conf;
         }
@@ -1403,11 +1403,10 @@ CicoSystemConfig::findNodeConfbyName(const string & name)
 const CicoSCDisplayConf*
 CicoSystemConfig::findDisplayConfbyName(const string & name)
 {
-    vector<CicoSCDisplayConf*>::iterator itr;
+    vector<CicoSCDisplayConf*>::const_iterator itr;
     itr = m_displayConfList.begin();
     for (; itr != m_displayConfList.end(); ++itr) {
-        const CicoSCDisplayConf* conf = NULL;
-        conf = const_cast<CicoSCDisplayConf*>(*itr);
+        const CicoSCDisplayConf* conf = (*itr);
         if (name == conf->name) {
             return conf;
         }
@@ -1427,11 +1426,10 @@ const CicoSCDisplayConf*
 CicoSystemConfig::findDisplayConfbyName(const string& ECU, const string& name)
 {
     int nodeId = getNodeIdbyName(ECU);
-    vector<CicoSCDisplayConf*>::iterator itr;
+    vector<CicoSCDisplayConf*>::const_iterator itr;
     itr = m_displayConfList.begin();
     for (; itr != m_displayConfList.end(); ++itr) {
-        const CicoSCDisplayConf* conf = NULL;
-        conf = const_cast<CicoSCDisplayConf*>(*itr);
+        const CicoSCDisplayConf* conf = (*itr);
         if ((name == conf->name)&&(nodeId == conf->node)) {
             return conf;
         }
@@ -1450,11 +1448,10 @@ CicoSystemConfig::findDisplayConfbyName(const string& ECU, const string& name)
 const CicoSCDisplayConf*
 CicoSystemConfig::findDisplayConfbyId(int id)
 {
-    vector<CicoSCDisplayConf*>::iterator itr;
+    vector<CicoSCDisplayConf*>::const_iterator itr;
     itr = m_displayConfList.begin();
     for (; itr != m_displayConfList.end(); ++itr) {
-        const CicoSCDisplayConf* conf = NULL;
-        conf = const_cast<CicoSCDisplayConf*>(*itr);
+        const CicoSCDisplayConf* conf = (*itr);
         if (id == conf->id) {
             return conf;
         }
@@ -1482,8 +1479,7 @@ CicoSystemConfig::findLayerConfbyName(const string & displayName,
     vector<CicoSCLayerConf*>::const_iterator itr;
     itr = displayConf->layerConfList.begin();
     for (; itr != displayConf->layerConfList.end(); ++itr) {
-        const CicoSCLayerConf* conf = NULL;
-        conf = const_cast<CicoSCLayerConf*>(*itr);
+        const CicoSCLayerConf* conf = (*itr);
 //        if (layerName == conf->name) {
         if ((layerName == conf->name) && (-1 == conf->layout_id)) {
             return conf;
@@ -1516,8 +1512,7 @@ CicoSystemConfig::findLayerConfbyName(const string& ECU,
     vector<CicoSCLayerConf*>::const_iterator itr;
     itr = displayConf->layerConfList.begin();
     for (; itr != displayConf->layerConfList.end(); ++itr) {
-        const CicoSCLayerConf* conf = NULL;
-        conf = const_cast<CicoSCLayerConf*>(*itr);
+        const CicoSCLayerConf* conf = (*itr);
         if ((layer == conf->name)&&(layout == conf->layout_name)&&
             (area == conf->area_name)) {
             return conf;
@@ -1546,8 +1541,7 @@ CicoSystemConfig::findLayerConfbyIdx(int displayid, int idx)
     vector<CicoSCLayerConf*>::const_iterator itr;
     itr = displayConf->layerConfList.begin();
     for (; itr != displayConf->layerConfList.end(); ++itr) {
-        const CicoSCLayerConf* conf = NULL;
-        conf = const_cast<CicoSCLayerConf*>(*itr);
+        const CicoSCLayerConf* conf = (*itr);
         if (idx <= 0)   {
             return conf;
         }
@@ -1581,8 +1575,7 @@ CicoSystemConfig::findDisplayZoneConfbyName(const string & displayName,
     vector<CicoSCDisplayZoneConf*>::const_iterator itr;
     itr = displayConf->zoneConfList.begin();
     for (; itr != displayConf->zoneConfList.end(); ++itr) {
-        const CicoSCDisplayZoneConf* conf = NULL;
-        conf = const_cast<CicoSCDisplayZoneConf*>(*itr);
+        const CicoSCDisplayZoneConf* conf = (*itr);
         if (zoneName == conf->name) {
 //            ICO_TRA("CicoSystemConfig::findDisplayZoneConfbyName Leave"
 //                    "(0x%08x)", conf);
@@ -1604,11 +1597,10 @@ CicoSystemConfig::findDisplayZoneConfbyName(const string & displayName,
 const CicoSCSoundConf*
 CicoSystemConfig::findSoundConfbyName(const string & name)
 {
-    vector<CicoSCSoundConf*>::iterator itr;
+    vector<CicoSCSoundConf*>::const_iterator itr;
     itr = m_soundConfList.begin();
     for (; itr != m_soundConfList.end(); ++itr) {
-        const CicoSCSoundConf* conf = NULL;
-        conf = const_cast<CicoSCSoundConf*>(*itr);
+        const CicoSCSoundConf* conf = (*itr);
         if (name == conf->name) {
             return conf;
         }
@@ -1641,8 +1633,7 @@ CicoSystemConfig::findSoundZoneConfbyName(const string & soundName,
     vector<CicoSCSoundZoneConf*>::const_iterator itr;
     itr = soundConf->zoneConfList.begin();
     for (; itr != soundConf->zoneConfList.end(); ++itr) {
-        const CicoSCSoundZoneConf* conf = NULL;
-        conf = const_cast<CicoSCSoundZoneConf*>(*itr);
+        const CicoSCSoundZoneConf* conf = (*itr);
         if (zoneName == conf->name) {
             return conf;
         }
@@ -1661,11 +1652,10 @@ CicoSystemConfig::findSoundZoneConfbyName(const string & soundName,
 const CicoSCInputDevConf*
 CicoSystemConfig::findInputDevConfbyName(const string & name)
 {
-    vector<CicoSCInputDevConf*>::iterator itr;
+    vector<CicoSCInputDevConf*>::const_iterator itr;
     itr = m_inputDevConfList.begin();
     for (; itr != m_inputDevConfList.end(); ++itr) {
-        const CicoSCInputDevConf* conf = NULL;
-        conf = const_cast<CicoSCInputDevConf*>(*itr);
+        const CicoSCInputDevConf* conf = (*itr);
         if (name == conf->name) {
             return conf;
         }
@@ -1696,8 +1686,7 @@ CicoSystemConfig::findSwitchConfbyName(const string & inputDevName,
     vector<CicoSCSwitchConf*>::const_iterator itr;
     itr = inputDevConf->switchConfList.begin();
     for (; itr != inputDevConf->switchConfList.end(); ++itr) {
-        const CicoSCSwitchConf* conf = NULL;
-        conf = const_cast<CicoSCSwitchConf*>(*itr);
+        const CicoSCSwitchConf* conf = (*itr);
         if (switchName == conf->name) {
             return conf;
         }
@@ -1717,11 +1706,10 @@ CicoSystemConfig::findSwitchConfbyName(const string & inputDevName,
 const CicoSCAppKindConf*
 CicoSystemConfig::findAppKindConfbyName(const string & name)
 {
-    vector<CicoSCAppKindConf*>::iterator itr;
+    vector<CicoSCAppKindConf*>::const_iterator itr;
     itr = m_appKindConfList.begin();
     for (; itr != m_appKindConfList.end(); ++itr) {
-        const CicoSCAppKindConf* conf = NULL;
-        conf = const_cast<CicoSCAppKindConf*>(*itr);
+        const CicoSCAppKindConf* conf = (*itr);
         if (name == conf->name) {
             return conf;
         }
@@ -1740,10 +1728,10 @@ CicoSystemConfig::findAppKindConfbyName(const string & name)
 const CicoSCDisplayZoneConf*
 CicoSystemConfig::findDisplayZoneConfbyId(int id)
 {
-    vector<CicoSCDisplayConf*>::iterator itr;
+    vector<CicoSCDisplayConf*>::const_iterator itr;
     itr = m_displayConfList.begin();
     for (; itr != m_displayConfList.end(); ++itr) {
-        vector<CicoSCDisplayZoneConf*>::iterator itr2;
+        vector<CicoSCDisplayZoneConf*>::const_iterator itr2;
         itr2 = (*itr)->zoneConfList.begin();
         for (; itr2 != (*itr)->zoneConfList.end(); ++itr2) {
             if (id == (*itr2)->id) {
@@ -1765,10 +1753,10 @@ CicoSystemConfig::findDisplayZoneConfbyId(int id)
 const CicoSCSoundZoneConf*
 CicoSystemConfig::findSoundZoneConfbyId(int id)
 {
-    vector<CicoSCSoundConf*>::iterator itr;
+    vector<CicoSCSoundConf*>::const_iterator itr;
     itr = m_soundConfList.begin();
     for (; itr != m_soundConfList.end(); ++itr) {
-        vector<CicoSCSoundZoneConf*>::iterator itr2;
+        vector<CicoSCSoundZoneConf*>::const_iterator itr2;
         itr2 = (*itr)->zoneConfList.begin();
         for (; itr2 != (*itr)->zoneConfList.end(); ++itr2) {
             if (id == (*itr2)->id) {
@@ -1790,11 +1778,10 @@ CicoSystemConfig::findSoundZoneConfbyId(int id)
 const CicoSCCategoryConf*
 CicoSystemConfig::findCategoryConfbyName(const string & name)
 {
-    vector<CicoSCCategoryConf*>::iterator itr;
+    vector<CicoSCCategoryConf*>::const_iterator itr;
     itr = m_categoryConfList.begin();
     for (; itr != m_categoryConfList.end(); ++itr) {
-        const CicoSCCategoryConf* conf = NULL;
-        conf = const_cast<CicoSCCategoryConf*>(*itr);
+        const CicoSCCategoryConf* conf = (*itr);
         if (name == conf->name) {
             //return const_cast<CicoSCCategoryConf*>(itr->pointer);
             return conf;
@@ -1814,11 +1801,10 @@ CicoSystemConfig::findCategoryConfbyName(const string & name)
 const CicoSCCategoryConf*
 CicoSystemConfig::findCategoryConfbyId(int id)
 {
-    vector<CicoSCCategoryConf*>::iterator itr;
+    vector<CicoSCCategoryConf*>::const_iterator itr;
     itr = m_categoryConfList.begin();
     for (; itr != m_categoryConfList.end(); ++itr) {
-        const CicoSCCategoryConf* conf = NULL;
-        conf = const_cast<CicoSCCategoryConf*>(*itr);
+        const CicoSCCategoryConf* conf = (*itr);
         if (id == conf->id) {
             return conf;
         }
@@ -1837,7 +1823,7 @@ CicoSystemConfig::findCategoryConfbyId(int id)
 const CicoSCAppKindConf *
 CicoSystemConfig::findAppKindConfbyId(int id)
 {
-    vector<CicoSCAppKindConf*>::iterator itr;
+    vector<CicoSCAppKindConf*>::const_iterator itr;
     itr = m_appKindConfList.begin();
     for (; itr != m_appKindConfList.end(); ++itr) {
         if (id == (*itr)->id) {
@@ -1909,11 +1895,10 @@ CicoSystemConfig::getDisplayIdbyName(const string & name)
 int
 CicoSystemConfig::getDisplayIdbyNo(int no)
 {
-    vector<CicoSCDisplayConf*>::iterator itr;
+    vector<CicoSCDisplayConf*>::const_iterator itr;
     itr = m_displayConfList.begin();
     for (; itr != m_displayConfList.end(); ++itr) {
-        const CicoSCDisplayConf* conf = NULL;
-        conf = const_cast<CicoSCDisplayConf*>(*itr);
+        const CicoSCDisplayConf* conf = (*itr);
         if (no == conf->no) {
             return conf->id;
         }
@@ -2178,11 +2163,10 @@ CicoSystemConfig::getCategoryObjbyCaategoryID(int id)
     if (-1 == id) {
         return NULL;
     }
-    vector<CicoSCCategoryConf*>::iterator itr;
+    vector<CicoSCCategoryConf*>::const_iterator itr;
     itr = m_categoryConfList.begin();
     for (; itr != m_categoryConfList.end(); ++itr) {
-        const CicoSCCategoryConf* conf = NULL;
-        conf = const_cast<CicoSCCategoryConf*>(*itr);
+        const CicoSCCategoryConf* conf = (*itr);
         if (id == conf->id) {
             //return const_cast<CicoSCCategoryConf*>(itr->pointer);
             return conf;
@@ -2291,52 +2275,34 @@ void CicoSystemConfig::createRoleConf(const ptree& root)
 //--------------------------------------------------------------------------
 void CicoSystemConfig::createPositionOSConf(const ptree& root)
 {
-    m_positionOSConf = new CicoSCPositionOSConf();
     ptree posc = root.get_child("systemconfig.on_screen_position");
 
-    try {
-        optional<string> opts = posc.get_optional<string>("x");
-        if (true == opts.is_initialized()) {
-            m_positionOSConf->m_x = atoi(opts.get().c_str());
-        }
-    }
-    catch (...) {
-        ICO_WRN("NG x");
-        m_positionOSConf->m_x = 0;
+    int x = ICO_SYC_ONSCREEN_WINDOW_START_X;
+    int y = ICO_SYC_ONSCREEN_WINDOW_START_Y;
+    int w = ICO_SYC_ONSCREEN_WINDOW_WIDTH;
+    int h = ICO_SYC_ONSCREEN_WINDOW_HEIGHT;
+
+    optional<string> optsx = posc.get_optional<string>("x");
+    if (true == optsx.is_initialized()) {
+        x = atoi(optsx.get().c_str());
     }
 
-    try {
-        optional<string> opts = posc.get_optional<string>("y");
-        if (true == opts.is_initialized()) {
-            m_positionOSConf->m_y = atoi(opts.get().c_str());
-        }
-    }
-    catch (...) {
-        ICO_WRN("NG y");
-        m_positionOSConf->m_y = 0;
+    optional<string> optsy = posc.get_optional<string>("y");
+    if (true == optsy.is_initialized()) {
+        y = atoi(optsy.get().c_str());
     }
 
-    try {
-        optional<string> opts = posc.get_optional<string>("w");
-        if (true == opts.is_initialized()) {
-            m_positionOSConf->m_w = atoi(opts.get().c_str());
-        }
-    }
-    catch (...) {
-        ICO_WRN("NG w");
-        m_positionOSConf->m_w = 1080;
+    optional<string> optsw = posc.get_optional<string>("w");
+    if (true == optsw.is_initialized()) {
+        w = atoi(optsw.get().c_str());
     }
 
-    try {
-        optional<string> opts = posc.get_optional<string>("h");
-        if (true == opts.is_initialized()) {
-            m_positionOSConf->m_h = atoi(opts.get().c_str());
-        }
+    optional<string> optsh = posc.get_optional<string>("h");
+    if (true == optsh.is_initialized()) {
+        h = atoi(optsh.get().c_str());
     }
-    catch (...) {
-        ICO_WRN("NG h");
-        m_positionOSConf->m_h = 1920;
-    }
+
+    m_positionOSConf = new CicoSCPositionOSConf(x, y, w, h);
     m_positionOSConf->dumpConf();
 }
 
