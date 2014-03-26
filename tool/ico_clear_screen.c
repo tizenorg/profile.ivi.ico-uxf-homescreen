@@ -28,14 +28,10 @@ sigterm_catch(int signo)
 {
     signal_flag = 1;
 
-#if 0
     if (_display->ico_window_mgr)   {
-        ico_window_mgr_set_visible(_display->ico_window_mgr, ICO_WINDOW_MGR_V_MAINSURFACE,
-                                   ICO_WINDOW_MGR_VISIBLE_HIDE, ICO_WINDOW_MGR_V_NOCHANGE,
-                                   ICO_WINDOW_MGR_FLAGS_ANIMATION |
-                                     ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE);
+		ico_window_mgr_layout_surface(_display->ico_window_mgr, -1, -1,
+									  -1, -1, -1, -1, 0);
     }
-#endif
 }
 
 void
@@ -141,23 +137,12 @@ opengl_create_window(struct display *display, struct wl_surface *surface,
 
     opengl_swap_buffer(display->display, dpy, egl_surface);
 
-#if 0
-    ico_window_mgr_set_animation(display->ico_window_mgr, ICO_WINDOW_MGR_V_MAINSURFACE,
+    ico_window_mgr_set_animation(display->ico_window_mgr, 0,
                                  ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE|
                                    ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
                                  display->animation, display->animatime);
-    ico_window_mgr_set_positionsize(display->ico_window_mgr, ICO_WINDOW_MGR_V_MAINSURFACE,
-                                    displayno, posx, posy,
-                                    ICO_WINDOW_MGR_V_NOCHANGE, ICO_WINDOW_MGR_V_NOCHANGE,
-                                    ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE);
-    ico_window_mgr_set_window_layer(display->ico_window_mgr, ICO_WINDOW_MGR_V_MAINSURFACE,
-                                    display->init_layer);
-    ico_window_mgr_set_layer_visible(display->ico_window_mgr, display->init_layer, 1);
-    ico_window_mgr_set_visible(display->ico_window_mgr, ICO_WINDOW_MGR_V_MAINSURFACE,
-                               ICO_WINDOW_MGR_VISIBLE_SHOW, ICO_WINDOW_MGR_RAISE_RAISE,
-                               ICO_WINDOW_MGR_FLAGS_ANIMATION |
-                                 ICO_WINDOW_MGR_FLAGS_NO_CONFIGURE);
-#endif
+	ico_window_mgr_layout_surface(display->ico_window_mgr, 0, display->init_layer,
+								  posx, posy, width, height, 1);
     return(egl_surface);
 }
 

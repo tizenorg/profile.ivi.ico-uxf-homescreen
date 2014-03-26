@@ -23,68 +23,47 @@
 #include <ico_log.h>
 #include "CicoComponentImplementation.h"
 
+/*  define of path   */
 #define IMG_DIR "/usr/apps/org.tizen.ico.statusbar/res/images/"
+#define THEME_PATH "/usr/apps/org.tizen.ico.statusbar/res/themes/statusbar.edj"
 
-// set image size of clock
-const int CicoStatusBarClockComponent::AMPM_WIDTH = 47;
-const int CicoStatusBarClockComponent::AMPM_HEIGHT = 30;
-const int CicoStatusBarClockComponent::HOUR10_WIDTH = 20;
-const int CicoStatusBarClockComponent::HOUR10_HEIGHT = 30;
-const int CicoStatusBarClockComponent::HOUR1_WIDTH = 20;
-const int CicoStatusBarClockComponent::HOUR1_HEIGHT = 30;
-const int CicoStatusBarClockComponent::COLON_WIDTH = 8;
-const int CicoStatusBarClockComponent::COLON_HEIGHT = 20;
-const int CicoStatusBarClockComponent::MIN10_WIDTH = 20;
-const int CicoStatusBarClockComponent::MIN10_HEIGHT = 30;
-const int CicoStatusBarClockComponent::MIN1_WIDTH = 20;
-const int CicoStatusBarClockComponent::MIN1_HEIGHT = 30;
-
-// set blank size
-const int CicoStatusBarClockComponent::COLON_BLANK = 7;
-const int CicoStatusBarClockComponent::AMPM_BLANK = 7;
-const int CicoStatusBarClockComponent::LAST_BLANK = 20;
-
-// set image position of clock
-const int CicoStatusBarClockComponent::AMPM_POSX = 0;
-const int CicoStatusBarClockComponent::AMPM_POSY = 8;
-const int CicoStatusBarClockComponent::RELATIVE_HOUR10_POSX = AMPM_WIDTH + AMPM_BLANK;
-const int CicoStatusBarClockComponent::RELATIVE_HOUR10_POSY = -8;
-const int CicoStatusBarClockComponent::RELATIVE_HOUR1_POSX = RELATIVE_HOUR10_POSX + HOUR10_WIDTH;
-const int CicoStatusBarClockComponent::RELATIVE_HOUR1_POSY = -8;
-const int CicoStatusBarClockComponent::RELATIVE_COLON_POSX = RELATIVE_HOUR1_POSX + HOUR1_WIDTH + COLON_BLANK;
-const int CicoStatusBarClockComponent::RELATIVE_COLON_POSY = -3;
-const int CicoStatusBarClockComponent::RELATIVE_MIN10_POSX = RELATIVE_COLON_POSX + COLON_WIDTH + COLON_BLANK;
-const int CicoStatusBarClockComponent::RELATIVE_MIN10_POSY = -8;
-const int CicoStatusBarClockComponent::RELATIVE_MIN1_POSX = RELATIVE_MIN10_POSX + MIN10_WIDTH;
-const int CicoStatusBarClockComponent::RELATIVE_MIN1_POSY = -8;
+/*  Theme group name  */
+#define THEME_CLOCK_NAME "ClockImage"
+#define THEME_NOTIFICATION_NAME "Notification"
 
 // set image file path of clock
-const char *CicoStatusBarClockComponent::imgfilepath_am = IMG_DIR"time_am.png";
-const char *CicoStatusBarClockComponent::imgfilepath_pm = IMG_DIR"time_pm.png";
-const char *CicoStatusBarClockComponent::imgfilepath_0 = IMG_DIR"time_0.png";
-const char *CicoStatusBarClockComponent::imgfilepath_1 = IMG_DIR"time_1.png";
-const char *CicoStatusBarClockComponent::imgfilepath_2 = IMG_DIR"time_2.png";
-const char *CicoStatusBarClockComponent::imgfilepath_3 = IMG_DIR"time_3.png";
-const char *CicoStatusBarClockComponent::imgfilepath_4 = IMG_DIR"time_4.png";
-const char *CicoStatusBarClockComponent::imgfilepath_5 = IMG_DIR"time_5.png";
-const char *CicoStatusBarClockComponent::imgfilepath_6 = IMG_DIR"time_6.png";
-const char *CicoStatusBarClockComponent::imgfilepath_7 = IMG_DIR"time_7.png";
-const char *CicoStatusBarClockComponent::imgfilepath_8 = IMG_DIR"time_8.png";
-const char *CicoStatusBarClockComponent::imgfilepath_9 = IMG_DIR"time_9.png";
-const char *CicoStatusBarClockComponent::imgfilepath_colon = IMG_DIR"time_ten.png";
+static const char *clock_image_path[] = {
+    IMG_DIR"time_0.png",
+    IMG_DIR"time_1.png",
+    IMG_DIR"time_2.png",
+    IMG_DIR"time_3.png",
+    IMG_DIR"time_4.png",
+    IMG_DIR"time_5.png",
+    IMG_DIR"time_6.png",
+    IMG_DIR"time_7.png",
+    IMG_DIR"time_8.png",
+    IMG_DIR"time_9.png",
+    IMG_DIR"time_am.png",
+    IMG_DIR"time_pm.png",
+    IMG_DIR"time_ten.png",
+    NULL
+};
 
-// set clock component size
-const int CicoStatusBarClockComponent::CLOCK_COMPONENT_WIDTH = AMPM_WIDTH +
-                                                               AMPM_BLANK +
-                                                               HOUR10_WIDTH +
-                                                               HOUR1_WIDTH +
-                                                               COLON_BLANK +
-                                                               COLON_WIDTH +
-                                                               COLON_BLANK +
-                                                               MIN10_WIDTH +
-                                                               MIN1_WIDTH;
+/*  define of special image index  */
+#define TIME_IMAGE_AM (10)
+#define TIME_IMAGE_PM (11)
+#define TIME_IMAGE_SP (12)
 
-const int CicoStatusBarClockComponent::CLOCK_COMPONENT_HEIGHT = HOUR10_HEIGHT;
+/*  array of clock object name  */
+static const char *clock_image_object[] = {
+    "AM_PM_img",
+    "HOUR10_img",
+    "HOUR1_img",
+    "TIME_SP_img",
+    "MIN10_img",
+    "MIN1_img",
+    NULL
+};
 
 /*--------------------------------------------------------------------------*/
 /**
@@ -95,7 +74,6 @@ const int CicoStatusBarClockComponent::CLOCK_COMPONENT_HEIGHT = HOUR10_HEIGHT;
  */
 /*--------------------------------------------------------------------------*/
 CicoStatusBarClockComponent::CicoStatusBarClockComponent()
-    : rate_(1.0)
 {
 }
 
@@ -109,7 +87,6 @@ CicoStatusBarClockComponent::CicoStatusBarClockComponent()
 /*--------------------------------------------------------------------------*/
 CicoStatusBarClockComponent::~CicoStatusBarClockComponent()
 {
-    imgfilelist_number.clear();
 }
 
 /*--------------------------------------------------------------------------*/
@@ -123,76 +100,49 @@ CicoStatusBarClockComponent::~CicoStatusBarClockComponent()
  */
 /*--------------------------------------------------------------------------*/
 bool
-CicoStatusBarClockComponent::Initialize(Evas_Object *windowobj, int posx, int posy)
+CicoStatusBarClockComponent::Initialize(Evas_Object *windowobj, Evas *evas)
 {
     ICO_TRA("CicoStatusBarClockComponent::Initialize Enter");
-    if (imgfilelist_number.empty()) {
-        imgfilelist_number.push_back(imgfilepath_0);
-        imgfilelist_number.push_back(imgfilepath_1);
-        imgfilelist_number.push_back(imgfilepath_2);
-        imgfilelist_number.push_back(imgfilepath_3);
-        imgfilelist_number.push_back(imgfilepath_4);
-        imgfilelist_number.push_back(imgfilepath_5);
-        imgfilelist_number.push_back(imgfilepath_6);
-        imgfilelist_number.push_back(imgfilepath_7);
-        imgfilelist_number.push_back(imgfilepath_8);
-        imgfilelist_number.push_back(imgfilepath_9);
+
+    /*  initialize display clock image */
+    int i;
+    for(i=0; i<CLOCK_OBJECT_COUNT; i++ ){
+        last_clock_image[i] = -1;
     }
 
-    std::shared_ptr<CicoImageModule> ampm_module;
-    ampm_module = std::make_shared<CicoImageModule>(CicoImageModule());
-    if (!ampm_module->Initialize(windowobj)) {
-        ICO_TRA("CicoStatusBarClockComponent::Initialize Leave(false)");
+    /*  make TimeImage object  */
+    evasobj_=edje_object_add(evas);
+    if (!edje_object_file_set(evasobj_, THEME_PATH, THEME_CLOCK_NAME )) {
+        Edje_Load_Error err = edje_object_load_error_get(evasobj_);
+        const char *errmsg = edje_load_error_str(err);
+        ICO_ERR("could not load 'main' from statusbar.edj: %s",
+                errmsg);
         return false;
     }
 
-    std::shared_ptr<CicoImageModule> hour10_module;
-    hour10_module = std::make_shared<CicoImageModule>(CicoImageModule());
-    if (!hour10_module->Initialize(windowobj)) {
-        ICO_TRA("CicoStatusBarClockComponent::Initialize Leave(false)");
-        return false;
+    /*  move TimeImage to UpRight of window  */
+    /*  Do not need this process , if positiong of UpRight enabled with .EDC file */
+    Evas_Coord x,y,w,h;
+    Evas_Coord w_width=0;
+    Evas_Object* obj = NULL;
+    evas_object_geometry_get( windowobj, &x, &y, &w_width, &h );
+    evas_object_resize( evasobj_, w_width, h );
+    obj = (Evas_Object*)edje_object_part_object_get(evasobj_,"MIN1_img" );
+    evas_object_geometry_get( obj, &x, &y, &w, &h );
+    Evas_Coord offset = w_width - x - w;
+
+    for ( i=0; i<CLOCK_OBJECT_COUNT; i++ ) {
+        obj = (Evas_Object*)edje_object_part_object_get(
+                        evasobj_, clock_image_object[i] );
+        if ( obj != NULL ) {
+            evas_object_geometry_get( obj, &x, &y, &w, &h );
+            evas_object_move( obj, x+offset , y);
+        }
     }
 
-    std::shared_ptr<CicoImageModule> hour1_module;
-    hour1_module = std::make_shared<CicoImageModule>(CicoImageModule());
-    if (!hour1_module->Initialize(windowobj)) {
-        ICO_TRA("CicoStatusBarClockComponent::Initialize Leave(false)");
-        return false;
-    }
-
-    std::shared_ptr<CicoImageModule> colon_module;
-    colon_module = std::make_shared<CicoImageModule>(CicoImageModule());
-    if (!colon_module->Initialize(windowobj)) {
-        ICO_TRA("CicoStatusBarClockComponent::Initialize Leave(false)");
-        return false;
-    }
-
-    std::shared_ptr<CicoImageModule> min10_module;
-    min10_module = std::make_shared<CicoImageModule>(CicoImageModule());
-    if (!min10_module->Initialize(windowobj)) {
-        ICO_TRA("CicoStatusBarClockComponent::Initialize Leave(false)");
-        return false;
-    }
-
-    std::shared_ptr<CicoImageModule> min1_module;
-    min1_module = std::make_shared<CicoImageModule>(CicoImageModule());
-    if (!min1_module->Initialize(windowobj)) {
-        ICO_TRA("CicoStatusBarClockComponent::Initialize Leave(false)");
-        return false;
-    }
-
-    PackModule(ampm_module);
-    PackModule(hour10_module);
-    PackModule(hour1_module);
-    PackModule(colon_module);
-    PackModule(min10_module);
-    PackModule(min1_module);
-
-    SetPos(posx, posy);
-    SetSize(AMPM_WIDTH + HOUR10_WIDTH + HOUR1_WIDTH + COLON_WIDTH +
-            MIN10_WIDTH + MIN1_WIDTH,
-            AMPM_HEIGHT);
-    SetRate(1.5);
+    /*  initial display  */
+    Update();
+    Show();
 
     ICO_TRA("CicoStatusBarClockComponent::Initialize Leave");
     return Update();
@@ -210,7 +160,7 @@ bool
 CicoStatusBarClockComponent::Update()
 {
     //ICO_TRA("CicoStatusBarClockComponent::Update Enter");
-    if (modulelist_.empty()) {
+    if (evasobj_ == NULL) {
         return false;
     }
 
@@ -220,89 +170,41 @@ CicoStatusBarClockComponent::Update()
     int min = tm->tm_min;
     int hour = tm->tm_hour;
 
-    std::shared_ptr<CicoImageModule> imagemodule;
-    assert(!modulelist_.empty());
-    std::list<std::shared_ptr<CicoCommonModule>>::iterator itr;
-    itr = modulelist_.begin();
-    imagemodule = std::static_pointer_cast<CicoImageModule>((*itr));
-    assert(imagemodule != NULL);
-
+    /*  Make now clock image tabel  */
+    int now_clock_image[CLOCK_OBJECT_COUNT];
     if (hour > 11) {
-        if (!imagemodule->SetFilePath(imgfilepath_pm)) {
-            ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-            return false;
-        }
+        now_clock_image[0]=TIME_IMAGE_PM;
     }
     else {
-        if (!imagemodule->SetFilePath(imgfilepath_am)) {
-            ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-            return false;
+        now_clock_image[0]=TIME_IMAGE_AM;
+    }
+    time_t hour_m = hour % 12;
+    now_clock_image[1]=hour_m / 10;
+    now_clock_image[2]=hour_m % 10;
+    now_clock_image[3]=TIME_IMAGE_SP;
+    now_clock_image[4]=min / 10;
+    now_clock_image[5]=min % 10;
+
+    /*  Set now clock image  */
+    int i;
+    for ( i=0; i<CLOCK_OBJECT_COUNT; i++ ) {
+
+        /*  if now clock image different last clock  */
+        if ( now_clock_image[i] != last_clock_image[i] ) {
+
+            Evas_Object* obj = NULL;
+            obj = (Evas_Object*)edje_object_part_object_get(
+                         evasobj_,clock_image_object[i] );
+            if ( obj != NULL ) {
+                ICO_DBG("SetNotification image set[%s][%s]",clock_image_object[i],clock_image_path[i]);
+                evas_object_image_file_set(obj, clock_image_path[now_clock_image[i]], NULL);
+            }
+            else {
+                ICO_DBG("SetNotification image set error[object not found]" );
+            }
+            last_clock_image[i] = now_clock_image[i];
         }
     }
-    imagemodule->SetSize(rate_ * AMPM_WIDTH, rate_ * AMPM_HEIGHT);
-    imagemodule->SetPos(posx_, posy_);
-    imagemodule->Show();
-
-    time_t hour_m = hour % 12;
-    itr++;
-    imagemodule = std::static_pointer_cast<CicoImageModule>((*itr));
-    assert(imagemodule != NULL);
-    if (!imagemodule->SetFilePath(imgfilelist_number[hour_m / 10])) {
-        ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-        return false;
-    }
-    imagemodule->SetSize(rate_ * HOUR10_WIDTH, rate_ * HOUR10_HEIGHT);
-    imagemodule->SetPos(posx_ + rate_ * RELATIVE_HOUR10_POSX,
-                        posy_ + rate_ * RELATIVE_HOUR10_POSY);
-    imagemodule->Show();
-
-    itr++;
-    imagemodule = std::static_pointer_cast<CicoImageModule>((*itr));
-    assert(imagemodule != NULL);
-    if (!imagemodule->SetFilePath(imgfilelist_number[hour_m % 10])) {
-        ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-        return false;
-    }
-    imagemodule->SetSize(rate_ * HOUR1_WIDTH, rate_ * HOUR1_HEIGHT);
-    imagemodule->SetPos(posx_ + rate_ * RELATIVE_HOUR1_POSX,
-                        posy_ + rate_ * RELATIVE_HOUR1_POSY);
-    imagemodule->Show();
-
-    itr++;
-    imagemodule = std::static_pointer_cast<CicoImageModule>((*itr));
-    assert(imagemodule != NULL);
-    if (!imagemodule->SetFilePath(imgfilepath_colon)) {
-        ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-        return false;
-    }
-    imagemodule->SetSize(rate_ * COLON_WIDTH, rate_ * COLON_HEIGHT);
-    imagemodule->SetPos(posx_ + rate_ * RELATIVE_COLON_POSX,
-                        posy_ + rate_ * RELATIVE_COLON_POSY);
-    imagemodule->Show();
-
-    itr++;
-    imagemodule = std::static_pointer_cast<CicoImageModule>((*itr));
-    assert(imagemodule != NULL);
-    if (!imagemodule->SetFilePath(imgfilelist_number[min / 10])) {
-        ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-        return false;
-    }
-    imagemodule->SetSize(rate_ * MIN10_WIDTH, rate_ * MIN10_HEIGHT);
-    imagemodule->SetPos(posx_ + rate_ * RELATIVE_MIN10_POSX,
-                        posy_ + rate_ * RELATIVE_MIN10_POSY);
-    imagemodule->Show();
-
-    itr++;
-    imagemodule = std::static_pointer_cast<CicoImageModule>((*itr));
-    assert(imagemodule != NULL);
-    if (!imagemodule->SetFilePath(imgfilelist_number[min % 10])) {
-        ICO_TRA("CicoStatusBarClockComponent::Update Leave(false)");
-        return false;
-    }
-    imagemodule->SetSize(rate_ * MIN1_WIDTH, rate_ * MIN1_HEIGHT);
-    imagemodule->SetPos(posx_ + rate_ * RELATIVE_MIN1_POSX,
-                        posy_ + rate_ * RELATIVE_MIN1_POSY);
-    imagemodule->Show();
 
     //ICO_TRA("CicoStatusBarClockComponent::Update Leave(true)");
     return true;
@@ -310,38 +212,38 @@ CicoStatusBarClockComponent::Update()
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   set rate of clock component
+ *  @brief   get clock start position
  *
- *  @param[in]  rate
+ *  @param[out]  x  X axis
+ *  @param[out]  y  Y axis
  *  @return     true: success   false: failed
  */
 /*--------------------------------------------------------------------------*/
 bool
-CicoStatusBarClockComponent::SetRate(double rate)
+CicoStatusBarClockComponent::GetClockStart( Evas_Coord *x_ret, Evas_Coord *y_ret)
 {
-    if (modulelist_.empty()) {
+    ICO_TRA("CicoStatusBarClockComponent::GetClockStart Enter");
+    if (evasobj_ == NULL) {
+        ICO_TRA("CicoStatusBarClockComponent::GetClockStart Leave(false)");
         return false;
     }
 
-    rate_ = rate;
-    width_ *= rate_;
-    height_ *= rate_;
-    SetPos(posx_, posy_);
-    SetSize(width_, height_);
+    Evas_Object* obj = NULL;
+    obj = (Evas_Object*)edje_object_part_object_get(
+                 evasobj_, clock_image_object[0] );
+    if ( obj == NULL ) {
+        ICO_TRA("CicoStatusBarClockComponent::GetClockStart Leave(false)");
+        return false;
+    }
+
+    Evas_Coord x,y,w,h;
+    evas_object_geometry_get( obj, &x, &y, &w, &h );
+    *x_ret = x;
+    *y_ret = y;
+
+    ICO_TRA("CicoStatusBarClockComponent::GetClockStart Leave(true)");
     return true;
 }
-
-// set notification(icon-image, text) position and font
-const int CicoNotificationPanelComponent::ICON_POSX = 0;
-const int CicoNotificationPanelComponent::ICON_POSY = 0;
-const int CicoNotificationPanelComponent::ICON_WIDTH = 48;
-const int CicoNotificationPanelComponent::ICON_HEIGHT = 48;
-const int CicoNotificationPanelComponent::RELATIVE_TEXT_POSX = 70;
-const int CicoNotificationPanelComponent::RELATIVE_TEXT_POSY = 10;
-const int CicoNotificationPanelComponent::TEXT_WIDTH = 450;
-const int CicoNotificationPanelComponent::TEXT_HEIGHT = 50;
-const char *CicoNotificationPanelComponent::FONT_STYLE = "Sans";
-const int CicoNotificationPanelComponent::FONT_SIZE = 50;
 
 /*--------------------------------------------------------------------------*/
 /**
@@ -352,13 +254,13 @@ const int CicoNotificationPanelComponent::FONT_SIZE = 50;
  */
 /*--------------------------------------------------------------------------*/
 CicoNotificationPanelComponent::CicoNotificationPanelComponent()
-    : CicoCommonComponent(), rate_(1.0)
+    : CicoCommonModule()
 {
 }
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   destructor
+ *  @brief   destructor
  *
  *  @param[in]  none
  *  @return     none
@@ -370,18 +272,18 @@ CicoNotificationPanelComponent::~CicoNotificationPanelComponent()
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   initialize of notification component
+ *  @brief   initialize of notification component
  *
  *  @param[in]  window
  *  @return     true: success   false: failed
  */
 /*--------------------------------------------------------------------------*/
 bool
-CicoNotificationPanelComponent::Initialize(Evas_Object *window)
+CicoNotificationPanelComponent::Initialize(Evas_Object *window, Evas *evas)
 {
     ICO_TRA("CicoNotificationPanelComponent::Initialize Enter");
 
-    if (!modulelist_.empty()) {
+    if (evasobj_ != NULL) {
         ICO_TRA("CicoNotificationPanelComponent::Initialize Levae(false)");
         return false;
     }
@@ -391,46 +293,23 @@ CicoNotificationPanelComponent::Initialize(Evas_Object *window)
         return false;
     }
 
-    posx_= ICON_POSX;
-    posy_ = ICON_POSY;
-    width_ = RELATIVE_TEXT_POSX + TEXT_WIDTH;
-    height_ = ICON_HEIGHT - ICON_POSY;
-
-    imgmod_ = std::make_shared<CicoImageModule>(CicoImageModule());
-    if (imgmod_ == NULL) {
-        ICO_TRA("CicoNotificationPanelComponent::Initialize Levae(false)");
-        return false;
-    }
-
-    if (!imgmod_->Initialize(window)) {
-        ICO_TRA("CicoNotificationPanelComponent::Initialize Levae(false)");
-        return false;
-    }
-
-    imgmod_->SetPos(posx_,7);
-
-    imgmod_->SetSize(ICON_WIDTH, ICON_HEIGHT);
-    imgmod_->Show();
-
-    ICO_DBG("Create Text Module start");
-    textmod_ = std::make_shared<CicoTextModule>(CicoTextModule());
-    if (textmod_ == NULL) {
-        ICO_TRA("CicoNotificationPanelComponent::Initialize Levae(false)");
-        return false;
-    }
+    /*  create Notification object  */
     ICO_DBG("Create Text Module end");
-    if (!textmod_->Initialize(window)) {
-        ICO_TRA("CicoNotificationPanelComponent::Initialize Levae(false)");
+    evasobj_=edje_object_add(evas);
+    if (!edje_object_file_set(evasobj_, THEME_PATH, THEME_NOTIFICATION_NAME)) {
+        Edje_Load_Error err = edje_object_load_error_get(evasobj_);
+        const char *errmsg = edje_load_error_str(err);
+        ICO_ERR("could not load 'main' from statusbar.edj: %s",
+                errmsg);
         return false;
     }
+    Evas_Coord x,y,w,h;
+    evas_object_geometry_get( window, &x, &y, &w, &h );
+    evas_object_resize( evasobj_, w, h );
 
-    textmod_->SetPos(posx_ + RELATIVE_TEXT_POSX, posy_ + RELATIVE_TEXT_POSY);
-    textmod_->SetSize(TEXT_WIDTH, TEXT_HEIGHT);
-    textmod_->SetFont(FONT_STYLE, FONT_SIZE);
-    textmod_->Show();
-
-    PackModule(imgmod_);
-    PackModule(textmod_);
+    /*  initial display  */
+    SetText("");
+    Hide();
 
     ICO_TRA("CicoNotificationPanelComponent::Initialize Levae(true)");
     return true;
@@ -438,7 +317,7 @@ CicoNotificationPanelComponent::Initialize(Evas_Object *window)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   set notification panel
+ *  @brief   set notification panel
  *
  *  @param[in]  text
  *  @param[in]  iconpaht
@@ -454,40 +333,84 @@ CicoNotificationPanelComponent::SetNotification(const char *text,
     ICO_TRA("CicoNotificationPanelComponent::SetNotification Enter"
             "(text=%s icon=%s sound=%s)", text, iconpath, soundpath);
 
+    /*  set image file  */
     if (iconpath != NULL) {
-        imgmod_->SetFilePath(iconpath);
+        Evas_Object* obj = NULL;
+        obj = (Evas_Object*)edje_object_part_object_get(
+                     evasobj_, "noti_image");
+        if ( obj != NULL ) {
+            ICO_DBG("SetNotification image set[%s]",iconpath);
+            evas_object_image_file_set(obj, iconpath, NULL);
+        }
+        else {
+            ICO_DBG("SetNotification image set error[object not found]" );
+        }
     }
 
+    /*  set text  */
     if (text != NULL) {
-        textmod_->SetText(text);
+        SetText(text);
     }
 
-    textmod_->SetFont(NULL,50);
-    textmod_->SetColor(0, 255, 255, 255);
     Show();
 
     ICO_TRA("CicoNotificationPanelComponent::SetNotification Leave");
 }
 
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 /**
- * @brief   set rate of notification component
- *
- *  @param[in]  rate
- *  @return     true: success   false: failed
+ *  @brief  set text to Content_text
+ *  @param[in]  text
+ *  @return     true: success
  */
-/*--------------------------------------------------------------------------*/
+//--------------------------------------------------------------------------
 bool
-CicoNotificationPanelComponent::SetRate(double rate)
+CicoNotificationPanelComponent::SetText(const char *text)
 {
-    if (modulelist_.empty()) {
-        return false;
+    ICO_TRA("CicoNotificationPanelComponent::SetText Enter(text=%s)", text? text:"NULL");
+    if ( text == NULL ) {
+        edje_object_part_text_set(evasobj_, "content_text", "");
+        return true;
     }
-    rate_ = rate;
-    width_ *= rate;
-    height_ *= rate;
-    SetPos(posx_, posy_);
-    SetSize(width_, height_);
+    edje_object_part_text_set(evasobj_, "content_text", text);
+
+    ICO_TRA("CicoNotificationPanelComponent::SetText Leave");
     return true;
 }
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  set text to Content_text
+ *  @param[in]  text
+ *  @return     true: success
+ */
+//--------------------------------------------------------------------------
+void
+CicoNotificationPanelComponent::SetTextEndPosition( Evas_Coord x_end, Evas_Coord y_end)
+{
+    ICO_TRA("CicoNotificationPanelComponent::SetTextEndPosition Enter(%d,%d)",x_end,y_end);
+
+    if (evasobj_ == NULL) {
+        ICO_TRA("CicoNotificationPanelComponent::SetTextEndPosition Leave(false)");
+        return;
+    }
+
+    Evas_Object* obj = NULL;
+    obj = (Evas_Object*)edje_object_part_object_get(
+                 evasobj_, "content_text" );
+    if ( obj == NULL ) {
+        ICO_TRA("CicoNotificationPanelComponent::SetTextEndPosition Leave(false)");
+        return;
+    }
+
+    Evas_Coord x,y,w,h;
+    evas_object_geometry_get( obj, &x, &y, &w, &h );
+    evas_object_resize( evasobj_, x_end, h );
+    ICO_TRA("CicoNotificationPanelComponent::text width %d -> %d",w, x_end - x -1);
+    evas_object_resize( obj, x_end - x -1, h );
+    edje_object_calc_force( obj );
+
+    ICO_TRA("CicoNotificationPanelComponent::SetTextEndPosition Leave" );
+}
+
 // vim: set expandtab ts=4 sw=4:

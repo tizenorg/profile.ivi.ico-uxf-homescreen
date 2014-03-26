@@ -196,7 +196,7 @@ CicoSCResourceManager::initialize(void)
     ICO_TRA("CicoSCResourceManager::initialize Leave");
     return ret;
 }
-  
+
 void
 CicoSCResourceManager::terminate(void)
 {
@@ -220,7 +220,7 @@ CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
     int reqtype = internal ? REQTYPE_AUTO : REQTYPE_APP;
     if ((MSG_CMD_CREATE_RES == cmd.cmdid) ||
         (MSG_CMD_ACQUIRE_RES == cmd.cmdid)) {
-        
+
         if (true == opt->dispres) {
             resource_request_t *req = newResourceRequest(RESID_KIND_DISPLAY,
                                                          reqtype,
@@ -233,7 +233,7 @@ CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
                 if (true == isTypeOnScreen(*req)) {
                     acquireOnScreenDisplayResource(req);
                 }
-                else 
+                else
                 if ((true == m_policyMgr->getRegulation()) &&
                     (false == isMatchDisplayed())) {
                     updateDispResRegulationPreProc(req);
@@ -320,7 +320,7 @@ CicoSCResourceManager::setInputController(CicoSCInputController *inputCtrl)
 }
 
 #if 0
-resource_request_t * 
+resource_request_t *
 CicoSCResourceManager::popDispResReq(resource_request_t *req)
 {
     ICO_TRA("CicoSCResourceManager::popDispResReq Enter");
@@ -371,7 +371,7 @@ CicoSCResourceManager::popSoundResReq(resource_request_t *req)
     return NULL;
 }
 
-resource_request_t * 
+resource_request_t *
 CicoSCResourceManager::popInputResReq(resource_request_t *req)
 {
     ICO_TRA("CicoSCResourceManager::popInputResReq Enter");
@@ -460,7 +460,7 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
     }
 
     bool displayMatch = false;
-    // 
+    //
     if (req != newreq) {
         char zoneO[128],zoneN[128];
         zoneO[0] = zoneN[0] = '\0';
@@ -493,17 +493,17 @@ CicoSCResourceManager::acquireDisplayResource(resource_request_t *newreq,
         }
         // update request data
         req->dispzoneid = newreq->dispzoneid;
-        if (NULL != req->dispzone) free(req->dispzone);
+        free(req->dispzone);
         req->dispzone = strdup(newreq->dispzone);
         req->layerid = newreq->layerid;
-        if (NULL != req->animation) free(req->animation);
+        free(req->animation);
         req->animation = strdup(newreq->animation);
         req->animationTime = newreq->animationTime;
 
         // delete new request
         delResourceRequest(newreq);
     }
-    
+
     if (false == control) {
         ICO_TRA("Enqueue waiting display resource request"
                 "(req=0x%08x appid=%s)", req, req->appid);
@@ -683,7 +683,7 @@ CicoSCResourceManager::releaseSoundResource(resource_request_t *newreq)
          }
     }
 
-    // If current request is not changed, 
+    // If current request is not changed,
     // remove the request from the waiting queue.
     if (false == curchg) {
        resource_request_t *req = popSoundResReq(newreq);
@@ -792,7 +792,7 @@ CicoSCResourceManager::releaseInputResource(resource_request_t *newreq)
          }
     }
 
-    // If current request is not changed, 
+    // If current request is not changed,
     // remove the request from the waiting queue.
     if (false == curchg) {
        resource_request_t *req = popInputResReq(newreq);
@@ -853,7 +853,7 @@ CicoSCResourceManager::newResourceRequest(int resid,
     }
 
     req->prio = req->category;
- 
+
     req->released = 0;
 
     /* set resource id */
@@ -924,20 +924,20 @@ CicoSCResourceManager::delResourceRequest(resource_request_t *req)
 {
     if (NULL == req) return;
 
-    if (NULL != req->appid)     free(req->appid);
-    if (NULL != req->dispzone)  free(req->dispzone);
-    if (NULL != req->winname)   free(req->winname);
-    if (NULL != req->animation) free(req->animation);
-    if (NULL != req->soundzone) free(req->soundzone);
-    if (NULL != req->soundname) free(req->soundname);
-    if (NULL != req->device)    free(req->device);
-    if (NULL != req->ECU)         free(req->ECU); // name to identify ECU
-    if (NULL != req->display)     free(req->display); // name to identify Display in ECU
-    if (NULL != req->layer)       free(req->layer); // name to identify Layer in Display
-    if (NULL != req->layout)      free(req->layout); // name to identify layout in Layer
-    if (NULL != req->area)        free(req->area); // name to Output position in Layout
-    if (NULL != req->dispatchApp) free(req->dispatchApp); // origin of application
-    if (NULL != req->role)        free(req->role); // role of notice
+    free(req->appid);
+    free(req->dispzone);
+    free(req->winname);
+    free(req->animation);
+    free(req->soundzone);
+    free(req->soundname);
+    free(req->device);
+    free(req->ECU);             // name to identify ECU
+    free(req->display);         // name to identify Display in ECU
+    free(req->layer);           // name to identify Layer in Display
+    free(req->layout);          // name to identify layout in Layer
+    free(req->area);            // name to Output position in Layout
+    free(req->dispatchApp);     // origin of application
+    free(req->role);            // role of notice
     free(req);
 }
 
@@ -950,7 +950,7 @@ CicoSCResourceManager::enforceSound(unsigned short state,
     /* NOP */
     ICO_TRA("CicoSCResourceManager::enforceSound Leave");
 }
-            
+
 // receive changed state
 void
 CicoSCResourceManager::receiveChangedState(int state)
@@ -958,7 +958,7 @@ CicoSCResourceManager::receiveChangedState(int state)
     ICO_TRA("CicoSCResourceManager::receiveChangedState Enter"
             "(state=%d)", state);
 
-    if (STID_DRVREGULATION_ON == state) { 
+    if (STID_DRVREGULATION_ON == state) {
         if (true == isMatchDisplayed()) {
             updateDisplayResourceRegulation(state);
             updateSoundResourceRegulation(state);
@@ -1034,7 +1034,7 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
     itr2 = m_curDispResOwerReq.begin();
     for (; itr2 != m_curDispResOwerReq.end(); ++itr2) {
         resource_request_t *tmpreq = itr2->second;
-        
+
         if (true == m_policyMgr->getDispZoneState(itr2->first)) {
             continue;
         }
@@ -1213,7 +1213,7 @@ CicoSCResourceManager::updateInputResource(resource_request_t *req)
             // initialize current zone request
             ICO_DBG("Dequeue current input request queue "
                     "(req=0x%08x input:%d appid=%s)",
-                    m_curInputResReq[i], 
+                    m_curInputResReq[i],
                     m_curInputResReq[i]->input, m_curInputResReq[i]->appid);
             ICO_PRF("CHG_GUI_RES input   deprived input=%d appid=%s",
                     m_curInputResReq[i]->input,
@@ -1340,7 +1340,7 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
                         m_waitingDispResReq.erase(itr2);
                         ICO_DBG("Enqueue current display resource request"
                                 "(req=0x%08x zone=%02d:%s appid=%s)",
-                                req, req->dispzoneid, 
+                                req, req->dispzoneid,
                                 req->dispzone, req->appid);
                         ICO_PRF("CHG_GUI_RES display acquired zone=%02d:%s "
                                 "appid=%s",
@@ -1372,7 +1372,7 @@ CicoSCResourceManager::updateDisplayResourceRegulation(int state)
                             m_winCtrl->hide(surfaceid,
                                             m_animaName.c_str(), m_animaTime);
                         }
- 
+
                         // show current window
                         m_winCtrl->show(current->surfaceid,
                                         m_animaName.c_str(), m_animaTime);
@@ -1530,7 +1530,7 @@ CicoSCResourceManager::updateInputResourceRegulation(int state)
  *  @brief   find currnet dipalay resource ower request
  *
  *  @param [in] request  compare requset
- *  
+ *
  *  @return request object on same requeset found, NULL on not found
  */
 //--------------------------------------------------------------------------
@@ -1557,7 +1557,7 @@ CicoSCResourceManager::findCurDispResOwerReq(resource_request_t *req)
  *  @brief  pop currnet dipalay resource ower request from list
  *
  *  @param [in] request  compare requset
- *  
+ *
  *  @return request object on same requeset found, NULL on not found
  */
 //--------------------------------------------------------------------------
@@ -1618,7 +1618,7 @@ CicoSCResourceManager::dumpCurDispResOwerReq(void)
  *  @brief  find waiting dipalay resource request
  *
  *  @param [in] request  compare requset
- *  
+ *
  *  @return request object on same requeset found, NULL on not found
  */
 //--------------------------------------------------------------------------
@@ -1643,7 +1643,7 @@ CicoSCResourceManager::findWaitingDispResReq(resource_request_t *req)
  *  @brief  pop waiting dipalay resource request from waiting list
  *
  *  @param [in] request  compare requset
- *  
+ *
  *  @return request object on same requeset found, NULL on not found
  */
 //--------------------------------------------------------------------------
@@ -1770,10 +1770,10 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
             }
         }
     }
-    
+
     min = ICO_DISPLAY1_ZONEID_MIN;
     max = ICO_DISPLAY1_ZONEID_MAX;
-    if ((NULL == curreq) && 
+    if ((NULL == curreq) &&
         (req->dispzoneid >= min) && (req->dispzoneid <= max)) {
         for (int i = min; i <= max; ++i) {
             std::map<unsigned int, resource_request_t*>::iterator itr;
@@ -2165,7 +2165,7 @@ CicoSCResourceManager::releaseOnScreenDisplayResource(resource_request_t *req)
             if (NULL != bwo) {
                 m_winCtrl->hide(bwo->surfaceid, NULL, 0);
                 if (m_rrtHO != tgt) {
-                    ICO_DBG("_____ NG Control OnScreen Resource %x(%d, %d), %x", 
+                    ICO_DBG("_____ NG Control OnScreen Resource %x(%d, %d), %x",
                             m_rrtHO, m_rrtHO->pid, m_rrtHO->resourceId, tgt);
                     resCB(ICO_SYC_EV_RES_WAITING, *m_rrtHO);
                 }
@@ -2308,7 +2308,11 @@ const resource_request_t* CicoSCResourceManager::getNoticeOfHighOder()
         if ((ICO_SYC_ROLE_CONF_DEF == hEv) || (0 == hEv)) {
             continue;  // continue of for itr
         }
+        bool test = m_policyMgr->testSMEvent(hEv);
         if (true == m_policyMgr->sendSMEvent(hEv)) {
+            r = (*itr);
+        }
+        else if (true == test) {
             r = (*itr);
         }
     }

@@ -19,8 +19,7 @@
 #include <cassert>
 
 #include <ico_log.h>
-#include "CicoModuleInterface.h"
-#include "CicoModuleImplementation.h"
+#include "CicoComponentImplementation.h"
 
 //--------------------------------------------------------------------------
 /**
@@ -30,7 +29,7 @@
  *  @return     none
  */
 //--------------------------------------------------------------------------
-CicoCommonModule::CicoCommonModule() 
+CicoCommonModule::CicoCommonModule()
     : evasobj_(NULL), posx_(0), posy_(0), width_(0), height_(0)
 {
     ICO_TRA("CicoCommonModule::CicoCommonModule Enter");
@@ -49,6 +48,7 @@ CicoCommonModule::CicoCommonModule()
 CicoCommonModule::~CicoCommonModule()
 {
     ICO_TRA("CicoCommonModule::~CicoCommonModule Enter");
+    Terminate();
     ICO_TRA("CicoCommonModule::~CicoCommonModule Leave");
 }
 
@@ -64,11 +64,14 @@ bool
 CicoCommonModule::Terminate(void)
 {
     ICO_TRA("CicoCommonModule::Terminate Enter");
-    if (evas_object_ref_get(evasobj_) > 1) {
-        evas_object_unref(evasobj_);
-    }
-    else {
-        evas_object_del(evasobj_);
+    if (evasobj_ != NULL) {
+        if (evas_object_ref_get(evasobj_) > 1) {
+            evas_object_unref(evasobj_);
+        }
+        else {
+            evas_object_del(evasobj_);
+        }
+        evasobj_ = NULL;
     }
     ICO_TRA("CicoCommonModule::Terminate Leave");
     return true;
@@ -76,7 +79,7 @@ CicoCommonModule::Terminate(void)
 
 //--------------------------------------------------------------------------
 /**
- *  @brief show module 
+ *  @brief show module
  *
  *  @param[in]  none
  *  @return     none
@@ -85,11 +88,11 @@ CicoCommonModule::Terminate(void)
 void
 CicoCommonModule::Show(void)
 {
-    // ICO_TRA("CicoCommonModule::Show Enter");
+    //ICO_TRA("CicoCommonModule::Show Enter");
     assert(evasobj_!=NULL);
     evas_object_show(evasobj_);
     assert (evas_object_visible_get(evasobj_) == EINA_TRUE);
-    // ICO_TRA("CicoCommonModule::Show Leave");
+    //ICO_TRA("CicoCommonModule::Show Leave");
 }
 
 //--------------------------------------------------------------------------

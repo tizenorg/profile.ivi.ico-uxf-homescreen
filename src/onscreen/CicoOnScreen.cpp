@@ -15,6 +15,7 @@
 #include "CicoOSPopWindow.h"
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
+#include "CicoOSClient.h"
 
 using namespace std;
 
@@ -70,10 +71,8 @@ CicoOnScreen::~CicoOnScreen(void)
     }
     m_waitMngWin.clear();
 
-    if (NULL != m_request) {
-        delete m_request;
-        m_request = NULL;
-    }
+    delete m_request;
+    m_request = NULL;
 //    ICO_TRA("CicoOnScreen::~CicoOnScreen Leave");
 }
 
@@ -93,12 +92,14 @@ CicoOnScreen::StartOnScreen(void)
     ICO_TRA("Enter");
 
     ico_syc_connect(EventCallBack, NULL);
-
     // save instance pointer
     os_instance = this;
 
     // Initialize
     ecore_evas_init();
+
+    CicoOSClient* cosc = CicoOSClient::getInstance();
+    cosc->connect();
 
     if (NULL == m_reserve) {
         m_reserve = new CicoOSPopWindow(NOTIFICATION_TYPE_NONE);
@@ -129,7 +130,6 @@ bool CicoOnScreen::insertNoti(notification_h noti_h)
     }
     if (NULL != w) {
         delete w;
-        w = NULL;
         ICO_TRA("Leave (false)");
         return false;
     }
@@ -267,7 +267,7 @@ bool CicoOnScreen::requestShowSC()
     ICO_TRA("Leave %s", r? "true": "false");
     return r;
 }
-    
+
 //--------------------------------------------------------------------------
 /**
  *  @brief   callback for system controller

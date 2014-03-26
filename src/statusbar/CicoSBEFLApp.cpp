@@ -32,6 +32,7 @@
 CicoSBEFLApp::CicoSBEFLApp()
 {
     ICO_TRA("CicoSBEFLApp::CicoSBEFLApp Enter");
+    m_statusbar = NULL;
     ICO_TRA("CicoSBEFLApp::CicoSBEFLApp Leave");
 }
 
@@ -104,6 +105,7 @@ void
 CicoSBEFLApp::onTerminate(void *user_data)
 {
     ICO_TRA("CicoSBEFLApp::onTerminate Enter");
+    delete m_statusbar;
     ICO_TRA("CicoSBEFLApp::onTerminate Leave");
 }
 

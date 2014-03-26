@@ -18,7 +18,7 @@
 #define __CICO_SC_WL_INPUT_MGR_IF_H__
 
 #include <string>
-#include <ico_input_mgr-client-protocol.h>
+#include <ico-uxf-weston-plugin/ico_input_mgr-client-protocol.h>
 #include "CicoSCWaylandIF.h"
 
 //--------------------------------------------------------------------------

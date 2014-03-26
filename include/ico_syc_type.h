@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, TOYOTA MOTOR CORPORATION.
+ * Copyright (c) 2013-2014, TOYOTA MOTOR CORPORATION.
  *
  * This program is licensed under the terms and conditions of the
  * Apache License, version 2.0.  The full text of the Apache License is at
@@ -10,13 +10,13 @@
  * @brief   header file of System Controller
  *          for privilege and general applications
  *
- * @date    Aug-6-2013
+ * @date    Feb-21-2014
  */
 
 #ifndef _ICO_SYC_TYPE_H_
 #define _ICO_SYC_TYPE_H_
 
-#include <ico_window_mgr-client-protocol.h>
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -272,9 +272,6 @@ typedef struct _user_list {
  * window resource information
  */
 typedef struct _res_win {
-/*-    char *zone; */        /* area of showing application window */
-/*-    char *name; */        /* window's surface name */
-/*-    char *id;   */        /* window id */
     char *ECU;          /* name to identify ECU */
     char *display;      /* name to identify Display in ECU */
     char *layer;        /* name to identify Layer in Display */

@@ -9,7 +9,8 @@ OnScreen_SOURCES = \
 	on_screen_main.cpp \
 	CicoOSEFLApp.cpp   \
 	CicoOnScreen.cpp   \
-	CicoOSPopWindow.cpp
+	CicoOSPopWindow.cpp \
+	CicoOSClient.cpp
 
 OnScreen_CFLAGS= 					\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
@@ -18,7 +19,6 @@ OnScreen_CFLAGS= 					\
     $(AUL_CFLAGS) 					\
     $(UWS_CFLAGS) 					\
 	$(NOTIFICATION_CFLAGS)          \
-    $(WESTONPLUGIN_CFLAGS) 			\
     -I../../include 				\
     -I../../lib/common              \
     -I../../lib/notification
@@ -30,7 +30,6 @@ OnScreen_CXXFLAGS= 				\
     $(AUL_CFLAGS) 					\
     $(UWS_CFLAGS) 					\
 	$(NOTIFICATION_CFLAGS)          \
-    $(WESTONPLUGIN_CFLAGS) 			\
     -I../../include 				\
     -I../../lib/common              \
     -I../../lib/notification
@@ -43,7 +42,8 @@ OnScreen_LDADD = 					\
     $(OPT_LIBS) 					\
     $(AUL_LIBS) 					\
     $(UWS_LIBS) 					\
-	$(NOTIFICATION_LIBS)		\
+	$(NOTIFICATION_LIBS)			\
+	-lappsvc						\
 	../../lib/apps-framework/.libs/libico-appfw.so
 
 SUFFIXES = .edc .edj
