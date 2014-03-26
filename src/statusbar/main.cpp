@@ -33,7 +33,7 @@
 //--------------------------------------------------------------------------
 /**
  *  @brief  setup log
- *  @param[in]  void 
+ *  @param[in]  void
  *  @return     none
  */
 //--------------------------------------------------------------------------
@@ -115,7 +115,7 @@ setupLog(void)
 
 //--------------------------------------------------------------------------
 /**
- *  @brief   status bar main 
+ *  @brief   status bar main
  *
  *  @param [in] argc    counts of argment
  *  @param [in] argv    argment
@@ -129,7 +129,7 @@ main(int argc, char *argv[])
 {
     try {
         printf("=== start Status Bar main entry\n");
- 
+
         // setupLog
         setupLog();
         ICO_INF( "START_MODULE StatusBar");

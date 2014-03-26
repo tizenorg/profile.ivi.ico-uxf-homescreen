@@ -1,0 +1,182 @@
+/*
+ * Copyright (c) 2014, TOYOTA MOTOR CORPORATION.
+ *
+ * This program is licensed under the terms and conditions of the
+ * Apache License, version 2.0.  The full text of the Apache License is at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
+
+collections {
+   group {
+      name: "Notification";
+
+      styles {
+         style {
+            name: "content_style_left";
+            base: "font="Sans" font_size=22 color=#00FFFFFF shadow_color=#80808032 style=shadow wrap=mixed";
+         }
+         style {
+            name: "content_style_center";
+            base: "font="Sans" font_size=25 color=#00FFFFFF shadow_color=#80808032 align=center style=shadow wrap=mixed";
+         }
+      }
+      
+      parts {
+          part {  
+              name: "noti_image";
+              type: IMAGE;
+              description {
+                  min: 50 50;
+                  max: 50 50;
+                  align: 0.0 0.0;
+                  rel1 {
+                        relative: 0.0 0.0;
+                        offset: 0 7;
+                  }
+/*
+                  image{
+                    normal: "time_0.png";
+                  }
+*/
+              }
+         }
+
+
+         part {
+            name: "content_text";
+            type: TEXTBLOCK;
+            scale: 1;
+            effect: FAR_SOFT_SHADOW;
+            description {
+               min: 300 50;
+               max: 1500 50;
+               state: "default" 0.0;
+               align: 0.0 0.0;
+               rel1.relative: 0.0 0.0;
+               rel1.offset: 70 5;
+               color: 0 255 255 255;
+               text {
+                  style: "content_style_left";
+                  text: "text";
+                  align: 0.0 0.5;
+               }
+            }
+         }
+      }
+   }
+   group {
+      name: "ClockImage";
+
+      images{
+        image:"time_am.png" COMP;
+        image:"time_ten.png" COMP;
+        image:"time_0.png" COMP;
+      }
+
+
+      parts {
+          part { 
+              name: "MIN1_img";
+              type: IMAGE;
+              description {
+                  min: 30 45;
+                  max: 30 45;
+                  align: 0.0 0.0;
+                  rel1 {
+                        relative: 0.0 0.0;
+                        offset: 500 3;
+                  }
+                  image{
+                    normal: "time_0.png";
+                  }
+              }
+          }
+          part { 
+              name: "MIN10_img";
+              type: IMAGE;
+              description {
+                  min: 30 45;
+                  max: 30 45;
+                  align: 0.0 0.0;
+                  rel1 {
+                        to: "MIN1_img";
+                        relative: 0.0 0.0;
+                        offset: -31 0;
+                  }
+                  image{
+                    normal: "time_0.png";
+                  }
+              }
+          }
+          part { 
+              name: "TIME_SP_img";
+              type: IMAGE;
+              description {
+                  min: 12 30;
+                  max: 12 30;
+                  align: 0.0 0.0;
+                  rel1 {
+                        to: "MIN10_img";
+                        relative: 0.0 0.0;
+                        offset: -13 8;
+                  }
+                  image{
+                    normal: "time_ten.png";
+                  }
+              }
+          }
+          part { 
+              name: "HOUR1_img";
+              type: IMAGE;
+              description {
+                  min: 30 45;
+                  max: 30 45;
+                  align: 0.0 0.0;
+                  rel1 {
+                        to: "TIME_SP_img";
+                        relative: 0.0 0.0;
+                        offset: -31 -8;
+                  }
+                  image{
+                    normal: "time_0.png";
+                  }
+              }
+          }
+          part { 
+              name: "HOUR10_img";
+              type: IMAGE;
+              description {
+                  min: 30 45;
+                  max: 30 45;
+                  align: 0.0 0.0;
+                  rel1 {
+                        to: "HOUR1_img";
+                        relative: 0.0 0.0;
+                        offset: -31 0;
+                  }
+                  image{
+                    normal: "time_0.png";
+                  }
+              }
+          }
+          part { 
+              name: "AM_PM_img";
+              type: IMAGE;
+              description {
+                  min: 60 45;
+                  max: 60 45;
+                  align: 0.0 0.0;
+                  rel1 {
+                        to: "HOUR10_img";
+                        relative: 0.0 0.0;
+                        offset: -61 12;
+                  }
+                  image{
+                    normal: "time_am.png";
+                  }
+              }
+          }
+      }
+   }
+}

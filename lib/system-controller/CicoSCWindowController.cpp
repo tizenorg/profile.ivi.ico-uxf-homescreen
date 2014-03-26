@@ -191,9 +191,12 @@ CicoSCWindowController::show(int        surfaceid,
                              const char *animation,
                              int        animationTime)
 {
+    int     type = animationTime & ICO_SYC_WIN_SURF_FLAGS;
+    animationTime &= ~ICO_SYC_WIN_SURF_FLAGS;
+
     ICO_TRA("CicoSCWindowController::show Enter"
-            "(surfaceid=0x%08X animation=%s animationTime=%d)",
-            surfaceid, animation, animationTime);
+            "(surfaceid=%08x animation=%s type=%x animationTime=%d)",
+            surfaceid, animation, type, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -220,21 +223,24 @@ CicoSCWindowController::show(int        surfaceid,
 
     // set animation request to Multi Window Manager
     int raiseFlag = ICO_SYC_WIN_RAISE_NOCHANGE;
-    if (animationTime & ICO_SYC_WIN_SURF_RAISE) {
+    if (type & ICO_SYC_WIN_SURF_RAISE)  {
         raiseFlag = ICO_SYC_WIN_RAISE_RAISE;
     }
-    else if (animationTime & ICO_SYC_WIN_SURF_LOWER)    {
+    else if (type & ICO_SYC_WIN_SURF_LOWER) {
         raiseFlag = ICO_SYC_WIN_RAISE_LOWER;
     }
-    else if (((animationTime & ICO_SYC_WIN_SURF_NOCHANGE) == 0) &&
+    else if (((type & ICO_SYC_WIN_SURF_NOCHANGE) == 0) &&
              (false == window->raise))   {
         raiseFlag = ICO_SYC_WIN_RAISE_RAISE;
     }
     if ((NULL != animation) && (animation[0] != '\0')) {
         // set animation request to Multi Window Manager
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
-                                    ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
-                                    animation, animationTime & ~ICO_SYC_WIN_SURF_FLAGS);
+                                       (type & ICO_SYC_WIN_SURF_ONESHOT) ?
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW |
+                                           ICO_WINDOW_MGR_ANIMATION_TYPE_ONESHOT :
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
+                                       animation, animationTime);
     }
 
     // set raise/lower request (if need)
@@ -315,9 +321,12 @@ CicoSCWindowController::hide(int        surfaceid,
                              const char *animation,
                              int        animationTime)
 {
+    int     type = animationTime & ICO_SYC_WIN_SURF_FLAGS;
+    animationTime &= ~ICO_SYC_WIN_SURF_FLAGS;
+
     ICO_TRA("CicoSCWindowController::hide Enter"
-            "(surfaceid=0x%08X animation=%s animationTime=%d)",
-            surfaceid, animation, animationTime);
+            "(surfaceid=%08x animation=%s type=%x animationTime=%d)",
+            surfaceid, animation, type, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -352,8 +361,11 @@ CicoSCWindowController::hide(int        surfaceid,
     // set animation request to Multi Window Manager
     if ((NULL != animation) && (animation[0] != '\0')) {
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
-                                       ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE,
-                                       animation, animationTime & ~ICO_SYC_WIN_SURF_FLAGS);
+                                       (type & ICO_SYC_WIN_SURF_ONESHOT) ?
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE |
+                                           ICO_WINDOW_MGR_ANIMATION_TYPE_ONESHOT :
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE,
+                                       animation, animationTime);
     }
 
     // set visible request to Multi Window Manager
@@ -389,9 +401,12 @@ CicoSCWindowController::resize(int        surfaceid,
                                const char *animation,
                                int        animationTime)
 {
+    int     type = animationTime & ICO_SYC_WIN_SURF_FLAGS;
+    animationTime &= ~ICO_SYC_WIN_SURF_FLAGS;
+
     ICO_TRA("CicoSCWindowController::resize Enter"
-            "(surfaceid=0x%08X h=%d w=%d animation=%s animationTime=%d)",
-            surfaceid, w, h, animation, animationTime);
+            "(surfaceid=%08x h=%d w=%d animation=%s type=%x animationTime=%d)",
+            surfaceid, w, h, animation, type, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -404,7 +419,10 @@ CicoSCWindowController::resize(int        surfaceid,
     // set animation request to Multi Window Manager
     if ((NULL != animation) && (animation[0] != '\0')) {
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
-                                       ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE,
+                                       (type & ICO_SYC_WIN_SURF_ONESHOT) ?
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE |
+                                           ICO_WINDOW_MGR_ANIMATION_TYPE_ONESHOT :
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE,
                                        animation, animationTime);
     }
 
@@ -446,10 +464,13 @@ CicoSCWindowController::move(int        surfaceid,
                              const char *animation,
                              int        animationTime)
 {
+    int     type = animationTime & ICO_SYC_WIN_SURF_FLAGS;
+    animationTime &= ~ICO_SYC_WIN_SURF_FLAGS;
+
     ICO_TRA("CicoSCWindowController::move Enter"
-            "(surfaceid=0x%08X nodeid=%d x=%d y=%d "
-            "animation=%s animationTime=%d)",
-            surfaceid, nodeid, x, y, animation, animationTime);
+            "(surfaceid=%08x nodeid=%d x=%d y=%d "
+            "animation=%s type=%x animationTime=%d)",
+            surfaceid, nodeid, x, y, animation, type, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -468,7 +489,10 @@ CicoSCWindowController::move(int        surfaceid,
     // set animation request to Multi Window Manager
     if ((NULL != animation) && (animation[0] != '\0')) {
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
-                                       ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
+                                       (type & ICO_SYC_WIN_SURF_ONESHOT) ?
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE |
+                                           ICO_WINDOW_MGR_ANIMATION_TYPE_ONESHOT :
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
                                        animation, animationTime);
     }
 
@@ -510,9 +534,12 @@ CicoSCWindowController::raise(int        surfaceid,
                               const char *animation,
                               int        animationTime)
 {
+    int     type = animationTime & ICO_SYC_WIN_SURF_FLAGS;
+    animationTime &= ~ICO_SYC_WIN_SURF_FLAGS;
+
     ICO_TRA("CicoSCWindowController::raise Enter"
-            "(surfaceid=0x%08X animation=%s animationTime=%d)",
-            surfaceid, animation, animationTime);
+            "(surfaceid=%08x animation=%s type=%x animationTime=%d)",
+            surfaceid, animation, type, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -525,7 +552,10 @@ CicoSCWindowController::raise(int        surfaceid,
     // set animation request to Multi Window Manager
     if ((NULL != animation) && (animation[0] != '\0')) {
         CicoSCWindowController::setAnimation(window->surfaceid,
-                                             ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
+                                             (type & ICO_SYC_WIN_SURF_ONESHOT) ?
+                                               ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW |
+                                                 ICO_WINDOW_MGR_ANIMATION_TYPE_ONESHOT :
+                                               ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
                                              animation, animationTime);
     }
     // set raise request to Multi Window Manager
@@ -577,7 +607,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
                                     int        moveAnimationTime)
 {
     ICO_TRA("CicoSCWindowController::setGeometry Enter"
-            "(surfaceid=0x%08X nodeid=%d layerid=%d x=%d y=%d w=%d h=%d "
+            "(surfaceid=%08x nodeid=%d layerid=%d x=%d y=%d w=%d h=%d "
             "resizeAnimation=%s resizeAnimationTime=%d "
             "moveAnimation=%s moveAnimationTime=%d)",
             surfaceid, nodeid, layerid, x, y, w, h,
@@ -806,9 +836,12 @@ CicoSCWindowController::lower(int        surfaceid,
                               const char *animation,
                               int        animationTime)
 {
+    int     type = animationTime & ICO_SYC_WIN_SURF_FLAGS;
+    animationTime &= ~ICO_SYC_WIN_SURF_FLAGS;
+
     ICO_TRA("CicoSCWindowController::lower Enter"
-            "(surfaceid=0x%08X animation=%s animationTime=%d)",
-            surfaceid, animation, animationTime);
+            "(surfaceid=08x animation=%s type=%x animationTime=%d)",
+            surfaceid, animation, type, animationTime);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -821,7 +854,10 @@ CicoSCWindowController::lower(int        surfaceid,
     // set animation request to Multi Window Manager
     if ((NULL != animation) && (animation[0] != '\0')) {
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
-                                       ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE,
+                                       (type & ICO_SYC_WIN_SURF_ONESHOT) ?
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW |
+                                           ICO_WINDOW_MGR_ANIMATION_TYPE_ONESHOT :
+                                         ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
                                        animation, animationTime);
     }
 
@@ -1168,10 +1204,6 @@ CicoSCWindowController::mapSurface(int surfaceid, int framerate, const char *fil
         ICO_WRN("not found window information");
         ICO_TRA("CicoSCWindowController::mapSurface Leave(ENOENT)");
         return ICO_SYC_ENOENT;
-    }
-
-    if (framerate < 0) {
-        framerate = 0;
     }
 
     CicoSCWlWinMgrIF::mapSurface(surfaceid, framerate, filepath);

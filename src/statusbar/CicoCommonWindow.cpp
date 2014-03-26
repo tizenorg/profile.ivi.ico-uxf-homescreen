@@ -50,12 +50,6 @@ bool
 CicoCommonWindow::Terminate(void)
 {
     ICO_TRA("CicoCommonWindow::Terminate Enter");
-    std::list<CicoCommonComponent*>::iterator itr, itr_end;
-    itr_end = componentlist_.end();
-    for (itr = componentlist_.begin(); itr != itr_end; itr++) {
-        delete (*itr);
-    }
-    componentlist_.clear();
     ICO_TRA("CicoCommonWindow::Terminate Leave");
     return true;
 }
@@ -75,11 +69,6 @@ CicoCommonWindow::Show(void)
     ecore_evas_show(window_);
     if (windowobj_ != NULL) {
         evas_object_show(windowobj_);
-        std::list<CicoCommonComponent*>::iterator itr, itr_end;
-        itr_end = componentlist_.end();
-        for (itr = componentlist_.begin(); itr != itr_end; itr++) {
-            (*itr)->Show();
-        }
     }
     ICO_TRA("CicoCommonWindow::Show Leave");
 }
@@ -99,11 +88,6 @@ CicoCommonWindow::Hide(void)
     ecore_evas_hide(window_);
     if (windowobj_ != NULL) {
         evas_object_hide(windowobj_);
-        std::list<CicoCommonComponent*>::iterator itr, itr_end;
-        itr_end = componentlist_.end();
-        for (itr = componentlist_.begin(); itr != itr_end; itr++) {
-            (*itr)->Hide();
-        }
     }
     ICO_TRA("CicoCommonWindow::Show Enter");
 }
@@ -125,11 +109,6 @@ CicoCommonWindow::SetPos(int x, int y)
     ecore_evas_move(window_, posx_, posy_);
     if (windowobj_ != NULL) {
         evas_object_move(windowobj_, posx_, posy_);
-        std::list<CicoCommonComponent*>::iterator itr, itr_end;
-        itr_end = componentlist_.end();
-        for (itr = componentlist_.begin(); itr != itr_end; itr++) {
-            (*itr)->SetPos(posx_, posy_);
-        }
     }
 }
 
@@ -150,14 +129,10 @@ CicoCommonWindow::SetSize(int w, int h)
     ecore_evas_resize(window_, width_, height_);
     if (windowobj_ != NULL) {
         evas_object_resize(windowobj_, width_, height_);
-        std::list<CicoCommonComponent*>::iterator itr, itr_end;
-        itr_end = componentlist_.end();
-        for (itr = componentlist_.begin(); itr != itr_end; itr++) {
-            (*itr)->SetSize(width_, height_);
-        }
     }
 }
 
+#if 0
 //--------------------------------------------------------------------------
 /**
  *  @brief  set component
@@ -185,4 +160,5 @@ CicoCommonWindow::UnsetComponent(CicoCommonComponent *component)
 {
     componentlist_.remove(component);
 }
+#endif
 // vim: set expandtab ts=4 sw=4:

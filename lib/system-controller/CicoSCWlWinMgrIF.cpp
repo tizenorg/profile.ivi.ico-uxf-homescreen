@@ -56,7 +56,6 @@ CicoSCWlWinMgrIF::CicoSCWlWinMgrIF()
     m_listener.destroy_surface  = wlDestroySurfaceCB;
 
     // genivi ivi_application listener
-    m_ivi_app_listener.error = wlIviAppErrorCB;
     m_ivi_app_listener.wl_shell_info = wlIviAppNativeShellInfoCB;
 
     // genivi ivi_controller listener
@@ -470,6 +469,8 @@ CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(uint32_t id_surface)
             ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(%x) removed", id_surface);
             return;
         }
+        bp = tp;
+        tp = tp->next;
     }
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(%x) dose not exist", id_surface);
 }
@@ -871,31 +872,6 @@ CicoSCWlWinMgrIF::wlOutputModeCB(void             *data,
     static_cast<CicoSCWlWinMgrIF*>(data)->outputModeCB(data, wl_output, flags,
                                                        width, height, refresh);
 //    ICO_TRA("CicoSCWlWinMgrIF::wlOutputModeCB Leave");
-}
-
-//--------------------------------------------------------------------------
-/**
- *  @brief  wayland ivi-shell ivi-application protocol error callback
- *
- *  @param [in] data            user data(unused)
- *  @param [in] ivi_application wayland ivi-application interface
- *  @param [in] error_code      error code
- *  @param [in] error_text      error message
- */
-//--------------------------------------------------------------------------
-void
-CicoSCWlWinMgrIF::wlIviAppErrorCB(void *data,
-                                 struct ivi_application *ivi_application,
-                                 int32_t error_code, const char *error_text)
-{
-    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppErrorCB: Enter(%d,%s)",
-            error_code, error_text ? error_text : "(null)");
-
-    if (NULL == data) {
-        ICO_WRN("CicoSCWlWinMgrIF::wlIviAppErrorCB: data is null");
-        return;
-    }
-    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppErrorCB: Leave");
 }
 
 //--------------------------------------------------------------------------

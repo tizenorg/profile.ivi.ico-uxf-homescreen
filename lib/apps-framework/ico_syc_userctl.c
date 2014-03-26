@@ -421,7 +421,7 @@ ico_syc_cb_lastinfo(ico_syc_callback_t callback, void *user_data, int event,
 
     /* free memory */
     g_object_unref(parser);
-    if (lastinfo != NULL) free(lastinfo);
+    free(lastinfo);
 
     return;
 }

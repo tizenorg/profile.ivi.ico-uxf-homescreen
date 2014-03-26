@@ -1,3 +1,15 @@
+* Wed Mar 26 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/release/20140312.115201@3fee487
+- bug fix: Notification launch support. (TIVI-2926/1892)
+- bug fix: HomeScreen sometimes fails in connection with SystemController at the time of starting.
+- bug fix: Local time is supported in the clock display of StatusBar.
+- improve: A multiplex notice is supported in OnScreen.
+- bug fix: LiveThumbnail of HomeScreen not works when APP installed.
+-          Homescreen take over the SURFACE of the old menu to the new menu, when that regenerate the menu.
+- Delete as named ico_send_inputevent tool (It is contained in weston-plugin).
+- bug fix: Swipe operation cannot be performed.
+- Live thumbnail not updated at the time of menu un-displaying.
+- Correction of the review indication from a Tizen team.
+
 * Fri Feb 28 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/20140226.204656@99d1ebc
 - 0.9.21 release
 -- A spec file is changed corresponding to the packages of GENIVI layer management.

@@ -17,14 +17,9 @@
 
 using namespace std;
 
-const int CicoStatusBar::STATUSBAR_POSX = 0; 
-const int CicoStatusBar::STATUSBAR_POSY = 0; 
+const int CicoStatusBar::STATUSBAR_POSX = 0;
+const int CicoStatusBar::STATUSBAR_POSY = 0;
 const int CicoStatusBar::STATUSBAR_HEIGHT = 64;
-
-const int CicoStatusBar::CLOCK_WIDTH = 
-                        CicoStatusBarClockComponent::CLOCK_COMPONENT_WIDTH;
-const int CicoStatusBar::CLOCK_HEIGHT = 
-                        CicoStatusBarClockComponent::CLOCK_COMPONENT_HEIGHT;
 
 //--------------------------------------------------------------------------
 /**
@@ -36,6 +31,9 @@ const int CicoStatusBar::CLOCK_HEIGHT =
 CicoStatusBar::CicoStatusBar()
     : CicoCommonWindow()
 {
+    notitimer_ = NULL;
+    clockcomp_ = NULL;
+    noticomp_  = NULL;
 }
 
 //--------------------------------------------------------------------------
@@ -47,9 +45,18 @@ CicoStatusBar::CicoStatusBar()
 //--------------------------------------------------------------------------
 CicoStatusBar::~CicoStatusBar()
 {
-    while( !noti_list.empty() ) {
-        DeleteNotification( this );
+    ICO_TRA("CicoStatusBar::~CicoStatusBar() Enter");
+    if (notitimer_ != NULL) {
+        ecore_timer_del(notitimer_);
     }
+
+    while( !noti_list.empty() ) {
+        DeleteNotification();
+    }
+
+    delete clockcomp_;
+    delete noticomp_;
+    ICO_TRA("CicoStatusBar::~CicoStatusBar() Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -64,6 +71,9 @@ CicoStatusBar::Initialize(void)
 {
     ICO_TRA("CicoStatusBar::Initialize() Enter");
     ICO_DBG("Initialize start window_.");
+
+    ecore_evas_init();
+    edje_init();
 
     window_ = ecore_evas_new(NULL, 0, 0, 1, 1, "frame=0");
     if (window_ == NULL) {
@@ -84,7 +94,7 @@ CicoStatusBar::Initialize(void)
     ICO_DBG("Initialize start windowobj_.");
     windowobj_ = evas_object_rectangle_add(ecore_evas_get(window_));
 
-    //statusbar RGBcolor setting
+    // statusbar RGBcolor setting
     evas_object_color_set(windowobj_, 0, 0, 0, 255);
     ICO_DBG("Initialize setpos windowobj_.");
 
@@ -97,18 +107,16 @@ CicoStatusBar::Initialize(void)
     ICO_DBG("Initialize end windowobj_.");
 
     ICO_DBG("Initialize start Clock_Component.");
-    clockcomp_ = std::make_shared<CicoStatusBarClockComponent>(CicoStatusBarClockComponent());
-    if (!clockcomp_->Initialize(windowobj_,
-                                (width_ - CLOCK_WIDTH - 100),
-                                ((STATUSBAR_HEIGHT - CLOCK_HEIGHT) / 2))){
+    clockcomp_ = new CicoStatusBarClockComponent();
+    if (!clockcomp_->Initialize(windowobj_, ecore_evas_get(window_) )){
         ICO_ERR("Failed to initialize Clock_Componet.");
         return false;
     }
     ICO_DBG("Initialize end Clock_Component.");
 
     ICO_DBG("Initialize start Notification_Component.");
-    noticomp_ = std::make_shared<CicoNotificationPanelComponent>(CicoNotificationPanelComponent());
-    if (!noticomp_->Initialize(windowobj_)) {
+    noticomp_ = new CicoNotificationPanelComponent();
+    if (!noticomp_->Initialize(windowobj_,ecore_evas_get(window_))) {
         ICO_ERR("Failed to initialize Notification_Component.");
         return false;
     }
@@ -116,6 +124,12 @@ CicoStatusBar::Initialize(void)
     noticomp_->SetPos(STATUSBAR_POSX, STATUSBAR_POSY);
     notiservice_.SetCallback(NotificationCallback, this);
     ICO_DBG("Initialize end Notification_Component.");
+
+    // set notification text end
+    Evas_Coord x, y;
+    if ( clockcomp_-> GetClockStart( &x, &y ) ) {
+        noticomp_->SetTextEndPosition( x, y );
+    }
 
     Show();
 
@@ -150,7 +164,7 @@ CicoStatusBar::UpdateTime()
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   update notification panel 
+ *  @brief   update notification panel
  *  @param[in]  msg     message
  *  @param[in]  iconpaht    icon image path
  *  @param[in]  soundpath   sound data path
@@ -158,7 +172,7 @@ CicoStatusBar::UpdateTime()
  */
 /*--------------------------------------------------------------------------*/
 bool
-CicoStatusBar::UpdateNotificationPanel( CicoStatusBar *sb )
+CicoStatusBar::UpdateNotificationPanel()
 {
 
     /*  if timer is active then wait timeout  */
@@ -168,12 +182,11 @@ CicoStatusBar::UpdateNotificationPanel( CicoStatusBar *sb )
     }
 
     /*  get Notification , if it is empty then return  */
-    CicoNotification* noti = sb->GetNotification(sb);
-    if ( noti == NULL ) {
+    CicoNotification* noti = GetNotification();
+    if (noti == NULL) {
         ICO_TRA("CicoStatusBar::UpdateNotificationPanel empty" );
         return false;
     }
-    //const char *msg = noti->GetTitle();
     const char *msg = noti->GetContent();
     const char *iconpath = noti->GetIconPath();
     const char *soundpath = NULL;
@@ -183,14 +196,14 @@ CicoStatusBar::UpdateNotificationPanel( CicoStatusBar *sb )
             "(msg=%s icon=%s sound=%s)", msg, iconpath, soundpath);
     if (msg == NULL && iconpath == NULL && soundpath == NULL) {
         ICO_ERR("notification info is NULL.");
-        sb->DeleteNotification(sb);
+        DeleteNotification();
         return false;
     }
     noticomp_->SetNotification(msg, iconpath, soundpath);
     noticomp_->Show();
 
     /* delete Notification and set disp timer */
-    sb->DeleteNotification(sb);
+    DeleteNotification();
 
     notitimer_ = ecore_timer_add(3.0, HideNotification, this);
     ICO_TRA("CicoStatusBar::UpdateNotificationPanel Leave");
@@ -227,13 +240,13 @@ CicoStatusBar::NotificationCallback(void *data,
             ICO_DBG("NOTIFICATION_OP_INSERT/NOTIFICATION_OP_UPDATE");
 
             /*  add notification and update SB  */
-            sb->AddNotification( sb, op_list[i].noti );
-            sb->UpdateNotificationPanel( sb );
+            sb->AddNotification( op_list[i].noti );
+            sb->UpdateNotificationPanel();
 
             break;
         case NOTIFICATION_OP_DELETE:
             ICO_DBG("NOTIFICATION_OP_DELETE");
-            sb->DeleteNotification( sb, op_list[i].priv_id );
+            sb->DeleteNotification( op_list[i].priv_id );
             break;
         case NOTIFICATION_OP_DELETE_ALL:
             ICO_DBG("NOTIFICATION_OP_DELETE_ALL");
@@ -253,7 +266,7 @@ CicoStatusBar::NotificationCallback(void *data,
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   hide notification panel 
+ * @brief   hide notification panel
  *
  * @param[in]   data    StatusBar object
  * @return      ECORE_CALLBACK_CANCEL
@@ -269,7 +282,7 @@ CicoStatusBar::HideNotification(void *data)
     sb->notitimer_ = NULL;
 
     /*  update notification ,if Notification exist in the queue   */
-    sb->UpdateNotificationPanel( sb );
+    sb->UpdateNotificationPanel();
 
     ICO_TRA("CicoStatusBar::HideNotification Leave");
     return ECORE_CALLBACK_CANCEL;
@@ -284,8 +297,8 @@ CicoStatusBar::HideNotification(void *data)
  * @return      non
  */
 /*--------------------------------------------------------------------------*/
-void 
-CicoStatusBar::AddNotification(CicoStatusBar* sb, notification_h noti_h)
+void
+CicoStatusBar::AddNotification(notification_h noti_h)
 {
     ICO_TRA("CicoStatusBar::AddNotification() Enter");
 
@@ -294,7 +307,7 @@ CicoStatusBar::AddNotification(CicoStatusBar* sb, notification_h noti_h)
         delete noti;
         return;
     }
-    sb->noti_list.push_back(noti);
+    noti_list.push_back(noti);
 
     ICO_TRA("CicoStatusBar::AddNotification Leave");
 }
@@ -307,18 +320,18 @@ CicoStatusBar::AddNotification(CicoStatusBar* sb, notification_h noti_h)
  * @return      CicoNotification class pointer
  */
 /*--------------------------------------------------------------------------*/
-CicoNotification* 
-CicoStatusBar::GetNotification(CicoStatusBar* sb)
+CicoNotification*
+CicoStatusBar::GetNotification()
 {
     ICO_TRA("CicoStatusBar::GetNotification() Enter");
 
-    if ( ! sb->noti_list.empty() ) {
-        CicoNotification *noti = sb->noti_list.front();
+    if ( ! noti_list.empty() ) {
+        CicoNotification *noti = noti_list.front();
         if ( noti ) {
             return noti;
         }
         else {
-            DeleteNotification(sb);
+            DeleteNotification();
         }
     }
     ICO_TRA("CicoStatusBar::GetNotification Leave");
@@ -326,7 +339,7 @@ CicoStatusBar::GetNotification(CicoStatusBar* sb)
 }
 
 /*--------------------------------------------------------------------------*/
-/**
+/*
  * @brief    delete first notification
  *
  * @param[in]   sb    StatusBar object
@@ -334,16 +347,14 @@ CicoStatusBar::GetNotification(CicoStatusBar* sb)
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoStatusBar::DeleteNotification(CicoStatusBar *sb)
+CicoStatusBar::DeleteNotification()
 {
     ICO_TRA("CicoStatusBar::DeleteNotification() Enter");
 
-    if ( ! sb->noti_list.empty() ) {
-        CicoNotification *noti = sb->noti_list.front();
-        if ( noti ) {
-            delete noti;
-        }
-        sb->noti_list.pop_front();
+    if ( ! noti_list.empty() ) {
+        CicoNotification *noti = noti_list.front();
+        delete noti;
+        noti_list.pop_front();
     }
 
     ICO_TRA("CicoStatusBar::DeleteNotification Leave");
@@ -359,7 +370,7 @@ CicoStatusBar::DeleteNotification(CicoStatusBar *sb)
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoStatusBar::DeleteNotification(CicoStatusBar *sb, int priv_id)
+CicoStatusBar::DeleteNotification(int priv_id)
 {
     ICO_TRA("CicoStatusBar::DeleteNotification() Enter");
 
@@ -379,13 +390,12 @@ CicoStatusBar::DeleteNotification(CicoStatusBar *sb, int priv_id)
 }
 
 
-
 //==========================================================================
 //  public functions
 //==========================================================================
 //--------------------------------------------------------------------------
 /**
- *  @brief  callback function of time update 
+ *  @brief  callback function of time update
  *
  *  @param [in] data    user date
  */

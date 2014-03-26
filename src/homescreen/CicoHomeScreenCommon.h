@@ -15,7 +15,7 @@
 #define __CICO_HOMESCREEN_COMMON_H__
 
 #include <ico_log.h>
-#include <ico_window_mgr-client-protocol.h>
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
 #include "ico_syc_sysdef.h"
 
 #define ICO_OK 0

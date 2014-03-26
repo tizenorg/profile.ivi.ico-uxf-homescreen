@@ -43,7 +43,6 @@ HomeScreen_CFLAGS= 					\
     $(UWS_CFLAGS) 					\
     $(PKGMGR_CFLAGS) 				\
 	$(UWS_CFLAGS)					\
-	$(WESTONPLUGIN_CFLAGS)			\
     -I../../include 				\
     -I../../lib/common
 
@@ -57,7 +56,6 @@ HomeScreen_CXXFLAGS= 				\
     $(UWS_CFLAGS) 					\
     $(PKGMGR_CFLAGS) 				\
 	$(UWS_CFLAGS)					\
-	$(WESTONPLUGIN_CFLAGS)			\
     -I../../include 				\
     -I../../lib/common
 

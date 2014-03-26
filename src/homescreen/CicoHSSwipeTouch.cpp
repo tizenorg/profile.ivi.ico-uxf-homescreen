@@ -212,7 +212,8 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                 }
                 else    {
                     animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL;
+                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL |
+                                     ICO_SYC_WIN_SURF_ONESHOT;
 
                     /* show before application with slide to right  */
                     appinfo = CicoHomeScreen::GetAppInfo(histapp.c_str());
@@ -237,7 +238,8 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                         }
                         else    {
                             animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                             ICO_SYC_WIN_SURF_NORESCTL;
+                                             ICO_SYC_WIN_SURF_NORESCTL |
+                                             ICO_SYC_WIN_SURF_ONESHOT;
                             appinfo = CicoHomeScreen::GetAppInfo(curapp.c_str());
                             if (appinfo)    {
                                 animation.name = (char *)"slide.toleft";
@@ -303,7 +305,8 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                 }
                 else    {
                     animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL;
+                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL |
+                                     ICO_SYC_WIN_SURF_ONESHOT;
 
                     /* show next application with slide to left     */
                     appinfo = CicoHomeScreen::GetAppInfo(histapp.c_str());
@@ -328,7 +331,8 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                         }
                         else    {
                             animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                             ICO_SYC_WIN_SURF_NORESCTL;
+                                             ICO_SYC_WIN_SURF_NORESCTL |
+                                             ICO_SYC_WIN_SURF_ONESHOT;
                             appinfo = CicoHomeScreen::GetAppInfo(curapp.c_str());
                             if (appinfo)    {
                                 animation.name = (char *)"slide.toright";

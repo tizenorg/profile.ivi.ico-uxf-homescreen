@@ -6,10 +6,8 @@ noinst_PROGRAMS   = \
 	StatusBar
 
 StatusBar_SOURCES = \
-	CicoCommonComponent.cpp			\
 	CicoCommonModule.cpp 			\
 	CicoCommonWindow.cpp			\
-	CicoModuleImplementation.cpp	\
 	CicoComponentImplementation.cpp	\
 	CicoStatusBar.cpp				\
 	CicoSBEFLApp.cpp				\
@@ -50,17 +48,29 @@ StatusBar_LDADD = \
 	$(UWS_LIBS)		\
 	$(NOTIFICATION_LIBS)
 
+SUFFIXES = .edc .edj
+
+BUILT_SOURCES = \
+	statusbar.edj
+
+.edc.edj:
+	edje_cc $< -id ../../res/org.tizen.ico.statusbar/res/images \
+	               -fd ../../res/org.tizen.ico.statusbar/res/images \
+	           -sd ../../res/org.tizen.ico.statusbar/res/sounds -o $@
+
 CLEANFILES = $(BUILT_SOURCES)
 
 install-exec-hook:
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/bin
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/res/config
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/res/images
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/res/themes
 	mkdir -p $(INSTALL_ROOT)/usr/share/packages
 	install -m 0755 StatusBar $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/bin
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.statusbar/res/images/time*.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/res/images
 	install -m 0644 $(top_srcdir)/data/share/packages/org.tizen.ico.statusbar.xml $(INSTALL_ROOT)/usr/share/packages
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.statusbar/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/res/config
+	install -m 0644 *.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar/res/themes
 
 uninstall:
 	rm -rf $(INSTALL_ROOT)/usr/apps/org.tizen.ico.statusbar

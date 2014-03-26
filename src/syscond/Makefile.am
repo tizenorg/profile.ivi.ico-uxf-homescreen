@@ -28,8 +28,6 @@ IcoSysconDaemon_CPPFLAGS = 	\
 	@MURPHYRESOURCE_CFLAGS@				\
 	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
-	$(GENIVI_CFLAGS)					\
-	$(WESTONPLUGIN_CFLAGS)				\
 	-I../../include						\
     -I../../lib/system-controller		\
     -I../../lib/common

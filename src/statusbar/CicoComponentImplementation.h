@@ -21,16 +21,68 @@
 #include <ctime>
 #include <list>
 #include <vector>
-#include "CicoComponentInterface.h"
-#include "CicoCommonComponent.h"
-#include "CicoModuleImplementation.h"
+
+#define   CLOCK_OBJECT_COUNT   (6)
+
+//==========================================================================
+/**
+ *  @brief  This class provide the common module component interfaces
+ */
+//==========================================================================
+class CicoCommonModule
+{
+public:
+    // default constructor
+    CicoCommonModule();
+
+    // destructor
+    virtual ~CicoCommonModule();
+
+    // terminate module
+    virtual bool Terminate(void);
+
+    // show module
+    virtual void Show(void);
+
+    // hide module
+    virtual void Hide(void);
+
+    // set position of module
+    virtual void SetPos(int x, int y);
+
+    // set size of module
+    virtual void SetSize(int w, int h);
+
+    // move module
+    virtual void Move(int diffx, int diffy);
+
+    // resize module
+    virtual void Resize(double ratew, double rateh);
+
+    // reset position and size of module
+    virtual void Reallocate(int standardx, int standardy,
+                            double ratew, double rateh);
+
+    // get raw data
+    Evas_Object *GetRawData(void) const;
+    bool operator==(const CicoCommonModule& moduleb) {
+        return (this->evasobj_ == moduleb.evasobj_);
+    }
+
+protected:
+    Evas_Object *evasobj_;  /// module object
+    int posx_;              /// module position x
+    int posy_;              /// module position y
+    int width_;             /// module width
+    int height_;            /// module height
+};
 
 //==========================================================================
 /**
  *  @brief  This class provide the clock component
  */
 //==========================================================================
-class CicoStatusBarClockComponent : public CicoCommonComponent
+class CicoStatusBarClockComponent : public CicoCommonModule
 {
 public:
     // default constructor
@@ -40,64 +92,20 @@ public:
     ~CicoStatusBarClockComponent();
 
     // initialize of clock component
-    bool Initialize(Evas_Object *window, int posx, int posy);
+    bool Initialize(Evas_Object *window, Evas *evas);
 
     // update of clock component
     bool Update(void);
 
-    // set rate of clock component 
+    // set rate of clock component
     bool SetRate(double rate);
 
-    static const int CLOCK_COMPONENT_WIDTH; /// clock component width
-    static const int CLOCK_COMPONENT_HEIGHT;/// clock component height
+    // get clock start position
+    bool GetClockStart( Evas_Coord *x, Evas_Coord *y);
 
 private:
-    static const int AMPM_WIDTH;            /// ampm image width
-    static const int AMPM_HEIGHT;           /// ampm image height
-    static const int HOUR10_WIDTH;          /// hour10 image width
-    static const int HOUR10_HEIGHT;         /// hour10 image height
-    static const int HOUR1_WIDTH;           /// hour1 image width
-    static const int HOUR1_HEIGHT;          /// hour1 image height
-    static const int COLON_WIDTH;           /// colon image width
-    static const int COLON_HEIGHT;          /// colon image height
-    static const int MIN10_WIDTH;           /// min10 image width
-    static const int MIN10_HEIGHT;          /// min10 image height
-    static const int MIN1_WIDTH;            /// min1 image width
-    static const int MIN1_HEIGHT;           /// min1 image height
+    int last_clock_image[6];
 
-    static const int COLON_BLANK;           /// colon blank size
-    static const int AMPM_BLANK;            /// ampm blank size
-    static const int LAST_BLANK;            /// last blank size
-
-    static const int AMPM_POSX;             /// ampm image position x
-    static const int AMPM_POSY;             /// ampm image position y
-    static const int RELATIVE_HOUR10_POSX;  /// hour10 image position x
-    static const int RELATIVE_HOUR10_POSY;  /// hour10 image position y
-    static const int RELATIVE_HOUR1_POSX;   /// hour1 image position x
-    static const int RELATIVE_HOUR1_POSY;   /// hour1 image position y
-    static const int RELATIVE_COLON_POSX;   /// colon image position x
-    static const int RELATIVE_COLON_POSY;   /// colon image position y
-    static const int RELATIVE_MIN10_POSX;   /// min10 image position x
-    static const int RELATIVE_MIN10_POSY;   /// min10 image position y
-    static const int RELATIVE_MIN1_POSX;    /// min1 image position x
-    static const int RELATIVE_MIN1_POSY;    /// min1 image position y
-
-    static const char *imgfilepath_am;      /// am image filepath
-    static const char *imgfilepath_pm;      /// pm image filepath
-    static const char *imgfilepath_0;       /// 0 image filepath
-    static const char *imgfilepath_1;       /// 1 image filepath
-    static const char *imgfilepath_2;       /// 2 image filepath
-    static const char *imgfilepath_3;       /// 3 image filepath
-    static const char *imgfilepath_4;       /// 4 image filepath
-    static const char *imgfilepath_5;       /// 5 image filepath
-    static const char *imgfilepath_6;       /// 6 image filepath
-    static const char *imgfilepath_7;       /// 7 image filepath
-    static const char *imgfilepath_8;       /// 8 image filepath
-    static const char *imgfilepath_9;       /// 9 image filepath
-    static const char *imgfilepath_colon;   /// colon image filepath
-
-    std::vector<const char*> imgfilelist_number;    /// image filepath list
-    double rate_;
 };
 
 //==========================================================================
@@ -105,7 +113,7 @@ private:
  *  @brief  This class provide the notification panel component
  */
 //==========================================================================
-class CicoNotificationPanelComponent : public CicoCommonComponent
+class CicoNotificationPanelComponent : public CicoCommonModule
 {
 public:
     // default constructor
@@ -115,31 +123,20 @@ public:
     ~CicoNotificationPanelComponent();
 
     // initialize of notification component
-    bool Initialize(Evas_Object *window);
+    bool Initialize(Evas_Object *window,Evas *evas);
 
     // set notification panel
     void SetNotification(const char *text,
                          const char *iconpath,
                          const char *soundpath);
 
-    // set rate of notification component
-    bool SetRate(double rate);
+    // set text end position
+    void SetTextEndPosition( Evas_Coord x, Evas_Coord y);
 
-protected:
-    static const int ICON_POSX;             /// notification icon position x
-    static const int ICON_POSY;             /// notification icon position y
-    static const int ICON_WIDTH;            /// notification icon width
-    static const int ICON_HEIGHT;           /// notification icon height
-    static const int RELATIVE_TEXT_POSX;    /// notification text position x
-    static const int RELATIVE_TEXT_POSY;    /// notification text position y
-    static const int TEXT_WIDTH;            /// notification text width
-    static const int TEXT_HEIGHT;           /// notification text height
-    static const char *FONT_STYLE;          /// notification text font-style
-    static const int FONT_SIZE;             /// notification text font-size
+private:
+    // set text to content_text
+    bool SetText(const char *text);
 
-    std::shared_ptr<CicoTextModule> textmod_;   /// notification text module
-    std::shared_ptr<CicoImageModule> imgmod_;   /// notification icon module
-    double rate_;                               /// view rate of notification component 
 };
 #endif  // __CICO_COMPONENT_IMPLEMENTATION_H__
 // vim: set expandtab ts=4 sw=4:
