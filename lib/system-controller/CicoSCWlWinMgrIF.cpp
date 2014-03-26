@@ -56,7 +56,6 @@ CicoSCWlWinMgrIF::CicoSCWlWinMgrIF()
     m_listener.destroy_surface  = wlDestroySurfaceCB;
 
     // genivi ivi_application listener
-    m_ivi_app_listener.error = wlIviAppErrorCB;
     m_ivi_app_listener.wl_shell_info = wlIviAppNativeShellInfoCB;
 
     // genivi ivi_controller listener
