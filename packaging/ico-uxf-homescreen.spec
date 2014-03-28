@@ -31,6 +31,7 @@ BuildRequires: pkgconfig(murphy-domain-controller)
 BuildRequires: pkgconfig(murphy-ecore)
 BuildRequires: pkgconfig(murphy-resource)
 BuildRequires: pkgconfig(notification)
+BuildRequires: pkgconfig(appsvc)
 BuildRequires: boost-devel
 BuildRequires: mesa-devel
 BuildRequires: weston-ivi-shell
@@ -60,6 +61,7 @@ Requires: pkgconfig(elementary)
 Requires: pkgconfig(ecore-wayland)
 Requires: pkgconfig(ecore-x)
 Requires: pkgconfig(glib-2.0)
+Requires: pkgconfig(appsvc)
 
 %description system-controller-devel
 Development files for application that communicate homescreen.
@@ -78,6 +80,10 @@ rm -rf %{buildroot}
 
 cp tool/ico_clear_screen %{buildroot}%{_bindir}
 cp tool/ico_change_loginuser %{buildroot}%{_bindir}
+cp tool/notification/ico_del_notification %{buildroot}%{_bindir}
+cp tool/notification/ico_dump_notification %{buildroot}%{_bindir}
+cp tool/notification/ico_send_notification %{buildroot}%{_bindir}
+cp tool/notification/ico_send_notification2 %{buildroot}%{_bindir}
 
 %post
 /sbin/ldconfig
@@ -120,6 +126,10 @@ rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
 /usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
 %{_bindir}/ico_clear_screen
 %{_bindir}/ico_change_loginuser
+%{_bindir}/ico_del_notification
+%{_bindir}/ico_dump_notification
+%{_bindir}/ico_send_notification
+%{_bindir}/ico_send_notification2
 %attr(644,app,app) /home/app/ico/defaultApps.info
 %attr(755,app,app) /home/app/ico
 /home/app/ico/defaultApps.info

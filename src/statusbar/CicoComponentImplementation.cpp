@@ -129,7 +129,7 @@ CicoStatusBarClockComponent::Initialize(Evas_Object *windowobj, Evas *evas)
     evas_object_resize( evasobj_, w_width, h );
     obj = (Evas_Object*)edje_object_part_object_get(evasobj_,"MIN1_img" );
     evas_object_geometry_get( obj, &x, &y, &w, &h );
-    Evas_Coord offset = w_width - x - w;
+    Evas_Coord offset = w_width - x - w -18;
 
     for ( i=0; i<CLOCK_OBJECT_COUNT; i++ ) {
         obj = (Evas_Object*)edje_object_part_object_get(
@@ -137,15 +137,17 @@ CicoStatusBarClockComponent::Initialize(Evas_Object *windowobj, Evas *evas)
         if ( obj != NULL ) {
             evas_object_geometry_get( obj, &x, &y, &w, &h );
             evas_object_move( obj, x+offset , y);
+            evas_object_show(obj);
         }
     }
 
     /*  initial display  */
-    Update();
+    bool ret = true;
+    ret = Update();
     Show();
 
     ICO_TRA("CicoStatusBarClockComponent::Initialize Leave");
-    return Update();
+    return ret;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -196,11 +198,19 @@ CicoStatusBarClockComponent::Update()
             obj = (Evas_Object*)edje_object_part_object_get(
                          evasobj_,clock_image_object[i] );
             if ( obj != NULL ) {
-                ICO_DBG("SetNotification image set[%s][%s]",clock_image_object[i],clock_image_path[i]);
-                evas_object_image_file_set(obj, clock_image_path[now_clock_image[i]], NULL);
+                ICO_DBG("CicoStatusBarClockComponent image set[%s][%s]",
+                        clock_image_object[i],clock_image_path[now_clock_image[i]]);
+                evas_object_image_file_set(obj, 
+                        clock_image_path[now_clock_image[i]], NULL);
+                // add update view area 
+                //    (Omitted update area is set so that evas_object_image_file_set())
+                //Evas_Coord x,y,w,h;
+                //evas_object_geometry_get( obj, &x, &y, &w, &h );
+                //evas_object_image_data_update_add( obj, x, y, w, h );
+
             }
             else {
-                ICO_DBG("SetNotification image set error[object not found]" );
+                ICO_DBG("CicoStatusBarClockComponent image set error[object not found]" );
             }
             last_clock_image[i] = now_clock_image[i];
         }
@@ -367,7 +377,8 @@ CicoNotificationPanelComponent::SetNotification(const char *text,
 bool
 CicoNotificationPanelComponent::SetText(const char *text)
 {
-    ICO_TRA("CicoNotificationPanelComponent::SetText Enter(text=%s)", text? text:"NULL");
+    ICO_TRA("CicoNotificationPanelComponent::SetText Enter(text=%s)",
+            text? text:"NULL");
     if ( text == NULL ) {
         edje_object_part_text_set(evasobj_, "content_text", "");
         return true;
@@ -388,7 +399,8 @@ CicoNotificationPanelComponent::SetText(const char *text)
 void
 CicoNotificationPanelComponent::SetTextEndPosition( Evas_Coord x_end, Evas_Coord y_end)
 {
-    ICO_TRA("CicoNotificationPanelComponent::SetTextEndPosition Enter(%d,%d)",x_end,y_end);
+    ICO_TRA("CicoNotificationPanelComponent::SetTextEndPosition Enter(%d,%d)",
+            x_end,y_end);
 
     if (evasobj_ == NULL) {
         ICO_TRA("CicoNotificationPanelComponent::SetTextEndPosition Leave(false)");

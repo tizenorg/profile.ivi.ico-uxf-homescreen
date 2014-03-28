@@ -79,7 +79,6 @@ CicoStatusBar::Initialize(void)
     if (window_ == NULL) {
         return false;
     }
-    ecore_main_loop_iterate();
     ecore_wl_screen_size_get(&width_, &height_);
 
     ecore_evas_size_min_set(window_, width_, STATUSBAR_HEIGHT);
@@ -104,6 +103,10 @@ CicoStatusBar::Initialize(void)
 
     ecore_evas_object_associate(window_, windowobj_,
                                 ECORE_EVAS_OBJECT_ASSOCIATE_BASE);
+    /*  update initial view  */
+    Show();
+    ecore_main_loop_iterate();
+
     ICO_DBG("Initialize end windowobj_.");
 
     ICO_DBG("Initialize start Clock_Component.");
@@ -131,7 +134,9 @@ CicoStatusBar::Initialize(void)
         noticomp_->SetTextEndPosition( x, y );
     }
 
-    Show();
+    //Show();
+    //ecore_main_loop_iterate();
+    //clockcomp_->Update();
 
     // add timer callback function of time update
     ecore_timer_add(3.0, ecoreUpdateTimeCB, this);

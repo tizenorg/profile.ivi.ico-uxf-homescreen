@@ -803,7 +803,7 @@ void CicoHSLifeCycleController::getCategory(const char* sPkg, const char* sNm,
     int  appCtgryType;
     char addCtgry[400];
     int  addCtgryLen;
-    char work[80];
+    char work[PATH_MAX];
 
     /* get default category of this application */
     addCtgry[0] = 0;

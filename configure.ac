@@ -39,6 +39,7 @@ PKG_CHECK_MODULES([AUL], [aul])
 PKG_CHECK_MODULES([PKGMGR], [pkgmgr])
 PKG_CHECK_MODULES([WAYLANDCLIENT], [wayland-client])
 PKG_CHECK_MODULES([NOTIFICATION], [notification])
+PKG_CHECK_MODULES([APPSVC], [appsvc])
 
 # libraries for homescreen.
 PKG_CHECK_MODULES([EDJE], [edje])

@@ -32,7 +32,8 @@ ico_send_notification2_CXXFLAGS = \
 	$(NOTIFICATION_CFLAGS)
 
 ico_send_notification2_LDADD = \
-	$(NOTIFICATION_LIBS) -lappsvc
+	$(NOTIFICATION_LIBS) \
+	$(APPSVC_LIBS)
 	
 #
 #

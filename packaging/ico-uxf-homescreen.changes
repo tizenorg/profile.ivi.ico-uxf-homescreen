@@ -1,3 +1,7 @@
+* Fri Mar 28 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/panda/20140326.234210@52d43be
+- bug fix(StatusBar): Clock is not displayed at the time of the first start
+- bug fix(StatusBar): Adjustment of the clock image interval
+
 * Wed Mar 26 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/release/20140312.115201@3fee487
 - bug fix: Notification launch support. (TIVI-2926/1892)
 - bug fix: HomeScreen sometimes fails in connection with SystemController at the time of starting.

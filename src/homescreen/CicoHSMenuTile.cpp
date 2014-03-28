@@ -178,7 +178,7 @@ CicoHSMenuTile::HideTermIcon(void)
 void
 CicoHSMenuTile::FreeObject(void)
 {
-    char    sWork[80];
+    char    sWork[PATH_MAX];
 
     ICO_DBG("CicoHSMenuTile::FreeObject(appid=%08x<%s>)", (int)this->appid, appid);
 
@@ -519,7 +519,7 @@ CicoHSMenuTile::ValidMenuIcon(void)
 void
 CicoHSMenuTile::ValidThumbnail(int surface)
 {
-    char    sWork[80];
+    char    sWork[PATH_MAX];
 
     ICO_DBG("CicoHSMenuTile::ValidThumbnail(appid=%08x<%s>) run=%d surf=%08x",
             (int)this->appid, appid, app_running, surface);
@@ -601,7 +601,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
     int                 svx, svy;
     int                 unmap;
     int                 fd;
-    char                sWork[80];
+    char                sWork[PATH_MAX];
 #if     0           /* for BMP format   */
 #pragma pack(push, 1)
         struct _bmphead {
@@ -817,7 +817,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 void
 CicoHSMenuTile::ShowMenu(bool show)
 {
-    char    sWork[80];
+    char    sWork[PATH_MAX];
     menu_show = show;
     if ((thumb_tile) && (thumb.surface != 0)) {
         sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."

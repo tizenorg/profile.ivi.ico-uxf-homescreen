@@ -43,6 +43,7 @@ OnScreen_LDADD = 					\
     $(AUL_LIBS) 					\
     $(UWS_LIBS) 					\
 	$(NOTIFICATION_LIBS)			\
+	$(APPSVC_LIBS)					\
 	-lappsvc						\
 	../../lib/apps-framework/.libs/libico-appfw.so
 
