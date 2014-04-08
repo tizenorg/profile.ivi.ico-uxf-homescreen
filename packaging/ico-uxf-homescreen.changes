@@ -1,3 +1,15 @@
+* Tue Apr 08 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/panda/20140403.020026@294446b
+- 0.9.22 release
+-- bug fix: TIVI-3007 - Home button doesn't response after some operations.
+-- bug fix: Two or more Display(s) cannot be used.
+-- bug fix: SystemController sometimes crashes at the time of deletion of Surface.
+-- bug fix: defaultApps.info file overlaps in the definition of a spec file.
+-- cleanup debug log messages.
+-- Adjusted a gesture operation domain.
+-- bug fix: A lot of Surface will be temporarily made from the application which changes the title name of Surface like MiniBrowser.
+-- bug fix: TIVI-3018 - unable to launch smartdevicelink-sample-hmi(SDL) in ico homescreen.
+-- bug fix: TIVI-3001 - Apps gesture switching fails to work in ICO Homescreen.
+
 * Fri Mar 28 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/panda/20140326.234210@52d43be
 - bug fix(StatusBar): Clock is not displayed at the time of the first start
 - bug fix(StatusBar): Adjustment of the clock image interval

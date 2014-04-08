@@ -904,6 +904,16 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
         return;
     }
 
+    // if same pid and same title, skip
+    tp = m_wait_surface_creation;
+    while (tp)  {
+        if ((tp->pid == pid) && (strcmp(tp->title, title) == 0))    {
+            ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave(same title)");
+            return;
+        }
+        tp = tp->next;
+    }
+
     // get native surface info
     tp = m_free_surface_creation;
     if (tp)  {

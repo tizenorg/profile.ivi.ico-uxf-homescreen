@@ -184,7 +184,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
 
     /* check swipe left to right or right to left   */
     if (sub > ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
-        if (touch_state_b_x < ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
+        if (touch_state_b_x < ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH)   {
             /* get current application  */
             curapp = app_history->getSwipeCurrentAppid();
 
@@ -277,8 +277,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         }
     }
     else if (sub < (-1 * ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE)) {
-        if (touch_state_b_x >
-            (full_width - ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE))    {
+        if (touch_state_b_x >= (full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH))   {
             /* get current application  */
             curapp = app_history->getSwipeCurrentAppid();
 

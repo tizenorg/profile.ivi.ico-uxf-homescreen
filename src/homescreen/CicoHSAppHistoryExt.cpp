@@ -373,7 +373,11 @@ void CicoHSAppHistoryExt::activeApp(const string& appid)
  */
 void CicoHSAppHistoryExt::activeApp(const char* appid)
 {
+    if (strcmp(appid, ICO_HS_PROC_DEFAULT_HOMESCREEN) == 0) {
+        return;
+    }
     ICO_DBG("start %s", appid);
+
     if (true == m_waitSelApp.empty()) {
         moveHistoryHead(appid);
         ICO_DBG("end current none");
@@ -385,7 +389,7 @@ void CicoHSAppHistoryExt::activeApp(const char* appid)
         ICO_DBG("end touch operate app");
         return;
     }
-    ICO_DBG("end  no match select app(%s)", m_waitSelApp.c_str());
+    ICO_DBG("end no match select app(%s)", m_waitSelApp.c_str());
     if (true == moveHistoryHead(appid)) {
         m_waitSelApp.clear();
     }
