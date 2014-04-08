@@ -30,9 +30,12 @@ CicoSCLayer::CicoSCLayer()
       displayid(-1), numsurfaces(0), menuoverlap(false)
 
 {
-    surfaceids = (int *)malloc(40 * sizeof(int));
+    surfaceids = (int *)malloc(ICO_SC_LAYER_TABLE_INITIAL * sizeof(int));
     if (surfaceids) {
-        maxsurfaces = 50;
+        maxsurfaces = ICO_SC_LAYER_TABLE_INITIAL;
+    }
+    else    {
+        maxsurfaces = 0;
     }
 }
 
@@ -64,18 +67,15 @@ CicoSCLayer::addSurface(int surfaceid, bool top)
     ICO_DBG("CicoSCLayer::addSurface(%08x,%d)", surfaceid, top);
 
     idx2 = 0;
-    for (idx = 0; idx < numsurfaces; idx++, idx2++) {
-        if (surfaceids[idx] == surfaceid)   {
-            idx2 --;
-        }
-        else    {
-            surfaceids[idx2] = surfaceids[idx];
+    for (idx = 0; idx < numsurfaces; idx++) {
+        if (surfaceids[idx] != surfaceid)   {
+            surfaceids[idx2++] = surfaceids[idx];
         }
     }
     numsurfaces = idx2;
 
     if (numsurfaces >= maxsurfaces) {
-        maxsurfaces += 20;
+        maxsurfaces = numsurfaces + ICO_SC_LAYER_TABLE_EXTENSION;
         wksurfaceids = (int *)malloc(maxsurfaces * sizeof(int));
         if (! wksurfaceids) {
             ICO_ERR("CicoSCLayer::addSurface: Out of Memory");
@@ -111,12 +111,9 @@ CicoSCLayer::removeSurface(int surfaceid)
     ICO_DBG("CicoSCLayer::removeSurface(%08x)", surfaceid);
 
     idx2 = 0;
-    for (idx = 0; idx < numsurfaces; idx++, idx2++) {
-        if (surfaceids[idx] == surfaceid)   {
-            idx2 --;
-        }
-        else    {
-            surfaceids[idx2] = surfaceids[idx];
+    for (idx = 0; idx < numsurfaces; idx++) {
+        if (surfaceids[idx] != surfaceid)   {
+            surfaceids[idx2++] = surfaceids[idx];
         }
     }
     numsurfaces = idx2;

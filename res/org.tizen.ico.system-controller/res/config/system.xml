@@ -15,7 +15,7 @@
 <displays>
     <display id="0" name="Center">
         <node>Center</node>
-        <no>0</no>
+        <no>1</no>
         <type>center</type>
         <width>1080</width>
         <height>1920</height>
@@ -143,8 +143,8 @@
     </display>
     <display id="1" name="Mid">
         <node>Center</node>
-        <no>1</no>
-        <type>center</type>
+        <no>0</no>
+        <type>meter</type>
         <width>1280</width>
         <height>480</height>
         <layers>

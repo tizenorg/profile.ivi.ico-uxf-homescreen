@@ -19,6 +19,9 @@
 
 #include "CicoCommonDef.h"
 
+#define ICO_SC_LAYER_TABLE_INITIAL      50      // layer table initial size
+#define ICO_SC_LAYER_TABLE_EXTENSION    50      // layer table extension size
+
 //--------------------------------------------------------------------------
 /**
  *  @brief  This class hold layer information

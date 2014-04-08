@@ -294,6 +294,12 @@ CicoSCWindowController::raiselower(CicoSCWindow *window, bool raise)
 
         int nsurf;
         const int *surfs = layer->getSurfaces(&nsurf);
+        ICO_TRA("CicoSCWindowControllerCicoSCWindowController layer.%d %d.%x %x %x %x",
+                window->layerid, nsurf, surfs[0], surfs[1], surfs[2], surfs[3]);
+        if (nsurf > 4)  {
+            ICO_TRA("CicoSCWindowControllerCicoSCWindowController          .%x %x %x %x",
+                    surfs[4], surfs[5], surfs[6], surfs[7]);
+        }
         if (ilm_layerSetRenderOrder(window->layerid, (t_ilm_layer *)surfs, nsurf)
             != ILM_SUCCESS) {
             ICO_ERR("CicoSCWindowController::raiselower "
@@ -1538,6 +1544,16 @@ CicoSCWindowController::destroySurfaceCB(void                  *data,
         return;
     }
 
+    // delete surface from layer
+    CicoSCLayer* layer = findLayer(window->displayid, window->layerid);
+    if (NULL == layer) {
+        ICO_TRA("CicoSCWindowController::destroySurfaceCB: surf.%08x not exist in layer.%d",
+                surfaceid, window->layerid);
+    }
+    else    {
+        layer->removeSurface(surfaceid);
+    }
+
     // send message
     CicoSCMessage *message = new CicoSCMessage();
     message->addRootObject("command", MSG_CMD_DESTROY);
@@ -1983,65 +1999,73 @@ CicoSCWindowController::wlGeniviLayerNotification(t_ilm_layer layer,
 void
 CicoSCWindowController::initializeGeniviLMS(void)
 {
-    t_ilm_uint  NumberOfScreens = 16;
-    t_ilm_uint  ScreenIds[16];
+    t_ilm_uint  NumberOfScreens = 0;
     t_ilm_layer *pLayerId, *ppLayerId;
     t_ilm_int   LayerNumber;
-    t_ilm_uint  *pScreenIds = ScreenIds;
+    t_ilm_uint  *pScreenIds;
     struct ilmScreenProperties  ScreenProperties;
-    int                     idx, idx2;
+    int                     idxs, idx1, idx2;
     int                     DisplayId, LayerId;
     const CicoSCDisplayConf *DisplayConf;
     const CicoSCLayerConf   *LayerConf;
 
     // get all screen id
-    memset(ScreenIds, 0, sizeof(ScreenIds));
     if ((ilm_getScreenIDs(&NumberOfScreens, &pScreenIds) != ILM_SUCCESS) ||
-        (ilm_commitChanges() != ILM_SUCCESS))   {
+        (NumberOfScreens <= 0)) {
         ICO_ERR("CicoSCWindowController::initializeGeniviLMS "
-                "ilm_getScreenIDs() Error");
+                "ilm_getScreenIDs() Error(num=%d)", NumberOfScreens);
         return;
     }
-    ICO_TRA("initializeGeniviLMS: Screens=%d.%x %x %x %x",
-            NumberOfScreens, ScreenIds[0], ScreenIds[1], ScreenIds[2], ScreenIds[3]);
+    ICO_TRA("initializeGeniviLMS: Screens=%d.%x %x", NumberOfScreens, pScreenIds[0],
+            NumberOfScreens >= 2 ? pScreenIds[1] : 0);
     if ((int)NumberOfScreens > CicoSystemConfig::getInstance()->getNumberofDisplay())   {
+        ICO_WRN("CicoSCWindowController::initializeGeniviLMS # of screens physical=%d config=%d",
+                NumberOfScreens, CicoSystemConfig::getInstance()->getNumberofDisplay());
         NumberOfScreens = (t_ilm_uint)CicoSystemConfig::getInstance()->getNumberofDisplay();
     }
-    for (idx = 0; idx < (int)NumberOfScreens; idx++) {
-        ICO_TRA("CicoSCWindowController::initializeGeniviLMS: "
-                "call ilm_getPropertiesOfScreen(%x)", ScreenIds[idx]);
-        if ((ilm_getPropertiesOfScreen(ScreenIds[idx], &ScreenProperties) != ILM_SUCCESS) ||
-            (ilm_commitChanges() != ILM_SUCCESS))   {
+#if 1           /* At present, GENIVI (ivi-controller) is processing only one Display   */
+    for (idxs = (int)NumberOfScreens - 1; idxs >= 0; idxs--)
+#else
+    for (idxs = 0; idxs < (int)NumberOfScreens; idxs++)
+#endif
+    {
+        if (ilm_getPropertiesOfScreen(pScreenIds[idxs], &ScreenProperties) != ILM_SUCCESS)   {
             ICO_ERR("CicoSCWindowController::initializeGeniviLMS "
-                    "ilm_getPropertiesOfScreen(%d.%x) Error", idx, ScreenIds[idx]);
+                    "ilm_getPropertiesOfScreen(%d.%x) Error", idxs, pScreenIds[idxs]);
             continue;
         }
+        // It is referred to as Center when there is only one display
+        if (NumberOfScreens == 1)   {
+            DisplayId = CicoSystemConfig::getInstance()->getDisplayIdbyType(ICO_NODETYPE_CENTER);
+        }
+        else    {
+            DisplayId = CicoSystemConfig::getInstance()->getDisplayIdbyNo((int)pScreenIds[idxs]);
+        }
         ICO_TRA("CicoSCWindowController::initializeGeniviLMS: "
-                "Screen[%d.%x] w/h=%d/%d layers=%d",
-                idx, ScreenIds[idx], ScreenProperties.screenWidth,
-                ScreenProperties.screenHeight, ScreenProperties.layerCount);
+                "Screen[%d.%x] w/h=%d/%d layers=%d DisplayId=%d",
+                idxs, pScreenIds[idxs], ScreenProperties.screenWidth,
+                ScreenProperties.screenHeight, ScreenProperties.layerCount, DisplayId);
 
-        DisplayId = CicoSystemConfig::getInstance()->getDisplayIdbyNo((int)ScreenIds[idx]);
         if ((DisplayId < 0) ||
             ((DisplayConf = CicoSystemConfig::getInstance()->findDisplayConfbyId(DisplayId))
                 == NULL))   {
             ICO_ERR("CicoSCWindowController::initializeGeniviLMS "
-                    "ScreenId.%x not found", ScreenIds[idx]);
+                    "ScreenId.%x not found", pScreenIds[idxs]);
         }
         else    {
             // set genivi layers
-            for (idx = 0; ; idx++)  {
+            for (idx1 = 0; ; idx1++)  {
                 LayerConf = CicoSystemConfig::getInstance()->
-                                                findLayerConfbyIdx(DisplayId, idx);
+                                                findLayerConfbyIdx(DisplayId, idx1);
                 if (! LayerConf)    break;
             }
-            pLayerId = (t_ilm_layer *)malloc(sizeof(t_ilm_layer) * idx);
+            pLayerId = (t_ilm_layer *)malloc(sizeof(t_ilm_layer) * idx1);
             ppLayerId = pLayerId;
             LayerNumber = 0;
 
-            for (idx = 0; ; idx++)  {
+            for (idx1 = 0; ; idx1++)  {
                 LayerConf = CicoSystemConfig::getInstance()->
-                                                findLayerConfbyIdx(DisplayId, idx);
+                                                findLayerConfbyIdx(DisplayId, idx1);
                 if (! LayerConf)    break;
 
                 LayerId = LayerConf->id + DisplayId * ICO_SC_LAYERID_SCREENBASE;
@@ -2101,7 +2125,10 @@ CicoSCWindowController::initializeGeniviLMS(void)
                 }
             }
             if (LayerNumber > 0)    {
-                if (ilm_displaySetRenderOrder(ScreenIds[idx], pLayerId, LayerNumber)
+                ICO_TRA("initializeGeniviLMS: layers %d.%d %d %d %d set to screen %x",
+                        LayerNumber, pLayerId[0], pLayerId[1], pLayerId[2], pLayerId[3],
+                        pScreenIds[idxs]);
+                if (ilm_displaySetRenderOrder(pScreenIds[idxs], pLayerId, LayerNumber)
                     != ILM_SUCCESS)   {
                     ICO_ERR("CicoSCWindowController::initializeGeniviLMS "
                             "ilm_displaySetRenderOrder(%d) Error", LayerNumber);
@@ -2111,7 +2138,7 @@ CicoSCWindowController::initializeGeniviLMS(void)
                             "ilm_commitChanges() Error");
                 }
                 ppLayerId = pLayerId;
-                for (idx = 0; idx < LayerNumber; idx++) {
+                for (idx2 = 0; idx2 < LayerNumber; idx2++) {
                     if (ilm_layerAddNotification(*ppLayerId, wlGeniviLayerNotification)
                         != ILM_SUCCESS)   {
                         ICO_ERR("CicoSCWindowController::initializeGeniviLMS "
@@ -2123,6 +2150,7 @@ CicoSCWindowController::initializeGeniviLMS(void)
             free(pLayerId);
         }
     }
+    free(pScreenIds);
 }
 
 //==========================================================================

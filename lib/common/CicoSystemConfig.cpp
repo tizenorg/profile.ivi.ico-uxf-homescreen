@@ -1914,6 +1914,27 @@ CicoSystemConfig::getDisplayIdbyNo(int no)
  */
 //--------------------------------------------------------------------------
 int
+CicoSystemConfig::getDisplayIdbyType(int type)
+{
+    vector<CicoSCDisplayConf*>::const_iterator itr;
+    itr = m_displayConfList.begin();
+    for (; itr != m_displayConfList.end(); ++itr) {
+        const CicoSCDisplayConf* conf = (*itr);
+        if (type == conf->type) {
+            return conf->id;
+        }
+    }
+    return -1;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief
+ *
+ *  @param  [in]
+ */
+//--------------------------------------------------------------------------
+int
 CicoSystemConfig::getNumberofDisplay(void)
 {
     return numDisplay;

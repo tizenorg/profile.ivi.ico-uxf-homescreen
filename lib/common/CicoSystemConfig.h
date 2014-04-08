@@ -108,6 +108,7 @@ public:
     int getNodeIdbyName(const string & name);
     int getDisplayIdbyName(const string & name);
     int getDisplayIdbyNo(int no);
+    int getDisplayIdbyType(int type);
     int getNumberofDisplay(void);
     int getLayerIdfbyName(const string & displayName,
                           const string & layerName);
