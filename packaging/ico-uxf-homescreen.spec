@@ -132,7 +132,6 @@ rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
 %{_bindir}/ico_send_notification2
 %attr(644,app,app) /home/app/ico/defaultApps.info
 %attr(755,app,app) /home/app/ico
-/home/app/ico/defaultApps.info
 
 %files system-controller-devel
 %manifest %{name}.manifest
