@@ -127,7 +127,7 @@ CicoSCCommand::parseMessage(const char *message)
 void
 CicoSCCommand::dump(void)
 {
-    ICO_INF("Command: cmdid=0x%08X appid=%s pid=%d", cmdid, appid.c_str(), pid);
+    ICO_INF("Command: cmdid=0x%08x appid=%s pid=%d", cmdid, appid.c_str(), pid);
     if (NULL != this->opt) {
         this->opt->dump();
     }

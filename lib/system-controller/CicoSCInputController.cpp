@@ -100,7 +100,7 @@ void
 CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
 {
     ICO_TRA("CicoSCInputController::handleCommand Enter"
-            "(cmdid=0x%08X)", cmd->cmdid);
+            "(cmdid=0x%08x)", cmd->cmdid);
 
     CicoSCCmdInputDevCtrlOpt *opt;
     CicoSCCmdInputDevSettingOpt *set_opt; 
@@ -129,7 +129,7 @@ CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
                          set_opt->width, set_opt->height);
         break;
     default:
-        ICO_WRN("Unknown Command(0x%08X)", cmd->cmdid);
+        ICO_WRN("Unknown Command(0x%08x)", cmd->cmdid);
         break;
     }
 

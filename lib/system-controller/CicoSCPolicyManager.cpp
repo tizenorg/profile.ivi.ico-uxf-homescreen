@@ -468,7 +468,7 @@ bool
 CicoSCPolicyManager::acquireDisplayResource(int type, int zoneid, int priority)
 {
     ICO_TRA("CicoSCPolicyManager::acquireDisplayResource Enter"
-            "(type=0x%08X zoneid=%d priority=%d)", type, zoneid, priority);
+            "(type=0x%08x zoneid=%d priority=%d)", type, zoneid, priority);
 
     bool chg = false;
 
@@ -542,7 +542,7 @@ bool
 CicoSCPolicyManager::acquireSoundResource(int type, int zoneid, int priority)
 {
     ICO_TRA("CicoSCPolicyManager::acquireSoundResource Enter"
-            "(type=0x%08X zoneid=%d priority=%d)", type, zoneid, priority);
+            "(type=0x%08x zoneid=%d priority=%d)", type, zoneid, priority);
 
     bool chg = false;
 

@@ -215,7 +215,7 @@ CicoSCWindowController::show(int        surfaceid,
         CicoSCLayer *layer = findLayer(window->displayid, window->layerid);
         if ((NULL != layer) && (layer->type == ICO_LAYER_TYPE_APPLICATION)) {
             ICO_DBG("Entry display zone[%d] current displayed window"
-                    "(0x%08X:\"%s\")",
+                    "(%08x:\"%s\")",
                     zone->zoneid, window->surfaceid, window->appid.c_str());
             zone->displayedWindow = window;
         }
@@ -358,7 +358,7 @@ CicoSCWindowController::hide(int        surfaceid,
         if ((NULL != layer) && (layer->type == ICO_LAYER_TYPE_APPLICATION) &&
             (getDisplayedWindow(zone->zoneid) == surfaceid)) {
             ICO_DBG("Exit  display zone[%d] current displayed window"
-                    "(0x%08X:\"%s\")",
+                    "(%08x:\"%s\")",
                     zone->zoneid, window->surfaceid, window->appid.c_str());
             zone->displayedWindow = NULL;
         }
@@ -738,7 +738,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
                                     int        moveAnimationTime)
 {
     ICO_TRA("CicoSCWindowController::setGeometry Enter"
-            "(surfaceid=0x%08X zone=%s layerid=%d "
+            "(surfaceid=%08x zone=%s layerid=%d "
             "resizeAnimation=%s resizeAnimationTime=%d "
             "moveAnimation=%s moveAnimationTime=%d)",
             surfaceid, zone, layerid,
@@ -792,7 +792,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
                 (layer->type == ICO_LAYER_TYPE_APPLICATION) &&
                 (getDisplayedWindow(olddispzone->zoneid) == surfaceid)) {
                 ICO_DBG("Exit display zone[%d] current displayed window"
-                        "(0x%08X:\"%s\")",
+                        "(%08x:\"%s\")",
                         olddispzone->zoneid, window->surfaceid,
                         window->appid.c_str());
                 olddispzone->displayedWindow = NULL;
@@ -802,7 +802,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         CicoSCLayer *layer = findLayer(displayno, window->layerid);
         if ((NULL != layer) && (layer->type == ICO_LAYER_TYPE_APPLICATION)) {
             ICO_DBG("Entry display zone[%d] current displayed window"
-                    "(0x%08X:\"%s\")",
+                    "(%08x:\"%s\")",
                     dispzone->zoneid, window->surfaceid, window->appid.c_str());
             dispzone->displayedWindow = window;
         }
@@ -903,7 +903,7 @@ CicoSCWindowController::setWindowAnimation(int surfaceid, int type,
     CicoSCWindow *window = NULL;
 
     ICO_TRA("CicoSCWindowController::setWindowAnimation Enter"
-            "(surfaceid=%08X, type=%x, animation=<%s>, time=%d)",
+            "(surfaceid=%08x, type=%x, animation=<%s>, time=%d)",
             surfaceid, type, animation ? animation : "(null)", time);
 
     // find window information in window list
@@ -941,7 +941,7 @@ int
 CicoSCWindowController::setWindowLayer(int surfaceid, int layerid)
 {
     ICO_TRA("CicoSCWindowController::setWindowLayer Enter"
-            "(surfaceid=0x%08X layerid=%x)", surfaceid, layerid);
+            "(surfaceid=%08x layerid=%x)", surfaceid, layerid);
 
     // find window information in window list
     CicoSCWindow* window = findWindow(surfaceid);
@@ -1112,7 +1112,7 @@ CicoSCWindowController::active(int surfaceid, int target)
     CicoSCWindow *window = NULL;
 
     ICO_TRA("CicoSCWindowController::active Enter"
-            "(surfaceid=0x%08X, target=%08X)", surfaceid, target);
+            "(surfaceid=%08x, target=%08x)", surfaceid, target);
 
     // find window information in window list
     if (surfaceid) {
@@ -1201,7 +1201,7 @@ CicoSCWindowController::setmapGet(int surfaceid, const char *filepath)
 int
 CicoSCWindowController::mapSurface(int surfaceid, int framerate, const char *filepath)
 {
-    ICO_TRA("CicoSCWindowController::mapSurface Enter(0x%08x,%d,%s)",
+    ICO_TRA("CicoSCWindowController::mapSurface Enter(%08x,%d,%s)",
             surfaceid, framerate, filepath ? filepath : "(null)");
 
     // find window information in window list
@@ -1234,7 +1234,7 @@ CicoSCWindowController::mapSurface(int surfaceid, int framerate, const char *fil
 int
 CicoSCWindowController::unmapSurface(int surfaceid)
 {
-    ICO_TRA("CicoSCWindowController::unmapSurface Enter(0x%08x)", surfaceid);
+    ICO_TRA("CicoSCWindowController::unmapSurface Enter(%08x)", surfaceid);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -1290,7 +1290,7 @@ int
 CicoSCWindowController::setAttributes(int surfaceid)
 {
     ICO_TRA("CicoSCWindowController::setAttributes Enter"
-            "(surfaceid=0x%08X)", surfaceid);
+            "(surfaceid=%08x)", surfaceid);
 
     // find window information in window list
     CicoSCWindow *window = findWindow(surfaceid);
@@ -1346,7 +1346,7 @@ CicoSCWindowController::activeCB(void                  *data,
                                  int32_t               select)
 {
     ICO_TRA("CicoSCWindowController::activeCB Enter"
-            "(surfaceid=0x%08X select=%d)", surfaceid, select);
+            "(surfaceid=%08x select=%d)", surfaceid, select);
 
     CicoSCWindow *window = findWindow(surfaceid);
     if (NULL == window) {
@@ -1776,7 +1776,7 @@ CicoSCWindowController::createSurfaceCB(void *data,
     struct ilmSurfaceProperties SurfaceProperties;
 
     ICO_TRA("CicoSCWindowController::createSurfaceCB Enter"
-            "(surfaceid=0x%08x)", id_surface);
+            "(surfaceid=%08x)", id_surface);
 
     if (ilm_getPropertiesOfSurface(id_surface, &SurfaceProperties) != ILM_SUCCESS)  {
         ICO_ERR("CicoSCWindowController::createSurfaceCB: ilm_getPropertiesOfSurface(%x) Error",
@@ -2170,7 +2170,7 @@ CicoSCWindowController::findWindow(int surfaceid)
     map<unsigned int, CicoSCWindow*>::iterator itr;
     itr = m_windowList.find(surfaceid);
     if (m_windowList.end() == itr) {
-        ICO_TRA("not found window object. surfaceid=0x%08X", surfaceid);
+        ICO_TRA("not found window object. surfaceid=%08x", surfaceid);
         return NULL;
     }
 
@@ -2321,7 +2321,7 @@ CicoSCWindowController::handleCommand(const CicoSCCommand * cmd)
         (void)hideLayer(opt->displayid, opt->layerid);
         break;
     default:
-        ICO_WRN("command: Unknown(0x%08X)", cmd->cmdid);
+        ICO_WRN("command: Unknown(0x%08x)", cmd->cmdid);
         break;
     }
 
@@ -2336,7 +2336,7 @@ CicoSCWindowController::notifyResourceManager(int        surfaceid,
                                               int        animationTime)
 {
     ICO_TRA("CicoSCWindowController::notifyResourceManager Enter"
-            "(surfaceid=0x%08X zone=%s layerid=%d "
+            "(surfaceid=%08x zone=%s layerid=%d "
             "animation=%s animationTime=%d)",
             surfaceid, zone, layerid, animation, animationTime);
 

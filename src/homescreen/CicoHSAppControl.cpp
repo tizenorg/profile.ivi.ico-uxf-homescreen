@@ -119,7 +119,7 @@ CicoHSAppControl::handleCommand(const CicoHSCommand * cmd)
         WinChgControl(opt->arg);
         break;
     default:
-        ICO_WRN("Unknown Command(0x%08X)", cmd->cmdid);
+        ICO_WRN("Unknown Command(0x%08x)", cmd->cmdid);
         break;
     }
     ICO_TRA("CicoHSAppControl::handleCommand Leave");

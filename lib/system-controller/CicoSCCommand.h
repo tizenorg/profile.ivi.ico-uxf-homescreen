@@ -63,7 +63,7 @@ public:
     void dump(void)
     {
         ICO_DBG("WinCtrlOpt: "
-                "surfaceid=%08X layerid=%d nodeid=%d zone=%s "
+                "surfaceid=%08x layerid=%d nodeid=%d zone=%s "
                 "animation=%s animaType=%x animaTime=%d "
                 "x=%d y=%d w=%d h=%d raise=%d "
                 "visible=%d active=%d framerate=%d stride=%d format=%d",
@@ -114,7 +114,7 @@ public:
     void dump(void)
     {
         ICO_DBG("InputCtrlOpt: "
-                "device=%s input=%d surfaceid=0x%08X deviceno=%d "
+                "device=%s input=%d surfaceid=%08x deviceno=%d "
                 "fix=%d keycode=%d evtype=%d evtime=%d evcode=%d evvalue=%d",
                 device.c_str(), input, surfaceid, deviceno,
                 fix, keycode, evtype, evtime, evcode, evvalue);
@@ -183,7 +183,7 @@ public:
     void dump(void)
     {
         ICO_DBG("ResCtrlOpt: "
-                "diapres=%s dispzone=%s layerid=%d winname=%s srufaceid=0x%08X "
+                "diapres=%s dispzone=%s layerid=%d winname=%s srufaceid=%08x "
                 "animation=%s animatime=%d soundres=%s soundzone=%s"
                 "soundname=%s soundid=%d adjust=%d inputres=%s "
                 "device=%s input=%d type=%d",

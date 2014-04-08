@@ -118,7 +118,7 @@ CicoHSCommand::parseMessage(const char *message)
 void
 CicoHSCommand::dump(void)
 {
-    ICO_INF("Command: cmdid=0x%08X appid=%s pid=%d seq_no=%d", cmdid, appid.c_str(), pid, seq_no);
+    ICO_INF("Command: cmdid=0x%08x appid=%s pid=%d seq_no=%d", cmdid, appid.c_str(), pid, seq_no);
 
     if (NULL != this->opt) {
 //        this->opt->dump(); 

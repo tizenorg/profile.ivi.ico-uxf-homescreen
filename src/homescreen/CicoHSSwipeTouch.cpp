@@ -443,15 +443,10 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
         touch_state_b_y = touch_state_a_y;
         ICO_DBG("TouchMoveSwipe: save x/y=%d/%d", touch_state_b_x, touch_state_b_y);
     }
-
+#if 0       /* too many log */
     ICO_DBG("TouchMoveSwipe: Swipe Move (%d,%d)->(%d,%d) Button=%x",
             info->cur.output.x, info->cur.output.y,
             touch_state_a_x, touch_state_a_y, info->buttons);
-
-    /* long push    */
-    if(touch_down == 0) {
-        ICO_DBG("TouchMoveSwipe: no TouchDown, Skip");
-        return;
-    }
+#endif
 }
 // vim: set expandtab ts=4 sw=4:

@@ -208,7 +208,7 @@ CicoSCUserManager::handleCommand(const CicoSCCommand * cmd)
         setLastInfo(cmd->appid, opt->lastinfo);
         break;
     default:
-        ICO_WRN("Unknown Command(0x%08X)", cmd->cmdid);
+        ICO_WRN("Unknown Command(0x%08x)", cmd->cmdid);
         break;
     }
 

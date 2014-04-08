@@ -202,7 +202,7 @@ CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t ol
 {
     // set window layer request to Multi Window Manager
     ICO_DBG("CicoSCWlWinMgrIF::setWindowLayer: "
-            "surfaceid=0x%08X layer=%d->%d", surfaceid, oldlayer, layer);
+            "surfaceid=%08x layer=%d->%d", surfaceid, oldlayer, layer);
 
     if (oldlayer == layer)  {
         ICO_DBG("CicoSCWlWinMgrIF::setWindowLayer: new layer same as old, NOP");
@@ -255,7 +255,7 @@ CicoSCWlWinMgrIF::setPositionsize(uint32_t surfaceid, uint32_t node,
 {
     // set position size request to Multi Window Manager
     ICO_DBG("called: ilm_surfaceSetDestinationRectangle"
-            "(surfaceid=0x%08X node=%d x=%d y=%d w=%d h=%d)",
+            "(surfaceid=%08x node=%d x=%d y=%d w=%d h=%d)",
             surfaceid, node, x, y, width, height);
 
     if (ilm_surfaceSetDestinationRectangle(surfaceid, x, y, width, height)
@@ -285,7 +285,7 @@ void
 CicoSCWlWinMgrIF::setVisible(uint32_t surfaceid, int32_t visible)
 {
     // set visible request to Multi Window Manager
-    ICO_DBG("called: ilm_surfaceSetVisibility(surfaceid=0x%08X visible=%d)",
+    ICO_DBG("called: ilm_surfaceSetVisibility(surfaceid=%08x visible=%d)",
             surfaceid, visible);
     if ((visible == ICO_SYC_WIN_VISIBLE_SHOW) || (visible == ICO_SYC_WIN_VISIBLE_HIDE)) {
         ilm_surfaceSetVisibility(surfaceid, visible);
@@ -310,7 +310,7 @@ CicoSCWlWinMgrIF::setAnimation(uint32_t surfaceid, int32_t type,
                                const char *animation, int32_t time)
 {
     ICO_DBG("called: ico_window_mgr_set_animation"
-            "(surfaceid=0x%08X type=%d anima=%s time=%d)",
+            "(surfaceid=%08x type=%d anima=%s time=%d)",
             surfaceid, type, animation, time);
     ico_window_mgr_set_animation(m_winmgr, surfaceid, type, animation, time);
     // need wayland flush for GENIVI layer management
@@ -329,7 +329,7 @@ void
 CicoSCWlWinMgrIF::setActive(uint32_t surfaceid, int32_t active)
 {
     ICO_DBG("called: ilm_SetKeyboardFocusOn"
-            "(surfaceid=0x%08X active=%d)", surfaceid, active);
+            "(surfaceid=%08x active=%d)", surfaceid, active);
     if ((ilm_SetKeyboardFocusOn(surfaceid) != ILM_SUCCESS) ||
         (ilm_commitChanges() != ILM_SUCCESS))   {
         ICO_ERR("CicoSCWlWinMgrIF::setActive ilm_SetKeyboardFocusOn(%08x) Error", surfaceid);
@@ -368,7 +368,7 @@ CicoSCWlWinMgrIF::setLayerVisible(uint32_t layer, int32_t visible)
 void
 CicoSCWlWinMgrIF::setmapGet(int surfaceid, const char *filepath)
 {
-    ICO_DBG("called: ilm_takeSurfaceScreenshot(filepath=%s,, surface=0x%08x)",
+    ICO_DBG("called: ilm_takeSurfaceScreenshot(filepath=%s,, surface=%08x)",
             filepath ? filepath : "(null)", surfaceid);
     if ((ilm_takeSurfaceScreenshot(filepath, surfaceid) != ILM_SUCCESS) ||
         (ilm_commitChanges() != ILM_SUCCESS))   {
@@ -389,7 +389,7 @@ CicoSCWlWinMgrIF::setmapGet(int surfaceid, const char *filepath)
 void
 CicoSCWlWinMgrIF::mapSurface(uint32_t surfaceid, int32_t framerate, const char *filepath)
 {
-    ICO_DBG("called: ico_window_mgr_map_surface(surfaceid=0x%08X framerate=%d file=%s)",
+    ICO_DBG("called: ico_window_mgr_map_surface(surfaceid=%08x framerate=%d file=%s)",
             surfaceid, framerate, filepath ? filepath : "(null)");
     // currently GENIVI genivi-shell not support contents change, so use ico_window_mgr
     if ((filepath != NULL) && (*filepath != 0) && (*filepath != ' '))   {
@@ -411,7 +411,7 @@ void
 CicoSCWlWinMgrIF::unmapSurface(uint32_t surfaceid)
 {
     ICO_DBG("called: ico_window_mgr_unmap_surface"
-            "(surfaceid=0x%08X)", surfaceid);
+            "(surfaceid=%08x)", surfaceid);
     // currently GENIVI genivi-shell not support contents change, so use ico_window_mgr
     ico_window_mgr_unmap_surface(m_winmgr, surfaceid);
 }

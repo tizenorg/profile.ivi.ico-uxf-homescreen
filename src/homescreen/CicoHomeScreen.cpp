@@ -804,7 +804,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
     if (event == ICO_SYC_EV_WIN_CREATE) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_CREATE(appid=%s surface=0x%08x)",
+        ICO_DBG("Event:ICO_SYC_EV_WIN_CREATE(appid=%s surface=%08x)",
                 win_info->appid, win_info->surface);
         /*only save information*/
         if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
@@ -896,7 +896,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
     else if (event == ICO_SYC_EV_WIN_NAME) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_NAME(appid=%s surface=0x%08x name=%s)",
+        ICO_DBG("Event:ICO_SYC_EV_WIN_NAME(appid=%s surface=%08x name=%s)",
                 win_info->appid, win_info->surface, win_info->name);
 
         if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
@@ -952,7 +952,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
     else if (event == ICO_SYC_EV_WIN_DESTROY) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_DESTROY(appid=%s surface=0x%08x)",
+        ICO_DBG("Event:ICO_SYC_EV_WIN_DESTROY(appid=%s surface=%08x)",
                 win_info->appid, win_info->surface);
         /*only save information*/
         if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
@@ -995,14 +995,14 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
     else if (event == ICO_SYC_EV_WIN_ACTIVE) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_ACTIVE(appid=%s surface=0x%08x)",
+        ICO_DBG("Event:ICO_SYC_EV_WIN_ACTIVE(appid=%s surface=%08x)",
                 win_info->appid, win_info->surface);
         hs_instance->ChangeActive(win_info->appid, win_info->surface);
     }
     else if (event == ICO_SYC_EV_WIN_ATTR_CHANGE)   {
         ico_syc_win_attr_t *win_attr =
             reinterpret_cast<ico_syc_win_attr_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_ATTR_CHANGE(appid=%s surface=0x%08x)",
+        ICO_DBG("Event:ICO_SYC_EV_WIN_ATTR_CHANGE(appid=%s surface=%08x)",
                 win_attr->appid, win_attr->surface);
         if (strncmp(win_attr->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0)  {
@@ -1544,7 +1544,8 @@ CicoHomeScreen::CreateSwipeInputWindow(void)
             CreateSwipeInputWindow(ICO_HS_WINDOW_POS_X,
                                    full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY1,
                                    ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY2*2),
+                                   full_height / 2 - ICO_HS_SWIPE_TOUCH_DISTANCE_XY1
+                                                   - ICO_HS_SWIPE_TOUCH_DISTANCE_XY2,
                                    "left");
     swipe_input_windows[0]->ShowWindow();
 
@@ -1554,7 +1555,8 @@ CicoHomeScreen::CreateSwipeInputWindow(void)
             CreateSwipeInputWindow(full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
                                    full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY1,
                                    ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 - (ICO_HS_SWIPE_TOUCH_DISTANCE_XY2*2),
+                                   full_height / 2 - ICO_HS_SWIPE_TOUCH_DISTANCE_XY1
+                                                   - ICO_HS_SWIPE_TOUCH_DISTANCE_XY2,
                                    "right");
     swipe_input_windows[1]->ShowWindow();
 

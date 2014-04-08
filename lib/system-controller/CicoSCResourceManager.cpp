@@ -211,7 +211,7 @@ CicoSCResourceManager::handleCommand(const CicoSCCommand &cmd,
                                      bool internal)
 {
     ICO_TRA("CicoSCResourceManager::handleCommand Enter"
-            "(cmdid=0x%08X internal=%s)",
+            "(cmdid=0x%08x internal=%s)",
             cmd.cmdid, internal ? "true" : "false");
 
     CicoSCCmdResCtrlOpt *opt = (CicoSCCmdResCtrlOpt*)cmd.opt;
@@ -626,7 +626,7 @@ CicoSCResourceManager::acquireSoundResource(resource_request_t *newreq)
     // is change zone?
     CompSoundResourceRequest comp(req);
     if (true == comp(m_curSoundResReq[req->soundzoneid])) {
-        ICO_DBG("already acquired appid=%s pid=%d soundid=0x%08X",
+        ICO_DBG("already acquired appid=%s pid=%d soundid=0x%08x",
                 req->appid, req->pid, req->soundid);
         ICO_TRA("CicoSCResourceManager::acquireSoundResource Leave(true)");
         // free new request
@@ -739,7 +739,7 @@ CicoSCResourceManager::acquireInputResource(resource_request_t *newreq)
     // is change zone?
     CompInputResourceRequest comp(req);
     if (true == comp(m_curInputResReq[req->input])) {
-        ICO_DBG("already acquired appid=%s pid=%d input=0x%08X",
+        ICO_DBG("already acquired appid=%s pid=%d input=0x%08x",
                 req->appid, req->pid, req->input);
         ICO_TRA("CicoSCResourceManager::acquireInputResource Leave(true)");
         // free new request
@@ -999,7 +999,7 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
     if ((m_curDispResOwerReq.end() != itr) && (NULL != itr->second)) {
         // already ower
         if (itr->second == req) {
-            ICO_DBG("already ower appid=%s pid=%d surfaceid=0x%08X",
+            ICO_DBG("already ower appid=%s pid=%d surfaceid=%08x",
                     req->appid, req->pid, req->surfaceid);
             // show request window
             m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
@@ -1751,7 +1751,7 @@ CicoSCResourceManager::updateDispResRegulationPreProc(resource_request_t *req)
     }
 
     if (req->surfaceid != surfaceid) {
-        ICO_WRN("req->surfaceid(0x%08X) != displayedsurfaceid(0x%08X)",
+        ICO_WRN("req->surfaceid(%08x) != displayedsurfaceid(%08x)",
                 req->surfaceid, surfaceid);
     }
 

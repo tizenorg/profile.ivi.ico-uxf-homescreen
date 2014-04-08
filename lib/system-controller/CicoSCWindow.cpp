@@ -57,7 +57,7 @@ CicoSCWindow::~CicoSCWindow()
 void
 CicoSCWindow::dump(void)
 {
-    ICO_DBG("CicoSCWindow: surfaceid=0x%08X name=%s appid=%s pid=%d "
+    ICO_DBG("CicoSCWindow: surfaceid=%08x name=%s appid=%s pid=%d "
             "nodeid=%d displayid=%d layerid=%d zone=%s zoneid=%d "
             "subwindow=%d eventmask=%d x=%d y=%d width=%d height=%d "
             "visible=%s raise=%s active=%s",
