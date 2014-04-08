@@ -904,7 +904,7 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
         return;
     }
 
-    // bind wl_surface to ivi_surface
+    // get native surface info
     tp = m_free_surface_creation;
     if (tp)  {
         m_free_surface_creation = tp->next;
@@ -915,18 +915,18 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
             ICO_ERR("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: out of memory");
             return;
         }
-        memset(tp, 0, sizeof(struct creation_surface_wait));
     }
-    tp2 = m_wait_surface_creation;
-    tp->next = tp2;
-    m_wait_surface_creation = tp;
+    memset(tp, 0, sizeof(struct creation_surface_wait));
+    tp->next = m_wait_surface_creation;
     tp->pid = pid;
     strncpy(tp->title, title, ICO_SYC_MAX_WINNAME_LEN-1);
     tp->busy = SCWINMGR_GENIVI_BUSY_WAIT;
+    tp2 = m_wait_surface_creation;
     while (tp2)  {
         if (tp2->busy != SCWINMGR_GENIVI_BUSY_NONE) break;
         tp2 = tp2->next;
     }
+    m_wait_surface_creation = tp;
     if (! tp2)   {
         tp->busy = SCWINMGR_GENIVI_BUSY_REQSURF;
         ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: "
@@ -1028,6 +1028,7 @@ CicoSCWlWinMgrIF::wlIviCtrlErrorCB(void *data,
 {
     struct creation_surface_wait    *tp;
     struct creation_surface_wait    *tp2;
+    struct creation_surface_wait    *deltp;
 
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlErrorCB: Enter(%d[%d],%d,<%s>)",
             object_id, object_type, error_code, error_text ? error_text : "(null)");
@@ -1040,14 +1041,34 @@ CicoSCWlWinMgrIF::wlIviCtrlErrorCB(void *data,
     // search request wait
     tp = m_wait_surface_creation;
     tp2 = NULL;
+    deltp = NULL;
     while (tp)  {
         if (tp->busy == SCWINMGR_GENIVI_BUSY_WAIT)  {
             tp2 = tp;
+        }
+        else if (tp->busy == SCWINMGR_GENIVI_BUSY_REQSURF)  {
+            deltp = tp;
         }
         else if (tp->busy != SCWINMGR_GENIVI_BUSY_NONE) {
             tp->busy = SCWINMGR_GENIVI_BUSY_NONE;
         }
         tp = tp->next;
+    }
+    if (deltp)  {
+        if (m_wait_surface_creation == deltp)   {
+            m_wait_surface_creation = deltp->next;
+        }
+        else    {
+            tp = m_wait_surface_creation;
+            while(tp->next != deltp)    {
+                tp = tp->next;
+            }
+            if (tp) {
+                tp->next = deltp->next;
+            }
+        }
+        deltp->next = m_free_surface_creation;
+        m_free_surface_creation = deltp;
     }
     if (tp2 != NULL)    {
         tp2->busy = SCWINMGR_GENIVI_BUSY_REQSURF;
@@ -1060,12 +1081,11 @@ CicoSCWlWinMgrIF::wlIviCtrlErrorCB(void *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wayland ivi-shell ivi-controller protocol error callback
+ *  @brief  wayland ivi-shell ivi-controller protocol native handle callback
  *
  *  @param [in] data            user data(unused)
  *  @param [in] ivi_controller  wayland ivi-controller interface
- *  @param [in] error_code      error code
- *  @param [in] error_text      error message
+ *  @param [in] surface         weston_surface object
  */
 //--------------------------------------------------------------------------
 void
@@ -1073,10 +1093,12 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
                                           struct ivi_controller *ivi_controller,
                                           struct wl_surface *surface)
 {
-    uint32_t                        id_surface;
     struct creation_surface_wait    *tp;
     struct creation_surface_wait    *tp2;
+    struct creation_surface_wait    *tp3;
     struct creation_surface_wait    *bp;
+    uint32_t                        id_surface;
+    int                             surface_count;
 
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Enter(surf=%08x)", (int)surface);
 
@@ -1097,35 +1119,32 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
         ICO_WRN("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Leave(no request)");
         return;
     }
-    if (tp->surface == surface) {
-        tp->busy = SCWINMGR_GENIVI_BUSY_NONE;
-        ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: winname change(%08x,<%s>)",
-                tp->id_surface, tp->title);
-        id_surface = tp->id_surface;
-        static_cast<CicoSCWlWinMgrIF*>(data)->updateWinnameCB(id_surface, tp->title);
-
-        // title change, delete old table
-        tp2 = m_wait_surface_creation;
-        bp = NULL;
-        while (tp2) {
-            if (tp2 != tp)  {
-                if (tp2->surface == surface)    {
-                    if (bp) {
-                        bp->next = tp2->next;
-                    }
-                    else    {
-                        m_wait_surface_creation = tp2->next;
-                    }
-                    tp2->next = m_free_surface_creation;
-                    m_free_surface_creation = tp2;
-                    tp2 = m_wait_surface_creation;
-                    bp = NULL;
-                    continue;
-                }
-            }
-            bp = tp2;
-            tp2 = tp2->next;
+    surface_count = 0;
+    tp2 = NULL;
+    tp3 = m_wait_surface_creation;
+    while (tp3) {
+        if ((tp != tp3) && (tp3->pid == tp->pid))   {
+            surface_count ++;
+            tp2 = tp3;
         }
+        tp3 = tp3->next;
+    }
+    if (surface_count == 1) {
+        // title change, delete old table
+        id_surface = tp2->id_surface;
+        ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: winname change"
+                "(%08x,<%s>)", id_surface, tp->title);
+        strcpy(tp2->title, tp->title);
+        if (bp) {
+            bp->next = tp->next;
+        }
+        else    {
+            m_wait_surface_creation = tp->next;
+        }
+        tp->next = m_free_surface_creation;
+        m_free_surface_creation = tp;
+
+        static_cast<CicoSCWlWinMgrIF*>(data)->updateWinnameCB(tp2->id_surface, tp2->title);
     }
     else    {
         // create ivi-surface and bind to wl_surface
