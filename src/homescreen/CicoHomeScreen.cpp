@@ -1536,27 +1536,26 @@ CicoHomeScreen::DeleteControlBarWindow(void)
 void
 CicoHomeScreen::CreateSwipeInputWindow(void)
 {
+    int     pos_y, swipe_height;
+
     ICO_DBG("CicoHomeScreen::CreateSwipeInputWindow: start");
-    /* TODO: cullentry SwipeInput windows is fixed size, need configuration ?   */
+    /* cullentry SwipeInput windows is fixed size   */
+    pos_y = ICO_HS_WINDOW_POS_Y + ICO_HS_SWIPE_TOUCH_DISTANCE_TOP;
+    swipe_height = full_height - pos_y - ICO_HS_SWIPE_TOUCH_DISTANCE_BOTTOM;
+
     /* left side window     */
     swipe_input_windows[0] = new CicoHSSwipeInputWindow();
     swipe_input_windows[0]->
-            CreateSwipeInputWindow(ICO_HS_WINDOW_POS_X,
-                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY1,
-                                   ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 - ICO_HS_SWIPE_TOUCH_DISTANCE_XY1
-                                                   - ICO_HS_SWIPE_TOUCH_DISTANCE_XY2,
+            CreateSwipeInputWindow(ICO_HS_WINDOW_POS_X, pos_y,
+                                   ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH, swipe_height,
                                    "left");
     swipe_input_windows[0]->ShowWindow();
 
     /* right side window    */
     swipe_input_windows[1] = new CicoHSSwipeInputWindow();
     swipe_input_windows[1]->
-            CreateSwipeInputWindow(full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 + ICO_HS_SWIPE_TOUCH_DISTANCE_XY1,
-                                   ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH,
-                                   full_height / 2 - ICO_HS_SWIPE_TOUCH_DISTANCE_XY1
-                                                   - ICO_HS_SWIPE_TOUCH_DISTANCE_XY2,
+            CreateSwipeInputWindow(full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH, pos_y,
+                                   ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH, swipe_height,
                                    "right");
     swipe_input_windows[1]->ShowWindow();
 
