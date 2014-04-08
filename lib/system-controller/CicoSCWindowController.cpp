@@ -21,7 +21,10 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include <vector>
 #include <algorithm>
@@ -1803,16 +1806,43 @@ CicoSCWindowController::createSurfaceCB(void *data,
     appctrl = CicoSCLifeCycleController::getInstance();
     const CicoAilItems* ailItem = NULL;
     const CicoAulItems* aulitem = appctrl->findAUL(window->pid);
+    if (NULL == aulitem) {
+        /* client does not exist in AppCore, search parent process  */
+        ICO_DBG("application information not found. search parent process");
+
+        int     fd;
+        int     cpid = pid;
+        int     ppid;
+        int     size;
+        char    *ppid_line;
+        char    procpath[PATH_MAX];
+
+        while ((cpid > 1) && (aulitem == NULL)) {
+            snprintf(procpath, sizeof(procpath)-1, "/proc/%d/status", cpid);
+
+            fd = open(procpath, O_RDONLY);
+            if (fd < 0)     break;
+
+            size = read(fd, procpath, sizeof(procpath));
+            close(fd);
+
+            if (size <= 0)  break;
+            ppid_line = strstr(procpath, "PPid");
+
+            if (ppid_line == NULL)  break;
+            ppid = 0;
+            sscanf(ppid_line, "PPid:    %d", &ppid);
+            if (ppid <= 1)  break;
+            ICO_DBG("application pid=%d parent=%d", cpid, ppid);
+            cpid = ppid;
+            aulitem = appctrl->findAUL(cpid);
+        }
+    }
     if (NULL != aulitem) {
         window->appid = aulitem->m_appid;
         ICO_DBG("appid=%s", window->appid.c_str());
         ailItem = appctrl->findAIL(window->appid.c_str());
-    }
-    else {
-        ICO_DBG("application information not found.");
-    }
 
-    if (NULL != ailItem) {
         window->layerid = ailItem->m_layer;
         window->zoneid  = ailItem->m_displayZone;
         window->nodeid  = ailItem->m_nodeID;
