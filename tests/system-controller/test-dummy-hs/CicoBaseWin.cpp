@@ -22,7 +22,6 @@
 #include "CicoLog.h"
 //#include "Ecore_Wayland.h"
 //#include "Ecore.h"
-#include "Ecore_X.h"
 
 Ecore_Evas* CicoBaseWin::_window = NULL;
 
@@ -69,8 +68,6 @@ CicoBaseWin::CicoBaseWin(const char *title,
     /* get display screen size */ 
 //    ecore_main_loop_iterate();
 //    ecore_wl_screen_size_get(&_width, &_height);
-//    EAPI Ecore_X_Screen *screen = ecore_x_default_screen_get();
-//    ecore_x_screen_size_get(screen, &_width, &_height);
 //    _INFO("Display Screen Size(%dx%d)", _width, _height);
 
     /* set callback on destroy */

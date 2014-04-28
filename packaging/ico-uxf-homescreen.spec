@@ -59,7 +59,6 @@ Requires: pkgconfig(eina)
 Requires: pkgconfig(edje)
 Requires: pkgconfig(elementary)
 Requires: pkgconfig(ecore-wayland)
-Requires: pkgconfig(ecore-x)
 Requires: pkgconfig(glib-2.0)
 Requires: pkgconfig(appsvc)
 

@@ -45,7 +45,6 @@ PKG_CHECK_MODULES([APPSVC], [appsvc])
 PKG_CHECK_MODULES([EDJE], [edje])
 PKG_CHECK_MODULES([ELEM], [elementary])
 PKG_CHECK_MODULES([ECOREWAYLAND], [ecore-wayland])
-PKG_CHECK_MODULES([ECOREX], [ecore-x])
 PKG_CHECK_MODULES([WAYLANDCURSOR], [wayland-cursor])
 
 # libraries for system-controller.
