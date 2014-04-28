@@ -15,6 +15,7 @@
 #ifndef _CLEAR_SCREEN_H_
 #define _CLEAR_SCREEN_H_
 
+#define MESA_EGL_NO_X11_HEADERS
 #include <sys/ioctl.h>
 #include <GLES2/gl2.h>
 #include <EGL/egl.h>
