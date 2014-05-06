@@ -51,7 +51,6 @@ libico_system_controller_la_CPPFLAGS =	\
 	@MURPHYDOMAINCONTROLLER_CFLAGS@		\
 	@MURPHYECORE_CFLAGS@				\
 	@MURPHYRESOURCE_CFLAGS@				\
-	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
 	-I../../include						\
 	-I../common							\
@@ -73,7 +72,6 @@ libico_system_controller_la_LIBADD =	\
 	@MURPHYDOMAINCONTROLLER_LIBS@		\
 	@MURPHYECORE_LIBS@					\
 	@MURPHYRESOURCE_LIBS@				\
-	@EDBUS_LIBS@						\
 	$(UWS_LIBS)							\
 	$(GENIVI_LIBS)						\
 	$(WESTONPLUGIN_LIBS)

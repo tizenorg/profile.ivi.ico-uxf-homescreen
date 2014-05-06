@@ -20,7 +20,6 @@
 #include <Ecore.h>
 #include <Eina.h>
 #include <dbus/dbus.h>
-#include <E_DBus.h>
 
 #include <map>
 #include <vector>

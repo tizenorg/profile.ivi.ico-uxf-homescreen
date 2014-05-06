@@ -38,6 +38,7 @@ OnScreen_LDADD = 					\
 	../../lib/common/.libs/libico-common.a 			\
 	../../lib/notification/.libs/libico-notification.a \
 	@CAPIAPPFWAPPLICATION_LIBS@ 	\
+    $(ECOREEVAS_LIBS) 					\
     $(EFL_LIBS) 					\
     $(OPT_LIBS) 					\
     $(AUL_LIBS) 					\

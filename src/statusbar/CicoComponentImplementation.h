@@ -17,7 +17,7 @@
 #ifndef __CICO_COMPONENT_IMPLEMENTATION_H__
 #define __CICO_COMPONENT_IMPLEMENTATION_H__
 
-#include <Elementary.h>
+#include <Evas.h>
 #include <ctime>
 #include <list>
 #include <vector>
