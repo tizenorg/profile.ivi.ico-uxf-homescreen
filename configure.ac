@@ -28,6 +28,7 @@ AC_CHECK_LIB([aul], [aul_app_get_appid_bypid], AUL_LIBS="-laul")
 AC_SUBST(AUL_LIBS)
 
 # libraries for common.
+PKG_CHECK_MODULES([EGL], [egl])
 PKG_CHECK_MODULES([EINA], [eina])
 PKG_CHECK_MODULES([EVAS], [evas])
 PKG_CHECK_MODULES([ECORE], [ecore])
@@ -94,6 +95,9 @@ AC_SUBST(WL_LIBS)
 
 WESTONPLUGIN_LIBS="-lico-uxf-weston-plugin"
 AC_SUBST(WESTONPLUGIN_LIBS)
+
+CFLAGS="$CFLAGS $EGL_CFLAGS"
+AC_SUBST(CFLAGS)
 
 if test "x$GCC" = "xyes"; then
     my_common_gcc_flags="-Wall -Wextra -Wno-unused-parameter \
