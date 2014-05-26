@@ -31,7 +31,7 @@ HomeScreen_SOURCES =					\
     CicoHSServer.cpp                    \
     CicoHSMessage.cpp                   \
     CicoHSAppControl.cpp                \
-    CicoHSCommandArg.cpp                 
+    CicoHSCommandArg.cpp
 
 HomeScreen_CFLAGS= 					\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
@@ -63,7 +63,7 @@ HomeScreen_LDADD = 					\
 	../../lib/common/.libs/libico-common.a 			\
 	@CAPIAPPFWAPPLICATION_LIBS@ 	\
 	@PKGMGR_LIBS@					\
-    $(ECOREEVAS_LIBS)					\
+    $(ECOREEVAS_LIBS) 				\
     $(EFL_LIBS) 					\
     $(OPT_LIBS) 					\
     $(WL_LIBS) 						\

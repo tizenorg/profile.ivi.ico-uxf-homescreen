@@ -26,6 +26,7 @@ using namespace std;
 //==========================================================================
 // static members
 //==========================================================================
+int CicoOSPopWindow::m_windowno = 0;
 
 //==========================================================================
 // functions
@@ -203,7 +204,7 @@ CicoOSPopWindow::showPopup()
     return true;
 }
 
-bool 
+bool
 CicoOSPopWindow::acquireRes()
 {
     ICO_TRA("Enter");
@@ -244,7 +245,7 @@ CicoOSPopWindow::hidePopup(bool buttonTouch)
     ICO_TRA("Leave");
 }
 
-bool    
+bool
 CicoOSPopWindow::releaseRes()
 {
     ICO_TRA("Enter");
@@ -295,6 +296,7 @@ CicoOSPopWindow::InitializeWindow(void)
     }
     // icon setup
     m_icon = evas_object_image_filled_add(ecore_evas_get(m_window));
+    evas_object_pointer_mode_set(m_icon, EVAS_OBJECT_POINTER_MODE_NOGRAB);
     edje_object_part_swallow(m_theme, "icon", m_icon);
     /* getting size of screen */
     /* home screen size is full of display*/
@@ -329,7 +331,10 @@ CicoOSPopWindow::InitializeWindow(void)
 bool
 CicoOSPopWindow::createMainWindow()
 {
+    char    winname[64];
+
     ICO_TRA("Enter");
+
     // Window setup
     m_window = ecore_evas_new(NULL, 0, 0, WIDTH, HEIGHT, "frame=0");
     if (NULL == m_window) {
@@ -337,6 +342,11 @@ CicoOSPopWindow::createMainWindow()
         ICO_TRA("Leave(ERR)");
         return false;
     }
+
+    CicoOSPopWindow::m_windowno ++;
+    if (CicoOSPopWindow::m_windowno > 9999) CicoOSPopWindow::m_windowno = 1;
+    sprintf(winname, "OnScreen_%04d", CicoOSPopWindow::m_windowno);
+    ecore_evas_title_set(m_window, winname);
     ecore_evas_alpha_set(m_window, EINA_TRUE);
     ecore_evas_show(m_window);
     ICO_TRA("Leave");

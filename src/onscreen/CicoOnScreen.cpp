@@ -42,7 +42,6 @@ CicoOnScreen::CicoOnScreen(void)
     ICO_TRA("CicoOnScreen::CicoOnScreen Enter");
     m_request = NULL;
     m_del = false;
-    m_reserve = NULL;
     ICO_TRA("CicoOnScreen::CicoOnScreen Leave");
 }
 
@@ -100,11 +99,6 @@ CicoOnScreen::StartOnScreen(void)
 
     CicoOSClient* cosc = CicoOSClient::getInstance();
     cosc->connect();
-
-    if (NULL == m_reserve) {
-        m_reserve = new CicoOSPopWindow(NOTIFICATION_TYPE_NONE);
-        m_reserve->createMainWindow();
-    }
 
     // set notification callback function
     notiservice_.SetCallback(NotificationCallback, this);

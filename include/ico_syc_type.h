@@ -66,7 +66,7 @@ typedef enum _event_id {
  * @ICO_SYC_WIN_NOCHANGE: no change value
  */
 typedef enum _win_value {
-    ICO_SYC_WIN_NOCHANGE    = 99999999
+    ICO_SYC_WIN_NOCHANGE    = 99999999,
 } ico_syc_win_value_e;
 
 /*

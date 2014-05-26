@@ -13,6 +13,7 @@
  */
 #include "CicoHSMenuTile.h"
 #include "CicoHSMenuTouch.h"
+#include "CicoHSWindow.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -58,6 +59,8 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
     thumb.surface = 0;
     thumb.fbcount = 0;
     thumb.pixel_data = NULL;
+    thumb.thumb_timer = NULL;
+    thumb.orgsurface = 0;
     this->page = page;
     this->subpage = subpage;
     this->position = position;
@@ -83,6 +86,10 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
 /*--------------------------------------------------------------------------*/
 CicoHSMenuTile::~CicoHSMenuTile(void)
 {
+    if (thumb.thumb_timer)  {
+        ecore_timer_del(thumb.thumb_timer);
+        thumb.thumb_timer = NULL;
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -108,10 +115,13 @@ CicoHSMenuTile::CreateObject(Evas *evas)
     small_icon = NULL;
     thumb_reduce_x = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
     thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
+    if (thumb.thumb_timer)  {
+        ecore_timer_del(thumb.thumb_timer);
+        thumb.thumb_timer = NULL;
+    }
 
     /*tile*/
-    tile = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(tile, icon_image_path, NULL);
+    tile = CicoHSWindow::EvasObjectImageCreate(evas, icon_image_path, NULL);
     evas_object_move(tile, pos_x, pos_y);
     evas_object_resize(tile, width, height);
     evas_object_event_callback_add(tile, EVAS_CALLBACK_MOUSE_DOWN,
@@ -122,8 +132,8 @@ CicoHSMenuTile::CreateObject(Evas *evas)
     evas_object_show(icon);
 
     /*term Icon*/
-    term_icon = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(term_icon, ICO_HS_MENUTILE_TERM_ICON_PATH, NULL);
+    term_icon = CicoHSWindow::EvasObjectImageCreate(evas,
+                                                    ICO_HS_MENUTILE_TERM_ICON_PATH, NULL);
     evas_object_move(term_icon, pos_x + width - ICO_HS_MENUTILE_TERM_ICON_WIDTH, pos_y);
     evas_object_resize(term_icon, ICO_HS_MENUTILE_TERM_ICON_WIDTH,
                        ICO_HS_MENUTILE_TERM_ICON_HEIGHT);
@@ -188,6 +198,10 @@ CicoHSMenuTile::FreeObject(void)
         (void) unlink(sWork);
         ico_syc_unmap_thumb(thumb.surface);
         thumb.surface = 0;
+    }
+    if (thumb.thumb_timer)  {
+        ecore_timer_del(thumb.thumb_timer);
+        thumb.thumb_timer = NULL;
     }
     if (tile != NULL){
         evas_object_del(tile);
@@ -501,6 +515,10 @@ CicoHSMenuTile::ValidMenuIcon(void)
                 evas_object_show(tile);
             }
         }
+        if (thumb.thumb_timer)  {
+            ecore_timer_del(thumb.thumb_timer);
+            thumb.thumb_timer = NULL;
+        }
         if (small_icon) {
             evas_object_hide(small_icon);
         }
@@ -524,6 +542,7 @@ CicoHSMenuTile::ValidThumbnail(int surface)
     ICO_DBG("CicoHSMenuTile::ValidThumbnail(appid=%08x<%s>) run=%d surf=%08x",
             (int)this->appid, appid, app_running, surface);
 
+    thumb.orgsurface = surface;
     if ((! app_running) || (surface == 0))  {
         if (thumb.surface != 0) {
             sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
@@ -545,8 +564,8 @@ CicoHSMenuTile::ValidThumbnail(int surface)
                               menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
                                           ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
             if (! small_icon)   {
-                small_icon = evas_object_image_filled_add(menu_evas);
-                evas_object_image_file_set(small_icon, icon_image_path, NULL);
+                small_icon = CicoHSWindow::EvasObjectImageCreate(menu_evas,
+                                                                 icon_image_path, NULL);
                 evas_object_move(small_icon,
                                  pos_x + thumb_reduce_x
                                      - ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2,
@@ -579,9 +598,35 @@ CicoHSMenuTile::ValidThumbnail(int surface)
             if (small_icon) {
                 evas_object_hide(small_icon);
             }
+            if (thumb.thumb_timer)  {
+                ecore_timer_del(thumb.thumb_timer);
+                thumb.thumb_timer = NULL;
+            }
             ICO_DBG("CicoHSMenuTile::ValidThumbnail: %s(%08x) hide small icon",
                     appid, surface);
         }
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuTile::RetryThumbnail
+ *          check and retry thumbnail
+ *
+ * @param       none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuTile::RetryThumbnail(void)
+{
+    thumb.thumb_timer = NULL;
+
+    ICO_DBG("CicoHSMenuTile::RetryThumbnaili: surf=%08x app=%s", thumb.orgsurface, appid);
+
+    if ((icon == tile) && (thumb.orgsurface != 0))  {
+        app_running = false;
+        ValidThumbnail(thumb.orgsurface);
     }
 }
 
@@ -625,9 +670,10 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 #pragma pack(pop)
 #endif
 
+#if 0       /* too many log */
     ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%08x<%s>) info=%08x surf=%08x",
             (int)this->appid, appid, (int)info, info ? info->surface : 0);
-
+#endif
     if ((info == NULL) || (info->surface == 0)) {
         unmap = 1;
     }
@@ -685,7 +731,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                 thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
             }
             if (! thumb_tile)   {
-                thumb_tile = evas_object_image_filled_add(menu_evas);
+                thumb_tile = CicoHSWindow::EvasObjectImageCreate(menu_evas, NULL, NULL);
                 evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
                                                height - thumb_reduce_y * 2);
                 evas_object_move(thumb_tile, pos_x + thumb_reduce_x,
@@ -748,7 +794,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                     }
                 }
                 else    {
-                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
+                    ICO_DBG("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
                             sWork);
                 }
                 if (fd >= 0)    {
@@ -785,6 +831,11 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
         free(thumb.pixel_data);
         thumb.pixel_data = NULL;
         icon = tile;
+        if (thumb.thumb_timer)  {
+            ecore_timer_del(thumb.thumb_timer);
+        }
+        thumb.thumb_timer = ecore_timer_add(ICO_HS_MENUTILE_THUMBNAIL_RETRYTIME,
+                                            CicoHSMenuTile::TimerThumbnail, (void *)this);
     }
 
     if (icon != old_icon)   {
@@ -803,6 +854,25 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
             }
         }
     }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuTile::TimerThumbnail
+ *          recheck thumbnail
+ *
+ * @param[in]   data    CicoHSMenuTile object
+ * @return      fixed ECORE_CALLBACK_CANCEL
+ */
+/*--------------------------------------------------------------------------*/
+Eina_Bool
+CicoHSMenuTile::TimerThumbnail(void *data)
+{
+    CicoHSMenuTile  *tile = (CicoHSMenuTile *)data;
+
+    tile->RetryThumbnail();
+
+    return ECORE_CALLBACK_CANCEL;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -846,12 +916,12 @@ CicoHSMenuTile::SetOrgThumbnail(CicoHSMenuTile *orgTile)
             (int)this->appid, this->appid, app_running, orgTile->thumb.surface );
 
     /* check surface of orgTile */
-    if ( orgTile == NULL || orgTile->thumb.surface == 0 ) {
+    if (orgTile == NULL || orgTile->thumb.surface == 0) {
         return;
     }
 
     /* set surface */
-    this->ValidThumbnail( orgTile->thumb.surface );
+    this->ValidThumbnail(orgTile->thumb.surface);
 
     /* set new thumbnail */
     ico_syc_thumb_info_t info;
@@ -863,10 +933,10 @@ CicoHSMenuTile::SetOrgThumbnail(CicoHSMenuTile *orgTile)
     info.stride = orgTile->thumb.stride;
     info.format = orgTile->thumb.format;
 
-    SetThumbnail( &info );
+    SetThumbnail(&info);
 
     ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Leave(appid=%08x<%s>) run=%d surf=%08x",
-            (int)this->appid, this->appid, app_running, orgTile->thumb.surface );
+            (int)this->appid, this->appid, app_running, orgTile->thumb.surface);
 
 }
 // vim: set expandtab ts=4 sw=4:

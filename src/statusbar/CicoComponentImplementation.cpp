@@ -201,9 +201,9 @@ CicoStatusBarClockComponent::Update()
             if ( obj != NULL ) {
                 ICO_DBG("CicoStatusBarClockComponent image set[%s][%s]",
                         clock_image_object[i],clock_image_path[now_clock_image[i]]);
-                evas_object_image_file_set(obj, 
+                evas_object_image_file_set(obj,
                         clock_image_path[now_clock_image[i]], NULL);
-                // add update view area 
+                // add update view area
                 //    (Omitted update area is set so that evas_object_image_file_set())
                 //Evas_Coord x,y,w,h;
                 //evas_object_geometry_get( obj, &x, &y, &w, &h );

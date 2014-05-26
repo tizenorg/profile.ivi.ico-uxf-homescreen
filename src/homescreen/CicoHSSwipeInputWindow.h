@@ -46,6 +46,7 @@ class CicoHSSwipeInputWindow :public CicoHSWindow
     int GetPosY(void);
     int GetWidth(void);
     int GetHeight(void);
+    void GrabOff(void);
 
     void SetWindowID(const char *appid, int surface);
 

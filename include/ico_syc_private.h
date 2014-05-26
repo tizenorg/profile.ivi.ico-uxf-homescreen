@@ -265,6 +265,15 @@ void ico_syc_cb_region(ico_syc_callback_t callback, void *user_data,
 
 
 /*============================================================================*/
+/* NodeId <-> DisplayId macro                                                 */
+/*============================================================================*/
+#define ICO_SYC_ECUBASE 100
+#define ICO_SYC_DISPLAYID(nodeid)           (nodeid % ICO_SYC_ECUBASE)
+#define ICO_SYC_ECUID(nodeid)               (nodeid / ICO_SYC_ECUBASE)
+#define ICO_SYC_NODEID(ecuid, displayid)    (ecuid * ICO_SYC_ECUBASE + \
+                                             (displayid % ICO_SYC_ECUBASE))
+
+/*============================================================================*/
 /* log macro                                                                  */
 /*============================================================================*/
 #ifndef  _NO_USE_DLOG

@@ -43,7 +43,7 @@ public:
     // destructor
     ~CicoSCInputController();
 
-    // initialize input device information 
+    // initialize input device information
     int initDB(void);
 
     // executes an input control process corresponding to the command
@@ -60,6 +60,16 @@ public:
     int delInputApp(const std::string &appid,
                     const std::string &device,
                     int               input);
+
+    // send keyboard input device event
+    int sendKeyEvent(const std::string &winname,
+                     int               code,
+                     int               value);
+
+    // send pointer input device event
+    int sendPointerEvent(const std::string &winname,
+                         int               code,
+                         int               value);
 
     // set input region information
     int setInputRegion(const std::string &appid,
@@ -102,7 +112,7 @@ public:
                 const char         *codename,
                 int32_t            code);
 
-    // callback to application for switch input 
+    // callback to application for switch input
     void inputCB(void               *data,
                  struct ico_exinput *ico_exinput,
                  uint32_t           time,

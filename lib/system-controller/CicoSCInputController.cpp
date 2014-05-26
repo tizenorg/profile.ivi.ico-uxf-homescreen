@@ -103,7 +103,7 @@ CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
             "(cmdid=0x%08x)", cmd->cmdid);
 
     CicoSCCmdInputDevCtrlOpt *opt;
-    CicoSCCmdInputDevSettingOpt *set_opt; 
+    CicoSCCmdInputDevSettingOpt *set_opt;
 
     switch (cmd->cmdid) {
     case MSG_CMD_ADD_INPUT:
@@ -114,6 +114,13 @@ CicoSCInputController::handleCommand(const CicoSCCommand *cmd)
     case MSG_CMD_DEL_INPUT:
         opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
         delInputApp(cmd->appid, opt->device, opt->input);
+        break;
+    case MSG_CMD_SEND_KEY_EVENT:
+        opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
+        sendKeyEvent(cmd->appid, opt->evcode, opt->evvalue);
+    case MSG_CMD_SEND_POINTER_EVENT:
+        opt = static_cast<CicoSCCmdInputDevCtrlOpt*>(cmd->opt);
+        sendPointerEvent(cmd->appid, opt->evcode, opt->evvalue);
         break;
     case MSG_CMD_SET_REGION:
         set_opt = static_cast<CicoSCCmdInputDevSettingOpt*>(cmd->opt);
@@ -186,6 +193,52 @@ CicoSCInputController::delInputApp(const string &appid,
     CicoSCWlInputMgrIF::delInputApp(appid.c_str(), device.c_str(), input);
 
     ICO_TRA("CicoSCInputController::delInputApp Leave(EOK)");
+    return ICO_SYC_EOK;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  send keyboard input device event
+ *
+ *  @param [in] winname   windowname([name][@appid])
+ *  @param [in] code      event code
+ *  @param [in] value     event value
+ */
+//--------------------------------------------------------------------------
+int
+CicoSCInputController::sendKeyEvent(const string &winname,
+                                    int          code,
+                                    int          value)
+{
+    ICO_TRA("CicoSCInputController::sendKeyEvent Enter(winname=<%s> code=%d value=%d)",
+            winname.c_str(), code, value);
+
+    CicoSCWlInputMgrIF::sendKeyEvent(winname.c_str(), code, value);
+
+    ICO_TRA("CicoSCInputController::sendKeyEvent Leave(EOK)");
+    return ICO_SYC_EOK;
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  send pointer input device event
+ *
+ *  @param [in] winname   windowname([name][@appid])
+ *  @param [in] code      event code
+ *  @param [in] value     event value
+ */
+//--------------------------------------------------------------------------
+int
+CicoSCInputController::sendPointerEvent(const string &winname,
+                                        int          code,
+                                        int          value)
+{
+    ICO_TRA("CicoSCInputController::sendPointerEvent Enter(winname=<%s> code=%d value=%d)",
+            winname.c_str(), code, value);
+
+    CicoSCWlInputMgrIF::sendPointerEvent(winname.c_str(), code, value);
+
+    ICO_TRA("CicoSCInputController::sendPointerEvent Leave(EOK)");
     return ICO_SYC_EOK;
 }
 
@@ -338,7 +391,7 @@ CicoSCInputController::capabilitiesCB(void               *data,
 //--------------------------------------------------------------------------
 /**
  *  @brief  callback to application for input code information
- *  
+ *
  *  @param [in] data        user data
  *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] device      input device name
@@ -385,7 +438,7 @@ CicoSCInputController::codeCB(void               *data,
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  callback to application for switch input 
+ *  @brief  callback to application for switch input
  *
  *  @param [in] data        user data
  *  @param [in] ico_exinput wayland ico_exinput interface

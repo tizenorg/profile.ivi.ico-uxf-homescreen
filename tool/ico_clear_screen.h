@@ -16,8 +16,8 @@
 #define _CLEAR_SCREEN_H_
 
 #include <sys/ioctl.h>
-#include <GLES2/gl2.h>
 #include <EGL/egl.h>
+#include <GLES2/gl2.h>
 #include <wayland-client.h>
 #include <wayland-client-protocol.h>
 #include <wayland-egl.h>

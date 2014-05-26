@@ -11,6 +11,7 @@
  *
  * @date    Aug-08-2013
  */
+#include "CicoHomeScreen.h"
 #include "CicoHSMenuTouch.h"
 #include "CicoSound.h"
 
@@ -26,6 +27,8 @@ int CicoHSMenuTouch::touch_state_a_y;
 Ecore_Timer *CicoHSMenuTouch::timer;
 bool CicoHSMenuTouch::long_act;
 bool CicoHSMenuTouch::touch_down;
+
+Evas_Object *CicoHSMenuTouch::grabbed_object;
 
 CicoHSMenuWindow* CicoHSMenuTouch::menu_window;
 
@@ -47,6 +50,7 @@ CicoHSMenuTouch::Initialize(CicoHSMenuWindow* menu_window)
     timer = NULL;
     long_act = false;
     touch_down = false;
+    grabbed_object = NULL;
 
     CicoHSMenuTouch::menu_window = menu_window;
 }
@@ -131,13 +135,20 @@ Eina_Bool
 CicoHSMenuTouch::LongPushed(void *data)
 {
     ICO_TRA("CicoHSMenuTouch::LongPushed Enter");
-    long_act = true;
     timer = NULL;
 
-    /*stop select*/
-    menu_window->ChangeTerminateMode();
+    if (CicoHomeScreen::getInstance()->GetMode() == ICO_HS_MODE_MENU)   {
+        long_act = true;
 
-    ICO_TRA("CicoHSMenuTouch::LongPushed Leave");
+        /*stop select*/
+        menu_window->ChangeTerminateMode();
+
+        ICO_TRA("CicoHSMenuTouch::LongPushed Leave");
+    }
+    else    {
+        long_act = false;
+        ICO_TRA("CicoHSMenuTouch::LongPushed Leave(Not in Menu)");
+    }
     return ECORE_CALLBACK_CANCEL;
 }
 
@@ -171,8 +182,10 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
         timer = NULL;
     }
     else if (touch_down == false)   {
-        ICO_DBG("CicoHSMenuTouch::TouchUpMenu: (%d,%d) No Down, Skip", x, y);
-        return;
+        ICO_DBG("CicoHSMenuTouch::TouchUpMenu: (%d,%d) No Down", x, y);
+        // Menu manipulation is normally processed, even if there is no touchdown.
+        touch_state_b_x = x;
+        touch_state_b_y = y;
     }
     touch_down = false;
 
@@ -194,7 +207,6 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
             touch_state_a_x, touch_state_a_y, appid ? appid: "(NULL)");
 
     if (abs(sub_x) > abs(sub_y)) {
-
         /* menu slide*/
         if (sub_x > ICO_HS_MENU_TOUCH_FLICK_THREASHOLD_DISTANCE) {
             menu_window->GoBackMenu();
@@ -235,6 +247,63 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
 
 /*--------------------------------------------------------------------------*/
 /**
+ * @brief   CicoHSMenuTouch::FocusOutEvas
+ *          focus out at menu evas
+ *
+ * @param[in]   data        data(canvas object, unused)
+ * @param[in]   evas        evas(unused)
+ * @param[in]   event_info  event information(unused)
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuTouch::FocusOutEvas(void *data, Evas *evas, void *event_info)
+{
+    // Ungrab focus
+    if (grabbed_object) {
+        evas_object_focus_set(grabbed_object, EINA_FALSE);
+        grabbed_object = NULL;
+    }
+
+    // Focus Out, Cancel menu touch
+    if (timer != NULL) {
+        // delete timer
+        ecore_timer_del(timer);
+        timer = NULL;
+    }
+    else if (touch_down == false)   {
+        ICO_DBG("CicoHSMenuTouch::FocusOutEvas: No Down, Skip");
+        return;
+    }
+    touch_down = false;
+
+    if (long_act)   {
+        // Stop Terminate Mode
+        long_act = false;
+        menu_window->ChangeNormalMode();
+    }
+
+    ICO_PRF("TOUCH_EVENT Menu FocusOut(Evas)");
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuTouch::SetGrabbedObject
+ *          set/reset grabbed Evas Object
+ *
+ * @param[in]   object      grabbed Evas object or NULL
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuTouch::SetGrabbedObject(Evas_Object *object)
+{
+    ICO_DBG("CicoHSMenuTouch::SetGrabbedObject %08x", (int)object);
+    grabbed_object = object;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
  * @brief   CicoHSMenuTouch::TouchDownTerm
  *          touch down action at terminate icon
  *
@@ -248,7 +317,11 @@ CicoHSMenuTouch::TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *eve
 void
 CicoHSMenuTouch::TouchDownTerm(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-    ICO_DBG("CicoHSMenuTouch::TouchDownTerm:");
+    Evas_Event_Mouse_Down *info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
+    char *appid = reinterpret_cast<char*>(data);
+
+    ICO_PRF("TOUCH_EVENT Term Down (%d,%d) app=%s",
+            info->output.x, info->output.y, appid ? appid : "(NIL)");
     touch_down = true;
 }
 
@@ -267,19 +340,19 @@ CicoHSMenuTouch::TouchDownTerm(void *data, Evas *evas, Evas_Object *obj, void *e
 void
 CicoHSMenuTouch::TouchUpTerm(void *data, Evas *evas, Evas_Object *obj, void *event_info)
 {
-    // if no down, skip
-    ICO_DBG("CicoHSMenuTouch::TouchUpTerm: down=%d", (int)touch_down);
+    Evas_Event_Mouse_Down *info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
+    char *appid = reinterpret_cast<char*>(data);
+
+    ICO_PRF("TOUCH_EVENT Term Up   (%d,%d) app=%s",
+            info->output.x, info->output.y, appid ? appid : "(NIL)");
     if (touch_down == false)    {
-        ICO_DBG("CicoHSMenuTouch::TouchUpTerm: No Down, Skip");
-        return;
+        ICO_DBG("CicoHSMenuTouch::TouchUpTerm: No Down");
+        // Menu manipulation is normally processed, even if there is no touchdown.
     }
     touch_down = false;
 
     // play opration sound
     CicoSound::GetInstance()->PlayOperationSound();
-
-    char *appid = reinterpret_cast<char*>(data);
-    ICO_PRF("TOUCH_EVENT Term Down->Up app=%s", appid ? appid : "(NIL)");
 
     strncpy(terminate_appid, appid, ICO_HS_MAX_PROCESS_NAME);
 
@@ -302,7 +375,10 @@ void
 CicoHSMenuTouch::TouchUpTerminateYes(void *data, Evas *evas, Evas_Object *obj,
                                      void *event_info)
 {
-    ICO_PRF("TOUCH_EVENT TermYes Up app=%s", terminate_appid);
+    Evas_Event_Mouse_Down *info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
+
+    ICO_PRF("TOUCH_EVENT TermYes (%d,%d) app=%s",
+            info->output.x, info->output.y, terminate_appid);
 
     // play opration sound
     CicoSound::GetInstance()->PlayOperationSound();
@@ -322,9 +398,13 @@ CicoHSMenuTouch::TouchUpTerminateYes(void *data, Evas *evas, Evas_Object *obj,
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSMenuTouch::TouchUpTerminateNo(void *data, Evas *evas, Evas_Object *obj, void *event_info)
+CicoHSMenuTouch::TouchUpTerminateNo(void *data, Evas *evas, Evas_Object *obj,
+                                    void *event_info)
 {
-    ICO_PRF("TOUCH_EVENT TermNo Up app=%s", terminate_appid);
+    Evas_Event_Mouse_Down *info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
+
+    ICO_PRF("TOUCH_EVENT TermNo (%d,%d) app=%s",
+            info->output.x, info->output.y, terminate_appid);
 
     // play opration sound
     CicoSound::GetInstance()->PlayOperationSound();

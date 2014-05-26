@@ -1,3 +1,18 @@
+* Mon May 26 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/release/20140423.003041@f1bfdc7
+- 0.9.23 release
+-- bug fix: TIVI-1996 - Click app has no response after switching app for many times
+-- bug fix: TIVI-2834 - Fail to launch app after long time random automation testing for several hours(same cause as TIVI-1995)
+-- bug fix: TIVI-3091 - unable to close app by long press in ICO home screen(same cause as TIVI-1996)
+-- bug fix: TIVI-3012 - Some launched Apps' thumbnail show blank content in last user mode of ICO Homescreen
+-- bug fix: The HomeScreen operation by the switch of a handle is not effective.
+-- Correction of a spec file, because it is dependent on ico-uxf-weston-plugin 0.9.23.
+-- bug fix: TIVI-3101 - No notification pop up while incoming call comes on ICO
+-- bug fix: TIVI-3103 - Settings app is unable to be activated on ICO after wifi tethering failed
+-- bug fix: TIVI-3104 - It is hard to trigger On/Off "Automatic time zone" in ICO Homescreen
+-- workaround: TIVI-3132 - GhostCluster app is failed to be launched on ICO homescreen
+-- bug fix: A Web application cannot start more than one simultaneously.
+-- bug fix: When the last application is a Web application, it may not be displayed by reboot.
+
 * Tue Apr 08 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/panda/20140403.020026@294446b
 - 0.9.22 release
 -- bug fix: TIVI-3007 - Home button doesn't response after some operations.

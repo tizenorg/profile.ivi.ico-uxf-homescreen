@@ -96,7 +96,8 @@ CicoHSSwipeInputWindow::CreateSwipeInputWindow(int pos_x, int pos_y,
         return ICO_ERROR;
     }
 
-    /* background object(transparent)    */
+    /* background object(transparent)       */
+    /* (need grab control for swipe widdow) */
     background = evas_object_image_filled_add(evas);
 
     /* set mouse/touch callback */
@@ -249,6 +250,22 @@ int
 CicoHSSwipeInputWindow::GetHeight(void)
 {
     return height;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSSwipeInputWindow::GrabOff
+ *          Ecore grab off
+ *
+ * @param[in]   none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSSwipeInputWindow::GrabOff(void)
+{
+    ICO_DBG("GrabOff: appid=%s surface=%08x", appid, surface);
+    evas_object_focus_set(this->background, EINA_FALSE);
 }
 
 /*--------------------------------------------------------------------------*/

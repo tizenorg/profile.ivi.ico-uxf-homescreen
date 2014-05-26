@@ -189,9 +189,19 @@ public:
                                  struct ivi_controller *ivi_controller,
                                  uint32_t id_surface);
 
+    void createSurfaceCommon(struct ivi_controller *ivi_controller,
+                             uint32_t id_surface,
+                             const char *winname,
+                             int pid);
+
     const CicoSCWindow* findWindowObj(int32_t pid, uint32_t surfaceid) const;
 
     const CicoSCResourceManager* getResourceManager(void) const;
+
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    static Eina_Bool ChangeToHide(void *window);
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    static Eina_Bool RetryCreateWindow(void *retrydata);
 
 private:
     // assignment operator

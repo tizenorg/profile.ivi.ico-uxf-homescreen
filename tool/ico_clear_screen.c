@@ -30,7 +30,7 @@ sigterm_catch(int signo)
 
     if (_display->ico_window_mgr)   {
         ico_window_mgr_layout_surface(_display->ico_window_mgr, -1, -1,
-                                      -1, -1, -1, -1, 0);
+                                      -1, -1, -1, -1, 0, "\0");
     }
 }
 
@@ -142,7 +142,7 @@ opengl_create_window(struct display *display, struct wl_surface *surface,
                                    ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW,
                                  display->animation, display->animatime);
     ico_window_mgr_layout_surface(display->ico_window_mgr, 0, display->init_layer,
-                                  posx, posy, width, height, 1);
+                                  posx, posy, width, height, 1, "clear_screen");
     return(egl_surface);
 }
 
@@ -313,7 +313,7 @@ create_surface(struct display *display, const char *title) {
 
     surface->dpy = opengl_init(display->display, &surface->conf, &surface->ctx);
     if (surface->dpy) {
-        surface->egl_surface = opengl_create_window(display, 
+        surface->egl_surface = opengl_create_window(display,
                                                     surface->surface,
                                                     surface->dpy,
                                                     surface->conf,

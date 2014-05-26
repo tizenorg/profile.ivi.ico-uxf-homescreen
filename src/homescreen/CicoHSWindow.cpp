@@ -29,6 +29,7 @@ CicoHSWindow::CicoHSWindow(void)
 {
     window = NULL;
 }
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHSWindow::~CicoHSWindow
@@ -45,6 +46,7 @@ CicoHSWindow::~CicoHSWindow(void)
         FreeWindow();
     }
 }
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHSWindow::CreateWindow
@@ -54,17 +56,20 @@ CicoHSWindow::~CicoHSWindow(void)
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-int 
-CicoHSWindow::CreateWindow(const char *title,int pos_x,int pos_y,int width,int height,int alpha)
+int
+CicoHSWindow::CreateWindow(const char *title, int pos_x, int pos_y,
+                           int width, int height, int alpha)
 {
- 
+    ICO_DBG("CicoHSWindow::CreateWindow[%s] x/y=(%d,%d) w/h=%d/%d alpha=%d",
+            title ? title : "(NIL)", pos_x, pos_y, width, height, alpha);
+
     this->pos_x = pos_x;
     this->pos_y = pos_y;
     this->width = width;
     this->height = height;
 
     /* Make a new ecore_evas */
-    window = ecore_evas_new(NULL, pos_x, pos_y, width, height, "frame=0");  
+    window = ecore_evas_new(NULL, pos_x, pos_y, width, height, "frame=0");
     /* if do not creted new, enlightenment return NULL */
     if (!window) {
         EINA_LOG_CRIT("CicoHSWindow::Initialize: could not create new_window.");
@@ -78,6 +83,7 @@ CicoHSWindow::CreateWindow(const char *title,int pos_x,int pos_y,int width,int h
 
     return ICO_OK;
 }
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHSWindow::FreeWindow
@@ -87,11 +93,12 @@ CicoHSWindow::CreateWindow(const char *title,int pos_x,int pos_y,int width,int h
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-void 
+void
 CicoHSWindow::FreeWindow(void)
 {
     ecore_evas_free(window);
 }
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHSWindow::WindowSetting
@@ -102,20 +109,24 @@ CicoHSWindow::FreeWindow(void)
  */
 /*--------------------------------------------------------------------------*/
 void
-CicoHSWindow::WindowSetting(int pos_x,int pos_y,int width,int height,int alpha)
+CicoHSWindow::WindowSetting(int pos_x, int pos_y, int width, int height, int alpha)
 {
+    ICO_DBG("CicoHSWindow::WindowSetting[%s] x/y=(%d,%d) w/h=%d/%d alpha=%d",
+            this->title, pos_x, pos_y, width, height, alpha);
+
     this->pos_x = pos_x;
     this->pos_y = pos_y;
     this->width = width;
     this->height = height;
 
     /* move */
-    ecore_evas_move(window,pos_x,pos_y);
+    ecore_evas_move(window, pos_x, pos_y);
     /* resize */
     ecore_evas_resize(window, width, height);
     /* alpha channel is enable*/
     ecore_evas_alpha_set(window, alpha);
 }
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHSWindow::ShowWindow
@@ -146,5 +157,55 @@ CicoHSWindow::HideWindow(void)
 {
     /* hiding */
     ecore_evas_hide(window);
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSWindow::EvasObjectImageCreate
+ *          Create Evas Image object and initialize
+ *
+ * @param[in]   evas        Evas canvas
+ * @param[in]   image       Image file path if need
+ * @param[in]   key         key if need
+ * @return      created Evas object
+ */
+/*--------------------------------------------------------------------------*/
+Evas_Object *
+CicoHSWindow::EvasObjectImageCreate(Evas *evas, const char *image, const char *key)
+{
+    Evas_Object *obj;
+
+    obj = evas_object_image_filled_add(evas);
+    evas_object_pointer_mode_set(obj, EVAS_OBJECT_POINTER_MODE_NOGRAB);
+    if (image)  {
+        evas_object_image_file_set(obj, image, key);
+    }
+
+    return obj;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSWindow::EvasObjectRectangleCreate
+ *          Create Evas Rectangle object and initialize
+ *
+ * @param[in]   evas        Evas canvas
+ * @param[in]   r           Color Red
+ * @param[in]   g           Color Green
+ * @param[in]   b           Color Blue
+ * @param[in]   a           Color Alpha
+ * @return      created Evas object
+ */
+/*--------------------------------------------------------------------------*/
+Evas_Object *
+CicoHSWindow::EvasObjectRectangleCreate(Evas *evas, int r, int g, int b, int a)
+{
+    Evas_Object *obj;
+
+    obj = evas_object_rectangle_add(evas);
+    evas_object_pointer_mode_set(obj, EVAS_OBJECT_POINTER_MODE_NOGRAB);
+    evas_object_color_set(obj, r, g, b, a);
+
+    return obj;
 }
 // vim:set expandtab ts=4 sw=4:

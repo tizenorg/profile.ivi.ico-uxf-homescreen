@@ -151,6 +151,8 @@ extern "C" {
 /* input controller */
 #define MSG_CMD_ADD_INPUT           0x00020001
 #define MSG_CMD_DEL_INPUT           0x00020002
+#define MSG_CMD_SEND_KEY_EVENT      0x00020003
+#define MSG_CMD_SEND_POINTER_EVENT  0x00020004
 /* user controller */
 #define MSG_CMD_CHANGE_USER         0x00030001
 #define MSG_CMD_GET_USERLIST        0x00030002

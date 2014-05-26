@@ -185,6 +185,48 @@ CicoSCWlInputMgrIF::delInputApp(const string &appid,
 
 //--------------------------------------------------------------------------
 /**
+ *  @brief  wrapper function ico_input_mgr_control_send_key_event
+ *
+ *  @param [in] winname   windowname([name][@appid])
+ *  @param [in] code      event code
+ *  @param [in] value     event value
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlInputMgrIF::sendKeyEvent(const string &winname,
+                                 int          code,
+                                 int          value)
+{
+    ICO_DBG("called: ico_input_mgr_control_send_key_event(winname=<%s> code=%d value=%d)",
+            winname.c_str(), code, value);
+    ico_input_mgr_control_send_key_event(m_inputmgr, winname.c_str(), code, value);
+    // flush display
+    CicoSCWayland::getInstance()->flushDisplay();
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wrapper function ico_input_mgr_control_send_pointer_event
+ *
+ *  @param [in] winname   windowname([name][@appid])
+ *  @param [in] code      event code
+ *  @param [in] value     event value
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlInputMgrIF::sendPointerEvent(const string &winname,
+                                     int          code,
+                                     int          value)
+{
+    ICO_DBG("called: ico_input_mgr_control_send_pointer_event"
+            "(winname=<%s> code=%d value=%d)", winname.c_str(), code, value);
+    ico_input_mgr_control_send_pointer_event(m_inputmgr, winname.c_str(), code, value);
+    // flush display
+    CicoSCWayland::getInstance()->flushDisplay();
+}
+
+//--------------------------------------------------------------------------
+/**
  *  @brief  wrapper function ico_exinput_set_input_region
  *
  *  @param [in] target    target window name(winname@appid)

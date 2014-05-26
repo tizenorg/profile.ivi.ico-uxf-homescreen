@@ -15,10 +15,10 @@ StatusBar_SOURCES = \
 
 StatusBar_CFLAGS = \
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
-	$(EFL_CFLAGS)	\
-	$(OPT_CFLAGS)	\
-	$(AUL_CFLAGS)	\
-	$(UWS_CFLAGS)	\
+	$(EFL_CFLAGS)		\
+	$(OPT_CFLAGS)		\
+	$(AUL_CFLAGS)		\
+	$(UWS_CFLAGS)		\
 	$(NOTIFICATION_CFLAGS) \
 	-I/usr/include/ico-util	\
 	-I../../include			\
