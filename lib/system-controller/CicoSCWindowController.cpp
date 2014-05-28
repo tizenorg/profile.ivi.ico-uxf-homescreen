@@ -58,6 +58,17 @@ using namespace std;
 //==========================================================================
 CicoSCWindowController* CicoSCWindowController::ms_myInstance = NULL;
 
+//==========================================================================
+//  private local struct
+//==========================================================================
+struct _retry_window_create {
+    CicoSCWindowController  *myobject;
+    struct ivi_controller *ivi_controller;
+    uint32_t id_surface;
+    char *winname;
+    int pid;
+};
+
 //--------------------------------------------------------------------------
 /**
  *  @brief  get instance of CicoSCWindowController
@@ -1867,35 +1878,42 @@ CicoSCWindowController::outputModeCB(void             *data,
 /**
  *  @brief  wayland genivi ivi-shell surface create callback
  *
- *  @param [in] data        user data
+ *  @param [in] data            user data(if NULL, retry)
  *  @param [in] ivi_controller  wayland ivi-controller plugin interface
  *  @param [in] id_surface      surface id
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWindowController::createSurfaceCB(void *data,
-                                        struct ivi_controller *ivi_controller,
-                                        uint32_t id_surface)
+CicoSCWindowController::createSurfaceCommon(struct ivi_controller *ivi_controller,
+                                            uint32_t id_surface,
+                                            const char *winname, int pid)
 {
-    int     pid;
     int     cpid;
     struct ilmSurfaceProperties SurfaceProperties;
+    char    *svwinname;
 
-    ICO_TRA("CicoSCWindowController::createSurfaceCB Enter" "(surfaceid=%08x)", id_surface);
+    ICO_TRA("CicoSCWindowController::createSurfaceCommon Enter" "(surfaceid=%08x)",
+            id_surface);
 
     if (ilm_getPropertiesOfSurface(id_surface, &SurfaceProperties) != ILM_SUCCESS)  {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB: ilm_getPropertiesOfSurface(%x) "
-                "Error", id_surface);
+        ICO_WRN("CicoSCWindowController::createSurfaceCommon: ilm_getPropertiesOfSurface"
+                "(%x) Error", id_surface);
         return;
     }
-    ICO_TRA("createSurfaceCB: surface=%08x w/h=%d/%d->%d/%d",
+    ICO_TRA("createSurfaceCommon: surface=%08x w/h=%d/%d->%d/%d",
             id_surface, SurfaceProperties.sourceWidth, SurfaceProperties.sourceHeight,
             SurfaceProperties.destWidth, SurfaceProperties.destHeight);
 
     CicoSCWindow* window = new CicoSCWindow();
     window->surfaceid = id_surface;
-    window->name = CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &pid);
-    window->pid       = pid;
+    if (winname == NULL)    {
+        svwinname = (char *)CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &pid);
+    }
+    else    {
+        svwinname = (char *)winname;
+    }
+    window->name = svwinname;
+    window->pid = pid;
     window->displayid = 0;              // currently fixed 0
     window->raise = 1;                  // created surface is top of layer
     window->srcwidth = SurfaceProperties.sourceWidth;
@@ -1939,6 +1957,10 @@ CicoSCWindowController::createSurfaceCB(void *data,
             cpid = ppid;
             aulitem = appctrl->findAUL(cpid);
         }
+        if (aulitem)    {
+            window->pid = cpid;
+            pid = cpid;
+        }
     }
 
     if (NULL == aulitem) {
@@ -1949,6 +1971,8 @@ CicoSCWindowController::createSurfaceCB(void *data,
             if (aulitem)    {
                 ICO_DBG("last launched appid=%s", aulitem->m_appid.c_str());
                 CicoSCLifeCycleController::getInstance()->resetLastLaunchedPid(lpid);
+                window->pid = lpid;
+                pid = lpid;
             }
             else    {
                 ICO_DBG("last launched pid(%d) appid not exist", lpid);
@@ -1986,36 +2010,52 @@ CicoSCWindowController::createSurfaceCB(void *data,
     else{
         delete window;
         ICO_WRN("ail item not found.");
-        ICO_TRA("CicoSCWindowController::createSurfaceCB Leave(ENOENT)");
+        // Since Surface creation may come ahead of the starting notice of an application
+        if (winname == NULL)    {
+            struct _retry_window_create *retrydata;
+
+            retrydata = (struct _retry_window_create *)
+                            malloc(sizeof(struct _retry_window_create));
+            retrydata->myobject = this;
+            retrydata->ivi_controller = ivi_controller;
+            retrydata->id_surface = id_surface;
+            retrydata->winname = svwinname;
+            retrydata->pid = pid;
+            (void) ecore_timer_add(0.2f, RetryCreateWindow, (void *)retrydata);
+            ICO_TRA("CicoSCWindowController::createSurfaceCommon Leave(ENOENT, retry)");
+        }
+        else    {
+            ICO_TRA("CicoSCWindowController::createSurfaceCommon Leave(ENOENT)");
+        }
         return;
     }
 
     if (ilm_surfaceSetDestinationRectangle(window->surfaceid, window->x, window->y,
                  window->width, window->height) != ILM_SUCCESS) {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB "
+        ICO_ERR("CicoSCWindowController::createSurfaceCommon "
                 "ilm_surfaceSetDestinationRectangle(%08x) Error", window->surfaceid);
     }
     else if (ilm_surfaceSetSourceRectangle(window->surfaceid, 0, 0,
                  window->width, window->height) != ILM_SUCCESS) {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB "
+        ICO_ERR("CicoSCWindowController::createSurfaceCommon "
                 "ilm_surfaceSetSourceRectangle(%08x) Error", window->surfaceid);
     }
     else if (ilm_surfaceSetOrientation(window->surfaceid, ILM_ZERO) != ILM_SUCCESS) {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB "
+        ICO_ERR("CicoSCWindowController::createSurfaceCommon "
                 "ilm_surfaceSetOrientation(%08x) Error", window->surfaceid);
     }
     else if (ilm_commitChanges() != ILM_SUCCESS)    {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB ilm_commitChanges() Error");
+        ICO_ERR("CicoSCWindowController::createSurfaceCommon ilm_commitChanges() Error");
     }
 
     CicoSCLayer *layer = findLayer(window->displayid, window->layerid);
     if (layer) {
         if (ilm_layerAddSurface(window->layerid, window->surfaceid) != ILM_SUCCESS) {
-            ICO_ERR("CicoSCWindowController::createSurfaceCB ilm_layerAddSurface(%d,%08x) "
+            ICO_ERR("CicoSCWindowController::createSurfaceCommon ilm_layerAddSurface(%d,%08x) "
                     "Error", window->layerid, window->surfaceid);
         }
         if (ilm_commitChanges() != ILM_SUCCESS)    {
-            ICO_ERR("CicoSCWindowController::createSurfaceCB ilm_commitChanges() Error");
+            ICO_ERR("CicoSCWindowController::createSurfaceCommon ilm_commitChanges() Error");
         }
 
         layer->addSurface(window->surfaceid, true);
@@ -2023,26 +2063,24 @@ CicoSCWindowController::createSurfaceCB(void *data,
         const int *surfs = layer->getSurfaces(&nsurf);
         if (ilm_layerSetRenderOrder(window->layerid, (t_ilm_layer *)surfs, nsurf)
             != ILM_SUCCESS)   {
-            ICO_ERR("CicoSCWindowController::createSurfaceCB: "
+            ICO_ERR("CicoSCWindowController::createSurfaceCommon: "
                     "ilm_layerSetRenderOrder(%d,,%d) Error", window->layerid, nsurf);
         }
         if (ilm_commitChanges() != ILM_SUCCESS)    {
-            ICO_ERR("CicoSCWindowController::createSurfaceCB ilm_commitChanges() Error");
+            ICO_ERR("CicoSCWindowController::createSurfaceCommon ilm_commitChanges() Error");
         }
     }
     // must set surfaceOpacity after surfcaeAddLayer
     if (ilm_surfaceSetOpacity(window->surfaceid , (t_ilm_float)1.0f) != ILM_SUCCESS)    {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB "
+        ICO_ERR("CicoSCWindowController::createSurfaceCommon "
                             "ilm_surfaceSetOpacity(%08x) Error", window->surfaceid);
     }
     else if (ilm_commitChanges() != ILM_SUCCESS)    {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB ilm_commitChanges() Error");
+        ICO_ERR("CicoSCWindowController::createSurfaceCommon ilm_commitChanges() Error");
     }
 
     // set window name(surface title) to ico_window_mgr
     CicoSCWlWinMgrIF::setWindowName(id_surface, window->name.c_str());
-
-    window->name = CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &pid);
 
     appctrl->enterAUL(window->appid.c_str(), window->pid, window);
 
@@ -2118,7 +2156,52 @@ CicoSCWindowController::createSurfaceCB(void *data,
     else {
         show(window->surfaceid, NULL, 0);
     }
+    ICO_TRA("CicoSCWindowController::createSurfaceCommon Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  wayland genivi ivi-shell surface create callback
+ *
+ *  @param [in] data            user data(unused)
+ *  @param [in] ivi_controller  wayland ivi-controller plugin interface
+ *  @param [in] id_surface      surface id
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWindowController::createSurfaceCB(void *data,
+                                        struct ivi_controller *ivi_controller,
+                                        uint32_t id_surface)
+{
+    ICO_TRA("CicoSCWindowController::createSurfaceCB Enter" "(surfaceid=%08x)", id_surface);
+
+    createSurfaceCommon(ivi_controller, id_surface, NULL, 0);
+
     ICO_TRA("CicoSCWindowController::createSurfaceCB Leave");
+}
+
+//--------------------------------------------------------------------------
+/**
+ *  @brief  retry surface create event
+ *
+ *  @param [in] retrydata       retry data
+ *  @return fixed ECORE_CALLBACK_CANCEL
+ */
+//--------------------------------------------------------------------------
+Eina_Bool
+CicoSCWindowController::RetryCreateWindow(void *retrydata)
+{
+    ICO_TRA("CicoSCWindowController::RetryCreateWindow(%08x)",
+            ((struct _retry_window_create*)retrydata)->id_surface);
+
+    ((struct _retry_window_create*)retrydata)->myobject->
+        createSurfaceCommon(((struct _retry_window_create*)retrydata)->ivi_controller,
+                            ((struct _retry_window_create*)retrydata)->id_surface,
+                            ((struct _retry_window_create*)retrydata)->winname,
+                            ((struct _retry_window_create*)retrydata)->pid);
+    free(retrydata);
+
+    return ECORE_CALLBACK_CANCEL;
 }
 
 //--------------------------------------------------------------------------
