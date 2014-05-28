@@ -67,7 +67,6 @@ typedef enum _event_id {
  */
 typedef enum _win_value {
     ICO_SYC_WIN_NOCHANGE    = 99999999,
-    ICO_SYC_WIN_NODISPLAY   = 16384
 } ico_syc_win_value_e;
 
 /*

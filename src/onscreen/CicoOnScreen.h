@@ -83,7 +83,6 @@ protected:
     std::list<CicoOSPopWindow*> m_waitMngWin;
     CicoOSPopWindow*            m_request;
     bool                        m_del;
-    CicoOSPopWindow*            m_reserve;
 };
 #endif  // __CICO_ON_SCREEN_H__
 // vim:set expandtab ts=4 sw=4:

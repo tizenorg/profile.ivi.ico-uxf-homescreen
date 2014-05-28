@@ -30,6 +30,8 @@
 #include <algorithm>
 using namespace std;
 
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
+
 #include "CicoSCWindow.h"
 #include "CicoSCWayland.h"
 #include "CicoSCWindowController.h"
@@ -236,9 +238,10 @@ CicoSCWindowController::show(int        surfaceid,
 #if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
     if (window->hide_timer) {
         ecore_timer_del(window->hide_timer);
+        window->hide_timer = NULL;
     }
 
-    if (window->visible == false)   {
+    if ((window->hidewait == false) && (window->visible == false))  {
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
                                        ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE |
                                        ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE |
@@ -246,7 +249,7 @@ CicoSCWindowController::show(int        surfaceid,
                                        "none", 0);
         CicoSCWlWinMgrIF::setVisible(window->surfaceid, ICO_SYC_WIN_VISIBLE_HIDE);
         CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
-                                          ICO_SYC_WIN_NOCHANGE, window->x, window->y,
+                                          window->x, window->y,
                                           window->width, window->height);
     }
 #endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
@@ -402,8 +405,10 @@ CicoSCWindowController::hide(int        surfaceid,
     if (window->hide_timer) {
         ecore_timer_del(window->hide_timer);
     }
-    window->hide_timer = ecore_timer_add((double)(animationTime + 200) / 1000.0f,
-                                         ChangeToHide, (void *)window);
+    if (window->hidewait == false)  {
+        window->hide_timer = ecore_timer_add((double)(animationTime + 200) / 1000.0f,
+                                             ChangeToHide, (void *)window);
+    }
 #endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
 
     // flush display
@@ -465,13 +470,14 @@ CicoSCWindowController::resize(int        surfaceid,
     window->width = w;
     window->height = h;
 #if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
-    if (window->visible == false)
-        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, window->nodeid,
-                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+    if ((window->hidewait == false) && (window->visible == false))
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
                                           w, h);
     else
 #endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
-        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, window->nodeid,
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
                                           window->x, window->y, w, h);
 
     // flush display
@@ -522,10 +528,11 @@ CicoSCWindowController::move(int        surfaceid,
         return ICO_SYC_ENOENT;
     }
     // check nodeid
-    if (nodeid >= (int)m_physicalDisplayTotal)  {
-        ICO_WRN("CicoSCWindowController::move not found node(%d)", nodeid);
-        ICO_TRA("CicoSCWindowController::move Leave(ENOENT)");
-        return ICO_SYC_ENOENT;
+    if (nodeid >= 0)    {
+        if (ICO_SYC_DISPLAYID(nodeid) >= (int)m_physicalDisplayTotal)   {
+            ICO_WRN("CicoSCWindowController::move not found node(%d)", nodeid);
+            nodeid = ICO_SYC_NODEID(ICO_SYC_ECUID(nodeid), 0);
+        }
     }
 
     // set animation request to Multi Window Manager
@@ -538,24 +545,28 @@ CicoSCWindowController::move(int        surfaceid,
                                        animation, animationTime);
     }
 
-    int moveNodeId = ICO_SYC_WIN_NOCHANGE;
-    if (nodeid >= 0) {
-        moveNodeId = nodeid;
+    // move layer if node change
+    if ((nodeid >= 0) && (nodeid != window->nodeid))    {
+        uint32_t    oldlayer = window->layerid;
+        window->nodeid = nodeid;
+        window->layerid = (window->layerid % ICO_SC_LAYERID_SCREENBASE) +
+                          (ICO_SYC_DISPLAYID(window->nodeid) * ICO_SC_LAYERID_SCREENBASE);
+        CicoSCWlWinMgrIF::setWindowLayer(window->surfaceid, window->layerid, oldlayer);
     }
 
     // set visible request to Multi Window Manager
     window->x = x;
     window->y = y;
 #if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
-    if (window->visible == false)
-        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
-                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+    if ((window->hidewait == false) && (window->visible == false))
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
                                           window->width, window->height);
     else
 #endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
         CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
-                                          moveNodeId, x, y,
-                                          window->width, window->height);
+                                          x, y, window->width, window->height);
 
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
@@ -636,7 +647,7 @@ CicoSCWindowController::ChangeToHide(void *window)
     winobj->hide_timer = NULL;
 
     if (winobj->visible == false)   {
-        ICO_TRA("CicoSCWindowController::ChangeToHide move %08x(%s)",
+        ICO_TRA("CicoSCWindowController::ChangeToHide move over screen %08x(%s)",
                 winobj->surfaceid, winobj->name.c_str());
         CicoSCWlWinMgrIF::setAnimation(winobj->surfaceid,
                                        ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW |
@@ -645,8 +656,8 @@ CicoSCWindowController::ChangeToHide(void *window)
                                        ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
                                        "none", 0);
         CicoSCWlWinMgrIF::setPositionsize(winobj->surfaceid,
-                                          ICO_SYC_WIN_NOCHANGE,
-                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
                                           winobj->width, winobj->height);
         CicoSCWlWinMgrIF::setVisible(winobj->surfaceid, ICO_SYC_LAYER_VISIBLE_SHOW);
         CicoSCWayland::getInstance()->flushDisplay();
@@ -706,10 +717,9 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         return ICO_SYC_ENOENT;
     }
     // check nodeid
-    if (nodeid >= (int)m_physicalDisplayTotal)  {
+    if (ICO_SYC_DISPLAYID(nodeid) >= (int)m_physicalDisplayTotal)   {
         ICO_WRN("CicoSCWindowController::setGeometry not found node(%d)", nodeid);
-        ICO_TRA("CicoSCWindowController::setGeometry Leave(ENOENT)");
-        return ICO_SYC_ENOENT;
+        nodeid = ICO_SYC_NODEID(ICO_SYC_ECUID(nodeid), 0);
     }
 
     // set animation request to Multi Window Manager
@@ -728,19 +738,22 @@ CicoSCWindowController::setGeometry(int        surfaceid,
                                    ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
                                    animation, moveAnimationTime);
 
-    int moveNodeId = ICO_SYC_WIN_NOCHANGE;
-    if (nodeid >= 0) {
-        moveNodeId = nodeid;
-    }
-    else {
-        moveNodeId = window->nodeid;
-    }
-
-    if (m_physicalDisplayTotal <= (unsigned int)moveNodeId) {
-        ICO_WRN("nodeid(%d) is over physical display total(%d)",
-                m_physicalDisplayTotal, nodeid);
-        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
-        return ICO_SYC_EINVAL;
+    // move layer if node change
+    if (((nodeid >= 0) && (nodeid != window->nodeid)) ||
+        ((layerid > 0) && (layerid != window->layerid)))    {
+        uint32_t    oldlayer = window->layerid;
+        if (nodeid >= 0)    window->nodeid = nodeid;
+        if (layerid > 0)    {
+            window->layerid = (layerid % ICO_SC_LAYERID_SCREENBASE) +
+                              (ICO_SYC_DISPLAYID(window->nodeid) *
+                               ICO_SC_LAYERID_SCREENBASE);
+        }
+        else    {
+            window->layerid = (window->layerid % ICO_SC_LAYERID_SCREENBASE) +
+                              (ICO_SYC_DISPLAYID(window->nodeid) *
+                               ICO_SC_LAYERID_SCREENBASE);
+        }
+        CicoSCWlWinMgrIF::setWindowLayer(window->surfaceid, window->layerid, oldlayer);
     }
 
     int moveX = window->x;
@@ -767,23 +780,16 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         window->height = h;
     }
 
-    // set window layer to Multi Window Manager
-    if (0 <= layerid) {
-        setWindowLayer(window->surfaceid, layerid);
-    }
-
-    // update window attr
-    window->nodeid = moveNodeId;
-
     // set visible request to Multi Window Manager
 #if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
-    if (window->visible == false)
-        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
-                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+    if ((window->hidewait == false) && (window->visible == false))
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
+                                          ICO_WINDOW_MGR_MISC_OVER_SCREEN,
                                           moveW, moveH);
     else
 #endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
-        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
                                           moveX, moveY, moveW, moveH);
 
     // flush display
@@ -848,11 +854,11 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     vector<CicoSCDisplay*>::iterator itr;
     itr = m_displayList.begin();
     CicoSCDisplayZone* dispzone = NULL;
-    int displayno = 0;
+    int displayid = 0;
     for (; itr != m_displayList.end(); ++itr) {
         dispzone = (*itr)->findDisplayZonebyFullName(zone);
         if (NULL != dispzone) {
-            displayno = (*itr)->displayno;
+            displayid = (*itr)->displayid;
             break;
         }
     }
@@ -861,11 +867,10 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
         return ICO_SYC_EINVAL;
     }
-    if (m_physicalDisplayTotal <= (unsigned int)displayno) {
+    if (m_physicalDisplayTotal <= (unsigned int)displayid) {
         ICO_WRN("nodeid(%d) is over physical display total(%d)",
-                m_physicalDisplayTotal, displayno);
-        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
-        return ICO_SYC_EINVAL;
+                m_physicalDisplayTotal, displayid);
+        displayid = 0;
     }
 
     if (window->zoneid != dispzone->zoneid) {
@@ -884,7 +889,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
             }
         }
 
-        CicoSCLayer *layer = findLayer(displayno, window->layerid);
+        CicoSCLayer *layer = findLayer(displayid, window->layerid);
         if ((NULL != layer) && (layer->type == ICO_LAYER_TYPE_APPLICATION)) {
             ICO_DBG("Entry display zone[%d] current displayed window"
                     "(%08x:\"%s\")",
@@ -898,7 +903,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     window->zone = dispzone->fullname;
     setAttributes(window->surfaceid);
 
-    int ret = setGeometry(surfaceid, displayno, layerid,
+    int ret = setGeometry(surfaceid, displayid, layerid,
                           dispzone->x, dispzone->y,
                           dispzone->width, dispzone->height,
                           resizeAnimation, resizeAnimationTime,
@@ -1571,14 +1576,19 @@ CicoSCWindowController::updateSurfaceCB(void                  *data,
 
     // update attr
 #if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
-    if (window->visible)    {
+    if (window->hidewait == false)  {
+        if (window->visible)    {
+            window->x = x;
+            window->y = y;
+        }
+    }
+    else    {
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+        window->visible = visible;
         window->x = x;
         window->y = y;
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
     }
-#else   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
-    window->visible = visible;
-    window->x = x;
-    window->y = y;
 #endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
     window->srcwidth = srcwidth;
     window->srcheight = srcheight;
@@ -1937,8 +1947,10 @@ CicoSCWindowController::createSurfaceCB(void *data,
         window->layerid = ailItem->m_layer;
         window->zoneid  = ailItem->m_displayZone;
         window->nodeid  = ailItem->m_nodeID;
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+        window->hidewait = ailItem->m_hideWait;
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
         if ((window->displayid >= 0) && (window->zoneid >= 0)) {
-
             const CicoSCDisplayZone* zone = findDisplayZone(window->zoneid);
             if (NULL != zone) {
                 window->zone   = zone->fullname;

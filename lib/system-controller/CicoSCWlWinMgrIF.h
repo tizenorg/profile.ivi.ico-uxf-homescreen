@@ -38,7 +38,9 @@ struct creation_surface_wait    {
     int32_t     pid;
     uint32_t    id_surface;
     struct wl_surface *surface;
-    int32_t     busy;
+    int16_t     busy;
+    char        multisurface;
+    char        res;        
     char        title[ICO_SYC_MAX_WINNAME_LEN];
 };
 #define SCWINMGR_GENIVI_BUSY_NONE       0
@@ -128,7 +130,7 @@ protected:
     static void setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t oldlayer);
 
     // wrapper function ico_window_mgr_set_positionsize
-    static void setPositionsize(uint32_t surfaceid, uint32_t node,
+    static void setPositionsize(uint32_t surfaceid,
                                 int32_t x, int32_t y, int32_t width, int32_t height);
 
     // wrapper function ico_window_mgr_set_visible

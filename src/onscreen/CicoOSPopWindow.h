@@ -98,7 +98,7 @@
 #define POPUP_CONTENT_ST_X   POPUP_ST_X
 #define POPUP_CONTENT_ST_Y   (POPUP_ST_Y+POPUP_TITLE_HEIGHT+(POPUP_HEIGHT-POPUP_CONTENT_HEIGHT)/2)
 
-#define ICO_ORIENTATION_VERTICAL (1) 
+#define ICO_ORIENTATION_VERTICAL (1)
 #define ICO_ORIENTATION_HORIZONTAL (2)
 
 #define LEMOLO_PKGNAME       "org.tizen.dialer"
@@ -131,11 +131,13 @@ public:
         return (const CicoNotification&)*this;
     }
     bool    createMainWindow();
+
 private:
     bool    InitializeWindow(void);
     static void evasMouseUpCB(void *data, Evas *e, Evas_Object *obj,
                               void *event_info);
     void    makeResWindowT(ico_syc_res_window_t& w);
+    static int   m_windowno;
 
 public:
     Ecore_Evas*  m_window;

@@ -35,8 +35,8 @@ class CicoAilItems {
 public: // member method
     CicoAilItems();
     CicoAilItems(const char* pkg, const char* icon, const char* nam,
-                   const char* ctgry, const char* typ, const char* exe,
-                   std::string categorys, bool ndisp);
+                 const char* ctgry, const char* typ, const char* exe,
+                 std::string categorys, bool ndisp);
     CicoAilItems(const CicoAilItems& rAilItems);
     ~CicoAilItems();
 
@@ -66,36 +66,41 @@ protected: // member method
     bool categoryParseMenuoverlap(const std::string& s);
     bool categoryParseAuto(const std::string& s);
     bool categoryParseNoauto(const std::string& s);
+    bool categoryParseMultiSurface(const std::string& s);
+    bool categoryParseSingleSurface(const std::string& s);
+    bool categoryParseHideWait(const std::string& s);
+    bool categoryParseHideNoWait(const std::string& s);
 
 private: // member method
 
 public: // member aria
-    std::string m_appid;      // PACKAGE NAME
-    std::string m_icon;       // ICON
-    std::string m_name;       // NAME
-    std::string m_execPath;   // EXEC
-    std::string m_type;       // TYPE
+    std::string m_appid;        // PACKAGE NAME
+    std::string m_icon;         // ICON
+    std::string m_name;         // NAME
+    std::string m_execPath;     // EXEC
+    std::string m_type;         // TYPE
 
-    std::string m_categories; // CATEGORIES
+    std::string m_categories;   // CATEGORIES
 
-    int  m_nodeID;      // "run=xxx" xxx change to id
-    int  m_kindID;      // "kind=xxx" xxx change to id
-    int  m_categoryID;  // "category=xxx" xxx change to id
+    int  m_nodeID;              // "run=xxx" xxx change to id
+    int  m_kindID;              // "kind=xxx" xxx change to id
+    int  m_categoryID;          // "category=xxx" xxx change to id
 
-    int  m_display;   //
+    int  m_display;
     int  m_layer;
-    int  m_displayZone; // display zone
-    int  m_soundZone;  // sound zone
+    int  m_displayZone;         // display zone
+    int  m_soundZone;           // sound zone
     int  m_sound;
-    int  m_inputDev;   // input device
+    int  m_inputDev;            // input device
     int  m_switch;
     bool m_noIcon;
     std::string m_animation;
     int  m_animationTime;
     int  m_invisibleCPU;
     bool m_memnuOverlap;
-    bool m_autoStart; // auto start flag
-
+    bool m_autoStart;           // auto start flag
+    bool m_multiSurface;        // multi surface flag
+    bool m_hideWait;            // wait at surface hide
 
     std::string m_group;
     std::string m_location;
