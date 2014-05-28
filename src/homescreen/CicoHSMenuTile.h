@@ -82,6 +82,8 @@
 #define ICO_HS_MENUTILE_THUMBNAIL_REDUCE_RATE  10
 #define ICO_HS_MENUTILE_THUMBNAIL_REDUCTION     4
 
+#define ICO_HS_MENUTILE_THUMBNAIL_RETRYTIME     (0.3f)      /* thumbnail retry time(sec) */
+
 /*shared memory buffer*/
 #define ICO_HS_THUMB_ICODIR       "/tmp/ico"
 #define ICO_HS_THUMB_FILEDIR       "/thumbnail"

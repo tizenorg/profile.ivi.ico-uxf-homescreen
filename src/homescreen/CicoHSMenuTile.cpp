@@ -834,8 +834,8 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
         if (thumb.thumb_timer)  {
             ecore_timer_del(thumb.thumb_timer);
         }
-        thumb.thumb_timer = ecore_timer_add(0.2f, CicoHSMenuTile::TimerThumbnail,
-                                            (void *)this);
+        thumb.thumb_timer = ecore_timer_add(ICO_HS_MENUTILE_THUMBNAIL_RETRYTIME,
+                                            CicoHSMenuTile::TimerThumbnail, (void *)this);
     }
 
     if (icon != old_icon)   {

@@ -16,6 +16,8 @@
 #include <aul/aul.h>
 #include <bundle.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <time.h>
 
 #include "ico_syc_error.h"
@@ -176,23 +178,46 @@ CicoSCLifeCycleController::getInstance(void)
 }
 
 int
-CicoSCLifeCycleController::getLastLaunchedPid(void)
+CicoSCLifeCycleController::getLastLaunchedPid(const char *name)
 {
     struct _lastLaunched_app    *cp;
+    struct _lastLaunched_app    *bp;
+    struct _lastLaunched_app    *tp;
     time_t                      curtime;
+    int                         namesize;
 
+    if (name)   {
+        namesize = strlen(name);
+    }
+    else    {
+        namesize = 0;
+    }
     curtime = time(NULL);
+    bp = NULL;
     cp = CicoSCLifeCycleController::ms_lastLaunched_app;
     while (cp)  {
-        if ((curtime - cp->time) <= 3)  {
-            ICO_DBG("CicoSCLifeCycleController::getLastLaunchedPid: pid=%d", cp->pid);
-            return cp->pid;
+        if ((curtime - cp->time) > (LASTLAUNCH_MAXTIME+1))  {
+            // time over 15 sec, delete
+            tp = cp->next;
+            if (bp) {
+                bp->next = tp;
+            }
+            else    {
+                CicoSCLifeCycleController::ms_lastLaunched_app = tp;
+            }
+            cp->next = CicoSCLifeCycleController::ms_freeLaunched_app;
+            CicoSCLifeCycleController::ms_freeLaunched_app = cp;
+            cp = tp;
         }
-        // time over 3 sec, delete
-        CicoSCLifeCycleController::ms_lastLaunched_app = cp->next;
-        cp->next = CicoSCLifeCycleController::ms_freeLaunched_app;
-        CicoSCLifeCycleController::ms_freeLaunched_app = cp;
-        cp = CicoSCLifeCycleController::ms_lastLaunched_app;
+        else    {
+            if ((name == NULL) || (strncmp(cp->name, name, namesize) == 0)) {
+                ICO_DBG("CicoSCLifeCycleController::getLastLaunchedPid: pid=%d (%s,%s)",
+                        cp->pid, name ? name : "(null)", cp->name);
+                return cp->pid;
+            }
+            bp = cp;
+            cp = cp->next;
+        }
     }
     ICO_DBG("CicoSCLifeCycleController::getLastLaunchedPid: no process");
     return 0;
@@ -1080,6 +1105,30 @@ int CSCLCCapp_launch_handlerX(int pid, CicoSCLifeCycleController* x)
         lastApp = (struct _lastLaunched_app *)malloc(sizeof(struct _lastLaunched_app));
     }
     if (lastApp)    {
+        int     fd;
+        int     idx;
+        char    *pt;
+        char    procpath[PATH_MAX];
+
+        memset(lastApp, 0, sizeof(struct _lastLaunched_app));
+        snprintf(procpath, sizeof(procpath)-1, "/proc/%d/status", pid);
+        fd = open(procpath, O_RDONLY);
+        if (fd >= 0)    {
+            idx = read(fd, procpath, sizeof(procpath));
+            close(fd);
+            if (idx > 6)    {
+                pt = strstr(procpath, "Name");
+                if (pt) {
+                    pt += 5;
+                    idx = 0;
+                    for(idx = 0; idx < (int)(sizeof(lastApp->name)-1); pt++)    {
+                        if ((*pt == '\n') || (*pt == '\r') || (*pt == 0))   break;
+                        if ((*pt == '\t') || (*pt == ' '))  continue;
+                        lastApp->name[idx++] = *pt;
+                    }
+                }
+            }
+        }
         lastApp->pid = pid;
         lastApp->time = time(NULL);
         lastApp->next = NULL;
@@ -1100,7 +1149,8 @@ int CSCLCCapp_launch_handlerX(int pid, CicoSCLifeCycleController* x)
     else    {
         ICO_ERR("CSCLCCapp_launch_handlerX: No Memory");
     }
-    ICO_PRF("CHG_APP_STA notice  app=%s, pid=%d, rval=%d", appid, pid, iR);
+    ICO_PRF("CHG_APP_STA notice  app=%s(%s), pid=%d, rval=%d",
+            appid, lastApp->name, pid, iR);
     x->enterAUL(appid, pid, NULL, iR);
     ICO_TRA("end %s %d", appid, pid);
     return 0;

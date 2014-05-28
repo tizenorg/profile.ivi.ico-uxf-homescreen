@@ -19,7 +19,6 @@
 #include "CicoAilItems.h"
 #include "CicoAulItems.h"
 
-
 #ifndef __CICO_SC_WINDOW_H__
 class CicoSCWindow;
 #endif
@@ -34,8 +33,11 @@ class CicoSCAppResourceController;
 #endif
 #endif
 
+#define LASTLAUNCH_MAXTIME  (15)        // last launch app, max wait time(sec)
+#define XWALK_PROGNAME      "xwalk"     // program name of crosswalk application
 struct _lastLaunched_app    {
     struct _lastLaunched_app    *next;  // next pointer
+    char        name[16];               // program name
     int         pid;                    // process Id
     time_t      time;                   // launched date&time
 };
@@ -46,7 +48,7 @@ public:
     ~CicoSCLifeCycleController();
 
     static CicoSCLifeCycleController* getInstance(void);
-    static int  getLastLaunchedPid(void);
+    static int  getLastLaunchedPid(const char *name);
     static void resetLastLaunchedPid(int pid);
 
     // Starting application

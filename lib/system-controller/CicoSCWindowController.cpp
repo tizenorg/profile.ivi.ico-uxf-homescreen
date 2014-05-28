@@ -1963,9 +1963,40 @@ CicoSCWindowController::createSurfaceCommon(struct ivi_controller *ivi_controlle
         }
     }
 
-    if (NULL == aulitem) {
+    if (NULL == aulitem)    {
         /* parent process, workaround last launched application */
-        int     lpid = CicoSCLifeCycleController::getInstance()->getLastLaunchedPid();
+        int     fd;
+        int     idx;
+        char    *pt;
+        char    procpath[PATH_MAX];
+
+        snprintf(procpath, sizeof(procpath)-1, "/proc/%d/status", pid);
+        fd = open(procpath, O_RDONLY);
+        if (fd >= 0)    {
+            idx = read(fd, procpath, sizeof(procpath));
+            close(fd);
+            if (idx > 6)    {
+                pt = strstr(procpath, "Name");
+                if (pt) {
+                    pt += 5;
+                    idx = 0;
+                    for(idx = 0; idx < (int)(sizeof(procpath)-1); pt++)    {
+                        if ((*pt == '\n') || (*pt == '\r') || (*pt == 0))   break;
+                        if ((*pt == '\t') || (*pt == ' '))  continue;
+                        procpath[idx++] = *pt;
+                    }
+                    procpath[idx] = 0;
+                    if (strncmp(procpath, XWALK_PROGNAME, strlen(XWALK_PROGNAME)) != 0) {
+                        fd = -1;
+                    }
+                }
+            }
+        }
+        int lpid = 0;
+        if (fd >= 0)    {
+            lpid = CicoSCLifeCycleController::getInstance()->
+                        getLastLaunchedPid(XWALK_PROGNAME);
+        }
         if (lpid != 0)  {
             aulitem = appctrl->findAUL(lpid);
             if (aulitem)    {
