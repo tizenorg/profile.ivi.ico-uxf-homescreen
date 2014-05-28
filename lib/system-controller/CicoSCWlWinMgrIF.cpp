@@ -359,6 +359,23 @@ CicoSCWlWinMgrIF::setLayerVisible(uint32_t layer, int32_t visible)
 
 //--------------------------------------------------------------------------
 /**
+ *  @brief   wrapper function of ico_window_mgr_layout_surface(set window name)
+ *
+ *  @param [in] surfaceid       wayland surface id
+ *  @param [in] winname         window name(surface title)
+ */
+//--------------------------------------------------------------------------
+void
+CicoSCWlWinMgrIF::setWindowName(uint32_t surfaceid, const char *winname)
+{
+    ICO_DBG("called: ico_window_mgr_layout_surface(surface=%08x winname=<%s>)",
+            surfaceid, winname ? winname : "(NULL)");
+
+    ico_window_mgr_layout_surface(m_winmgr, surfaceid, 0, -1, -1, -1, -1, -1, winname);
+}
+
+//--------------------------------------------------------------------------
+/**
  *  @brief   wrapper function of ilm_takeSurfaceScreenshot
  *
  *  @param [in] surface     id of wayland surface

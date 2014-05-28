@@ -144,6 +144,9 @@ protected:
     // wrapper function of ico_window_mgr_set_layer_visible
     static void setLayerVisible(uint32_t layer, int32_t visible);
 
+    // wrapper function of ico_window_mgr_layout_surface(set window name)
+    static void setWindowName(uint32_t surfaceid, const char *winname);
+
     // wrapper function of ilm_takeSurfaceScreenshot
     static void setmapGet(int surfaceid, const char *filepath);
 

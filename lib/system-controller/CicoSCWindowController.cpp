@@ -1721,6 +1721,9 @@ CicoSCWindowController::updateWinnameCB(uint32_t surfaceid,
 
     window->name = winname;
 
+    // set window name(surface title) to ico_window_mgr
+    CicoSCWlWinMgrIF::setWindowName(window->surfaceid, window->name.c_str());
+
     // send message
     CicoSCMessage *message = new CicoSCMessage();
     message->addRootObject("command", MSG_CMD_NAME);
@@ -1867,12 +1870,11 @@ CicoSCWindowController::createSurfaceCB(void *data,
     int     pid;
     struct ilmSurfaceProperties SurfaceProperties;
 
-    ICO_TRA("CicoSCWindowController::createSurfaceCB Enter"
-            "(surfaceid=%08x)", id_surface);
+    ICO_TRA("CicoSCWindowController::createSurfaceCB Enter" "(surfaceid=%08x)", id_surface);
 
     if (ilm_getPropertiesOfSurface(id_surface, &SurfaceProperties) != ILM_SUCCESS)  {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB: ilm_getPropertiesOfSurface(%x) Error",
-                id_surface);
+        ICO_ERR("CicoSCWindowController::createSurfaceCB: ilm_getPropertiesOfSurface(%x) "
+                "Error", id_surface);
         return;
     }
     ICO_TRA("createSurfaceCB: surface=%08x w/h=%d/%d->%d/%d",
@@ -2002,6 +2004,11 @@ CicoSCWindowController::createSurfaceCB(void *data,
     else if (ilm_commitChanges() != ILM_SUCCESS)    {
         ICO_ERR("CicoSCWindowController::createSurfaceCB ilm_commitChanges() Error");
     }
+
+    // set window name(surface title) to ico_window_mgr
+    CicoSCWlWinMgrIF::setWindowName(id_surface, window->name.c_str());
+
+    window->name = CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &pid);
 
     appctrl->enterAUL(window->appid.c_str(), window->pid, window);
 
