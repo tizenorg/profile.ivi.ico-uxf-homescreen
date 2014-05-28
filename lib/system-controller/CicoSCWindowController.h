@@ -193,6 +193,10 @@ public:
 
     const CicoSCResourceManager* getResourceManager(void) const;
 
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    static Eina_Bool ChangeToHide(void *window);
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+
 private:
     // assignment operator
     CicoSCWindowController& operator=(const CicoSCWindowController &object);

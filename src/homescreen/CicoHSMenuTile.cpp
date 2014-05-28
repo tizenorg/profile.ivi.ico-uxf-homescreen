@@ -625,9 +625,10 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 #pragma pack(pop)
 #endif
 
+#if 0       /* too many log */
     ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%08x<%s>) info=%08x surf=%08x",
             (int)this->appid, appid, (int)info, info ? info->surface : 0);
-
+#endif
     if ((info == NULL) || (info->surface == 0)) {
         unmap = 1;
     }
@@ -748,7 +749,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                     }
                 }
                 else    {
-                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
+                    ICO_DBG("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
                             sWork);
                 }
                 if (fd >= 0)    {

@@ -125,33 +125,33 @@ protected:
     CicoSCWlWinMgrIF(const CicoSCWlWinMgrIF &object);
 
     // wrapper function ico_window_mgr_set_window_layer
-    void setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t oldlayer);
+    static void setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t oldlayer);
 
     // wrapper function ico_window_mgr_set_positionsize
-    void setPositionsize(uint32_t surfaceid, uint32_t node,
-                         int32_t x, int32_t y, int32_t width, int32_t height);
+    static void setPositionsize(uint32_t surfaceid, uint32_t node,
+                                int32_t x, int32_t y, int32_t width, int32_t height);
 
     // wrapper function ico_window_mgr_set_visible
-    void setVisible(uint32_t surfaceid, int32_t visible);
+    static void setVisible(uint32_t surfaceid, int32_t visible);
 
     // wrapper function of ico_window_mgr_set_animation
-    void setAnimation(uint32_t surfaceid, int32_t type,
-                      const char *animation, int32_t time);
+    static void setAnimation(uint32_t surfaceid, int32_t type,
+                             const char *animation, int32_t time);
 
     // wrapper function of ico_window_mgr_set_active
-    void setActive(uint32_t surfaceid, int32_t active);
+    static void setActive(uint32_t surfaceid, int32_t active);
 
     // wrapper function of ico_window_mgr_set_layer_visible
-    void setLayerVisible(uint32_t layer, int32_t visible);
+    static void setLayerVisible(uint32_t layer, int32_t visible);
 
     // wrapper function of ilm_takeSurfaceScreenshot
-    void setmapGet(int surfaceid, const char *filepath);
+    static void setmapGet(int surfaceid, const char *filepath);
 
     // wrapper function of ico_window_mgr_map_surface
-    void mapSurface(uint32_t surfaceid, int32_t framerate, const char *filepath);
+    static void mapSurface(uint32_t surfaceid, int32_t framerate, const char *filepath);
 
     // wrapper function of ico_window_mgr_unmap_surface
-    void unmapSurface(uint32_t surfaceid);
+    static void unmapSurface(uint32_t surfaceid);
 
     static const char *wlIviCtrlGetSurfaceWaiting(uint32_t id_surface, int *pid);
 
@@ -186,7 +186,7 @@ private:
     static void wlDestroySurfaceCB(void *data,
                                    struct ico_window_mgr *ico_window_mgr,
                                    uint32_t surfaceid);
-    //
+
     static void wlOutputGeometryCB(void             *data,
                                    struct wl_output *wl_output,
                                    int32_t          x,

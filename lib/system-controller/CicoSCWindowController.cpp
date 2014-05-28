@@ -209,9 +209,6 @@ CicoSCWindowController::show(int        surfaceid,
         return ICO_SYC_ENOENT;
     }
 
-    // update visible attr
-    window->visible = true;
-
     // update current displayed window at display zone
     CicoSCDisplayZone* zone = (CicoSCDisplayZone*)findDisplayZone(window->zoneid);
     if (NULL != zone) {
@@ -236,6 +233,27 @@ CicoSCWindowController::show(int        surfaceid,
              (false == window->raise))   {
         raiseFlag = ICO_SYC_WIN_RAISE_RAISE;
     }
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    if (window->hide_timer) {
+        ecore_timer_del(window->hide_timer);
+    }
+
+    if (window->visible == false)   {
+        CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE |
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE |
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
+                                       "none", 0);
+        CicoSCWlWinMgrIF::setVisible(window->surfaceid, ICO_SYC_WIN_VISIBLE_HIDE);
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                          ICO_SYC_WIN_NOCHANGE, window->x, window->y,
+                                          window->width, window->height);
+    }
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+
+    // update visible attr
+    window->visible = true;
+
     if ((NULL != animation) && (animation[0] != '\0')) {
         // set animation request to Multi Window Manager
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
@@ -380,6 +398,14 @@ CicoSCWindowController::hide(int        surfaceid,
     // set visible request to Multi Window Manager
     CicoSCWlWinMgrIF::setVisible(window->surfaceid, ICO_SYC_LAYER_VISIBLE_HIDE);
 
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    if (window->hide_timer) {
+        ecore_timer_del(window->hide_timer);
+    }
+    window->hide_timer = ecore_timer_add((double)(animationTime + 200) / 1000.0f,
+                                         ChangeToHide, (void *)window);
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
@@ -438,8 +464,15 @@ CicoSCWindowController::resize(int        surfaceid,
     // set visible request to Multi Window Manager
     window->width = w;
     window->height = h;
-    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, window->nodeid,
-                                      window->x, window->y, w, h);
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    if (window->visible == false)
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, window->nodeid,
+                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+                                          w, h);
+    else
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, window->nodeid,
+                                          window->x, window->y, w, h);
 
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
@@ -513,9 +546,16 @@ CicoSCWindowController::move(int        surfaceid,
     // set visible request to Multi Window Manager
     window->x = x;
     window->y = y;
-    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
-                                      moveNodeId, x, y,
-                                      window->width, window->height);
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    if (window->visible == false)
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
+                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+                                          window->width, window->height);
+    else
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                          moveNodeId, x, y,
+                                          window->width, window->height);
 
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
@@ -579,6 +619,41 @@ CicoSCWindowController::raise(int        surfaceid,
     ICO_TRA("CicoSCWindowController::raise Leave(EOK)");
     return ICO_SYC_EOK;
 }
+
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+//--------------------------------------------------------------------------
+/**
+ *  @brief  raise window(surface)
+ *
+ *  @param [in] window          window object
+ *  @return fixed ECORE_CALLBACK_CANCEL
+ */
+//--------------------------------------------------------------------------
+Eina_Bool
+CicoSCWindowController::ChangeToHide(void *window)
+{
+    CicoSCWindow *winobj = static_cast<CicoSCWindow *>(window);
+    winobj->hide_timer = NULL;
+
+    if (winobj->visible == false)   {
+        ICO_TRA("CicoSCWindowController::ChangeToHide move %08x(%s)",
+                winobj->surfaceid, winobj->name.c_str());
+        CicoSCWlWinMgrIF::setAnimation(winobj->surfaceid,
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_SHOW |
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_HIDE |
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_RESIZE |
+                                       ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
+                                       "none", 0);
+        CicoSCWlWinMgrIF::setPositionsize(winobj->surfaceid,
+                                          ICO_SYC_WIN_NOCHANGE,
+                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+                                          winobj->width, winobj->height);
+        CicoSCWlWinMgrIF::setVisible(winobj->surfaceid, ICO_SYC_LAYER_VISIBLE_SHOW);
+        CicoSCWayland::getInstance()->flushDisplay();
+    }
+    return ECORE_CALLBACK_CANCEL;
+}
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
 
 //--------------------------------------------------------------------------
 /**
@@ -701,8 +776,15 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     window->nodeid = moveNodeId;
 
     // set visible request to Multi Window Manager
-    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
-                                      moveX, moveY, moveW, moveH);
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    if (window->visible == false)
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
+                                          ICO_SYC_WIN_NODISPLAY, ICO_SYC_WIN_NODISPLAY,
+                                          moveW, moveH);
+    else
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+        CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
+                                          moveX, moveY, moveW, moveH);
 
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
@@ -1488,11 +1570,18 @@ CicoSCWindowController::updateSurfaceCB(void                  *data,
     }
 
     // update attr
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    if (window->visible)    {
+        window->x = x;
+        window->y = y;
+    }
+#else   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
     window->visible = visible;
-    window->srcwidth = srcwidth;
-    window->srcheight = srcheight;
     window->x = x;
     window->y = y;
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    window->srcwidth = srcwidth;
+    window->srcheight = srcheight;
     window->width = width;
     window->height = height;
     window->nodeid = window->layerid / ICO_SC_LAYERID_SCREENBASE;

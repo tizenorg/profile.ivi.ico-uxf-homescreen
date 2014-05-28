@@ -18,6 +18,7 @@
 #define __CICO_SC_WINDOW_H__
 
 #include <string>
+#include <Ecore.h>
 
 //==========================================================================
 //  define macro
@@ -73,6 +74,9 @@ public:
     bool              visible;      ///< visibility
     bool              raise;        ///< raise/lower
     bool              active;       ///< active/inactive
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    Ecore_Timer       *hide_timer;  ///< surface hide wait timer
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
 };
 #endif  // __CICO_SC_WINDOW_H__
 // vim:set expandtab ts=4 sw=4:

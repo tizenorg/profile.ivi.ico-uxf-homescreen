@@ -34,6 +34,9 @@ CicoSCWindow::CicoSCWindow()
       width(-1), height(-1), visible(false), raise(false), active(false)
 {
 //    ICO_TRA("CicoSCWindow::CicoSCWindow Enter");
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+      hide_timer = NULL;
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
 //    ICO_TRA("CicoSCWindow::CicoSCWindow Leave");
 }
 
@@ -45,6 +48,12 @@ CicoSCWindow::CicoSCWindow()
 CicoSCWindow::~CicoSCWindow()
 {
     ICO_TRA("CicoSCWindow::~CicoSCWindow Enter");
+#if 1   /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
+    if (hide_timer) {
+        ecore_timer_del(hide_timer);
+        hide_timer = NULL;
+    }
+#endif  /* change show/hide to move (Weston may stop drawing to undisplayed Surface) */
     CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(surfaceid);
     ICO_TRA("CicoSCWindow::~CicoSCWindow Leave");
 }
