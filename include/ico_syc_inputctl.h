@@ -36,7 +36,7 @@ typedef enum _input_alloc {
 } ico_syc_input_alloc_e;
 
 /*
- * type of input event
+ * type of input device
  * @ICO_SYC_INPUT_TYPE_POINTER: mouse event
  * @ICO_SYC_INPUT_TYPE_KEYBOARD: keyboard event
  * @ICO_SYC_INPUT_TYPE_TOUCH: touch panel event
@@ -48,6 +48,18 @@ typedef enum _input_type {
     ICO_SYC_INPUT_TYPE_TOUCH    = ICO_INPUT_MGR_DEVICE_TYPE_TOUCH,
     ICO_SYC_INPUT_TYPE_SWITCH   = ICO_INPUT_MGR_DEVICE_TYPE_SWITCH
 } ico_syc_input_type_e;
+
+/*
+ * type of add input event code
+ * @ICO_SYC_INPUT_CODE_TOUCH_UP: touch/click up event
+ * @ICO_SYC_INPUT_CODE_TOUCH_DOWN: touch/click down event
+ * @ICO_SYC_INPUT_CODE_TOUCH_CANCEL: cancel touch/click down event
+ */
+typedef enum _input_add_event_code {
+    ICO_SYC_INPUT_CODE_TOUCH_UP     = ICO_INPUT_MGR_CONTROL_EVENT_TOUCH_UP,
+    ICO_SYC_INPUT_CODE_TOUCH_DOWN   = ICO_INPUT_MGR_CONTROL_EVENT_TOUCH_DOWN,
+    ICO_SYC_INPUT_CODE_TOUCH_CANCEL = ICO_INPUT_MGR_CONTROL_EVENT_TOUCH_CANCEL
+} ico_syc_input_add_event_code_e;
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -86,6 +98,36 @@ int ico_syc_add_input(const char *appid, const char *device,
  */
 /*--------------------------------------------------------------------------*/
 int ico_syc_delete_input(const char *appid, const char *device, int input);
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_send_key_event
+ *          Send the keyboard input event to the application.
+ *
+ * @param[in]   winname                 window name([name][@appid])
+ * @param[in]   code                    input event code
+ * @param[in]   value                   input event value
+ * @return      result
+ * @retval      0                       success
+ * @retval      not 0                   error
+ */
+/*--------------------------------------------------------------------------*/
+int ico_syc_send_key_event(const char *winname, int code, int value);
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_send_pointer_event
+ *          Send the pointer input event to the application.
+ *
+ * @param[in]   winname                 window name([name][@appid])
+ * @param[in]   code                    input event code
+ * @param[in]   value                   input event value
+ * @return      result
+ * @retval      0                       success
+ * @retval      not 0                   error
+ */
+/*--------------------------------------------------------------------------*/
+int ico_syc_send_pointer_event(const char *winname, int code, int value);
 
 #ifdef __cplusplus
 }

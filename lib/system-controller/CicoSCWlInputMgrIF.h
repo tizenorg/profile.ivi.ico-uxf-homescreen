@@ -93,6 +93,16 @@ protected:
                      const std::string &device,
                      int               input);
 
+    // wrapper function ico_input_mgr_control_send_key_event
+    void sendKeyEvent(const std::string &winname,
+                      int               code,
+                      int               value);
+
+    // wrapper function ico_input_mgr_control_send_pointer_event
+    void sendPointerEvent(const std::string &winname,
+                          int               code,
+                          int               value);
+
     // wrapper function ico_exinput_set_input_region
     void setInputRegion(const std::string &target,
                         int x,

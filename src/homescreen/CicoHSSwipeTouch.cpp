@@ -9,13 +9,12 @@
 /**
  * @brief   touch action of menu
  *
- * @date    Sep^2--2013
+ * @date    Sep-20-2013
  */
 #include "CicoHSSwipeTouch.h"
 #include "CicoHSAppInfo.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
-#include "CicoHSMenuTouch.h"
 #include "ico_syc_inputctl.h"
 #include <linux/input.h>
 
@@ -31,7 +30,9 @@ int CicoHSSwipeTouch::touch_state_b_y;
 int CicoHSSwipeTouch::touch_state_a_x;
 int CicoHSSwipeTouch::touch_state_a_y;
 
-bool CicoHSSwipeTouch::touch_down;
+Ecore_Timer *CicoHSSwipeTouch::timer;
+int CicoHSSwipeTouch::touch_down;
+bool CicoHSSwipeTouch::long_act;
 bool CicoHSSwipeTouch::set_xy_pos;
 
 int CicoHSSwipeTouch::num_windows;
@@ -56,14 +57,17 @@ void
 CicoHSSwipeTouch::Initialize(CicoHSControlBarWindow* ctl_bar, CicoHSAppHistoryExt* apphist,
                              int width, int height)
 {
+    timer = NULL;
     num_windows = 0;
-    touch_down = false;
+    touch_down = 0;
+    long_act = false;
     set_xy_pos = false;
 
     ctl_bar_window = ctl_bar;
     app_history = apphist;
     full_width = width;
     full_height = height;
+
     ICO_DBG("Initialize: ctlbar=%08x apphist=%08x width=%d height=%d",
             (int)ctl_bar, (int)apphist, width, height);
 }
@@ -80,7 +84,7 @@ CicoHSSwipeTouch::Initialize(CicoHSControlBarWindow* ctl_bar, CicoHSAppHistoryEx
 void
 CicoHSSwipeTouch::Finalize(void)
 {
-  /*nothing to do*/
+    /* nothing to do    */
 }
 
 /*--------------------------------------------------------------------------*/
@@ -102,14 +106,18 @@ CicoHSSwipeTouch::TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void 
     CicoHSSwipeInputWindow  *window;
     int     x, y;
 
-    touch_down = true;
+    if (timer)  {
+        ecore_timer_del(timer);
+        timer = NULL;
+    }
+    touch_down ++;
 
     info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
     window = (CicoHSSwipeInputWindow *)data;
     x = info->output.x + window->GetPosX();
     y = info->output.y + window->GetPosY();
-    ICO_PRF("TOUCH_EVENT Swipe Down (%d,%d)->(%d,%d)",
-            info->output.x, info->output.y, x, y);
+    ICO_PRF("TOUCH_EVENT Swipe Down (%d,%d)->(%d,%d) (%d)",
+            info->output.x, info->output.y, x, y, touch_down);
 
     if ((x >= 0) && (x < 4096) && (y >= 0) && (y < 4096))   {
         if (set_xy_pos == false)    {
@@ -121,7 +129,58 @@ CicoHSSwipeTouch::TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void 
         touch_state_a_y = y;
     }
 
-    CicoHSMenuTouch::SetGrabbedObject(obj);
+    if (touch_down == 1)   {
+        long_act = false;
+        timer = ecore_timer_add(ICO_HS_SWIPE_TOUCH_LONG_PUSH_THREASHOLD_TIME_SECONDS,
+                                LongPushed, data);
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   LongPushed::Touch timeout
+ *          touch down timeout called from ecore
+ *
+ * @param[in]   data    CicoHSSwipeInputWindow object
+ * @return      fixed ECORE_CALLBACK_CANCEL
+ */
+/*--------------------------------------------------------------------------*/
+Eina_Bool
+CicoHSSwipeTouch::LongPushed(void *data)
+{
+    int     idx;
+
+    ICO_DBG("LongPushed: timedout");
+
+    long_act = true;
+    timer = NULL;
+
+    if (set_xy_pos == false)    {
+        ICO_DBG("LongPushed: unknown coordinate, Skip");
+
+        long_act = false;
+        return ECORE_CALLBACK_CANCEL;
+    }
+    ICO_DBG("LongPushed: Not Swipe, send Touch Down event to application");
+
+    /* grab off             */
+    CicoHSSwipeInputWindow *window = static_cast<CicoHSSwipeInputWindow *>(data);
+    if (window) {
+        window->GrabOff();
+    }
+
+    /* send start X/Y       */
+    ico_syc_send_pointer_event(" ", ABS_Z | ICO_SYC_INPUT_CODE_TOUCH_CANCEL,
+                               (touch_state_b_x << 16) | touch_state_b_y);
+    /* send TOUCH Down      */
+    for (idx = 0; idx < touch_down; idx++)  {
+        ico_syc_send_pointer_event(" ", BTN_TOUCH | ICO_SYC_INPUT_CODE_TOUCH_DOWN,
+                                   (touch_state_b_x << 16) | touch_state_b_y);
+    }
+    /* send current X/Y     */
+    ico_syc_send_pointer_event(" ", ABS_Z,
+                               (touch_state_a_x << 16) | touch_state_a_y);
+    return ECORE_CALLBACK_CANCEL;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -160,28 +219,35 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         touch_state_a_y = y;
     }
 
-    CicoHSMenuTouch::SetGrabbedObject(NULL);
-
-    ICO_PRF("TOUCH_EVENT Swipe Up   (%d,%d)->(%d,%d) before(%d,%d)",
+    ICO_PRF("TOUCH_EVENT Swipe Up   (%d,%d)->(%d,%d) before(%d,%d) (%d)",
             info->output.x, info->output.y, touch_state_a_x, touch_state_a_y,
-            touch_state_b_x, touch_state_b_y);
+            touch_state_b_x, touch_state_b_y, touch_down - 1);
 
-    if (touch_down == false)    {
-        set_xy_pos = false;
-        ICO_DBG("TouchUpSwipe: No Down, Skip");
+    if (touch_down != 1) {
+        if (touch_down > 0) touch_down --;
+        ICO_DBG("TouchUpSwipe: touch counter not 0(%d), Skip", touch_down);
         return;
     }
 
-    touch_down = false;
-
-    if (set_xy_pos == false)    {
-        ICO_DBG("TouchUpSwipe: unknown coordinate, Skip");
-        return;
+    if(timer != NULL){
+        ecore_timer_del(timer);
+        timer = NULL;
     }
+
+    touch_down = 0;
     set_xy_pos = false;
+
+    if (long_act == true)   {
+        long_act = false;
+        ICO_DBG("TouchUpSwipe: no touch down, Skip");
+        return;
+    }
+
     sub = touch_state_a_x - touch_state_b_x;
 
-    /* check swipe left to right or right to left   */
+    swipe = -1;
+
+    /* check slide left to right or right to left   */
     if (sub > ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
         if (touch_state_b_x < ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH)   {
             /* get current application  */
@@ -211,8 +277,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                 }
                 else    {
                     animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL |
-                                     ICO_SYC_WIN_SURF_ONESHOT;
+                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL;
 
                     /* show before application with slide to right  */
                     appinfo = CicoHomeScreen::GetAppInfo(histapp.c_str());
@@ -237,8 +302,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                         }
                         else    {
                             animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                             ICO_SYC_WIN_SURF_NORESCTL |
-                                             ICO_SYC_WIN_SURF_ONESHOT;
+                                             ICO_SYC_WIN_SURF_NORESCTL;
                             appinfo = CicoHomeScreen::GetAppInfo(curapp.c_str());
                             if (appinfo)    {
                                 animation.name = (char *)"slide.toleft";
@@ -272,11 +336,11 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         }
         else    {
             ICO_DBG("TouchUpSwipe: Swipe left to right, but nop");
-            swipe = -1;
         }
     }
     else if (sub < (-1 * ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE)) {
-        if (touch_state_b_x >= (full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH))   {
+        if (touch_state_b_x >=
+            (full_width - ICO_HS_SWIPE_TOUCH_SWIPE_WIDTH))  {
             /* get current application  */
             curapp = app_history->getSwipeCurrentAppid();
 
@@ -303,8 +367,7 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                 }
                 else    {
                     animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL |
-                                     ICO_SYC_WIN_SURF_ONESHOT;
+                                     ICO_SYC_WIN_SURF_RAISE | ICO_SYC_WIN_SURF_NORESCTL;
 
                     /* show next application with slide to left     */
                     appinfo = CicoHomeScreen::GetAppInfo(histapp.c_str());
@@ -329,11 +392,10 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
                         }
                         else    {
                             animation.time = ICO_HS_SWIPE_TOUCH_SWIPE_ANIMA_TIME |
-                                             ICO_SYC_WIN_SURF_NORESCTL |
-                                             ICO_SYC_WIN_SURF_ONESHOT;
+                                             ICO_SYC_WIN_SURF_NORESCTL;
                             appinfo = CicoHomeScreen::GetAppInfo(curapp.c_str());
                             if (appinfo)    {
-                                animation.name = (char *)"slide.toright";
+                            animation.name = (char *)"slide.toright";
                                 for (idx = 0; ; idx++)  {
                                     wininfo = appinfo->GetWindowInfo(idx);
                                     if (! wininfo)  break;
@@ -364,27 +426,25 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         }
         else    {
             ICO_DBG("TouchUpSwipe: Swipe right side to left, but nop");
-            swipe = -1;
         }
     }
 
 #if 0       /* currently not support    */
-    /* check swipe buttom to top or top to buttom   */
+    /* check slide buttom to top or top to buttom   */
     sub = touch_state_a_y - touch_state_b_y;
     if (sub > ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
-        if (touch_state_b_y < ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE) {
+        if (touch_state_b_y < ICO_HS_SWIPE_TOUCH_SWIPE_HEIGHT)  {
             /* swipe at top side to buttom = unknown    */
             ICO_DBG("TouchUpSwipe: Swipe top side to buttom");
             swipe = 1;
         }
         else    {
             ICO_DBG("TouchUpSwipe: Swipe top side to buttom, but nop");
-            swipe = -1;
         }
     }
     else if (sub < (-1 * ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE)) {
-        if (touch_state_b_y >
-            (full_width - ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_DISTANCE))    {
+        if (touch_state_b_y >=
+            (full_width - ICO_HS_SWIPE_TOUCH_SWIPE_HEIGHT)) {
             /* swipe at buttom side to top = show home menu screen  */
             ICO_DBG("TouchUpSwipe: Swipe buttom side to top");
             swipe = 1;
@@ -394,12 +454,23 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         }
         else    {
             ICO_DBG("TouchUpSwipe: Swipe buttom side to top, but nop");
-            swipe = -1;
         }
     }
 #endif
     if (swipe <= 0) {
-        set_xy_pos = false;
+        ICO_DBG("TouchUpSwipe: Not Swipe, send event to application");
+        /* send start X/Y       */
+        ico_syc_send_pointer_event(" ", ABS_Z,
+                                   (touch_state_b_x << 16) | touch_state_b_y);
+        /* send TOUCH Down      */
+        ico_syc_send_pointer_event(" ", BTN_TOUCH | ICO_SYC_INPUT_CODE_TOUCH_DOWN,
+                                   (touch_state_b_x << 16) | touch_state_b_y);
+        /* send current X/Y     */
+        ico_syc_send_pointer_event(" ", ABS_Z,
+                                   (touch_state_a_x << 16) | touch_state_a_y);
+        /* send TOUCH Up        */
+        ico_syc_send_pointer_event(" ", BTN_TOUCH | ICO_SYC_INPUT_CODE_TOUCH_UP,
+                                   (touch_state_a_x << 16) | touch_state_a_y);
     }
 }
 
@@ -420,7 +491,8 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
 {
     Evas_Event_Mouse_Move   *info;
     CicoHSSwipeInputWindow  *window;
-    int x, y;
+    int     idx;
+    int     x, y;
 
     info = reinterpret_cast<Evas_Event_Mouse_Move*>(event_info);
 
@@ -435,16 +507,53 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
     touch_state_a_x = x;
     touch_state_a_y = y;
 
-    if ((set_xy_pos == false) || (touch_down == false)) {
-        set_xy_pos = true;
+    if (set_xy_pos == false)    {
         touch_state_b_x = touch_state_a_x;
         touch_state_b_y = touch_state_a_y;
         ICO_DBG("TouchMoveSwipe: save x/y=%d/%d", touch_state_b_x, touch_state_b_y);
     }
-#if 0       /* too many log */
+
     ICO_DBG("TouchMoveSwipe: Swipe Move (%d,%d)->(%d,%d) Button=%x",
             info->cur.output.x, info->cur.output.y,
             touch_state_a_x, touch_state_a_y, info->buttons);
-#endif
+
+    if (long_act == true)   {
+        ICO_DBG("TouchMoveSwipe: long act, Skip");
+        return;
+    }
+
+    if(touch_down == 0) {
+        ICO_DBG("TouchMoveSwipe: no TouchDown, Skip");
+        return;
+    }
+
+    if (abs(touch_state_b_y - touch_state_a_y)
+        > ICO_HS_SWIPE_TOUCH_SWIPE_THREASHOLD_MOVE_Y)  {
+        /* slide to top or buttom over threashold, swipe cancel */
+        ICO_DBG("TouchMoveSwipe: over Y direction");
+        if(timer != NULL){
+            ecore_timer_del(timer);
+            timer = NULL;
+        }
+        long_act = true;
+
+        /* grab off             */
+        CicoHSSwipeInputWindow *window = static_cast<CicoHSSwipeInputWindow *>(data);
+        if (window) {
+            window->GrabOff();
+        }
+
+        /* send start X/Y       */
+        ico_syc_send_pointer_event(" ", ABS_Z | ICO_SYC_INPUT_CODE_TOUCH_CANCEL,
+                                   (touch_state_b_x << 16) | touch_state_b_y);
+        /* send TOUCH Down      */
+        for (idx = 0; idx < touch_down; idx++)  {
+            ico_syc_send_pointer_event(" ", BTN_TOUCH | ICO_SYC_INPUT_CODE_TOUCH_DOWN,
+                                       (touch_state_b_x << 16) | touch_state_b_y);
+        }
+        /* send current X/Y     */
+        ico_syc_send_pointer_event(" ", ABS_Z,
+                                   (touch_state_a_x << 16) | touch_state_a_y);
+    }
 }
 // vim: set expandtab ts=4 sw=4:

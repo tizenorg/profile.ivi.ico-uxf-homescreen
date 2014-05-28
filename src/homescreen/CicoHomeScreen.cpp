@@ -281,7 +281,9 @@ CicoHomeScreen::ChangeActive(const char * appid, int surface)
     appinfo->SetLastSurface(surface);
 
     // if window invisible, not update active information
-    if (0 != wininfo->visible) {
+    if ((0 != wininfo->visible) &&
+        (strncmp(wininfo->name, ICO_HS_SWIPE_INPUT_WINDOW_TITLE,
+                 strlen(ICO_HS_SWIPE_INPUT_WINDOW_TITLE)) != 0))    {
         hs_instance->SetActiveAppInfo(appid);
         hs_instance->setActiveApp(appid);
         ICO_TRA("CicoHomeScreen::ChangeActive set show");
