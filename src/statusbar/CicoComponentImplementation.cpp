@@ -16,7 +16,6 @@
  */
 //==========================================================================
 
-#include <Edje.h>
 #include <ctime>
 #include <cassert>
 #include <memory>

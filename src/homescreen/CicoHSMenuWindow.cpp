@@ -99,20 +99,18 @@ CicoHSMenuWindow::SetMenuBack(void)
              img_dir_path, ICO_HS_IMAGE_FILE_MENU_BACK_GROUND);
 
     /* set object*/
-    rectangle = evas_object_rectangle_add(evas);
-    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
-        evas_object_color_set(rectangle,0,0,0,178);
+    if (CicoHSSystemState::getInstance()->getNightMode())   {
+        rectangle = EvasObjectRectangleCreate(evas, 0, 0, 0, 178);
     }
     else {
-        evas_object_color_set(rectangle,120,120,120,178);
+        rectangle = EvasObjectRectangleCreate(evas, 120, 120, 120, 178);
     }
     evas_object_move(rectangle, 0, 0);
     evas_object_resize(rectangle, width, height);
     evas_object_show(rectangle);
 
     /* set object*/
-    canvas = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(canvas, img_path, NULL);
+    canvas = EvasObjectImageCreate(evas, img_path, NULL);
     int err = evas_object_image_load_error_get(canvas);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSMenuWindow::SetMenuBack: backgound image is not exist");
@@ -121,9 +119,12 @@ CicoHSMenuWindow::SetMenuBack(void)
         return ICO_ERROR;
     }
     evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_DOWN,
-                                   CicoHSMenuTouch::TouchDownMenu,NULL);
+                                   CicoHSMenuTouch::TouchDownMenu, NULL);
     evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_UP,
-                                   CicoHSMenuTouch::TouchUpMenu,NULL);
+                                   CicoHSMenuTouch::TouchUpMenu, NULL);
+    evas_event_callback_add(evas, EVAS_CALLBACK_CANVAS_FOCUS_OUT,
+                            CicoHSMenuTouch::FocusOutEvas, (void *)canvas);
+
     evas_object_move(canvas, 0, 0);
     evas_object_resize(canvas, width, height);
     evas_object_show(canvas);
@@ -513,8 +514,7 @@ CicoHSMenuWindow::SetPagePointer(void)
                      img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_N);
         }
         /* set object*/
-        page_pointer[ii] = evas_object_image_filled_add(evas);
-        evas_object_image_file_set(page_pointer[ii], img_path, NULL);
+        page_pointer[ii] = EvasObjectImageCreate(evas, img_path, NULL);
         int err = evas_object_image_load_error_get(page_pointer[ii]);
         if (err != EVAS_LOAD_ERROR_NONE) {
             ICO_ERR("CicoHSMenuWindow::SetPagePointer: page pointer image is not exist");
@@ -523,10 +523,10 @@ CicoHSMenuWindow::SetPagePointer(void)
         }
         evas_object_event_callback_add(page_pointer[ii],
                                        EVAS_CALLBACK_MOUSE_DOWN,
-                                       CicoHSMenuTouch::TouchDownMenu,NULL);
+                                       CicoHSMenuTouch::TouchDownMenu, NULL);
         evas_object_event_callback_add(page_pointer[ii],
                                        EVAS_CALLBACK_MOUSE_UP,
-                                       CicoHSMenuTouch::TouchUpMenu,NULL);
+                                       CicoHSMenuTouch::TouchUpMenu, NULL);
 
         int pos_x = ICO_HS_MENU_PAGE_POINTER_START_POS_X +
                     (((width - ICO_HS_MENU_PAGE_POINTER_START_POS_X * 2) /
@@ -579,16 +579,14 @@ CicoHSMenuWindow::SetTerminateButton(void)
     /* image file name*/
 
     /* set object*/
-    terminate_back = evas_object_rectangle_add(evas);
-    evas_object_color_set(terminate_back,0,0,0,178);
+    terminate_back = EvasObjectRectangleCreate(evas, 0, 0, 0, 178);
     evas_object_move(terminate_back, 0, 0);
     evas_object_resize(terminate_back, width, height);
     evas_object_layer_set(terminate_back, ICO_HS_MENU_TERMINATE_BUTTON_LAYER);
     /* set object*/
     snprintf(img_path,sizeof(img_path),"%s%s",
                      img_dir_path,ICO_HS_IMAGE_FILE_MENU_TERMINATE_YES);
-    terminate_button_yes = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(terminate_button_yes, img_path, NULL);
+    terminate_button_yes = EvasObjectImageCreate(evas, img_path, NULL);
     err = evas_object_image_load_error_get(terminate_button_yes);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSMenuWindow::SetTerminateButton: image is not exist");
@@ -596,8 +594,7 @@ CicoHSMenuWindow::SetTerminateButton(void)
         return ICO_ERROR;
     }
     evas_object_event_callback_add(terminate_button_yes, EVAS_CALLBACK_MOUSE_UP,
-                                       CicoHSMenuTouch::TouchUpTerminateYes,
-                                       NULL);
+                                       CicoHSMenuTouch::TouchUpTerminateYes, NULL);
     evas_object_move(terminate_button_yes, width / 2  - 100 - 64,
                                            height / 2 + 100);
     evas_object_resize(terminate_button_yes,100,64);
@@ -606,8 +603,7 @@ CicoHSMenuWindow::SetTerminateButton(void)
     /* set object*/
     snprintf(img_path,sizeof(img_path),"%s%s",
                      img_dir_path, ICO_HS_IMAGE_FILE_MENU_TERMINATE_NO);
-    terminate_button_no = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(terminate_button_no, img_path, NULL);
+    terminate_button_no = EvasObjectImageCreate(evas, img_path, NULL);
     err = evas_object_image_load_error_get(terminate_button_no);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSMenuWindow::SetTerminateButton: image is not exist");
@@ -615,8 +611,7 @@ CicoHSMenuWindow::SetTerminateButton(void)
         return ICO_ERROR;
     }
     evas_object_event_callback_add(terminate_button_no, EVAS_CALLBACK_MOUSE_UP,
-                                       CicoHSMenuTouch::TouchUpTerminateNo,
-                                       NULL);
+                                       CicoHSMenuTouch::TouchUpTerminateNo, NULL);
     evas_object_move(terminate_button_no, width / 2  + 64,
                                            height / 2 + 100);
     evas_object_resize(terminate_button_no,100,64);
@@ -625,8 +620,7 @@ CicoHSMenuWindow::SetTerminateButton(void)
     /* set object*/
     snprintf(img_path,sizeof(img_path),"%s%s",
                      img_dir_path,ICO_HS_IMAGE_FILE_MENU_TERMINATE_REALLY);
-    terminate_really = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(terminate_really, img_path, NULL);
+    terminate_really = EvasObjectImageCreate(evas, img_path, NULL);
     err = evas_object_image_load_error_get(terminate_really);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSMenuWindow::SetTerminateButton: image is not exist");
@@ -714,8 +708,7 @@ CicoHSMenuWindow::SetPageCursor(void)
                  img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGE_UP_CURSOR);
 
     /* set object*/
-    page_up_cursor = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(page_up_cursor, img_path, NULL);
+    page_up_cursor = EvasObjectImageCreate(evas, img_path, NULL);
     int err = evas_object_image_load_error_get(page_up_cursor);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSMenuWindow::SetPagePointer: page up cursor image is not exist");
@@ -734,8 +727,7 @@ CicoHSMenuWindow::SetPageCursor(void)
                  img_dir_path,ICO_HS_IMAGE_FILE_MENU_PAGE_DOWN_CURSOR);
 
     /* set object*/
-    page_down_cursor = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(page_down_cursor, img_path, NULL);
+    page_down_cursor = EvasObjectImageCreate(evas, img_path, NULL);
     err = evas_object_image_load_error_get(page_down_cursor);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSMenuWindow::SetPagePointer: page down cursor image is not exist");

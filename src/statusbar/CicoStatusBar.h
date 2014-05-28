@@ -17,7 +17,6 @@
 #ifndef __CICO_STATUSBAR_H__
 #define __CICO_STATUSBAR_H__
 
-#include <Ecore.h>
 #include <memory>
 #include <list>
 #include "CicoComponentImplementation.h"

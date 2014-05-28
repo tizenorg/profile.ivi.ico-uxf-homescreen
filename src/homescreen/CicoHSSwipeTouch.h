@@ -53,7 +53,7 @@ class CicoHSSwipeTouch
     static int touch_state_a_x;
     static int touch_state_a_y;
 
-    static int touch_down;
+    static bool touch_down;
     static bool set_xy_pos;
     static int num_windows;
     static CicoHSSwipeInputWindow* swipe_windows[ICO_HS_MAX_SWIPEWINDOWS];

@@ -121,20 +121,20 @@ CicoHSControlBarWindow::~CicoHSControlBarWindow(void)
  * @return      OK or ERRROR
  */
 /*--------------------------------------------------------------------------*/
-int 
+int
 CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
                                                int width, int height)
 {
     int ret;
     char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
-    
+
     /*create window*/
     ret = CreateWindow(ICO_HS_CONTROL_BAR_WINDOW_TITLE,
                        pos_x, pos_y, width, height, EINA_TRUE);
     if(ret != ICO_OK){
        return ret;
     }
-       
+
     /* get evas */
     evas = ecore_evas_get(window);
     if (!evas) {
@@ -144,14 +144,14 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
     }
 
     // create background evas object
-    background = evas_object_rectangle_add(evas);
+    background = EvasObjectRectangleCreate(evas, 128, 128, 128, 255);
 
     // add callback functions
-    evas_object_event_callback_add(background, EVAS_CALLBACK_KEY_DOWN, 
+    evas_object_event_callback_add(background, EVAS_CALLBACK_KEY_DOWN,
                                    CicoHSControlBarWindow::evasKeyDownCB, this);
 
     // key grab
-    evas_object_focus_set(background, EINA_FALSE);     
+    evas_object_focus_set(background, EINA_FALSE);
     Eina_Bool eret = evas_object_key_grab(background, (const char*)changeZoneKeyName,
                                           0, 0, EINA_TRUE);
     if (EINA_FALSE == eret) {
@@ -173,9 +173,6 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
         ICO_WRN("evas_object_key_grab failed.");
     }
 
-    // set background coloer
-    evas_object_color_set(background,128,128,128,255);
-
     // change window geometry
     evas_object_move(background, 0, 0);
     evas_object_resize(background, width,height);
@@ -183,36 +180,31 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
     // show window
     evas_object_show(background);
 
-    // home button
-    // image file name
-    snprintf(img_path, sizeof(img_path), "%s%s",
-             img_dir_path, ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY);
-
     // set object
-    menu_btn = evas_object_image_filled_add(evas);
+    menu_btn = EvasObjectImageCreate(evas, NULL, NULL);
 
     // preload image
-    snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+    snprintf(img_path, sizeof(img_path), "%s%s", img_dir_path,
              ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY2);
     evas_object_image_file_set(menu_btn, img_path, NULL);
 
-    snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+    snprintf(img_path, sizeof(img_path), "%s%s", img_dir_path,
              ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT);
     evas_object_image_file_set(menu_btn, img_path, NULL);
 
-    snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+    snprintf(img_path, sizeof(img_path), "%s%s", img_dir_path,
              ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT2);
     evas_object_image_file_set(menu_btn, img_path, NULL);
 
-    // load fisrt show icon image 
-    snprintf(img_path,sizeof(img_path),"%s%s",img_dir_path,
+    // load fisrt show icon image
+    snprintf(img_path, sizeof(img_path), "%s%s", img_dir_path,
              ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_DAY);
     evas_object_image_file_set(menu_btn, img_path, NULL);
 
     evas_object_move(menu_btn,
                      (width/2) - (ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH /2),
                      ICO_HS_CONTROL_BAR_MENU_BTN_START_POS_Y);
-    evas_object_resize(menu_btn, ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH, 
+    evas_object_resize(menu_btn, ICO_HS_CONTROL_BAR_MENU_BTN_WIDTH,
                        ICO_HS_CONTROL_BAR_MENU_BTN_HEIGHT);
     evas_object_event_callback_add(menu_btn, EVAS_CALLBACK_MOUSE_DOWN,
                                    CicoHSControlBarTouch::TouchDownControlBar,
@@ -220,11 +212,11 @@ CicoHSControlBarWindow::CreateControlBarWindow(int pos_x, int pos_y,
     evas_object_event_callback_add(menu_btn, EVAS_CALLBACK_MOUSE_UP,
                                    CicoHSControlBarTouch::TouchUpControlBar,
                                    NULL);
-    evas_object_show(menu_btn);    
+    evas_object_show(menu_btn);
 
     /* shortcut */
     AddShortcut(evas, width);
- 
+
     return ICO_OK;
 }
 
@@ -289,9 +281,8 @@ CicoHSControlBarWindow::AddShortcut(Evas *evas, int width)
                 ICO_HS_MAX_PROCESS_NAME) == 0) {
                 ICO_DBG("CicoHSControlBarWindow::AddShortcut tmp_appid = [%s]",
                         tmp_appid);
-                shortcut[s_cnt] = evas_object_image_filled_add(evas);
-                evas_object_image_file_set(shortcut[s_cnt],
-                                  aillist[kk].m_icon.c_str(), NULL);
+                shortcut[s_cnt] = EvasObjectImageCreate(evas,
+                                                        aillist[kk].m_icon.c_str(), NULL);
                 evas_object_move(shortcut[s_cnt], x,
                                   ICO_HS_CONTROL_BAR_SHORTCUT_BTN_START_POS_Y);
                 evas_object_resize(shortcut[s_cnt],
@@ -337,7 +328,7 @@ CicoHSControlBarWindow::FreeControlBarWindow(void)
  * @return      none
  */
 /*--------------------------------------------------------------------------*/
-void 
+void
 CicoHSControlBarWindow::TouchHome(void)
 {
     ActivationUpdate();
@@ -347,7 +338,7 @@ CicoHSControlBarWindow::TouchHome(void)
     else {
         CicoSound::GetInstance()->PlayOperationSound();
     }
-        
+
     CicoHomeScreen::ChangeMode(ICO_HS_SHOW_HIDE_PATTERN_SLIDE);
 }
 
@@ -546,10 +537,10 @@ CicoHSControlBarWindow::onKeyDown(void *data, Evas *evas,
         TouchHome();
     }
     else if (0 == strcmp(evinfo->keyname, backKeyName)) {
-        // TODO not assinded funciton 
+        // TODO not assinded funciton
     }
     else if (0 == strcmp(evinfo->keyname, menuKeyName)) {
-        // TODO not assinded funciton 
+        // TODO not assinded funciton
     }
 }
 

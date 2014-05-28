@@ -29,7 +29,7 @@
 
 #include "CicoHomeScreenCommon.h"
 
-#define ICO_ORIENTATION_VERTICAL (1) 
+#define ICO_ORIENTATION_VERTICAL (1)
 #define ICO_ORIENTATION_HORIZONTAL (2)
 
 #define ICO_MAX_TITLE_NAME_LEN 64
@@ -44,6 +44,11 @@ class CicoHSWindow
     void WindowSetting(int pos_x,int pos_y,int width,int height,int alpha);
     void ShowWindow(void);
     void HideWindow(void);
+
+    static Evas_Object *EvasObjectImageCreate(Evas *evas,
+                                              const char *image, const char *key);
+    static Evas_Object *EvasObjectRectangleCreate(Evas *evas, int r, int g, int b, int a);
+
   private:
 
   protected:

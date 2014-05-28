@@ -13,6 +13,7 @@
  */
 #include "CicoHSMenuTile.h"
 #include "CicoHSMenuTouch.h"
+#include "CicoHSWindow.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -110,8 +111,7 @@ CicoHSMenuTile::CreateObject(Evas *evas)
     thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
 
     /*tile*/
-    tile = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(tile, icon_image_path, NULL);
+    tile = CicoHSWindow::EvasObjectImageCreate(evas, icon_image_path, NULL);
     evas_object_move(tile, pos_x, pos_y);
     evas_object_resize(tile, width, height);
     evas_object_event_callback_add(tile, EVAS_CALLBACK_MOUSE_DOWN,
@@ -122,8 +122,8 @@ CicoHSMenuTile::CreateObject(Evas *evas)
     evas_object_show(icon);
 
     /*term Icon*/
-    term_icon = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(term_icon, ICO_HS_MENUTILE_TERM_ICON_PATH, NULL);
+    term_icon = CicoHSWindow::EvasObjectImageCreate(evas,
+                                                    ICO_HS_MENUTILE_TERM_ICON_PATH, NULL);
     evas_object_move(term_icon, pos_x + width - ICO_HS_MENUTILE_TERM_ICON_WIDTH, pos_y);
     evas_object_resize(term_icon, ICO_HS_MENUTILE_TERM_ICON_WIDTH,
                        ICO_HS_MENUTILE_TERM_ICON_HEIGHT);
@@ -545,8 +545,8 @@ CicoHSMenuTile::ValidThumbnail(int surface)
                               menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
                                           ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
             if (! small_icon)   {
-                small_icon = evas_object_image_filled_add(menu_evas);
-                evas_object_image_file_set(small_icon, icon_image_path, NULL);
+                small_icon = CicoHSWindow::EvasObjectImageCreate(menu_evas,
+                                                                 icon_image_path, NULL);
                 evas_object_move(small_icon,
                                  pos_x + thumb_reduce_x
                                      - ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2,
@@ -685,7 +685,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                 thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
             }
             if (! thumb_tile)   {
-                thumb_tile = evas_object_image_filled_add(menu_evas);
+                thumb_tile = CicoHSWindow::EvasObjectImageCreate(menu_evas, NULL, NULL);
                 evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
                                                height - thumb_reduce_y * 2);
                 evas_object_move(thumb_tile, pos_x + thumb_reduce_x,

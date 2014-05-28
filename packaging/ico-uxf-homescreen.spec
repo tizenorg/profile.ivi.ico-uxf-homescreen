@@ -1,6 +1,6 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
-Version:    0.9.22
+Version:    0.9.23
 Release:    1.1
 Group:		Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
@@ -9,7 +9,6 @@ Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.4
 BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.21
-BuildRequires: pkgconfig(egl)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(ecore)
 BuildRequires: pkgconfig(ecore-wayland)
@@ -17,6 +16,8 @@ BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(evas)
 BuildRequires: pkgconfig(eina)
 BuildRequires: pkgconfig(edje)
+BuildRequires: pkgconfig(elementary)
+BuildRequires: pkgconfig(edbus)
 BuildRequires: pkgconfig(dbus-1)
 BuildRequires: pkgconfig(json-glib-1.0)
 BuildRequires: pkgconfig(aul)
@@ -56,7 +57,9 @@ Requires: pkgconfig(eina)
 Requires: pkgconfig(evas)
 Requires: pkgconfig(eina)
 Requires: pkgconfig(edje)
+Requires: pkgconfig(elementary)
 Requires: pkgconfig(ecore-wayland)
+Requires: pkgconfig(ecore-x)
 Requires: pkgconfig(glib-2.0)
 Requires: pkgconfig(appsvc)
 

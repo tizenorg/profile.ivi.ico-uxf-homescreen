@@ -84,8 +84,7 @@ CicoHSBackWindow::CreateBackWindow(int pos_x,int pos_y,int width,int height)
     snprintf(img_path,sizeof(img_path),ICO_HS_BACK_WINDOW_IMAGE_FILE_PATH);
   
     /* set object*/
-    canvas = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(canvas, img_path, NULL);
+    canvas = EvasObjectImageCreate(evas, img_path, NULL);
     int err = evas_object_image_load_error_get(canvas);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSBackWindow::CreateBackWindow: backgound image is not exist");

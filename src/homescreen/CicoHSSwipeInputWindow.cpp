@@ -96,7 +96,8 @@ CicoHSSwipeInputWindow::CreateSwipeInputWindow(int pos_x, int pos_y,
         return ICO_ERROR;
     }
 
-    /* background object(transparent)    */
+    /* background object(transparent)       */
+    /* (need grab control for swipe widdow  */
     background = evas_object_image_filled_add(evas);
 
     /* set mouse/touch callback */

@@ -17,7 +17,8 @@
 #ifndef __CICO_COMMON_WINDOW_H__
 #define __CICO_COMMON_WINDOW_H__
 
-#include <Ecore_Evas.h>
+#include <Elementary.h>
+#include <Ecore.h>
 #include <Evas.h>
 #include <list>
 
