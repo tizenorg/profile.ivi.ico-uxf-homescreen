@@ -97,6 +97,8 @@ struct _CicoHSMenuTile_thumb {
     int         fbcount;                // frame buffer change counter
     char        *pixel_data;            // glReadPixels data buffer
     int         pixel_bufsize;          // data buffer size
+    Ecore_Timer *thumb_timer;           // retry timer
+    int         orgsurface;             // original surface id
 };
 
 class CicoHSMenuTile
@@ -127,6 +129,8 @@ class CicoHSMenuTile
     void SetThumbnail(ico_syc_thumb_info_t *info);
     void ShowMenu(bool show);
     void SetOrgThumbnail(CicoHSMenuTile *orgTile);
+    void RetryThumbnail(void);
+    static Eina_Bool TimerThumbnail(void *data);
 
   private:
     char appid[ICO_HS_MAX_PROCESS_NAME];

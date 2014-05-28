@@ -16,6 +16,7 @@
 #include <aul/aul.h>
 #include <bundle.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include "ico_syc_error.h"
 #include "CicoLog.h"
@@ -30,8 +31,9 @@
 
 using namespace std;
 
-
 CicoSCLifeCycleController* CicoSCLifeCycleController::ms_myInstance = NULL;
+struct _lastLaunched_app*  CicoSCLifeCycleController::ms_lastLaunched_app = NULL;
+struct _lastLaunched_app*  CicoSCLifeCycleController::ms_freeLaunched_app = NULL;
 
 const char* DAilTypeFilPrm_Menu="menu";
 const char* DAilTypeFilPrm_App="Application";
@@ -48,7 +50,7 @@ const char* DNull = "(null)";
  * @param pkg_name package name
  * @param key "start"/"end"/"install_percent"/"command" strings
  * @param val "ok"/"error"/"0.000000"-"100.000000" strings
- * @param pmsg pkgmgr message 
+ * @param pmsg pkgmgr message
  * @param data user data
  */
 static int CSCLCCpkgmgr_handler(int req_id, const char *pkg_type,
@@ -151,6 +153,8 @@ CicoSCLifeCycleController::CicoSCLifeCycleController()
     initAUL();
 
     CicoSCLifeCycleController::ms_myInstance = this;
+    ms_lastLaunched_app = NULL;
+    ms_freeLaunched_app = NULL;
 }
 
 /**
@@ -169,6 +173,55 @@ CicoSCLifeCycleController::getInstance(void)
         ms_myInstance = new CicoSCLifeCycleController();
     }
     return ms_myInstance;
+}
+
+int
+CicoSCLifeCycleController::getLastLaunchedPid(void)
+{
+    struct _lastLaunched_app    *cp;
+    time_t                      curtime;
+
+    curtime = time(NULL);
+    cp = CicoSCLifeCycleController::ms_lastLaunched_app;
+    while (cp)  {
+        if ((curtime - cp->time) <= 3)  {
+            ICO_DBG("CicoSCLifeCycleController::getLastLaunchedPid: pid=%d", cp->pid);
+            return cp->pid;
+        }
+        // time over 3 sec, delete
+        CicoSCLifeCycleController::ms_lastLaunched_app = cp->next;
+        cp->next = CicoSCLifeCycleController::ms_freeLaunched_app;
+        CicoSCLifeCycleController::ms_freeLaunched_app = cp;
+        cp = CicoSCLifeCycleController::ms_lastLaunched_app;
+    }
+    ICO_DBG("CicoSCLifeCycleController::getLastLaunchedPid: no process");
+    return 0;
+}
+
+void
+CicoSCLifeCycleController::resetLastLaunchedPid(int pid)
+{
+    struct _lastLaunched_app    *cp, *bp;
+
+    bp = NULL;
+    cp = CicoSCLifeCycleController::ms_lastLaunched_app;
+    while (cp)  {
+        if (cp->pid == pid) {
+            ICO_DBG("CicoSCLifeCycleController::resetLastLaunchedPid(%d) deleted", pid);
+            if (bp) {
+                bp->next = cp->next;
+            }
+            else    {
+                CicoSCLifeCycleController::ms_lastLaunched_app = cp->next;
+            }
+            cp->next = CicoSCLifeCycleController::ms_freeLaunched_app;
+            CicoSCLifeCycleController::ms_freeLaunched_app = cp;
+            break;
+        }
+        bp = cp;
+        cp = cp->next;
+    }
+    return;
 }
 
 /**
@@ -528,7 +581,7 @@ void CicoSCLifeCycleController::initAIL()
 /**
  * @brief
  */
-int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name, 
+int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name,
                          const char *key, const char *val, const void *pmsg,
                          CicoSCLifeCycleController* x)
 {
@@ -1002,25 +1055,56 @@ bool CicoSCLifeCycleController::removeAUL(int pid)
 }
 
 /**
- * @brief 
+ * @brief
  * @param x CicoSCLifeCycleController class pointer
  */
 int CSCLCCapp_launch_handlerX(int pid, CicoSCLifeCycleController* x)
 {
+    struct _lastLaunched_app    *lastApp;
+    struct _lastLaunched_app    *cp;
+    char    appid[256];
+
     ICO_TRA("start %d, %x", pid, x);
     if ((NULL == x) || (0 == x)) {
         ICO_TRA("end user data is NULL");
         return -1;
     }
-    char appid[255];
     memset(appid, 0, sizeof(appid));
-    int iR = Xaul_app_get_appid_bypid(pid, appid, sizeof(appid)); // pid to appid
+    int iR = Xaul_app_get_appid_bypid(pid, appid, sizeof(appid)-1); // pid to appid
+
+    lastApp = CicoSCLifeCycleController::ms_freeLaunched_app;
+    if (lastApp)    {
+        CicoSCLifeCycleController::ms_freeLaunched_app = lastApp->next;
+    }
+    else    {
+        lastApp = (struct _lastLaunched_app *)malloc(sizeof(struct _lastLaunched_app));
+    }
+    if (lastApp)    {
+        lastApp->pid = pid;
+        lastApp->time = time(NULL);
+        lastApp->next = NULL;
+        cp = CicoSCLifeCycleController::ms_lastLaunched_app;
+        if (cp) {
+            while (cp)  {
+                if (cp->next == NULL)   {
+                    cp->next = lastApp;
+                    break;
+                }
+                cp = cp->next;
+            }
+        }
+        else    {
+            CicoSCLifeCycleController::ms_lastLaunched_app = lastApp;
+        }
+    }
+    else    {
+        ICO_ERR("CSCLCCapp_launch_handlerX: No Memory");
+    }
     ICO_PRF("CHG_APP_STA notice  app=%s, pid=%d, rval=%d", appid, pid, iR);
     x->enterAUL(appid, pid, NULL, iR);
     ICO_TRA("end %s %d", appid, pid);
     return 0;
 }
-
 
 /**
  * @brief applications die. callback function

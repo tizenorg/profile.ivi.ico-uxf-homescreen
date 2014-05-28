@@ -1878,6 +1878,7 @@ CicoSCWindowController::createSurfaceCB(void *data,
                                         uint32_t id_surface)
 {
     int     pid;
+    int     cpid;
     struct ilmSurfaceProperties SurfaceProperties;
 
     ICO_TRA("CicoSCWindowController::createSurfaceCB Enter" "(surfaceid=%08x)", id_surface);
@@ -1902,6 +1903,7 @@ CicoSCWindowController::createSurfaceCB(void *data,
     window->width = SurfaceProperties.destWidth;
     window->height = SurfaceProperties.destHeight;
     window->layerid = 0;
+    cpid = pid;
 
     CicoSCLifeCycleController* appctrl;
     appctrl = CicoSCLifeCycleController::getInstance();
@@ -1912,7 +1914,6 @@ CicoSCWindowController::createSurfaceCB(void *data,
         ICO_DBG("application information not found. search parent process");
 
         int     fd;
-        int     cpid = pid;
         int     ppid;
         int     size;
         char    *ppid_line;
@@ -1938,6 +1939,27 @@ CicoSCWindowController::createSurfaceCB(void *data,
             cpid = ppid;
             aulitem = appctrl->findAUL(cpid);
         }
+    }
+
+    if (NULL == aulitem) {
+        /* parent process, workaround last launched application */
+        int     lpid = CicoSCLifeCycleController::getInstance()->getLastLaunchedPid();
+        if (lpid != 0)  {
+            aulitem = appctrl->findAUL(lpid);
+            if (aulitem)    {
+                ICO_DBG("last launched appid=%s", aulitem->m_appid.c_str());
+                CicoSCLifeCycleController::getInstance()->resetLastLaunchedPid(lpid);
+            }
+            else    {
+                ICO_DBG("last launched pid(%d) appid not exist", lpid);
+            }
+        }
+        else    {
+            ICO_DBG("no last launched application");
+        }
+    }
+    else    {
+        CicoSCLifeCycleController::getInstance()->resetLastLaunchedPid(cpid);
     }
     if (NULL != aulitem) {
         window->appid = aulitem->m_appid;

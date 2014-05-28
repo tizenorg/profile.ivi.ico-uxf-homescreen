@@ -8,6 +8,7 @@
  */
 #ifndef CICOSCLIFECYCLECONTROLLER_H
 #define CICOSCLIFECYCLECONTROLLER_H
+#include <time.h>
 #include <glib.h>
 #include <vector>
 #include <map>
@@ -33,12 +34,20 @@ class CicoSCAppResourceController;
 #endif
 #endif
 
+struct _lastLaunched_app    {
+    struct _lastLaunched_app    *next;  // next pointer
+    int         pid;                    // process Id
+    time_t      time;                   // launched date&time
+};
+
 class CicoSCLifeCycleController {
 public:
     CicoSCLifeCycleController();
     ~CicoSCLifeCycleController();
 
     static CicoSCLifeCycleController* getInstance(void);
+    static int  getLastLaunchedPid(void);
+    static void resetLastLaunchedPid(int pid);
 
     // Starting application
     int launch(const char* appid, bundle* b = NULL);
@@ -82,7 +91,7 @@ protected:
                                                    CicoSCLifeCycleController* x);
     bool createAilItems();
 
-    friend 
+    friend
         int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type,
                                  const char *pkg_name, const char *key,
                                  const char *val, const void *pmsg,
@@ -103,6 +112,8 @@ protected:
     bool removeAUL(int pid);
 private:
     static CicoSCLifeCycleController* ms_myInstance;
+    static struct _lastLaunched_app*  ms_lastLaunched_app;
+    static struct _lastLaunched_app*  ms_freeLaunched_app;
 
 protected:
     std::vector<CicoAilItems> m_ail;
