@@ -9,6 +9,7 @@ Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.4
 BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.23
+BuildRequires: pkgconfig(egl)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(ecore)
 BuildRequires: pkgconfig(ecore-wayland)

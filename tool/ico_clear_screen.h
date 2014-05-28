@@ -16,7 +16,6 @@
 #define _CLEAR_SCREEN_H_
 
 #include <sys/ioctl.h>
-#define MESA_EGL_NO_X11_HEADERS
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <wayland-client.h>
