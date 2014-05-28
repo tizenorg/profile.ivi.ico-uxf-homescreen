@@ -11,7 +11,7 @@
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
 #include <Evas.h>
-#include <Elementary.h>
+#include <Edje.h>
 #include <ico_log.h>
 #include "CicoStatusBar.h"
 

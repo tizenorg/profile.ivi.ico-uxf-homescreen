@@ -26,7 +26,6 @@ IcoSysconDaemon_CPPFLAGS = 	\
 	@MURPHYDOMAINCONTROLLER_CFLAGS@		\
 	@MURPHYECORE_CFLAGS@				\
 	@MURPHYRESOURCE_CFLAGS@				\
-	@EDBUS_CFLAGS@						\
 	$(UWS_CFLAGS)						\
 	-I../../include						\
     -I../../lib/system-controller		\
@@ -50,7 +49,6 @@ IcoSysconDaemon_LDADD = \
 	@MURPHYDOMAINCONTROLLER_LIBS@	\
 	@MURPHYECORE_LIBS@				\
 	@MURPHYRESOURCE_LIBS@			\
-	@EDBUS_LIBS@					\
 	$(UWS_LIBS)						\
 	$(GENIVI_LIBS)					\
 	$(WESTONPLUGIN_LIBS)
