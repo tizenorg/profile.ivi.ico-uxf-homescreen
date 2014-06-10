@@ -7,6 +7,8 @@ License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
+ExclusiveArch:  %ix86 x86_64
+
 BuildRequires: pkgconfig(wayland-client) >= 1.4
 BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.21
 BuildRequires: pkgconfig(glib-2.0)
