@@ -1,7 +1,7 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
 Version:    0.9.22
-Release:    1.1
+Release:    0
 Group:		Graphics & UI Framework/Automotive UI
 License:    Apache-2.0
 URL:        ""
@@ -65,6 +65,22 @@ Development files for application that communicate homescreen.
 
 %prep
 %setup -q -n %{name}-%{version}
+
+mkdir -p weston
+cp -av /usr/share/genivi-shell/protocol/*.xml weston/
+
+ls weston/*.xml | while read protocol ; do
+
+    /usr/bin/wayland-scanner client-header \
+        < "${protocol}" > "${protocol/.xml/}-client-protocol.h"
+
+    /usr/bin/wayland-scanner code \
+        < "${protocol}" > "${protocol/.xml/.c}"
+
+done
+
+ls weston/
+
 
 %build
 %autogen
