@@ -57,7 +57,7 @@ libico_system_controller_la_CPPFLAGS =	\
 	-I../misc/state-machine
 
 libico_system_controller_la_LIBADD =	\
-	../common/.libs/libico-common.a		\
+	../common/libico-common.la		\
 	@ECORE_LIBS@						\
 	@EINA_LIBS@							\
 	@GLIB_LIBS@							\

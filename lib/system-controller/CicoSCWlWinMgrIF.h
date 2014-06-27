@@ -21,7 +21,7 @@
 #include <ilm/ilm_client.h>
 #include <ilm/ilm_control.h>
 #include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
-#include <weston/ivi-controller-client-protocol.h>
+#include <weston/ivi-hmi-controller-client-protocol.h>
 #include <weston/ivi-application-client-protocol.h>
 
 #include "ico_syc_type.h"
@@ -106,7 +106,7 @@ public:
                               int32_t           refresh);
 
     virtual void createSurfaceCB(void           *data,
-                                 struct ivi_controller *ivi_controller,
+                                 struct ivi_hmi_controller *ivi_controller,
                                  uint32_t id_surface);
 
     static void wlIviCtrlRemoveSurface(uint32_t id_surface);
@@ -210,27 +210,27 @@ private:
                                           int32_t       pid,
                                           const char    *title);
     static void wlIviCtrlScreenCB(void                  *data,
-                                  struct ivi_controller *ivi_controller,
+                                  struct ivi_hmi_controller *ivi_controller,
                                   uint32_t              id_screen,
-                                  struct ivi_controller_screen *screen);
+                                  struct ivi_hmi_controller_screen *screen);
 
     static void wlIviCtrlLayerCB(void                   *data,
-                                 struct ivi_controller  *ivi_controller,
+                                 struct ivi_hmi_controller  *ivi_controller,
                                  uint32_t               id_layer);
 
     static void wlIviCtrlSurfaceCB(void                 *data,
-                                   struct ivi_controller *ivi_controller,
+                                   struct ivi_hmi_controller *ivi_controller,
                                    uint32_t             id_surface);
 
     static void wlIviCtrlErrorCB(void                   *data,
-                                 struct ivi_controller  *ivi_controller,
+                                 struct ivi_hmi_controller  *ivi_controller,
                                  int32_t                object_id,
                                  int32_t                object_type,
                                  int32_t                error_code,
                                  const char             *error_text);
 
     static void wlIviCtrlNativeHandleCB(void            *data,
-                                        struct ivi_controller *ivi_controller,
+                                        struct ivi_hmi_controller *ivi_controller,
                                         struct wl_surface *surface);
 
 protected:
@@ -241,10 +241,10 @@ protected:
     struct wl_output_listener m_wlOutputListener;
 
     // genivi ivi-application listener
-    struct ivi_application_listener m_ivi_app_listener;
+    // struct ivi_application_listener m_ivi_app_listener;
 
     // genivi ivi-controller listener
-    struct ivi_controller_listener m_ivi_ctrl_listener;
+    struct ivi_hmi_controller_listener m_ivi_ctrl_listener;
 
     // Wayland's Window Manager PlugIn instance
     static struct ico_window_mgr *m_winmgr;
@@ -252,11 +252,11 @@ protected:
     // Wayland's genivi ivi_application instance
     static struct ivi_application *m_ivi_app;
 
-    // Wayland's genivi ivi_controller instance
-    static struct ivi_controller *m_ivi_ctrl;
+    // Wayland's genivi ivi_hmi_controller instance
+    static struct ivi_hmi_controller *m_ivi_ctrl;
 
-    // Wayland's genivi ivi_controller_surface instance
-    static struct ivi_controller_surface *m_ivi_ctrl_surf;
+    // Wayland's genivi ivi_hmi_controller_surface instance
+    static struct ivi_hmi_controller_surface *m_ivi_ctrl_surf;
 
     // wayland output instance
     static struct wl_output *m_wloutput;

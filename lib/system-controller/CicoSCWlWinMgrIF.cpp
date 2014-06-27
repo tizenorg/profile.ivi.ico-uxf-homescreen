@@ -34,7 +34,7 @@
 //==========================================================================
 struct ico_window_mgr *CicoSCWlWinMgrIF::m_winmgr = NULL;
 struct ivi_application *CicoSCWlWinMgrIF::m_ivi_app = NULL;
-struct ivi_controller *CicoSCWlWinMgrIF::m_ivi_ctrl = NULL;
+struct ivi_hmi_controller *CicoSCWlWinMgrIF::m_ivi_ctrl = NULL;
 struct wl_output *CicoSCWlWinMgrIF::m_wloutput = NULL;
 
 int CicoSCWlWinMgrIF::m_id_surface = 0;
@@ -56,14 +56,14 @@ CicoSCWlWinMgrIF::CicoSCWlWinMgrIF()
     m_listener.destroy_surface  = wlDestroySurfaceCB;
 
     // genivi ivi_application listener
-    m_ivi_app_listener.wl_shell_info = wlIviAppNativeShellInfoCB;
+    // m_ivi_app_listener.wl_shell_info = wlIviAppNativeShellInfoCB;
 
-    // genivi ivi_controller listener
-    m_ivi_ctrl_listener.screen = wlIviCtrlScreenCB;
-    m_ivi_ctrl_listener.layer = wlIviCtrlLayerCB;
-    m_ivi_ctrl_listener.surface = wlIviCtrlSurfaceCB;
-    m_ivi_ctrl_listener.error = wlIviCtrlErrorCB;
-    m_ivi_ctrl_listener.native_handle = wlIviCtrlNativeHandleCB;
+    // genivi ivi_hmi_controller listener
+    // m_ivi_ctrl_listener.screen = wlIviCtrlScreenCB;
+    // m_ivi_ctrl_listener.layer = wlIviCtrlLayerCB;
+    // m_ivi_ctrl_listener.surface = wlIviCtrlSurfaceCB;
+    // m_ivi_ctrl_listener.error = wlIviCtrlErrorCB;
+    // m_ivi_ctrl_listener.native_handle = wlIviCtrlNativeHandleCB;
 
     // wayland output listener
     m_wlOutputListener.geometry = wlOutputGeometryCB;
@@ -134,16 +134,16 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
             return;
         }
         m_ivi_app = (struct ivi_application *)wlProxy;
-        ivi_application_add_listener(m_ivi_app,
-                                     &m_ivi_app_listener,
-                                     this);
+        // ivi_application_add_listener(m_ivi_app,
+        //                              &m_ivi_app_listener,
+        //                              this);
     }
     else if (0 == strcmp(interface, ICO_WL_IVI_CONTROLLER_IF)) {
         // get interface instance
-        ICO_DBG("called: wl_registry_bind for ivi_controller");
+        ICO_DBG("called: wl_registry_bind for ivi_hmi_controller");
         void *wlProxy = wl_registry_bind(registry,
                                          name,
-                                         &ivi_controller_interface,
+                                         &ivi_hmi_controller_interface,
                                          1);
         if (NULL == wlProxy) {
             ICO_WRN("interface(%s) wl_registry_bind failed.",
@@ -151,10 +151,10 @@ CicoSCWlWinMgrIF::initInterface(void               *data,
             ICO_TRA("CicoSCWlWinMgrIF::initInterface Leave(binding failed)");
             return;
         }
-        m_ivi_ctrl = (struct ivi_controller *)wlProxy;
-        ivi_controller_add_listener(m_ivi_ctrl,
-                                    &m_ivi_ctrl_listener,
-                                    this);
+        m_ivi_ctrl = (struct ivi_hmi_controller *)wlProxy;
+        ivi_hmi_controller_add_listener(m_ivi_ctrl,
+                                        &m_ivi_ctrl_listener,
+                                        this);
     }
     else if (0 == strcmp(interface, ICO_WL_OUTPUT_IF)) {
         // get interface instance
@@ -651,8 +651,8 @@ CicoSCWlWinMgrIF::outputModeCB(void             *data,
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::createSurfaceCB(void                  *data,
-                                  struct ivi_controller *ivi_controller,
+CicoSCWlWinMgrIF::createSurfaceCB(void                      *data,
+                                  struct ivi_hmi_controller *ivi_controller,
                                   uint32_t id_surface)
 {
     ICO_WRN("CicoSCWlWinMgrIF::createSurfaceCB called.");
@@ -940,8 +940,8 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
     if (! tp2)   {
         tp->busy = SCWINMGR_GENIVI_BUSY_REQSURF;
         ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: "
-                "call ivi_controller_get_native_handle(%d,<%s>)", pid, title);
-        ivi_controller_get_native_handle(m_ivi_ctrl, pid, title);
+                "call ivi_hmi_controller_get_native_handle(%d,<%s>)", pid, title);
+        // ivi_controller_get_native_handle(m_ivi_ctrl, pid, title);
     }
     ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave");
 }
@@ -958,9 +958,9 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::wlIviCtrlScreenCB(void *data,
-                                    struct ivi_controller *ivi_controller,
+                                    struct ivi_hmi_controller *ivi_controller,
                                     uint32_t id_screen,
-                                    struct ivi_controller_screen *screen)
+                                    struct ivi_hmi_controller_screen *screen)
 {
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlScreenCB: Enter(%x)", id_screen);
 
@@ -982,7 +982,7 @@ CicoSCWlWinMgrIF::wlIviCtrlScreenCB(void *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::wlIviCtrlLayerCB(void *data,
-                                   struct ivi_controller *ivi_controller,
+                                   struct ivi_hmi_controller *ivi_controller,
                                    uint32_t id_layer)
 {
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlLayerCB: Enter(%x)", id_layer);
@@ -1005,7 +1005,7 @@ CicoSCWlWinMgrIF::wlIviCtrlLayerCB(void *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void *data,
-                                     struct ivi_controller *ivi_controller,
+                                     struct ivi_hmi_controller *ivi_controller,
                                      uint32_t id_surface)
 {
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: Enter(%x)", id_surface);
@@ -1032,7 +1032,7 @@ CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::wlIviCtrlErrorCB(void *data,
-                                   struct ivi_controller *ivi_controller,
+                                   struct ivi_hmi_controller *ivi_controller,
                                    int32_t object_id, int32_t object_type,
                                    int32_t error_code, const char *error_text)
 {
@@ -1084,7 +1084,7 @@ CicoSCWlWinMgrIF::wlIviCtrlErrorCB(void *data,
         tp2->busy = SCWINMGR_GENIVI_BUSY_REQSURF;
         ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlErrorCB: "
                 "call ivi_controller_get_native_handle(%d,<%s>)", tp2->pid, tp2->title);
-        ivi_controller_get_native_handle(m_ivi_ctrl, tp2->pid, tp2->title);
+        // ivi_controller_get_native_handle(m_ivi_ctrl, tp2->pid, tp2->title);
     }
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlErrorCB: Leave");
 }
@@ -1100,7 +1100,7 @@ CicoSCWlWinMgrIF::wlIviCtrlErrorCB(void *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
-                                          struct ivi_controller *ivi_controller,
+                                          struct ivi_hmi_controller *ivi_controller,
                                           struct wl_surface *surface)
 {
     struct creation_surface_wait    *tp;
@@ -1199,7 +1199,7 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
         tp2->busy = SCWINMGR_GENIVI_BUSY_REQSURF;
         ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: "
                 "call ivi_controller_get_native_handle(%d,<%s>)", tp2->pid, tp2->title);
-        ivi_controller_get_native_handle(m_ivi_ctrl, tp2->pid, tp2->title);
+        // ivi_controller_get_native_handle(m_ivi_ctrl, tp2->pid, tp2->title);
     }
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Leave(id_surface=%08x)", id_surface);
 }
