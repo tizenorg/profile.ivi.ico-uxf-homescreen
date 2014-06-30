@@ -42,16 +42,6 @@ int CicoSCWlWinMgrIF::m_id_surface = 0;
 struct creation_surface_wait    *CicoSCWlWinMgrIF::m_wait_surface_creation = NULL;
 struct creation_surface_wait    *CicoSCWlWinMgrIF::m_free_surface_creation = NULL;
 
-#ifndef CONFIG_LOCAL_WESTON14
-namespace {
-  void ivi_controller_get_native_handle(struct ivi_controller *m_ivi_ctrl, int32_t pid, const char *title)
-  {
-    ICO_ERR("unsupported code: https://bugs.tizen.org/jira/browse/TC-1208");
-    exit(-1);
-  }
-}
-#endif
-
 //--------------------------------------------------------------------------
 /**
  *  @brief  default constructor
@@ -73,9 +63,7 @@ CicoSCWlWinMgrIF::CicoSCWlWinMgrIF()
     m_ivi_ctrl_listener.layer = wlIviCtrlLayerCB;
     m_ivi_ctrl_listener.surface = wlIviCtrlSurfaceCB;
     m_ivi_ctrl_listener.error = wlIviCtrlErrorCB;
-#ifdef CONFIG_LOCAL_WESTON14
     m_ivi_ctrl_listener.native_handle = wlIviCtrlNativeHandleCB;
-#endif
 
     // wayland output listener
     m_wlOutputListener.geometry = wlOutputGeometryCB;
