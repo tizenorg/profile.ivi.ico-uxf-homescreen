@@ -2,7 +2,4 @@
  <request>
     <domain name="_"/>
  </request>
- <assign>
-    <filesystem path="/home/app/ico" label="User"/>
- </assign>
 </manifest>

@@ -2,85 +2,82 @@ AM_CFLAGS = $(GCC_CFLAGS)
 AM_CPPFLAGS = $(GCC_CXXFLAGS)
 AM_CXXFLAGS = $(GCC_CXXFLAGS)
 
-COMMON_LIBS = -lm -lwebsockets -lico-uxf-weston-plugin -lsecurity-server-client
+COMMON_LIBS = -lm -lwebsockets -lsecurity-server-client
 
 noinst_PROGRAMS   = \
 	HomeScreen
 
-HomeScreen_SOURCES =					\
-	CicoHSEFLApp.cpp					\
-	CicoHSCmdOpts.cpp					\
-	home_screen_main.cpp				\
-	CicoHSLifeCycleController.cpp		\
-	CicoHSWindow.cpp					\
-	CicoHSWindowController.cpp			\
-	CicoHSMenuTouch.cpp					\
-	CicoHomeScreen.cpp					\
-	CicoHSMenuTile.cpp					\
-	CicoHSBackWindow.cpp				\
-	CicoHSControlBarWindow.cpp			\
-	CicoHSControlBarTouch.cpp			\
-	CicoHSMenuWindow.cpp				\
-	CicoHSAppInfo.cpp					\
-	CicoHSSystemState.cpp				\
-	CicoHSSwipeTouch.cpp				\
-	CicoHSSwipeInputWindow.cpp			\
-	CicoHSAppHistory.cpp				\
-	CicoHSAppHistoryExt.cpp             \
-    CicoHSCommand.cpp                   \
-    CicoHSServer.cpp                    \
-    CicoHSMessage.cpp                   \
-    CicoHSAppControl.cpp                \
-    CicoHSCommandArg.cpp                 
+HomeScreen_SOURCES =				\
+	CicoHSEFLApp.cpp				\
+	CicoHSCmdOpts.cpp				\
+	home_screen_main.cpp			\
+	CicoHSLifeCycleController.cpp	\
+	CicoHSWindow.cpp				\
+	CicoHSWindowController.cpp		\
+	CicoHSMenuTouch.cpp				\
+	CicoHomeScreen.cpp				\
+	CicoHSMenuTile.cpp				\
+	CicoHSBackWindow.cpp			\
+	CicoHSControlBarWindow.cpp		\
+	CicoHSControlBarTouch.cpp		\
+	CicoHSMenuWindow.cpp			\
+	CicoHSAppInfo.cpp				\
+	CicoHSSystemState.cpp			\
+	CicoHSSwipeTouch.cpp			\
+	CicoHSSwipeInputWindow.cpp		\
+	CicoHSAppHistory.cpp			\
+	CicoHSAppHistoryExt.cpp			\
+	CicoHSCommand.cpp				\
+	CicoHSServer.cpp				\
+	CicoHSMessage.cpp				\
+	CicoHSAppControl.cpp			\
+	CicoHSCommandArg.cpp
 
 HomeScreen_CFLAGS= 					\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
-    $(EFL_CFLAGS) 					\
-    $(OPT_CFLAGS) 					\
-    $(WL_CFLAGS) 					\
-    $(AUL_CFLAGS) 					\
-    $(AIL_CFLAGS) 					\
-    $(UWS_CFLAGS) 					\
-    $(PKGMGR_CFLAGS) 				\
-	$(UWS_CFLAGS)					\
-    -I../../include 				\
-    -I../../lib/common
+	$(EFL_CFLAGS) 					\
+	$(OPT_CFLAGS) 					\
+	$(WL_CFLAGS) 					\
+	$(AUL_CFLAGS) 					\
+	$(AIL_CFLAGS) 					\
+	$(SYSCOND_CFLAGS)				\
+	$(ICOUWS_CFLAGS) 				\
+	$(PKGMGR_CFLAGS) 				\
+	-I../../lib/common
 
 HomeScreen_CXXFLAGS= 				\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
-    $(EFL_CFLAGS) 					\
-    $(OPT_CFLAGS) 					\
-    $(WL_CFLAGS) 					\
-    $(AUL_CFLAGS) 					\
-    $(AIL_CFLAGS) 					\
-    $(UWS_CFLAGS) 					\
-    $(PKGMGR_CFLAGS) 				\
-	$(UWS_CFLAGS)					\
-    -I../../include 				\
-    -I../../lib/common
+	$(EFL_CFLAGS) 					\
+	$(OPT_CFLAGS) 					\
+	$(WL_CFLAGS) 					\
+	$(AUL_CFLAGS) 					\
+	$(AIL_CFLAGS) 					\
+	$(SYSCOND_CFLAGS)				\
+	$(ICOUWS_CFLAGS) 				\
+	$(PKGMGR_CFLAGS) 				\
+	-I../../lib/common
 
 HomeScreen_LDADD = 					\
-	../../lib/common/.libs/libico-common.a 			\
+	../../lib/common/.libs/libico-common.a 	\
 	@CAPIAPPFWAPPLICATION_LIBS@ 	\
 	@PKGMGR_LIBS@					\
-    $(ECOREEVAS_LIBS)					\
-    $(EFL_LIBS) 					\
-    $(OPT_LIBS) 					\
-    $(WL_LIBS) 						\
-    $(COMMON_LIBS) 					\
-    $(UWS_LIBS) 					\
-    $(AUL_LIBS) 					\
-    $(AIL_LIBS) 					\
-	$(UWS_LIBS)						\
-	../../lib/apps-framework/.libs/libico-appfw.so	\
+	$(ECOREEVAS_LIBS)				\
+	$(EFL_LIBS) 					\
+	$(OPT_LIBS) 					\
+	$(WL_LIBS) 						\
+	$(COMMON_LIBS) 					\
+	$(SYSCOND_LIBS)					\
+	$(ICOUWS_LIBS) 					\
+	$(AUL_LIBS) 					\
+	$(AIL_LIBS) 					\
 	-lwayland-egl -lEGL -lGLESv2
 
 SUFFIXES = .edc .edj
 
 BUILT_SOURCES = \
-	home_screen_bg.edj	\
+	home_screen_bg.edj		\
 	home_screen_touch.edj	\
-	appli_list.edj	\
+	appli_list.edj			\
 	appli_kill.edj
 
 .edc.edj:

@@ -1,8 +1,0 @@
-Name=OnScreen
-Type=menu
-Exec=/opt/apps/org.tizen.ico.onscreen/bin/OnScreen
-Icon=org.tizen.ico.onscreen.png
-NoDisplay=false
-Version=0.1.0
-Comment=onscreen app
-Categories=Menu;HomeScreen;run=Center;auto

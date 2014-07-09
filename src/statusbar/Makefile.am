@@ -15,25 +15,23 @@ StatusBar_SOURCES = \
 
 StatusBar_CFLAGS = \
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
-	$(EFL_CFLAGS)	\
-	$(OPT_CFLAGS)	\
-	$(AUL_CFLAGS)	\
-	$(UWS_CFLAGS)	\
-	$(NOTIFICATION_CFLAGS) \
-	-I/usr/include/ico-util	\
-	-I../../include			\
+	$(EFL_CFLAGS)			\
+	$(OPT_CFLAGS)			\
+	$(AUL_CFLAGS)			\
+	$(SYSCOND_CFLAGS)		\
+	$(ICOUWS_CFLAGS)		\
+	$(NOTIFICATION_CFLAGS)	\
 	-I../../lib/common      \
 	-I../../lib/notification
 
 StatusBar_CXXFLAGS = \
 	@CAPIAPPFWAPPLICATION_CFLAGS@ 	\
-	$(EFL_CFLAGS)	\
-	$(OPT_CFLAGS)	\
-	$(AUL_CFLAGS)	\
-	$(UWS_CFLAGS)	\
-	$(NOTIFICATION_CFLAGS) \
-	-I/usr/include/ico-util \
-	-I../../include			\
+	$(EFL_CFLAGS)			\
+	$(OPT_CFLAGS)			\
+	$(AUL_CFLAGS)			\
+	$(SYSCOND_CFLAGS)		\
+	$(ICOUWS_CFLAGS)		\
+	$(NOTIFICATION_CFLAGS)	\
 	-I../../lib/common	\
 	-I../../lib/notification \
 	-std=c++11
@@ -42,11 +40,12 @@ StatusBar_LDADD = \
 	../../lib/common/.libs/libico-common.a \
 	../../lib/notification/.libs/libico-notification.a \
 	@CAPIAPPFWAPPLICATION_LIBS@ 	\
-	$(ECOREEVAS_LIBS)	\
-	$(EFL_LIBS)		\
-	$(OPT_LIBS)		\
-	$(AUL_LIBS)		\
-	$(UWS_LIBS)		\
+	$(ECOREEVAS_LIBS)		\
+	$(EFL_LIBS)				\
+	$(OPT_LIBS)				\
+	$(AUL_LIBS)				\
+	$(SYSCOND_LIBS)			\
+	$(ICOUWS_LIBS)			\
 	$(NOTIFICATION_LIBS)
 
 SUFFIXES = .edc .edj

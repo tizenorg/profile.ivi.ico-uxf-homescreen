@@ -3,9 +3,6 @@ AM_CPPFLAGS = $(GCC_CXXFLAGS)
 noinst_LTLIBRARIES =\
 	libico-notification.la
 
-#lib_LTLIBRARIES =\
-#	libico-system-controller.la
-
 libico_notification_la_LDFLAGS = -version-info 0:9:0 
 libico_notification_la_SOURCES =	\
 	CicoNotification.cpp			\
@@ -24,8 +21,8 @@ libico_notification_la_CPPFLAGS =	\
 	@AUL_CFLAGS@					\
 	@PKGMGR_CFLAGS@					\
 	@CAPIAPPFWAPPLICATION_CFLAGS@	\
-	$(UWS_CFLAGS)					\
-	-I../../include
+	$(SYSCOND_CFLAGS)				\
+	$(ICOUWS_CFLAGS)
 
 libico_notification_la_LIBADD =		\
 	$(NOTIFICATION_LIBS)			\
@@ -37,7 +34,8 @@ libico_notification_la_LIBADD =		\
 	@AUL_LIBS@						\
 	@PKGMGR_LIBS@					\
 	@CAPIAPPFWAPPLICATION_LIBS@		\
-	$(UWS_LIBS)
+	$(SYSCOND_LIBS)					\
+	$(ICOUWS_LIBS)
 
 AM_LDFLAGS = -module -avoid-version -rpath $(libdir)
 

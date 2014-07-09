@@ -1,7 +1,0 @@
-Name=sampleMusic
-Type=Application
-Exec=/opt/apps/org.tizen.ico.sample.music/bin/DummyApp -number=1
-Icon=org.tizen.ico.sample.music.png
-NoDisplay=false
-Version=0.1.0
-Comment=Dummy

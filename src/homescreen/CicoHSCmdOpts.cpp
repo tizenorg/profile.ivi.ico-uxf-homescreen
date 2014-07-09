@@ -19,7 +19,7 @@
 #include <bundle.h>
 
 #include "ico_log.h"
-#include "ico_syc_public.h"
+#include "CicoHomeScreenCommon.h"
 #include "CicoHSCmdOpts.h"
 
 CicoHSCmdOpts* CicoHSCmdOpts::ms_myInstance = NULL;
@@ -129,7 +129,7 @@ CicoHSCmdOpts::getLoginUser(void)
  *  @return history file path
  */
 //--------------------------------------------------------------------------
-const std::string & 
+const std::string &
 CicoHSCmdOpts::getHistoryFilePath(void)
 {
     return m_historyFilePath;

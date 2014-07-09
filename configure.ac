@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.9.21], [])
+AC_INIT([org.tizen.ico.homescreen], [0.9.31], [])
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
@@ -32,6 +32,7 @@ PKG_CHECK_MODULES([EGL], [egl])
 PKG_CHECK_MODULES([EINA], [eina])
 PKG_CHECK_MODULES([EVAS], [evas])
 PKG_CHECK_MODULES([ECORE], [ecore])
+PKG_CHECK_MODULES([ECOREEVAS], [ecore-evas])
 PKG_CHECK_MODULES([GLIB], [glib-2.0])
 PKG_CHECK_MODULES([JSONGLIB], [json-glib-1.0])
 PKG_CHECK_MODULES([AIL], [ail])
@@ -41,21 +42,12 @@ PKG_CHECK_MODULES([PKGMGR], [pkgmgr])
 PKG_CHECK_MODULES([WAYLANDCLIENT], [wayland-client])
 PKG_CHECK_MODULES([NOTIFICATION], [notification])
 PKG_CHECK_MODULES([APPSVC], [appsvc])
+PKG_CHECK_MODULES([CAPIAPPFWAPPLICATION], [capi-appfw-application])
 
 # libraries for homescreen.
 PKG_CHECK_MODULES([EDJE], [edje])
 PKG_CHECK_MODULES([ECOREWAYLAND], [ecore-wayland])
 PKG_CHECK_MODULES([WAYLANDCURSOR], [wayland-cursor])
-
-# libraries for system-controller.
-PKG_CHECK_MODULES([DLOG], [dlog])
-PKG_CHECK_MODULES([CAPIAPPFWAPPLICATION], [capi-appfw-application])
-PKG_CHECK_MODULES([MURPHYCOMMON], [murphy-common]);
-PKG_CHECK_MODULES([MURPHYDOMAINCONTROLLER], [murphy-domain-controller]);
-PKG_CHECK_MODULES([MURPHYECORE], [murphy-ecore]);
-PKG_CHECK_MODULES([MURPHYRESOURCE], [murphy-resource]);
-PKG_CHECK_MODULES([LIBWEBSOCKETS], [libwebsockets]);
-PKG_CHECK_MODULES([ECOREEVAS], [ecore-evas])
 
 # Set flags
 EFL_CFLAGS="$EINA_CFLAGS $EVAS_CFLAGS $ECORE_CFLAGS $EDJE_CFLAGS $ECOREWAYLAND_CFLAGS"
@@ -63,8 +55,8 @@ EFL_LIBS="$EINA_LIBS $EVAS_LIBS $ECORE_LIBS $EDJE_LIBS $ECOREWAYLAND_LIBS $ECORE
 AC_SUBST(EFL_CFLAGS)
 AC_SUBST(EFL_LIBS)
 
-OPT_CFLAGS="$DLOG_CFLAGS $GLIB_CFLAGS $JSONGLIB_CFLAGS"
-OPT_LIBS="$DLOG_LIBS $GLIB_LIBS $JSONGLIB_LIBS"
+OPT_CFLAGS="$GLIB_CFLAGS $JSONGLIB_CFLAGS"
+OPT_LIBS="$GLIB_LIBS $JSONGLIB_LIBS"
 AC_SUBST(OPT_CFLAGS)
 AC_SUBST(OPT_LIBS)
 
@@ -73,10 +65,15 @@ AUL_LIBS="$AUL_LIBS $AIL_LIBS $BUNDLE_LIBS"
 AC_SUBST(AUL_CFLAGS)
 AC_SUBST(AUL_LIBS)
 
-UWS_CFLAGS="-I/usr/include/ico-util"
-UWS_LIBS="-lico-util"
-AC_SUBST(UWS_CFLAGS)
-AC_SUBST(UWS_LIBS)
+ICOUWS_CFLAGS="-I/usr/include/ico-util"
+ICOUWS_LIBS="-lico-util"
+AC_SUBST(ICOUWS_CFLAGS)
+AC_SUBST(ICOUWS_LIBS)
+
+SYSCOND_CFLAGS="-I/usr/include/ico-appfw"
+SYSCOND_LIBS="-lico-appfw"
+AC_SUBST(SYSCOND_CFLAGS)
+AC_SUBST(SYSCOND_LIBS)
 
 GENIVI_LIBS="-lilmCommon -lilmControl -lilmClient"
 AC_SUBST(GENIVI_LIBS)
@@ -128,19 +125,9 @@ AC_CONFIG_FILES([Makefile
                  lib/Makefile
                  lib/common/Makefile
                  lib/notification/Makefile
-                 lib/apps-framework/Makefile
-                 lib/misc/Makefile
-                 lib/misc/state-machine/Makefile
-                 lib/system-controller/Makefile
                  src/Makefile
-                 src/syscond/Makefile
                  src/homescreen/Makefile
                  src/statusbar/Makefile
-                 src/onscreen/Makefile
-                 tool/Makefile
-                 tool/notification/Makefile
-                 tests/Makefile
-                 tests/system-controller/Makefile
-                 tests/system-controller/apps-framework/Makefile])
+                 src/onscreen/Makefile])
 AC_PROG_RANLIB([ranlib])
 AC_OUTPUT

@@ -1,3 +1,9 @@
+* Wed Jul 09 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen_ivi/20140626.144348@be29f6a
+- 0.9.31 release
+-- The System Controller Daemon and interface library of System Controller was excepted from the package.
+-- (relates to TC-706 - Remove system controller and move its functionality to Murphy)
+-- It enabled building in TizenIVI M14.3 environment.
+
 * Tue Apr 08 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/panda/20140403.020026@294446b
 - 0.9.22 release
 -- bug fix: TIVI-3007 - Home button doesn't response after some operations.

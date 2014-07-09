@@ -3,9 +3,6 @@ AM_CPPFLAGS = $(GCC_CXXFLAGS)
 noinst_LTLIBRARIES =\
 	libico-common.la
 
-#lib_LTLIBRARIES =\
-#	libico-system-controller.la
-
 libico_common_la_LDFLAGS = -version-info 0:9:0 
 libico_common_la_SOURCES =	\
 	CicoEFLApp.cpp			\
@@ -28,8 +25,8 @@ libico_common_la_CPPFLAGS =			\
 	@AUL_CFLAGS@					\
 	@PKGMGR_CFLAGS@					\
 	@CAPIAPPFWAPPLICATION_CFLAGS@	\
-	$(UWS_CFLAGS)					\
-	-I../../include
+	$(SYSCOND_CFLAGS)				\
+	$(ICOUWS_CFLAGS)
 
 libico_common_la_LIBADD =			\
 	@ECORE_LIBS@					\
@@ -40,7 +37,8 @@ libico_common_la_LIBADD =			\
 	@AUL_LIBS@						\
 	@PKGMGR_LIBS@					\
 	@CAPIAPPFWAPPLICATION_LIBS@		\
-	$(UWS_LIBS)
+	$(SYSCOND_LIBS)					\
+	$(ICOUWS_LIBS)
 
 AM_LDFLAGS = -module -avoid-version -rpath $(libdir)
 

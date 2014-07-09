@@ -16,7 +16,6 @@
 
 #include <ico_log.h>
 #include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
-#include "ico_syc_sysdef.h"
 
 #define ICO_OK 0
 #define ICO_ERROR -1
@@ -50,6 +49,22 @@
 
 /* max number of tile */
 #define ICO_HS_MENU_MAX_TILE_NUM 512
+
+/* Display number */
+#define ICO_SYC_DISPLAY_CENTER      0       /* center display Id        */
+#define ICO_SYC_DISPLAY_MATER       1       /* meter display Id         */
+
+/* Layer id */
+#define ICO_SYC_LAYER_BACKGROUND    0       /* layer of BackGround      */
+#define ICO_SYC_LAYER_APPLICATION   1       /* layer of Application     */
+#define ICO_SYC_LAYER_HOMESCREEN    2       /* layer of HomeScreen menu */
+#define ICO_SYC_LAYER_CONTROLBAR    3       /* layer of Control/Status bar */
+#define ICO_SYC_LAYER_INTERRUPTAPP  4       /* layer of Interrupt Application */
+#define ICO_SYC_LAYER_ONSCREEN      5       /* lay er of OnScreen        */
+#define ICO_SYC_LAYER_TOUCHPANEL    6       /* layer of TouchPanel input */
+#define ICO_SYC_LAYER_MATERMAIN     1001    /* layer of Meter Main display Application */
+#define ICO_SYC_LAYER_MATERSUB      1002    /* layer of Meter Sub display Application */
+#define ICO_SYC_LAYER_MATERSUBSUB   1003    /* layer of Meter Sub display SubApplication */
 
 /*window title*/
 #define ICO_HS_MENU_WINDOW_TITLE "ico_hs_menuwindow"
@@ -96,10 +111,10 @@
 #define ICO_HS_CONFIG_SOUND         "sound"
 #define ICO_HS_CONFIG_HISTORY       "app_history"
 
-/*misc*/
+/* misc */
 #define HS_DISPLAY_HOMESCREEN   ICO_SYC_DISPLAY_CENTER  /* HomeScreen target display Id */
 
-/*Layer dicralation*/
+/* Layer dicralation */
 #define HS_LAYER_BACKGROUND     ICO_SYC_LAYER_BACKGROUND    /* layer of BackGround */
 #define HS_LAYER_APPLICATION    ICO_SYC_LAYER_APPLICATION   /* layer of Application */
 #define HS_LAYER_HOMESCREEN     ICO_SYC_LAYER_HOMESCREEN    /* layer of HomeScreen menu */
@@ -112,19 +127,31 @@
 #define HS_LAYER_2NDDISP_APP    ICO_SYC_LAYER_MATERMAIN     /* second display application layer */
 
 /* config history name */
-#define ICO_HS_CONFIG_HSTRY_KEY1      "timer"
-#define ICO_HS_CONFIG_HSTRY_DEF1      "1"
-#define ICO_HS_CONFIG_HSTRY_KEY2      "manage_off_app"
-#define ICO_HS_CONFIG_HSTRY_DEF2      "org.tizen.ico.homescreen;org.tizen.ico.statusbar"
-#define ICO_HS_CONFIG_HSTRY_KEY3      "write_off_app"
-#define ICO_HS_CONFIG_HSTRY_DEF3      "org.tizen.ico.login"
-#define ICO_HS_CONFIG_HSTRY_SPL       ';'
+#define ICO_HS_CONFIG_HSTRY_KEY1    "timer"
+#define ICO_HS_CONFIG_HSTRY_DEF1    "1"
+#define ICO_HS_CONFIG_HSTRY_KEY2    "manage_off_app"
+#define ICO_HS_CONFIG_HSTRY_DEF2    "org.tizen.ico.homescreen;org.tizen.ico.statusbar"
+#define ICO_HS_CONFIG_HSTRY_KEY3    "write_off_app"
+#define ICO_HS_CONFIG_HSTRY_DEF3    "org.tizen.ico.login"
+#define ICO_HS_CONFIG_HSTRY_SPL     ';'
 
 #define ICO_HS_ANIMATION_SLIDE      "Slide"
 #define ICO_HS_ANIMATION_SLIDE      "Slide"
 #define ICO_HS_ANIMATION_FADE       "Fade"
 #define ICO_HS_ANIMATION_FADE       "Fade"
 #define ICO_HS_ANIMATION_DURATION   (400)
+
+/* login user name bundle key name */
+#define ICO_SYC_APP_BUNDLE_KEY1 "HS_PARAM_U"
+
+/* Individual history file of the logged-in user. parameter key */
+#define ICO_SYC_APP_BUNDLE_KEY2 "HS_PARAM_D"
+
+/* History file of common. parameter key */
+#define ICO_SYC_APP_BUNDLE_KEY3 "HS_PARAM_DD"
+
+/* change user status flag file. parameter key */
+#define ICO_SYC_APP_BUNDLE_KEY4 "HS_PARAM_FLG"
 
 #endif
 // vim:set expandtab ts=4 sw=4:

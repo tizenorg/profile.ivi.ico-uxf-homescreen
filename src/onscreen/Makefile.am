@@ -17,9 +17,9 @@ OnScreen_CFLAGS= 					\
     $(EFL_CFLAGS) 					\
     $(OPT_CFLAGS) 					\
     $(AUL_CFLAGS) 					\
-    $(UWS_CFLAGS) 					\
+    $(SYSCOND_CFLAGS) 				\
+    $(ICOUWS_CFLAGS) 				\
 	$(NOTIFICATION_CFLAGS)          \
-    -I../../include 				\
     -I../../lib/common              \
     -I../../lib/notification
 
@@ -28,9 +28,9 @@ OnScreen_CXXFLAGS= 				\
     $(EFL_CFLAGS) 					\
     $(OPT_CFLAGS) 					\
     $(AUL_CFLAGS) 					\
-    $(UWS_CFLAGS) 					\
+    $(SYSCOND_CFLAGS) 				\
+    $(ICOUWS_CFLAGS) 				\
 	$(NOTIFICATION_CFLAGS)          \
-    -I../../include 				\
     -I../../lib/common              \
     -I../../lib/notification
 
@@ -38,15 +38,15 @@ OnScreen_LDADD = 					\
 	../../lib/common/.libs/libico-common.a 			\
 	../../lib/notification/.libs/libico-notification.a \
 	@CAPIAPPFWAPPLICATION_LIBS@ 	\
-    $(ECOREEVAS_LIBS) 					\
+    $(ECOREEVAS_LIBS) 				\
     $(EFL_LIBS) 					\
     $(OPT_LIBS) 					\
     $(AUL_LIBS) 					\
-    $(UWS_LIBS) 					\
+    $(SYSCOND_LIBS) 				\
+    $(ICOUWS_LIBS) 					\
 	$(NOTIFICATION_LIBS)			\
 	$(APPSVC_LIBS)					\
-	-lappsvc						\
-	../../lib/apps-framework/.libs/libico-appfw.so
+	-lappsvc
 
 SUFFIXES = .edc .edj
 

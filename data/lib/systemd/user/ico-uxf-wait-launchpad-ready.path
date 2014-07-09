@@ -1,8 +1,0 @@
-# Description=Path activation for ico-system-controller
-
-[Path]
-PathExists=/run/user/5000/wayland-0
-Unit=ico-system-controller.service
-
-[Install]
-WantedBy=weston.target

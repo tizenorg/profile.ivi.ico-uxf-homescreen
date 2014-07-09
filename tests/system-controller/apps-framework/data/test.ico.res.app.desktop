@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=test.ico.res.app
-Type=Application
-Exec=/opt/usr/apps/test.ico.res.app/bin/tst_appresctl
-Icon=
-Categories=Test
-Version=1.0.0
-NoDisplay=true
-X-TIZEN-Removable=False

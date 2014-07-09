@@ -39,7 +39,7 @@
 #include "CicoHSAppHistory.h"
 #include "CicoHSAppHistoryExt.h"
 
-/* display position and size */
+/* Display Position and Size */
 #define ICO_HS_WINDOW_POS_X 0
 #define ICO_HS_WINDOW_POS_Y 0
 #define ICO_HS_STATUSBAR_WINDOW_HEIGHT 64
@@ -48,26 +48,27 @@
 #define ICO_HS_CONTROLBAR_WINDOW_POS_X ICO_HS_WINDOW_POS_X
 #define ICO_HS_CONTROLBAR_WINDOW_HEIGHT 128
 
-/*mode*/
+/* Menu Mode */
 #define ICO_HS_MODE_MENU 0
 #define ICO_HS_MODE_APPLICATION 1
 
-/*hide pattern*/
+/* Hide Pattern */
 #define ICO_HS_SHOW_HIDE_PATTERN_SLIDE 0
 #define ICO_HS_SHOW_HIDE_PATTERN_FADE 1
 
-#define ICO_HS_CONFIG_HOMESCREEN    "homescreen"
-#define ICO_HS_CONFIG_ONSCREEN      "onscreen"
-#define ICO_HS_CONFIG_SOUND         "sound"
-#define ICO_HS_CONFIG_SB            "statusbar"
-#define ICO_HS_CONFIG_ONS           "onscreen"
-#define ICO_HS_APPID_DEFAULT_SB     "org.tizen.ico.statusbar"   /* default statusbar appid */
-#define ICO_HS_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"    /* default on screen appid */
-
-#define ICO_HS_GROUP_SPECIAL        "menu"
+/* Names */
+#define ICO_HS_CONFIG_HOMESCREEN  "homescreen"
+#define ICO_HS_CONFIG_ONSCREEN    "onscreen"
+#define ICO_HS_CONFIG_SOUND       "sound"
+#define ICO_HS_CONFIG_SB          "statusbar"
+#define ICO_HS_CONFIG_ONS         "onscreen"
+#define ICO_HS_APPID_DEFAULT_SB   "org.tizen.ico.statusbar" /* default statusbar appid */
+#define ICO_HS_APPID_DEFAULT_ONS  "org.tizen.ico.onscreen"  /* default on screen appid */
+#define ICO_HS_GROUP_SPECIAL      "menu"
 
 #define ICO_HS_APP_STATUS_ERR -1
 
+/* Max. Zone */
 #define ICO_HS_CHANGE_ZONE_MAX  10
 
 class CicoHomeScreen
