@@ -64,7 +64,7 @@ CicoBlockParser::~CicoBlockParser()
     m_childs.clear();
 
     if ((char*)0 != m_jsonTmp) {
-        delete m_jsonTmp;
+        delete[] m_jsonTmp;
         m_jsonTmp = (char*)0;
     }
 
@@ -362,7 +362,7 @@ bool CicoBlockParser::jsonParse(const char* objectname)
     m_err = picojson::parse(m_v, start, end);
     if (!m_err.empty()) {
         if ((char*)0 != m_jsonTmp) {
-            delete m_jsonTmp;
+            delete[] m_jsonTmp;
             m_jsonTmp = (char*)0;
         }
         return false;
@@ -372,7 +372,7 @@ bool CicoBlockParser::jsonParse(const char* objectname)
         m_err += std::string(objectname);
         m_err += std::string(")");
         if ((char*)0 != m_jsonTmp) {
-            delete m_jsonTmp;
+            delete[] m_jsonTmp;
             m_jsonTmp = (char*)0;
         }
         return false;
