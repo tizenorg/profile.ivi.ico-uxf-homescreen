@@ -99,6 +99,13 @@ CicoSCWayland::initialize(void)
 {
     ICO_TRA("CicoSCWayland::initialize Enter");
 
+    // initialize genivi ivi-shell
+    if (ilm_init() != ILM_SUCCESS)  {
+        ICO_ERR("ilm_init failed.");
+        ICO_TRA("CicoSCWayland::initialize Leave(EIO)");
+        return ICO_SYC_EIO;
+    }
+
     for (int i = 0; i < (5000/50); ++i)  {
         m_wlDisplay = wl_display_connect(NULL);
         if (NULL != m_wlDisplay) {
@@ -157,13 +164,6 @@ CicoSCWayland::initialize(void)
     // flush display 
     ICO_DBG("called: wl_display_flush(wlDisplay=0x%08x)", (int)m_wlDisplay);
     wl_display_flush(m_wlDisplay);
-
-    // initialize genivi ivi-shell
-    if (ilm_init() != ILM_SUCCESS)  {
-        ICO_ERR("ilm_init failed.");
-        ICO_TRA("CicoSCWayland::initialize Leave(EIO)");
-        return ICO_SYC_EIO;
-    }
 
     ICO_DBG("called: wl_display_get_fd(wlDisplay=0x%08x)", (int)m_wlDisplay);
     m_wlFd = wl_display_get_fd(m_wlDisplay);
