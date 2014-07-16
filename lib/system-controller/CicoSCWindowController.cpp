@@ -1792,7 +1792,7 @@ CicoSCWindowController::createSurfaceCB(void *data,
 
     CicoSCWindow* window = new CicoSCWindow();
     window->surfaceid = id_surface;
-    window->name = CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &pid);
+    window->name = "";
     window->pid       = pid;
     window->displayid = 0;              // currently fixed 0
     window->raise = 1;                  // created surface is top of layer
@@ -1801,6 +1801,15 @@ CicoSCWindowController::createSurfaceCB(void *data,
     window->width = SurfaceProperties.destWidth;
     window->height = SurfaceProperties.destHeight;
     window->layerid = 0;
+
+    const char *title = CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &pid);
+
+    if (title) {
+        window->name = title;
+    }
+    else {
+        ICO_WRN("Could not find window title!");
+    }
 
     CicoSCLifeCycleController* appctrl;
     appctrl = CicoSCLifeCycleController::getInstance();
