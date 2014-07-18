@@ -100,6 +100,7 @@ install-exec-hook:
 	install -m 0644 home_screen_bg.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
 	install -m 0644 home_screen_touch.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/bg.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/bg_bk.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/ctrl.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_off.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_off_2.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
