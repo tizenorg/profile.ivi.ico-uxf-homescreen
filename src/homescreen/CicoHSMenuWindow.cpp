@@ -46,7 +46,6 @@ CicoHSMenuWindow::CicoHSMenuWindow(void)
 
     evas = NULL;
     canvas = NULL;
-    rectangle = NULL;
 
     for (int ii = 0;ii < ICO_HS_MENU_MAX_TILE_NUM;ii++) {
         menu_tile[ii] = NULL;
@@ -99,18 +98,6 @@ CicoHSMenuWindow::SetMenuBack(void)
              img_dir_path, ICO_HS_IMAGE_FILE_MENU_BACK_GROUND);
 
     /* set object*/
-    rectangle = evas_object_rectangle_add(evas);
-    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
-        evas_object_color_set(rectangle,0,0,0,178);
-    }
-    else {
-        evas_object_color_set(rectangle,120,120,120,178);
-    }
-    evas_object_move(rectangle, 0, 0);
-    evas_object_resize(rectangle, width, height);
-    evas_object_show(rectangle);
-
-    /* set object*/
     canvas = evas_object_image_filled_add(evas);
     evas_object_image_file_set(canvas, img_path, NULL);
     int err = evas_object_image_load_error_get(canvas);
@@ -145,7 +132,6 @@ void
 CicoHSMenuWindow::FreeMenuBack(void)
 {
     evas_object_del(canvas);
-    evas_object_del(rectangle);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1589,14 +1575,6 @@ CicoHSMenuWindow::SetThumbnail(const char *appid, ico_syc_thumb_info_t *info)
 void
 CicoHSMenuWindow::SetNightMode(void)
 {
-    ICO_TRA("CicoHSMenuWindow::SetNightMode Enter");
-    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
-        evas_object_color_set(rectangle,0,0,0,178);
-    }
-    else {
-        evas_object_color_set(rectangle,120,120,120,178);
-    }
-    ICO_TRA("CicoHSMenuWindow::SetNightMode Leave");
 }
 
 /*--------------------------------------------------------------------------*/
