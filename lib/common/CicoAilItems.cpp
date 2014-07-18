@@ -604,7 +604,7 @@ bool CicoAilItems::categoryGetInput(const string& inputDev,
     }
 
     CicoSystemConfig* CSCSC = CicoSystemConfig::getInstance();
-    m_sound = CSCSC->getInputDevIdbyName(inputDev);
+    m_inputDev = CSCSC->getInputDevIdbyName(inputDev);
     ICO_DBG("sound %s->%d", inputDev.c_str(), m_sound);
     if (false == sw.empty()) {
         m_switch = CSCSC->getSwitchIdbyName(inputDev, sw);
