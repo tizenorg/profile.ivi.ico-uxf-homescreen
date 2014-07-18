@@ -163,6 +163,7 @@ class CicoHSMenuWindow :public CicoHSWindow
     Evas *evas;
     /* menu back */
     Evas_Object *canvas;
+    bool transparent_background;
     Evas_Object *rectangle;
     /* tiles */
     CicoHSMenuTile *menu_tile[ICO_HS_MENU_MAX_TILE_NUM];
