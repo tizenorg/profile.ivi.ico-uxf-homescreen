@@ -70,7 +70,8 @@
 #define ICO_HS_BACK_WINDOW_IMAGE_FILE_PATH "/opt/usr/media/Images/Home_default.jpg"
 
 /*name of image file (in config image directry)*/
-#define ICO_HS_IMAGE_FILE_MENU_BACK_GROUND "bg.png"
+#define ICO_HS_IMAGE_FILE_MENU_BACK_GROUND_BLANK "bg.png"
+#define ICO_HS_IMAGE_FILE_MENU_BACK_GROUND_PICTURE "bg_bk.png"
 #define ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_P "pagePointer_p.png"
 #define ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_N "pagePointer_n.png"
 
