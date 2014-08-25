@@ -2,9 +2,8 @@ Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
 Version:    0.9.22
 Release:    0
-Group:      Automotive / ICO Homescreen
+Group:      Automotive/ICO Homescreen
 License:    Apache-2.0
-URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
 BuildRequires: pkgconfig(wayland-client) >= 1.4
@@ -38,6 +37,7 @@ BuildRequires: weston-ivi-shell-devel
 BuildRequires: genivi-shell
 BuildRequires: genivi-shell-devel
 BuildRequires: ico-uxf-utilities-devel >= 0.9.07
+BuildRequires: libtzplatform-config-devel
 Requires: weston >= 1.4
 Requires: weston-ivi-shell
 Requires: genivi-shell
@@ -85,24 +85,21 @@ Development files for application that communicate homescreen.
 %setup -q -n %{name}-%{version}
 
 mkdir -p weston
-cp -av /usr/share/genivi-shell/protocol/*.xml weston/
+cp -av %{TZ_SYS_SHARE}/genivi-shell/protocol/*.xml weston/
 
 ls weston/*.xml | while read protocol ; do
 
-    /usr/bin/wayland-scanner client-header \
+    %{_bindir}/wayland-scanner client-header \
         < "${protocol}" > "${protocol/.xml/}-client-protocol.h"
 
-    /usr/bin/wayland-scanner code \
+    %{_bindir}/wayland-scanner code \
         < "${protocol}" > "${protocol/.xml/.c}"
 
 done
 
-ls weston/
-
-
 %build
 %autogen
-make %{?_smp_mflags}
+%__make %{?_smp_mflags}
 
 %install
 rm -rf %{buildroot}
@@ -120,34 +117,34 @@ cp tool/notification/ico_send_notification2 %{buildroot}%{_bindir}
 /sbin/ldconfig
 
 # Update the app database.
-%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.homescreen.xml
-%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.statusbar.xml
-%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.system-controller.xml
-%{_bindir}/pkginfo --imd /usr/share/packages/org.tizen.ico.onscreen.xml
+%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.homescreen.xml
+%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.statusbar.xml
+%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.system-controller.xml
+%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.onscreen.xml
 
 %preun
 # Update the app database.
-%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.homescreen.xml
-%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.statusbar.xml
-%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.system-controller.xml
-%{_bindir}/pkginfo --rmd /usr/share/packages/org.tizen.ico.onscreen.xml
+%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.homescreen.xml
+%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.statusbar.xml
+%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.system-controller.xml
+%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.onscreen.xml
 
 %postun
 /sbin/ldconfig
-rm -f /usr/share/applications/org.tizen.ico.homescreen.desktop
-rm -f /usr/share/applications/org.tizen.ico.statusbar.desktop
-rm -f /usr/share/applications/org.tizen.ico.onscreen.desktop
-rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
+rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.homescreen.desktop
+rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.statusbar.desktop
+rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.onscreen.desktop
+rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
 
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
-/usr/apps/org.tizen.ico.homescreen
-/usr/apps/org.tizen.ico.statusbar
-/usr/apps/org.tizen.ico.onscreen
-/usr/share/packages/org.tizen.ico.homescreen.xml
-/usr/share/packages/org.tizen.ico.statusbar.xml
-/usr/share/packages/org.tizen.ico.onscreen.xml
+%{TZ_SYS_RW_APP}/org.tizen.ico.homescreen
+%{TZ_SYS_RW_APP}/org.tizen.ico.statusbar
+%{TZ_SYS_RW_APP}/org.tizen.ico.onscreen
+%{TZ_SYS_RW_PACKAGES}/org.tizen.ico.homescreen.xml
+%{TZ_SYS_RW_PACKAGES}/org.tizen.ico.statusbar.xml
+%{TZ_SYS_RW_PACKAGES}/org.tizen.ico.onscreen.xml
 %{_libdir}/libico-appfw.*
 %{_libdir}/libico-state-machine.*
 %{_bindir}/ico_clear_screen
