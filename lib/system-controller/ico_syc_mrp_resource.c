@@ -191,8 +191,8 @@ ico_syc_mrp_del_request(resource_request_t *req)
     mrp_list_delete(&req->hook);
 
     if (mrp_ctx && req->rset) {
-        mrp_res_release_resource_set(mrp_ctx, req->rset);
-        mrp_res_delete_resource_set(mrp_ctx, req->rset);
+        mrp_res_release_resource_set(req->rset);
+        mrp_res_delete_resource_set(req->rset);
         req->rset = NULL;
     }
 }
@@ -248,7 +248,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
             }
 
             ICO_DBG("called: mrp_res_set_autorelease()");
-            if (!mrp_res_set_autorelease(mrp_ctx, FALSE, rs)) {
+            if (!mrp_res_set_autorelease(FALSE, rs)) {
                 ICO_ERR("ico_syc_mrp_acquire_sound_resource: "
                         "failed to set auto release mode");
                 ICO_DBG("ico_syc_mrp_acquire_sound_resource: Leave(false)");
@@ -256,7 +256,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
             }
 
             ICO_DBG("called: mrp_res_create_resource");
-            res = mrp_res_create_resource(mrp_ctx, rs, "audio_playback", TRUE, FALSE);
+            res = mrp_res_create_resource(rs, "audio_playback", TRUE, FALSE);
 
             if (!res) {
                 ICO_ERR("ico_syc_mrp_acquire_sound_resource: "
@@ -267,7 +267,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
 
             ICO_DBG("pid=%d category=%d appid=%s priority=%d",
                     req->pid, req->category, req->appid, req->prio);
-            attr = mrp_res_get_attribute_by_name(mrp_ctx, res, "pid");
+            attr = mrp_res_get_attribute_by_name(res, "pid");
             if (attr && attr->type == mrp_string) {
                 char numbuf[16];
                 int ret;
@@ -275,22 +275,22 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
                 ret = snprintf(numbuf, sizeof(numbuf), "%d", req->pid);
 
                 if (ret > 0 && (size_t)ret < sizeof(numbuf)) {
-                    mrp_res_set_attribute_string(mrp_ctx, attr, numbuf);
+                    mrp_res_set_attribute_string(attr, numbuf);
                 }
             }
-            attr = mrp_res_get_attribute_by_name(mrp_ctx, res, "category");
+            attr = mrp_res_get_attribute_by_name(res, "category");
             if (attr && attr->type == mrp_int32) {
-                mrp_res_set_attribute_int(mrp_ctx, attr, req->category);
+                mrp_res_set_attribute_int(attr, req->category);
             }
 
-            attr = mrp_res_get_attribute_by_name(mrp_ctx, res, "appid");
+            attr = mrp_res_get_attribute_by_name(res, "appid");
             if (attr && attr->type == mrp_string) {
-                mrp_res_set_attribute_string(mrp_ctx, attr, req->appid);
+                mrp_res_set_attribute_string(attr, req->appid);
             }
 
-            attr = mrp_res_get_attribute_by_name(mrp_ctx, res, "priority");
+            attr = mrp_res_get_attribute_by_name(res, "priority");
             if (attr && attr->type == mrp_int32) {
-               mrp_res_set_attribute_int(mrp_ctx, attr, 0/*req->prio*/);
+               mrp_res_set_attribute_int(attr, 0/*req->prio*/);
             }
 
             req->rset = rs;
@@ -298,7 +298,7 @@ ico_syc_mrp_acquire_sound_resource(resource_request_t *newreq)
         }
 
         ICO_DBG("called: mrp_res_acquire_resource_set()");
-        mrp_res_acquire_resource_set(mrp_ctx, req->rset);
+        mrp_res_acquire_resource_set(req->rset);
     }
 
     ICO_DBG("ico_syc_mrp_acquire_sound_resource: Leave(true)");
@@ -469,11 +469,11 @@ ico_syc_mrp_resource_cb(mrp_res_context_t *ctx,
 
     /* delete the previous set */
     ICO_DBG("called: mrp_res_delete_resource");
-    mrp_res_delete_resource_set(ctx, req->rset);
+    mrp_res_delete_resource_set(req->rset);
 
     /* copy the new set into place */
     ICO_DBG("called: mrp_res_copy_resource_set");
-    req->rset = mrp_res_copy_resource_set(ctx, rs);
+    req->rset = mrp_res_copy_resource_set(rs);
 
     switch(req->rset->state) {
     case MRP_RES_RESOURCE_ACQUIRED:
