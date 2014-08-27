@@ -2,7 +2,7 @@ Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
 Version:    0.9.22
 Release:    0
-Group:		Graphics & UI Framework/Automotive UI
+Group:      Automotive / ICO Homescreen
 License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
@@ -43,13 +43,31 @@ Requires: weston-ivi-shell
 Requires: genivi-shell
 Requires: ico-uxf-weston-plugin >= 0.9.21
 Requires: ico-uxf-utilities >= 0.9.07
+Requires: system-controller
 
 %description
-Sample homescreen application and system controller daemon
+Sample homescreen application.
+
+
+%package system-controller
+Summary: System controller for ICO HomeScreen.
+Group:   Automotive / ICO Homescreen
+Requires: %{name} = %{version}-%{release}
+Requires: weston >= 1.4
+Requires: weston-ivi-shell
+Requires: genivi-shell
+Requires: ico-uxf-weston-plugin >= 0.9.21
+Requires: ico-uxf-utilities >= 0.9.07
+Provides: system-controller
+
+%description system-controller
+A service to provide the low-level functionality that ICO HomeScreen
+requires.
+
 
 %package system-controller-devel
 Summary:  Development files for %{name}
-Group:    Graphics & UI Framework/Development
+Group:    Automotive / ICO Homescreen
 Requires: %{name} = %{version}-%{release}
 Requires: capi-base-common-devel
 Requires: pkgconfig(eina)
@@ -132,17 +150,23 @@ rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
 /usr/share/packages/org.tizen.ico.onscreen.xml
 %{_libdir}/libico-appfw.*
 %{_libdir}/libico-state-machine.*
-/usr/apps/org.tizen.ico.system-controller
-/usr/share/packages/org.tizen.ico.system-controller.xml
-/usr/lib/systemd/user/ico-system-controller.service
-/usr/lib/systemd/user/ico-uxf-wait-launchpad-ready.path
-/usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
 %{_bindir}/ico_clear_screen
 %{_bindir}/ico_change_loginuser
 %{_bindir}/ico_del_notification
 %{_bindir}/ico_dump_notification
 %{_bindir}/ico_send_notification
 %{_bindir}/ico_send_notification2
+%attr(644,app,app) /home/app/ico/defaultApps.info
+%attr(755,app,app) /home/app/ico
+
+%files system-controller
+%manifest %{name}.manifest
+%defattr(-,root,root,-)
+/usr/share/packages/org.tizen.ico.system-controller.xml
+/usr/lib/systemd/user/ico-uxf-wait-launchpad-ready.path
+/usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
+/usr/lib/systemd/user/ico-system-controller.service
+/usr/apps/org.tizen.ico.system-controller
 %attr(644,app,app) /home/app/ico/defaultApps.info
 %attr(755,app,app) /home/app/ico
 
@@ -169,3 +193,4 @@ rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
 %{_includedir}/ico-state-machine/CicoStateCore.h
 %{_includedir}/ico-state-machine/CicoStateMachine.h
 %{_includedir}/ico-state-machine/CicoStateMachineCreator.h
+
