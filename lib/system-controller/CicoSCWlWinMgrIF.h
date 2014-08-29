@@ -20,7 +20,6 @@
 #include <wayland-client.h>
 #include <ilm/ilm_client.h>
 #include <ilm/ilm_control.h>
-#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
 #include <weston/ivi-controller-client-protocol.h>
 #include <weston/ivi-application-client-protocol.h>
 
@@ -33,6 +32,7 @@
  *  @brief  This class is wayland interface of multi window manager
  */
 //--------------------------------------------------------------------------
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
 struct creation_surface_wait    {
     struct creation_surface_wait    *next;
     int32_t     pid;
@@ -45,6 +45,7 @@ struct creation_surface_wait    {
 #define SCWINMGR_GENIVI_BUSY_REQSURF    1
 #define SCWINMGR_GENIVI_BUSY_REQBIND    2
 #define SCWINMGR_GENIVI_BUSY_WAIT       3
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
 
 class CicoSCWlWinMgrIF : public CicoSCWaylandIF {
 public:
@@ -55,33 +56,10 @@ public:
                                uint32_t           version);
 
     virtual void activeCB(void *data,
-                          struct ico_window_mgr *ico_window_mgr,
                           uint32_t surfaceid,
                           int32_t select);
 
-    virtual void mapSurfaceCB(void *data,
-                              struct ico_window_mgr *ico_window_mgr,
-                              int32_t event,
-                              uint32_t surfaceid,
-                              uint32_t type,
-                              int32_t width,
-                              int32_t height,
-                              int32_t stride,
-                              uint32_t format);
-
-    virtual void updateSurfaceCB(void *data,
-                                 struct ico_window_mgr *ico_window_mgr,
-                                 uint32_t surfaceid,
-                                 int visible,
-                                 int srcwidth,
-                                 int srcheight,
-                                 int x,
-                                 int y,
-                                 int width,
-                                 int height);
-
     virtual void destroySurfaceCB(void *data,
-                                  struct ico_window_mgr *ico_window_mgr,
                                   uint32_t surfaceid);
 
     virtual void updateWinnameCB(uint32_t surfaceid,
@@ -107,9 +85,11 @@ public:
 
     virtual void createSurfaceCB(void           *data,
                                  struct ivi_controller *ivi_controller,
-                                 uint32_t id_surface);
-
+                                 uint32_t id_surface,
+                                 int32_t pid, const char *title);
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
     static void wlIviCtrlRemoveSurface(uint32_t id_surface);
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
 
 protected:
     // default constructor
@@ -124,67 +104,36 @@ protected:
     // copy constructor
     CicoSCWlWinMgrIF(const CicoSCWlWinMgrIF &object);
 
-    // wrapper function ico_window_mgr_set_window_layer
+    // wrapper function  GENIVI-LM set layer
     void setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t oldlayer);
 
-    // wrapper function ico_window_mgr_set_positionsize
+    // wrapper function GENIVI-LM set position and size
     void setPositionsize(uint32_t surfaceid, uint32_t node,
                          int32_t x, int32_t y, int32_t width, int32_t height);
 
-    // wrapper function ico_window_mgr_set_visible
+    // wrapper function GENIVI-LM set visibility
     void setVisible(uint32_t surfaceid, int32_t visible);
 
-    // wrapper function of ico_window_mgr_set_animation
-    void setAnimation(uint32_t surfaceid, int32_t type,
-                      const char *animation, int32_t time);
-
-    // wrapper function of ico_window_mgr_set_active
+    // wrapper function of GENIVI-LM set active
     void setActive(uint32_t surfaceid, int32_t active);
 
-    // wrapper function of ico_window_mgr_set_layer_visible
+    // wrapper function of GENIVI-LM set layer visibility
     void setLayerVisible(uint32_t layer, int32_t visible);
 
     // wrapper function of ilm_takeSurfaceScreenshot
     void setmapGet(int surfaceid, const char *filepath);
 
-    // wrapper function of ico_window_mgr_map_surface
-    void mapSurface(uint32_t surfaceid, int32_t framerate, const char *filepath);
-
-    // wrapper function of ico_window_mgr_unmap_surface
-    void unmapSurface(uint32_t surfaceid);
-
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
     static const char *wlIviCtrlGetSurfaceWaiting(uint32_t id_surface, int *pid);
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
 
 private:
-    // ico_window_mgr(Multi Window Manager) callback functions
+    // GENIVI-LM callback functions
     static void wlActiveCB(void *data,
-                           struct ico_window_mgr *ico_window_mgr,
                            uint32_t surfaceid,
                            int32_t active);
 
-    static void wlMapSurfaceCB(void *data,
-                               struct ico_window_mgr *ico_window_mgr,
-                               int32_t event,
-                               uint32_t surfaceid,
-                               uint32_t type,
-                               int32_t width,
-                               int32_t height,
-                               int32_t stride,
-                               uint32_t format);
-
-    static void wlUpdateSurfaceCB(void *data,
-                                  struct ico_window_mgr *ico_window_mgr,
-                                  uint32_t surfaceid,
-                                  int layer,
-                                  int srcwidth,
-                                  int srcheight,
-                                  int x,
-                                  int y,
-                                  int width,
-                                  int height);
-
     static void wlDestroySurfaceCB(void *data,
-                                   struct ico_window_mgr *ico_window_mgr,
                                    uint32_t surfaceid);
     //
     static void wlOutputGeometryCB(void             *data,
@@ -205,10 +154,13 @@ private:
                                int32_t          height,
                                int32_t          refresh);
 
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
     static void wlIviAppNativeShellInfoCB(void          *data,
                                           struct ivi_application *ivi_application,
                                           int32_t       pid,
                                           const char    *title);
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
+
     static void wlIviCtrlScreenCB(void                  *data,
                                   struct ivi_controller *ivi_controller,
                                   uint32_t              id_screen,
@@ -220,7 +172,9 @@ private:
 
     static void wlIviCtrlSurfaceCB(void                 *data,
                                    struct ivi_controller *ivi_controller,
-                                   uint32_t             id_surface);
+                                   uint32_t             id_surface,
+                                   int32_t              pid,
+                                   const char           *title);
 
     static void wlIviCtrlErrorCB(void                   *data,
                                  struct ivi_controller  *ivi_controller,
@@ -229,25 +183,23 @@ private:
                                  int32_t                error_code,
                                  const char             *error_text);
 
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
     static void wlIviCtrlNativeHandleCB(void            *data,
                                         struct ivi_controller *ivi_controller,
                                         struct wl_surface *surface);
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
 
 protected:
-    // ico_window_mgr listener
-    struct ico_window_mgr_listener m_listener;
-
     // wayland output listener
     struct wl_output_listener m_wlOutputListener;
-
-    // genivi ivi-application listener
-    struct ivi_application_listener m_ivi_app_listener;
 
     // genivi ivi-controller listener
     struct ivi_controller_listener m_ivi_ctrl_listener;
 
-    // Wayland's Window Manager PlugIn instance
-    static struct ico_window_mgr *m_winmgr;
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
+    // genivi ivi-application listener
+    struct ivi_application_listener m_ivi_app_listener;
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
 
     // Wayland's genivi ivi_application instance
     static struct ivi_application *m_ivi_app;
@@ -264,9 +216,11 @@ protected:
     // surface id for wayland/weston applications
     static int m_id_surface;
 
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
     // creation surface title name
     static struct creation_surface_wait *m_wait_surface_creation;
     static struct creation_surface_wait *m_free_surface_creation;
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
 };
 #endif  // __CICO_SC_WL_WINMGR_IF_H__
 // vim:set expandtab ts=4 sw=4:

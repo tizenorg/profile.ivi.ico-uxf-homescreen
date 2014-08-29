@@ -86,7 +86,6 @@ public:
 
     // callback to application for input switch information
     void capabilitiesCB(void               *data,
-                        struct ico_exinput *ico_exinput,
                         const char         *device,
                         int32_t            type,
                         const char         *swname,
@@ -96,7 +95,6 @@ public:
 
     // callback to application for input code information
     void codeCB(void               *data,
-                struct ico_exinput *ico_exinput,
                 const char         *device,
                 int32_t            input,
                 const char         *codename,
@@ -104,7 +102,6 @@ public:
 
     // callback to application for switch input 
     void inputCB(void               *data,
-                 struct ico_exinput *ico_exinput,
                  uint32_t           time,
                  const char         *device,
                  int32_t            input,
@@ -113,7 +110,6 @@ public:
 
     // callback to application for change input region
     void regionCB(void                        *data,
-                  struct ico_input_mgr_device *ico_input_mgr_device,
                   struct wl_array             *region);
 
 protected:
