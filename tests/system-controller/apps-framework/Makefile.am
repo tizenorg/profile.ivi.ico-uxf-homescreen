@@ -19,6 +19,7 @@ check_PROGRAMS = tst_common tst_appresctl tst_appresctl_main tst_inputctl tst_us
 
 test_target_flag = -I../../../include $(AIL_CFLAGS) $(OPT_CFLAGS) \
                    @ECORE_CFLAGS@ @EINA_CFLAGS@ \
+                   -I/usr/include/ico-uxf-weston-plugin     \
                    -I/usr/include/ico-util
 test_target_lib = ../../../lib/apps-framework/.libs/libico-appfw.so \
                    @ECORE_LIBS@ @EINA_LIBS@ \

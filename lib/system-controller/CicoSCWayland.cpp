@@ -28,6 +28,7 @@
 using namespace std;
 
 #include <wayland-client.h>
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
 #include <ilm/ilm_control.h>
 
 #include "CicoSCWayland.h"

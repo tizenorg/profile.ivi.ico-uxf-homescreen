@@ -63,7 +63,8 @@ CicoHSEFLApp::onCreate(void *user_data)
 
     try {
         // load system config
-        (void) CicoSystemConfig::getInstance();
+        CicoSystemConfig::getInstance()->load(
+                ICO_HS_LIFECYCLE_CONTROLLER_SETTING_PATH);
 
         // start homescreen
         m_homescreen = new CicoHomeScreen();

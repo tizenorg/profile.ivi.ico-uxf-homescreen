@@ -602,6 +602,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
     int                 unmap;
     int                 fd;
     char                sWork[PATH_MAX];
+#if     0           /* for BMP format   */
 #pragma pack(push, 1)
         struct _bmphead {
             short   magic;
@@ -622,6 +623,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
             int     colors2;
         }   bmphead;
 #pragma pack(pop)
+#endif
 
     ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%08x<%s>) info=%08x surf=%08x",
             (int)this->appid, appid, (int)info, info ? info->surface : 0);
@@ -656,63 +658,17 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
         thumb.height = info->height;
         thumb.stride = info->stride;
         thumb.format = info->format;
-
-        /* read surface image pixel         */
-        int bufsize = ((thumb.width * thumb.height * 4 + 4095) / 4096) * 4096;
-        if ((! thumb.pixel_data) || (bufsize > thumb.pixel_bufsize))    {
-            free(thumb.pixel_data);
-            thumb.pixel_data = (char *)malloc(bufsize);
-            thumb.pixel_bufsize = bufsize;
-            if (thumb.pixel_data)   {
-                memset(thumb.pixel_data, 0, bufsize);
-            }
-        }
-        if (thumb.pixel_data)   {
-            fd = open(sWork, O_RDONLY, 0644);
-            if (fd >= 0)    {
-                if (read(fd, &bmphead, sizeof(bmphead)) != sizeof(bmphead)) {
-                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)",
-                            sWork);
-                    close(fd);
-                    fd = -1;
-                }
-                else if (read(fd, thumb.pixel_data, bufsize) <= 0)  {
-                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)",
-                            sWork);
-                    close(fd);
-                    fd = -1;
-                }
-                else    {
-                    thumb.width = bmphead.width;
-                    thumb.height = bmphead.height;
-                    thumb.stride = thumb.width * 4;
-                }
-            }
-            else    {
-                ICO_ERR("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
-                        sWork);
-            }
-            if (fd >= 0)    {
-                close(fd);
-                (void) unlink(sWork);
-            }
-        }
-        else    {
-            ICO_ERR("CicoHSMenuTile::SetThumbnail: can not malloc pixel buffer");
-            unmap = 1;
-        }
-
 #if 0       /* too many log */
         ICO_DBG("CicoHSMenuTile::SetThumbnail: make thumbnail %s(%08x) "
                 "type=%d w/h/s=%d/%d/%d tile w/h=%d/%d",
                 appid, thumb.surface, thumb.type,
                 thumb.width, thumb.height, thumb.stride, width, height);
 #endif
-        if ((thumb.width <= 1) || (thumb.height <= 1))  {
+        if ((info->width <= 1) || (info->height <= 1))  {
             ICO_DBG("CicoHSMenuTile::SetThumbnail: small surface(%d,%d) skip",
-                    thumb.width, thumb.height);
+                    info->width, info->height);
         }
-        else if (unmap == 0)    {
+        else    {
             // create thumbnail image
             svx = thumb_reduce_x;
             svy = thumb_reduce_y;
@@ -766,16 +722,54 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                                          + ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2);
                 }
             }
-            evas_object_image_data_update_add(
-                            thumb_tile, 0, 0, thumb.width, thumb.height);
-            icon = thumb_tile;
-            evas_object_image_size_set(thumb_tile, thumb.width, thumb.height);
-            evas_object_image_data_set(thumb_tile, thumb.pixel_data);
-            evas_object_image_filled_set(thumb_tile, EINA_TRUE);
-            evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
-                               height - thumb_reduce_y * 2);
-            evas_object_move(thumb_tile,
-                             pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
+            /* read surface image pixel         */
+            int bufsize = ((thumb.width * thumb.height * 4 + 4095) / 4096) * 4096;
+            if ((! thumb.pixel_data) || (bufsize > thumb.pixel_bufsize))    {
+                free(thumb.pixel_data);
+                thumb.pixel_data = (char *)malloc(bufsize);
+                thumb.pixel_bufsize = bufsize;
+                if (thumb.pixel_data)   {
+                    memset(thumb.pixel_data, 0, bufsize);
+                }
+            }
+            if (thumb.pixel_data)   {
+                fd = open(sWork, O_RDONLY, 0644);
+                if (fd >= 0)    {
+#if     0           /* for BMP format   */
+                    if (read(fd, &bmphead, sizeof(bmphead)) != sizeof(bmphead)) {
+                        ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)",
+                                sWork);
+                    }
+                    else
+#endif
+                    if (read(fd, thumb.pixel_data, bufsize) <= 0)   {
+                        ICO_ERR("CicoHSMenuTile::SetThumbnail: can not read pixel file(%s)",
+                                sWork);
+                    }
+                }
+                else    {
+                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
+                            sWork);
+                }
+                if (fd >= 0)    {
+                    close(fd);
+                    (void) unlink(sWork);
+                }
+                evas_object_image_data_update_add(
+                                    thumb_tile, 0, 0, thumb.width, thumb.height);
+                icon = thumb_tile;
+                evas_object_image_size_set(thumb_tile, thumb.width, thumb.height);
+                evas_object_image_data_set(thumb_tile, thumb.pixel_data);
+                evas_object_image_filled_set(thumb_tile, EINA_TRUE);
+                evas_object_resize(thumb_tile, width - thumb_reduce_x * 2,
+                                   height - thumb_reduce_y * 2);
+                evas_object_move(thumb_tile,
+                                 pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
+            }
+            else    {
+                ICO_ERR("CicoHSMenuTile::SetThumbnail: can not malloc pixel buffer");
+                unmap = 1;
+            }
         }
     }
 
@@ -825,9 +819,10 @@ CicoHSMenuTile::ShowMenu(bool show)
 {
     char    sWork[PATH_MAX];
     menu_show = show;
-    if (thumb.surface != 0) {
+    if ((thumb_tile) && (thumb.surface != 0)) {
         sprintf(sWork, ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR "/%08x."
                 ICO_HS_THUMB_FILEEXT, thumb.surface);
+        (void) unlink(sWork);
         ico_syc_map_thumb(thumb.surface,
                           menu_show ? ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW :
                                       ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE, sWork);
@@ -846,6 +841,7 @@ CicoHSMenuTile::ShowMenu(bool show)
 void
 CicoHSMenuTile::SetOrgThumbnail(CicoHSMenuTile *orgTile)
 {
+
     ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Enter(appid=%08x<%s>) run=%d surf=%08x",
             (int)this->appid, this->appid, app_running, orgTile->thumb.surface );
 

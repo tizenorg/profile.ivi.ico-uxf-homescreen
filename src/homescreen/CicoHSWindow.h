@@ -34,11 +34,6 @@
 
 #define ICO_MAX_TITLE_NAME_LEN 64
 
-struct created_window_name  {
-    struct created_window_name  *next;
-    char    winname[ICO_MAX_TITLE_NAME_LEN];
-};
-
 class CicoHSWindow
 {
   public:
@@ -49,8 +44,6 @@ class CicoHSWindow
     void WindowSetting(int pos_x,int pos_y,int width,int height,int alpha);
     void ShowWindow(void);
     void HideWindow(void);
-
-    static const char *getWindowName(const int index);
   private:
 
   protected:
@@ -63,8 +56,6 @@ class CicoHSWindow
     int width; /*width*/
     int height; /*height*/
     Ecore_Evas *window; /* ecore-evas object */
-
-    static struct created_window_name   *created_window_title;
 };
 #endif
 // vim:set expandtab ts=4 sw=4:

@@ -585,7 +585,7 @@ CicoSCResourceManager::releaseDisplayResource(resource_request_t *newreq)
         if (true == active) {
             resource_request_t* popreq = popWaitingDispResReq(*itr);
             updateDisplayResource(popreq);
-            m_winCtrl->activeCB(NULL, popreq->surfaceid, -1);
+            m_winCtrl->activeCB(NULL, NULL, popreq->surfaceid, -1);
             break;
         }
     }
@@ -1004,7 +1004,7 @@ CicoSCResourceManager::updateDisplayResource(resource_request_t *req,
             // show request window
             m_winCtrl->show(req->surfaceid, req->animation, req->animationTime);
 #if 0
-            m_winCtrl->activeCB(NULL, req->surfaceid, -1);
+            m_winCtrl->activeCB(NULL, NULL, req->surfaceid, -1);
 #endif
             ICO_TRA("CicoSCResourceManager::updateDisplayResource Leave");
             return;

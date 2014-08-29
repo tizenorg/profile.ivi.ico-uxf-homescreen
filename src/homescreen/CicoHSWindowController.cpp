@@ -12,8 +12,6 @@
  * @date    Aug-08-2013
  */
 #include "CicoHSWindowController.h"
-#include "CicoConf.h"
-#include "CicoSystemConfig.h"
 
 Ecore_Evas *CicoHSWindowController::ms_ecoreEvas = NULL;
 
@@ -104,28 +102,23 @@ CicoHSWindowController::GetFullScreenSize(int orientation,
     ICO_DBG("ecore_wl_screen_size_get => w/h=%d/%d",
             display_width, display_height);
 
-#if 1       /* 2014/07/16 ecore_wl_screen_size_get() bug    */
-    if ((display_width <= 0) || (display_height <= 0))  {
-        const CicoSCDisplayConf* dispconf = CicoSystemConfig::getInstance()
-                                                ->findDisplayConfbyId(0);
-        if (dispconf)   {
-            // if Ecore has no full screen size, get from configuration
-            display_width = dispconf->width;
-            display_height = dispconf->height;
-            ICO_DBG("Screen size w/h=%d/%d from Config", display_width, display_height);
-        }
-        else    {
-            // if Ecore and config has no full screen size, fixed vaule
-            display_width = 1080;
-            display_height = 1920;
-            ICO_DBG("Screen size w/h=1080/1920 fixed");
-        }
-    }
-#endif      /* 2014/07/16 ecore_wl_screen_size_get() bug    */
-
+#if 1           /* TizenIVI 3.0 ecore return correct display size   */
     *width = display_width;
     *height = display_height;
-
+#else           /* TizenIVI 3.0 ecore return correct display size   */
+    if (orientation == ICO_ORIENTATION_VERTICAL) {
+        *width = display_width > display_height ?
+                                 display_height : display_width;
+        *height = (display_width > display_height ?
+                                 display_width : display_height);
+    }
+    else {
+        *width = display_width < display_height ?
+                                 display_height : display_width;
+        *height = (display_width < display_height ?
+                                   display_width : display_height);
+    }
+#endif          /* TizenIVI 3.0 ecore return correct display size   */
     ICO_TRA("CicoHSWindowController::GetFullScreenSize Leave(w/h=%d/%d)", *width, *height);
 }
 // vim:set expandtab ts=4 sw=4:

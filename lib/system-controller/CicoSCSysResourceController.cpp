@@ -56,6 +56,8 @@ static Eina_Bool ico_SCResourceWatch(void *data)
     }
     CicoSCSysResourceController* oCSCSRC = (CicoSCSysResourceController*)data;
     oCSCSRC->watch();
+//    double tVal = (double)g_samplingWaitTimer / 100;
+//    ecore_timer_add(g_samplingWaitTimer, ico_SCResourceWatch, data);
     if (g_RC_LOG) ICO_TRA("end");
     return ECORE_CALLBACK_RENEW;
 }
@@ -148,7 +150,7 @@ bool CicoSCSysResourceController::startSysResource()
         return false;
     }
     // cpu,cpuacct cgroup init
-    init_cgroup();  // cgroup
+    init_cgroup();  // cgroup 
     m_monitor = new CicoSCSysResourceMonitor();
     CicoSystemConfig* CSCSC = CicoSystemConfig::getInstance();
     string filePath(CSCSC->getDefaultConf()->confdir);

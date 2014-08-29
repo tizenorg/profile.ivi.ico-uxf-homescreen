@@ -157,6 +157,8 @@ CicoHSSwipeInputWindow::SetupSwipeWindow(void)
         memset(&show, 0, sizeof(show));
         show.name = (char *)"none";
 
+        /* set default animation                    */
+        ico_syc_set_animation(appid, surface, ICO_SYC_ANIMATION_TYPE_ALL, &show);
         /* move swipe input window to TouchLayer    */
         ico_syc_change_layer(appid, surface, HS_LAYER_TOUCHPANEL);
         /* move window position and size            */

@@ -18,10 +18,12 @@
 #include "CicoSCWaylandIF.h"
 #include "CicoLog.h"
 
-const char * CicoSCWaylandIF::ICO_WL_IVI_CONTROLLER_IF = "ivi_controller";
-#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
+const char * CicoSCWaylandIF::ICO_WL_WIN_MGR_IF        = "ico_window_mgr";
+const char * CicoSCWaylandIF::ICO_WL_INPUT_MGR_CTRL_IF = "ico_input_mgr_control";
+const char * CicoSCWaylandIF::ICO_WL_EXINPUT_IF        = "ico_exinput";
+const char * CicoSCWaylandIF::ICO_WL_INPUT_MGR_DEV_IF  = "ico_input_mgr_device";
 const char * CicoSCWaylandIF::ICO_WL_IVI_APPLICATION_IF= "ivi_application";
-#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
+const char * CicoSCWaylandIF::ICO_WL_IVI_CONTROLLER_IF = "ivi_controller";
 const char * CicoSCWaylandIF::ICO_WL_OUTPUT_IF         = "wl_output";
 
 

@@ -1,7 +1,7 @@
 AM_CFLAGS = $(GCC_CFLAGS)
 AM_CPPFLAGS = $(GCC_CXXFLAGS)
 
-COMMON_LIBS = -L/usr/local/lib -lm -lwebsockets
+COMMON_LIBS = -L/usr/local/lib -lm -lwebsockets -lico-uxf-weston-plugin
 
 noinst_PROGRAMS   = \
 	DummyHomeScreen
@@ -30,6 +30,7 @@ DummyHomeScreen_CXXFLAGS = 	\
 	@WAYLANDCLIENT_CFLAGS@	\
 	@CAPIAPPFWAPPLICATION_CFLAGS@ \
 	-I/usr/include/ico-util	\
+	-I/usr/include/ico-uxf-weston-plugin	\
 	-I../../../include
 
 DummyHomeScreen_LDADD =		\
@@ -45,6 +46,7 @@ DummyHomeScreen_LDADD =		\
 	@WAYLANDCLIENT_LIBS@	\
 	@CAPIAPPFWAPPLICATION_LIBS@ \
 	-L/usr/lib				\
+    -lico-uxf-weston-plugin \
 	-lico-util				\
 	../../../lib/apps-framework/.libs/libico-appfw.so \
 	-lreadline

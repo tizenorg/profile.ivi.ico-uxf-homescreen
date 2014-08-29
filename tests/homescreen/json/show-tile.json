@@ -1,0 +1,14 @@
+{
+	"application": [
+		{
+			"program": {
+				"id":"TOUCH_SCREEN"
+			},
+			"window": [
+				{
+					"show":"0"
+				}
+			]
+		}
+	]
+}

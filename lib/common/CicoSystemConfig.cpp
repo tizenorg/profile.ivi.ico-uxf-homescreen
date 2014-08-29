@@ -101,7 +101,6 @@ CicoSystemConfig::getInstance(void)
 {
     if (NULL == ms_myInstance) {
         ms_myInstance = new CicoSystemConfig();
-        ms_myInstance->load(ICO_SYSTEM_CONFIG_PATH);
     }
     return ms_myInstance;
 }

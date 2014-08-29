@@ -174,7 +174,7 @@ CicoSound::PlaySound(std::string & soundFile)
 {
     int pid;
     char command[256];
-
+ 
     if (false == m_initialized) {
         return false;
     }
@@ -196,7 +196,7 @@ CicoSound::PlaySound(std::string & soundFile)
     ICO_DBG("PlaySound:system(%s)", command);
     pid = fork();
     if (!pid) {
-        (void) system(command);
+        system(command);
         exit(0);
     }
 

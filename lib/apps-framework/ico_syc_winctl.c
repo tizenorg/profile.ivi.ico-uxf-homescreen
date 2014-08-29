@@ -38,6 +38,8 @@ static msg_t _create_win_msg(const char *appid, int surface,
 static msg_t _create_win_move_msg(const char *appid, int surface,
                                   const ico_syc_win_move_t *move,
                                   const ico_syc_animation_t *animation);
+static msg_t _create_win_animation_msg(const char *appid, int surface,
+                                       int type, const char *animation, int time);
 static msg_t _create_active_win_msg(const char *appid, int surface);
 static msg_t _create_change_layer_msg(const char *appid, int surface, int layer);
 static msg_t _create_map_get_msg(const char *appid, int surface, const char *filepath);
@@ -172,6 +174,61 @@ _create_win_move_msg(const char *appid, int surface,
         json_object_set_int_member(argobj, MSG_PRMKEY_ANIM_TIME,
                                    animation->time);
     }
+    json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
+
+    /* create root object */
+    root = json_node_new(JSON_NODE_OBJECT);
+    json_node_take_object(root, obj);
+
+    /* create generator object */
+    gen = json_generator_new();
+    json_generator_set_root(gen, root);
+
+    return gen;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   _create_win_animation_msg
+ *          Create the message to set animation the application window.
+ *
+ * @param[in]   appid                   application id
+ * @param[in]   surface                 window's surface id
+ * @param[in]   type                    set animation target
+ * @param[in]   animation               animation information
+ * @param[in]   time                    animation time
+ * @return      json generator
+ * @retval      json generator          success
+ * @retval      NULL                    error
+ */
+/*--------------------------------------------------------------------------*/
+static msg_t
+_create_win_animation_msg(const char *appid, int surface,
+                          int type, const char *animation, int time)
+{
+    JsonObject *obj     = NULL;
+    JsonObject *argobj  = NULL;
+    JsonGenerator *gen  = NULL;
+    JsonNode *root      = NULL;
+
+    /* create json object */
+    obj = json_object_new();
+    argobj = json_object_new();
+    if (obj == NULL || argobj == NULL) {
+        _ERR("json_object_new failed");
+        return NULL;
+    }
+
+    /* set message */
+    json_object_set_int_member(obj, MSG_PRMKEY_CMD, MSG_CMD_ANIMATION);
+    json_object_set_string_member(obj, MSG_PRMKEY_APPID, appid);
+    json_object_set_int_member(obj, MSG_PRMKEY_PID, getpid());
+
+    json_object_set_int_member(argobj, MSG_PRMKEY_SURFACE, surface);
+    json_object_set_int_member(argobj, MSG_PRMKEY_ANIM_TYPE, type);
+    json_object_set_string_member(argobj, MSG_PRMKEY_ANIM_NAME, animation);
+    json_object_set_int_member(argobj, MSG_PRMKEY_ANIM_TIME, time);
+
     json_object_set_object_member(obj, MSG_PRMKEY_ARG, argobj);
 
     /* create root object */
@@ -945,6 +1002,43 @@ ico_syc_move(const char *appid, int surface,
 
     /* make message */
     msg = _create_win_move_msg(appid, surface, move, animation);
+    /* send message */
+    ret = ico_syc_send_msg(msg);
+    /* free send message */
+    ico_syc_free_msg(msg);
+
+    return ret;
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_set_animation
+ *          Set the application window animation.
+ *
+ * @param[in]   appid                   application id
+ * @param[in]   surface                 window's surface id
+ * @param[in]   type                    set animation target
+ * @param[in]   animation               animation information
+ * @return      result
+ * @retval      0                       success
+ * @retval      not 0                   error
+ */
+/*--------------------------------------------------------------------------*/
+ICO_API int
+ico_syc_set_animation(const char *appid, int surface, int type,
+                      const ico_syc_animation_t *animation)
+{
+    int ret = ICO_SYC_ERR_NONE;
+    msg_t msg;
+
+    /* check argument */
+    if (appid == NULL) {
+        _ERR("invalid parameter (appid is NULL)");
+        return ICO_SYC_ERR_INVALID_PARAM;
+    }
+
+    /* make message */
+    msg = _create_win_animation_msg(appid, surface, type, animation->name, animation->time);
     /* send message */
     ret = ico_syc_send_msg(msg);
     /* free send message */

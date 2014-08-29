@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([org.tizen.ico.homescreen], [0.9.31], [])
+AC_INIT([org.tizen.ico.homescreen], [0.9.21], [])
 AM_INIT_AUTOMAKE([1.11 foreign no-dist-gzip dist-xz])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_HEADERS([config.h])
@@ -91,6 +91,9 @@ WL_LIBS="$WAYLANDCLIENT_LIBS $WAYLANDCURSOR_LIBS"
 AC_SUBST(WL_CFLAGS)
 AC_SUBST(WL_LIBS)
 
+WESTONPLUGIN_LIBS="-lico-uxf-weston-plugin"
+AC_SUBST(WESTONPLUGIN_LIBS)
+
 CFLAGS="$CFLAGS $EGL_CFLAGS"
 AC_SUBST(CFLAGS)
 
@@ -135,6 +138,7 @@ AC_CONFIG_FILES([Makefile
                  src/statusbar/Makefile
                  src/onscreen/Makefile
                  tool/Makefile
+                 tool/notification/Makefile
                  tests/Makefile
                  tests/system-controller/Makefile
                  tests/system-controller/apps-framework/Makefile])

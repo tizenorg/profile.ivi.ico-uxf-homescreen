@@ -334,7 +334,7 @@ CicoHomeScreen::requestChangeZone(CicoHSAppInfo* appinfo)
         return;
     }
 
-    ICO_DBG("change zone: \"%s\"->\"%s\" move with (w/h=0/0)", wininfo->zone, dispzone);
+    ICO_DBG("change zone: \"%s\"->\"%s\"", wininfo->zone, dispzone);
     ico_syc_win_move_t move = {
         .zone   = (char*)dispzone,
         .layer  = layer,
@@ -644,10 +644,10 @@ CicoHomeScreen::ShowHomeScreenWindow(ico_syc_win_info_t *win_info)
         return;
     }
 
-    ico_syc_change_layer(win_info->appid, win_info->surface, layer);
-    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) layer(%d) surface(%x) "
+    ico_syc_change_layer(win_info->appid,win_info->surface,layer);
+    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) surface(%d) "
             "pos(%d,%d) size(%d,%d)", win_info->appid,
-            win_info->name, layer, win_info->surface, move. pos_x, move.pos_y,
+            win_info->name, win_info->surface, move. pos_x, move.pos_y,
             move.width, move.height);
     ico_syc_move(win_info->appid, win_info->surface, &move, NULL);
 
@@ -681,13 +681,13 @@ CicoHomeScreen::ShowStatusBarWindow(ico_syc_win_info_t *win_info)
     move.height = ICO_HS_STATUSBAR_WINDOW_HEIGHT;
     layer = HS_LAYER_CONTROLBAR;
 
-    ico_syc_change_layer(win_info->appid, win_info->surface, layer);
+    ico_syc_change_layer(win_info->appid,win_info->surface,layer);
     ICO_DBG("CicoHomeScreen::ShowStatusBarWindow: id(%s) name(%s) surface(%d) "
-            "pos(%d,%d) size(%d,%d)", win_info->appid,
-            win_info->name, win_info->surface, move.pos_x, move.pos_y,
-            move.width, move.height);
-    ico_syc_move(win_info->appid, win_info->surface, &move, NULL);
-    ico_syc_show(win_info->appid, win_info->surface, NULL);
+            "pos(%d,%d) size(%d,%d)",win_info->appid,
+            win_info->name,win_info->surface,move.pos_x,move.pos_y,
+            move.width,move.height);
+    ico_syc_move(win_info->appid,win_info->surface,&move,NULL);
+    ico_syc_show(win_info->appid, win_info->surface,NULL);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -738,9 +738,9 @@ CicoHomeScreen::ShowApplicationWindow(ico_syc_win_info_t *win_info)
     move.height = full_height - ICO_HS_STATUSBAR_WINDOW_HEIGHT -
                   ICO_HS_CONTROLBAR_WINDOW_HEIGHT;
 
-    ico_syc_move(win_info->appid, win_info->surface, &move, NULL);
+    ico_syc_move(win_info->appid,win_info->surface,&move,NULL);
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_SYC_WIN_ANIMATION_FADE;
+    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
     const string& lastStartupApp = m_appHis->getLastStartupAppid();
     if (true == lastStartupApp.empty()) {
@@ -795,78 +795,70 @@ CicoHomeScreen::RaiseApplicationWindow(const char *appid,int surface)
 /*--------------------------------------------------------------------------*/
 void
 CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
-                              const void *detail, void *user_data)
+                              const void *detail,void *user_data)
 {
     int     idx;
 
-    ICO_DBG("CicoHomeScreen::EventCallBack: start(event %d)", event);
+//    ICO_DBG("CicoHomeScreen::EventCallBack: start (event %d)",event);
 
     if (event == ICO_SYC_EV_WIN_CREATE) {
-        ico_syc_win_info_t wk_win_info;
-
-        memcpy(&wk_win_info, detail, sizeof(wk_win_info));
-
-        ICO_DBG("Event:ICO_SYC_EV_WIN_CREATE(appid=%s surface=%d[%x])",
-                wk_win_info.appid, wk_win_info.surface, wk_win_info.surface);
-        /* only save information    */
-        if (strncmp(wk_win_info.appid, hs_instance->GetHsPackageName(),
+        ico_syc_win_info_t *win_info =
+            reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
+        ICO_DBG("Event:ICO_SYC_EV_WIN_CREATE(appid=%s surface=%08x)",
+                win_info->appid, win_info->surface);
+        /*only save information*/
+        if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0)  {
-            /* Home Screen  */
-            hs_instance->hs_app_info->AddWindowInfo(&wk_win_info);
+            /*Home Screen*/
+            hs_instance->hs_app_info->AddWindowInfo(win_info);
 
-            if ((wk_win_info.name == NULL) || (*wk_win_info.name == 0)) {
-                ico_hs_window_info *hs_win_info
-                    = hs_instance->hs_app_info->GetWindowInfobySurface(wk_win_info.surface);
-                if (hs_win_info)    wk_win_info.name = &hs_win_info->name[0];
-            }
-
-            /* when Menu window */
-            if (strncmp(wk_win_info.name, ICO_HS_MENU_WINDOW_TITLE,
+            /*when Menu window*/
+            if (strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
                         ICO_MAX_TITLE_NAME_LEN) == 0) {
-                hs_instance->menu_window->SetMenuWindowID(wk_win_info.appid,
-                                                          wk_win_info.surface);
+                hs_instance->menu_window->SetMenuWindowID(win_info->appid,
+                                                          win_info->surface);
             }
-            else if (strncmp(wk_win_info.name, ICO_HS_CONTROL_BAR_WINDOW_TITLE,
+            else if (strncmp(win_info->name,ICO_HS_CONTROL_BAR_WINDOW_TITLE,
                              ICO_MAX_TITLE_NAME_LEN) == 0) {
-                hs_instance->ctl_bar_window->SetWindowID(wk_win_info.appid,
-                                                         wk_win_info.surface);
+                hs_instance->ctl_bar_window->SetWindowID(win_info->appid,
+                                                         win_info->surface);
             }
             else    {
-                if (wk_win_info.name[0] == 0) {
-                  /* null name, nothing to do   */
+                if (win_info->name[0] == 0) {
+                  /* null name, nothing to do */
                     return;
                 }
                 for (idx = 0; idx < hs_instance->num_swipe_input_windows; idx++)    {
                     if (hs_instance->swipe_input_windows[idx]->
-                                         isMyWindowName(wk_win_info.name)) {
+                                         isMyWindowName(win_info->name)) {
                         hs_instance->swipe_input_windows[idx]->
-                                         SetWindowID(wk_win_info.appid, wk_win_info.surface);
+                                         SetWindowID(win_info->appid, win_info->surface);
                         hs_instance->swipe_input_windows[idx]->SetupSwipeWindow();
                         break;
                     }
                 }
             }
-            /* show window  */
-            hs_instance->ShowHomeScreenWindow(&wk_win_info);
+            /*show window*/
+            hs_instance->ShowHomeScreenWindow(win_info);
         }
-        else if (strncmp(wk_win_info.appid,
+        else if (strncmp(win_info->appid,
                          hs_instance->GetSbPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
-            /* Status Bar   */
-            hs_instance->sb_app_info->AddWindowInfo(&wk_win_info);
+            /*Status Bar*/
+            hs_instance->sb_app_info->AddWindowInfo(win_info);
 
-            /* show window  */
-            hs_instance->ShowStatusBarWindow(&wk_win_info);
+            /*show window*/
+            hs_instance->ShowStatusBarWindow(win_info);
         }
-        else if (strncmp(wk_win_info.appid,
+        else if (strncmp(win_info->appid,
                          hs_instance->GetOsPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
 
             // On Screen
-            hs_instance->os_app_info->AddWindowInfo(&wk_win_info);
+            hs_instance->os_app_info->AddWindowInfo(win_info);
 
             // change the layer of onscreen window
-            ico_syc_change_layer(wk_win_info.appid, wk_win_info.surface,
+            ico_syc_change_layer(win_info->appid, win_info->surface,
                                  HS_LAYER_ONSCREEN);
 
             const CicoSCPositionOSConf* oPOSC =
@@ -879,28 +871,28 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             move.width  = oPOSC->m_w;
             move.height = oPOSC->m_h;
             ico_syc_animation_t animation;
-            animation.name = (char*)ICO_SYC_WIN_ANIMATION_SLIDE_TOTOP;
+            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
             animation.time = ICO_HS_MENU_ANIMATION_DURATION;
-            ico_syc_move(wk_win_info.appid, wk_win_info.surface, &move, &animation);
+            ico_syc_move(win_info->appid, win_info->surface, &move, &animation);
+
         }
         else    {
-            /* Application  */
-            CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(wk_win_info.appid);
+            /*Application*/
+            CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(win_info->appid);
             if (appinfo == NULL) {
                 return;
             }
-            appinfo->AddWindowInfo(&wk_win_info);
+            appinfo->AddWindowInfo(win_info);
 
-            appinfo->SetLastSurface(wk_win_info.surface);
-            hs_instance->ShowApplicationWindow(&wk_win_info);
-            ico_syc_change_active(wk_win_info.appid, wk_win_info.surface);
-            hs_instance->SetActiveAppInfo(wk_win_info.appid);
-            hs_instance->UpdateTile(wk_win_info.appid);
+            appinfo->SetLastSurface(win_info->surface);
+            hs_instance->ShowApplicationWindow(win_info);
+            ico_syc_change_active(win_info->appid,win_info->surface);
+            hs_instance->SetActiveAppInfo(win_info->appid);
+            hs_instance->UpdateTile(win_info->appid);
 
-            hs_instance->startupCheck(wk_win_info.appid);
+            hs_instance->startupCheck(win_info->appid);
         }
     }
-#if 0           /* GENIVI-LM not support window title   */
     else if (event == ICO_SYC_EV_WIN_NAME) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
@@ -909,10 +901,10 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
 
         if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0) {
-            /* Home Screen  */
+            /*Home Screen*/
             hs_instance->hs_app_info->AddWindowInfo(win_info);
 
-            /* when Menu window */
+            /*when Menu window*/
             if (strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
                         ICO_MAX_TITLE_NAME_LEN) == 0) {
                 hs_instance->menu_window->SetMenuWindowID(win_info->appid,
@@ -935,21 +927,21 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
                 }
             }
 
-            /* show window  */
+            /*show window*/
             hs_instance->ShowHomeScreenWindow(win_info);
         }
         else if (strncmp(win_info->appid, hs_instance->GetSbPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
-            /* Status Bar   */
+            /*Status Bar*/
             hs_instance->sb_app_info->AddWindowInfo(win_info);
         }
         else if (strncmp(win_info->appid, hs_instance->GetOsPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
-            /* On Screen    */
+            /*On Screen*/
             hs_instance->os_app_info->AddWindowInfo(win_info);
         }
         else {
-            /* Application  */
+            /*Application*/
             CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(win_info->appid);
             if (appinfo == NULL) {
                 return;
@@ -957,13 +949,12 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             appinfo->AddWindowInfo(win_info);
         }
     }
-#endif          /* GENIVI-LM not support window title   */
     else if (event == ICO_SYC_EV_WIN_DESTROY) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_DESTROY(appid=%s surface=%d[%x])",
-                win_info->appid, win_info->surface, win_info->surface);
-        /* only save information    */
+        ICO_DBG("Event:ICO_SYC_EV_WIN_DESTROY(appid=%s surface=%08x)",
+                win_info->appid, win_info->surface);
+        /*only save information*/
         if (strncmp(win_info->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0)  {
             hs_instance->hs_app_info->FreeWindowInfo(win_info->name);
@@ -979,7 +970,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             hs_instance->os_app_info->FreeWindowInfo(win_info->name);
         }
         else    {
-            /* Application  */
+            /*Application*/
             CicoHSAppInfo *appinfo =
                        hs_instance->GetAppInfo(win_info->appid);
             if (appinfo == NULL) {
@@ -1004,34 +995,34 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
     else if (event == ICO_SYC_EV_WIN_ACTIVE) {
         ico_syc_win_info_t *win_info =
             reinterpret_cast<ico_syc_win_info_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_ACTIVE(appid=%s surface=%d[%x])",
-                win_info->appid, win_info->surface, win_info->surface);
+        ICO_DBG("Event:ICO_SYC_EV_WIN_ACTIVE(appid=%s surface=%08x)",
+                win_info->appid, win_info->surface);
         hs_instance->ChangeActive(win_info->appid, win_info->surface);
     }
     else if (event == ICO_SYC_EV_WIN_ATTR_CHANGE)   {
         ico_syc_win_attr_t *win_attr =
             reinterpret_cast<ico_syc_win_attr_t*>(const_cast<void*>(detail));
-        ICO_DBG("Event:ICO_SYC_EV_WIN_ATTR_CHANGE(appid=%s surface=%d[%x])",
-                win_attr->appid, win_attr->surface, win_attr->surface);
+        ICO_DBG("Event:ICO_SYC_EV_WIN_ATTR_CHANGE(appid=%s surface=%08x)",
+                win_attr->appid, win_attr->surface);
         if (strncmp(win_attr->appid, hs_instance->GetHsPackageName(),
                     ICO_HS_MAX_PROCESS_NAME) == 0)  {
-            /* Home Screen  */
+            /*Home Screen*/
             hs_instance->hs_app_info->AddWindowAttr(win_attr);
         }
         else if (strncmp(win_attr->appid, hs_instance->GetSbPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
-            /* Status Bar   */
+            /*Status Bar*/
             hs_instance->sb_app_info->AddWindowAttr(win_attr);
         }
         else if (strncmp(win_attr->appid, hs_instance->GetOsPackageName(),
                          ICO_HS_MAX_PROCESS_NAME) == 0) {
-            /* On Screen    */
+            /*On Screen*/
             hs_instance->os_app_info->AddWindowAttr(win_attr);
         }
         else {
             ICO_DBG("CicoHomeScreen::EventCallBack : application window %s %s",
                     win_attr->appid,win_attr->name);
-            /* Application  */
+            /*Application*/
             CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(win_attr->appid);
             if (appinfo == NULL) {
                 return;
@@ -1072,6 +1063,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
                     }
                 }
             }
+
             // update window information
             appinfo->AddWindowAttr(win_attr);
             hs_instance->UpdateTile(win_attr->appid);
@@ -1082,9 +1074,8 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
         CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
         if (appinfo == NULL)    {
-            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_CHANGE %s"
-                    "(%d[%x]) no appinfo",
-                    thumb_info->appid, thumb_info->surface, thumb_info->surface);
+            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_CHANGE %s(%02x) "
+                    "no appinfo", thumb_info->appid, thumb_info->surface);
             return;
         }
 //      ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_CHANGE %s(%02x)",
@@ -1097,13 +1088,12 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
         CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
         if (appinfo == NULL)    {
-            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s"
-                    "(%d[%x]) no appinfo",
-                    thumb_info->appid, thumb_info->surface, thumb_info->surface);
+            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s(%02x) "
+                    "no appinfo", thumb_info->appid, thumb_info->surface);
             return;
         }
-        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s(%d[%x])",
-                thumb_info->appid, thumb_info->surface, thumb_info->surface);
+        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s(%02x)",
+                thumb_info->appid, thumb_info->surface);
         hs_instance->menu_window->SetThumbnail(thumb_info->appid, NULL);
     }
     else if (event == ICO_SYC_EV_THUMB_ERROR)  {
@@ -1111,9 +1101,8 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             reinterpret_cast<ico_syc_thumb_info_t*>(const_cast<void*>(detail));
         CicoHSAppInfo *appinfo = hs_instance->GetAppInfo(thumb_info->appid);
         if (appinfo == NULL)    {
-            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_ERROR %s"
-                    "(%d[%x]) no appinfo",
-                    thumb_info->appid, thumb_info->surface, thumb_info->surface);
+            ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_ERROR %s(%02x) "
+                    "no appinfo", thumb_info->appid, thumb_info->surface);
             return;
         }
         ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_ERROR %s(%02x)",
@@ -1121,24 +1110,34 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
         hs_instance->menu_window->SetThumbnail(thumb_info->appid, NULL);
     }
     else if (event == ICO_SYC_EV_LAYER_ATTR_CHANGE) {
+
     }
     else if (event == ICO_SYC_EV_USERLIST)  {
+
     }
     else if (event == ICO_SYC_EV_AUTH_FAIL) {
+
     }
     else if (event == ICO_SYC_EV_RES_ACQUIRE) {
+
     }
     else if (event == ICO_SYC_EV_RES_DEPRIVE)   {
+
     }
     else if (event == ICO_SYC_EV_RES_WAITING)   {
+
     }
     else if (event == ICO_SYC_EV_RES_REVERT)    {
+
     }
     else if (event == ICO_SYC_EV_RES_RELEASE)   {
+
     }
     else if (event == ICO_SYC_EV_INPUT_SET) {
+
     }
     else if (event == ICO_SYC_EV_INPUT_UNSET)   {
+
     }
     else if (event == ICO_SYC_EV_STATE_CHANGE)  {
         ico_syc_state_info_t *state_info =
@@ -1158,7 +1157,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             ecore_main_loop_thread_safe_call_async(CicoHomeScreen::SetNightMode, NULL);
         }
     }
-    ICO_DBG("CicoHomeScreen::EventCallBack: end");
+//    ICO_DBG("CicoHomeScreen::EventCallBack: end");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1260,7 +1259,7 @@ CicoHomeScreen::Initialize(int orientation, CicoGKeyFileConfig *config)
 
     /* Get screen size */
     CicoHSWindowController::GetFullScreenSize(orientation,
-                                              &full_width, &full_height);
+                                              &full_width,&full_height);
 
     ICO_DBG("full screen size x=%d y=%d",full_width,full_height);
 
@@ -1282,7 +1281,7 @@ CicoHomeScreen::Initialize(int orientation, CicoGKeyFileConfig *config)
 
     moveZoneAnimation.name = (char*)config->ConfigGetString("switchzone",
                                                             "animation",
-                                                            ICO_SYC_WIN_ANIMATION_FADE);
+                                                            ICO_HS_ANIMATION_FADE);
 
     moveZoneAnimation.time = config->ConfigGetInteger("switchzone",
                                                       "animatime", 400);
@@ -1498,13 +1497,12 @@ void
 CicoHomeScreen::CreateControlBarWindow(void)
 {
     /*create window*/
-    ICO_DBG("CicoHomeScreen::CreateControlBarWindow: Enter");
+    ICO_DBG("CicoHomeScreen::CreateControlBarWindow");
     ctl_bar_window = new CicoHSControlBarWindow();
-    ctl_bar_window->CreateControlBarWindow(ICO_HS_MENU_WINDOW_POS_X,
-                                           bg_height - ctl_bar_height,
-                                           ctl_bar_width, ctl_bar_height);
+    ctl_bar_window->CreateControlBarWindow(ICO_HS_MENU_WINDOW_POS_X,bg_height -
+                                           ctl_bar_height,ctl_bar_width,
+                                           ctl_bar_height);
     ctl_bar_window->ShowWindow();
-    ICO_DBG("CicoHomeScreen::CreateControlBarWindow: Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1737,7 +1735,7 @@ CicoHomeScreen::StartHomeScreen(int orientation)
 
     moveZoneAnimation.name = (char*)config->ConfigGetString("switchzone",
                                                             "animation",
-                                                            ICO_SYC_WIN_ANIMATION_FADE);
+                                                            ICO_HS_ANIMATION_FADE);
     moveZoneAnimation.time = config->ConfigGetInteger("switchzone",
                                                       "animatime", 400);
     // debug log
@@ -1831,10 +1829,10 @@ CicoHomeScreen::ChangeMode(int pattern)
         ico_syc_animation_t animation;
         ICO_DBG("CicoHomeScreen::ChangeMode: MENU->APP");
         if (pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE)  {
-            animation.name = (char*)ICO_SYC_WIN_ANIMATION_SLIDE_TOTOP;
+            animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
         }
         else    {
-            animation.name = (char*)ICO_SYC_WIN_ANIMATION_FADE;
+            animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Hide(&animation);
@@ -1851,10 +1849,10 @@ CicoHomeScreen::ChangeMode(int pattern)
         ico_syc_animation_t animation;
         ICO_DBG("CicoHomeScreen::ChangeMode: APP->MENU");
         if (pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE)  {
-            animation.name = (char*)ICO_SYC_WIN_ANIMATION_SLIDE_TOTOP;
+            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
         }
         else    {
-            animation.name = (char*)ICO_SYC_WIN_ANIMATION_FADE;
+            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_FADE;
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Show(&animation);
@@ -1950,7 +1948,7 @@ CicoHomeScreen::SetRegulation(void* data)
     // regulation action
     hs_instance->ctl_bar_window->SetRegulation();
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_SYC_WIN_ANIMATION_SLIDE_TOTOP;
+    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
     hs_instance->menu_window->Hide(&animation);
 
@@ -2380,7 +2378,7 @@ CicoHomeScreen::ShowApp_i(const std::string& app)
     }
 
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_SYC_WIN_ANIMATION_FADE;
+    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
 
     ico_syc_show(appinfo->GetAppId(), appinfo->GetLastSurface(), &animation);
@@ -2427,7 +2425,7 @@ CicoHomeScreen::HideApp(const std::string& app)
     }
 
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_SYC_WIN_ANIMATION_FADE;
+    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
 
     int surface = ai->GetLastSurface();

@@ -64,7 +64,7 @@ CicoSCLayer::addSurface(int surfaceid, bool top)
 {
     int     idx, idx2;
     int     *wksurfaceids;
-    ICO_DBG("CicoSCLayer::addSurface(%d,%08x,%d)", layerid, surfaceid, top);
+    ICO_DBG("CicoSCLayer::addSurface(%08x,%d)", surfaceid, top);
 
     idx2 = 0;
     for (idx = 0; idx < numsurfaces; idx++) {
@@ -108,7 +108,7 @@ void
 CicoSCLayer::removeSurface(int surfaceid)
 {
     int     idx, idx2;
-    ICO_DBG("CicoSCLayer::removeSurface(%d,%08x)", layerid, surfaceid);
+    ICO_DBG("CicoSCLayer::removeSurface(%08x)", surfaceid);
 
     idx2 = 0;
     for (idx = 0; idx < numsurfaces; idx++) {

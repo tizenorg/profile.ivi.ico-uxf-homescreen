@@ -59,7 +59,7 @@
 #define ICO_HS_MENU_SHOW_ANIMATION_SLIDE "Slide"
 #define ICO_HS_MENU_HIDE_ANIMATION_FADE "Fade"
 #define ICO_HS_MENU_SHOW_ANIMATION_FADE "Fade"
-#define ICO_HS_MENU_ANIMATION_DURATION 400
+#define ICO_HS_MENU_ANIMATION_DURATION 300
 
 #define ICO_HS_MENU_OTHER_CATEGORY_ID -1
 
@@ -163,7 +163,6 @@ class CicoHSMenuWindow :public CicoHSWindow
     Evas *evas;
     /* menu back */
     Evas_Object *canvas;
-    bool transparent_background;
     Evas_Object *rectangle;
     /* tiles */
     CicoHSMenuTile *menu_tile[ICO_HS_MENU_MAX_TILE_NUM];

@@ -440,7 +440,7 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
         set_xy_pos = true;
         touch_state_b_x = touch_state_a_x;
         touch_state_b_y = touch_state_a_y;
-//      ICO_DBG("TouchMoveSwipe: save x/y=%d/%d", touch_state_b_x, touch_state_b_y);
+        ICO_DBG("TouchMoveSwipe: save x/y=%d/%d", touch_state_b_x, touch_state_b_y);
     }
 #if 0       /* too many log */
     ICO_DBG("TouchMoveSwipe: Swipe Move (%d,%d)->(%d,%d) Button=%x",

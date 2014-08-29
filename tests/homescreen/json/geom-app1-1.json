@@ -1,0 +1,16 @@
+{
+	"application": [
+		{
+			"program": {
+				"id":"org.tizen.music-player"
+			},
+			"window": [
+				{
+					"resize":"0,200,200",
+					"move":"0,100,164",
+					"visible_raise":"0,1,1"
+				}
+			]
+		}
+	]
+}

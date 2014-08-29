@@ -14,8 +14,6 @@
 #include <Edje.h>
 #include <ico_log.h>
 #include "CicoStatusBar.h"
-#include "CicoConf.h"
-#include "CicoSystemConfig.h"
 
 using namespace std;
 
@@ -82,25 +80,6 @@ CicoStatusBar::Initialize(void)
         return false;
     }
     ecore_wl_screen_size_get(&width_, &height_);
-
-#if 1       /* 2014/07/16 ecore_wl_screen_size_get() bug    */
-    if ((width_ <= 0) || (height_ <= 0))  {
-        const CicoSCDisplayConf* dispconf = CicoSystemConfig::getInstance()
-                                                ->findDisplayConfbyId(0);
-        if (dispconf)   {
-            // if Ecore has no full screen size, get from configuration
-            width_ = dispconf->width;
-            height_ = dispconf->height;
-            ICO_DBG("Screen size w/h=%d/%d from Config", width_, height_);
-        }
-        else    {
-            // if Ecore and config has no full screen size, fixed vaule
-            width_ = 1080;
-            height_ = 1920;
-            ICO_DBG("Screen size w/h=1080/1920 fixed");
-        }
-    }
-#endif      /* 2014/07/16 ecore_wl_screen_size_get() bug    */
 
     ecore_evas_size_min_set(window_, width_, STATUSBAR_HEIGHT);
     ecore_evas_size_max_set(window_, width_, STATUSBAR_HEIGHT);

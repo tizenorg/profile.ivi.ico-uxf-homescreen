@@ -16,6 +16,8 @@
 #ifndef _ICO_SYC_WINCTL_H_
 #define _ICO_SYC_WINCTL_H_
 
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -103,6 +105,23 @@ int ico_syc_hide(const char *appid, int surface,
 int ico_syc_move(const char *appid, int surface,
                  const ico_syc_win_move_t *move,
                  const ico_syc_animation_t *animation);
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   ico_syc_set_animation
+ *          Set the application window animation.
+ *
+ * @param[in]   appid                   application id
+ * @param[in]   surface                 window's surface id
+ * @param[in]   type                    set animation target
+ * @param[in]   animation               animation information
+ * @return      result
+ * @retval      0                       success
+ * @retval      not 0                   error
+ */
+/*--------------------------------------------------------------------------*/
+int ico_syc_set_animation(const char *appid, int surface, int type,
+                          const ico_syc_animation_t *animation);
 
 /*--------------------------------------------------------------------------*/
 /**

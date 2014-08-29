@@ -6,7 +6,7 @@ noinst_LTLIBRARIES =\
 #lib_LTLIBRARIES =\
 #	libico-system-controller.la
 
-libico_system_controller_la_LDFLAGS = -version-info 0:9:0
+libico_system_controller_la_LDFLAGS = -version-info 0:9:0 
 libico_system_controller_la_SOURCES =	\
 	CicoSCLifeCycleController.cpp		\
 	CicoSCWaylandIF.cpp					\
@@ -73,7 +73,8 @@ libico_system_controller_la_LIBADD =	\
 	@MURPHYECORE_LIBS@					\
 	@MURPHYRESOURCE_LIBS@				\
 	$(UWS_LIBS)							\
-	$(GENIVI_LIBS)
+	$(GENIVI_LIBS)						\
+	$(WESTONPLUGIN_LIBS)
 
 AM_LDFLAGS = -module -avoid-version -rpath $(libdir)
 

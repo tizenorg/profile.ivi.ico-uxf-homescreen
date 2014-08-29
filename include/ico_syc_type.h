@@ -16,8 +16,7 @@
 #ifndef _ICO_SYC_TYPE_H_
 #define _ICO_SYC_TYPE_H_
 
-#include <stdint.h>
-#include <wayland-client-protocol.h>
+#include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -195,16 +194,6 @@ typedef enum _state_onoff {
     ICO_SYC_STATE_ON  = 1    /**< state of on */
 } ico_syc_state_onoff_e;
 
-/**
- * window animation name
- */
-#define ICO_SYC_WIN_ANIMATION_FADE              "Fade"
-#define ICO_SYC_WIN_ANIMATION_SLIDE             "Slide"
-#define ICO_SYC_WIN_ANIMATION_SLIDE_TOTOP       "Slide.toTop"
-#define ICO_SYC_WIN_ANIMATION_SLIDE_TOBUTTOM    "Slide.toButtom"
-#define ICO_SYC_WIN_ANIMATION_SLIDE_TOLEFT      "Slide.toLeft"
-#define ICO_SYC_WIN_ANIMATION_SLIDE_TORIGHT     "Slide.toRight"
-
 /*============================================================================*/
 /* structure                                                                  */
 /*============================================================================*/
@@ -255,7 +244,7 @@ typedef struct _win_attr {
 typedef struct _thumb_info {
     char *appid;    /* application id */
     int  surface;   /* window's surface id */
-    int  type;      /* buffer type */
+    int  type;      /* buffer type(ICO_WINDOW_MGR_MAP_TYPE_EGL/SHM/PIXEL)*/
     int  width;     /* window width */
     int  height;    /* window height */
     int  stride;    /* byte par line of frame buffer */

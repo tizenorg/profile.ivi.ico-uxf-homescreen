@@ -20,8 +20,6 @@
 #include "ico_syc_type.h"
 #include "ico_syc_appresctl.h"
 #include "CicoOSClient.h"
-#include "CicoConf.h"
-#include "CicoSystemConfig.h"
 
 using namespace std;
 
@@ -205,7 +203,7 @@ CicoOSPopWindow::showPopup()
     return true;
 }
 
-bool
+bool 
 CicoOSPopWindow::acquireRes()
 {
     ICO_TRA("Enter");
@@ -246,7 +244,7 @@ CicoOSPopWindow::hidePopup(bool buttonTouch)
     ICO_TRA("Leave");
 }
 
-bool
+bool    
 CicoOSPopWindow::releaseRes()
 {
     ICO_TRA("Enter");
@@ -305,26 +303,6 @@ CicoOSPopWindow::InitializeWindow(void)
     ecore_wl_screen_size_get(&display_width, &display_height);
 
     ICO_DBG("display size w/h=%d/%d", display_width, display_height);
-
-#if 1       /* 2014/07/16 ecore_wl_screen_size_get() bug    */
-    if ((display_width <= 0) || (display_height <= 0))  {
-        const CicoSCDisplayConf* dispconf = CicoSystemConfig::getInstance()
-                                                ->findDisplayConfbyId(0);
-        if (dispconf)   {
-            // if Ecore has no full screen size, get from configuration
-            display_width = dispconf->width;
-            display_height = dispconf->height;
-            ICO_DBG("Screen size w/h=%d/%d from Config", display_width, display_height);
-        }
-        else    {
-            // if Ecore and config has no full screen size, fixed vaule
-            display_width = 1080;
-            display_height = 1920;
-            ICO_DBG("Screen size w/h=1080/1920 fixed");
-        }
-    }
-#endif      /* 2014/07/16 ecore_wl_screen_size_get() bug    */
-
     int popup_x = (display_width / 2) - (POPUP_FRAME_WIDTH / 2);
     int popup_y = (display_height / 2) - (POPUP_FRAME_HEIGHT/ 2);
     ICO_DBG("popup postion x/y=%d/%d", popup_x, popup_y);
