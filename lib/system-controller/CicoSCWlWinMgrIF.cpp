@@ -766,7 +766,8 @@ CicoSCWlWinMgrIF::wlIviCtrlLayerCB(void *data,
 void
 CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void *data,
                                      struct ivi_controller *ivi_controller,
-                                     uint32_t id_surface)
+                                     uint32_t id_surface, int32_t pid,
+				     const char *title)
 {
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: Enter(%x)", id_surface);
 

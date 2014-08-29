@@ -171,7 +171,8 @@ private:
 
     static void wlIviCtrlSurfaceCB(void                 *data,
                                    struct ivi_controller *ivi_controller,
-                                   uint32_t             id_surface);
+                                   uint32_t id_surface, int32_t pid,
+				   const char *title);
 
     static void wlIviCtrlErrorCB(void                   *data,
                                  struct ivi_controller  *ivi_controller,
