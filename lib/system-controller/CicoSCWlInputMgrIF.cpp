@@ -30,15 +30,7 @@ using namespace std;
  */
 //--------------------------------------------------------------------------
 CicoSCWlInputMgrIF::CicoSCWlInputMgrIF()
-    : m_inputmgr(NULL), m_exinput(NULL), m_inputmgrdev(NULL)
 {
-    // ico_exinput listener
-    m_exInputListener.capabilities = wlCapabilitiesCB;
-    m_exInputListener.code         = wlCodeCB;
-    m_exInputListener.input        = wlInputCB;
-
-    // ico_input_mgr_device listener
-    m_devListener.input_regions    = wlRegionCB;
 }
 
 //--------------------------------------------------------------------------
@@ -52,7 +44,7 @@ CicoSCWlInputMgrIF::~CicoSCWlInputMgrIF()
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  initialize ico_input_mgr interfaces
+ *  @brief  initialize input interfaces
  *
  *  @param [in] data        user data
  *  @param [in] registry    wayland registry
@@ -68,74 +60,14 @@ CicoSCWlInputMgrIF::initInterface(void               *data,
                                   const char         *interface,
                                   uint32_t           version)
 {
-    ICO_TRA("CicoSCWlInputMgrIF::initInterface : Enter(interface=%s)",
-            interface);
-
-    if (0 == strcmp(interface, ICO_WL_INPUT_MGR_CTRL_IF)) {
-        // get interface instance
-        ICO_DBG("called: wl_registry_bind");
-        void *wlProxy = wl_registry_bind(registry,
-                                         name,
-                                         &ico_input_mgr_control_interface,
-                                         1);
-        if (NULL == wlProxy) {
-            ICO_WRN("interface(%s) wl_registry_bind failed.", interface);
-            ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave",
-                    "(binding failed)");
-            return;
-        }
-        m_inputmgr = (struct ico_input_mgr_control*)wlProxy;
-    }
-    else if (0 == strcmp(interface, ICO_WL_EXINPUT_IF)) {
-        // get interface instance
-        ICO_DBG("called: wl_registry_bind");
-        void *wlProxy = wl_registry_bind(registry,
-                                         name,
-                                         &ico_exinput_interface,
-                                         1);
-        if (NULL == wlProxy) {
-            ICO_WRN("interface(%s) wl_registry_bind failed.", interface);
-            ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave",
-                    "(binding failed)");
-            return;
-        }
-
-        m_exinput = (struct ico_exinput*)wlProxy;
-        ico_exinput_add_listener(m_exinput,
-                                 &m_exInputListener,
-                                 this);
-    }
-    else if (0 == strcmp(interface, ICO_WL_INPUT_MGR_DEV_IF)) {
-        // get interface instance
-        ICO_DBG("called: wl_registry_bind");
-        void *wlProxy = wl_registry_bind(registry,
-                                         name,
-                                         &ico_input_mgr_device_interface,
-                                         1);
-        if (NULL == wlProxy) {
-            ICO_WRN("interface(%s) wl_registry_bind failed.", interface);
-            ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave"
-                    "(binding failed)");
-            return;
-        }
-
-        m_inputmgrdev = (struct ico_input_mgr_device*)wlProxy;
-        ico_input_mgr_device_add_listener(m_inputmgrdev,
-                                          &m_devListener,
-                                          this);
-    }
-
-    if ((NULL != m_inputmgrdev) &&
-        (NULL != m_inputmgr) &&
-        (NULL != m_exinput)) {
-        m_initialized = true;
-    }
+    ICO_TRA("CicoSCWlInputMgrIF::initInterface : Enter(interface=%s)", interface);
+    m_initialized = true;
     ICO_TRA("CicoSCWlInputMgrIF::initInterface Leave");
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wrapper function ico_input_mgr_control_add_input_app
+ *  @brief  wrapper function add_input_app
  *
  *  @param [in] appid   application id
  *  @param [in] device  input device name
@@ -151,18 +83,14 @@ CicoSCWlInputMgrIF::addInputApp(const string &appid,
                                 int          fix,
                                 int          keycode)
 {
-    ICO_DBG("called: ico_input_mgr_control_add_input_app"
+    ICO_DBG("called: add_input_app"
             "(appid=%s device=%s input=%d fix=%d keycode=%d)",
             appid.c_str(), device.c_str(), input, fix, keycode);
-    ico_input_mgr_control_add_input_app(m_inputmgr,appid.c_str(),
-                                        device.c_str(), input, fix, keycode);
-    // flush display
-    CicoSCWayland::getInstance()->flushDisplay();
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wrapper function ico_input_mgr_control_del_input_app
+ *  @brief  wrapper function del_input_app
  *
  *  @param [in] appid   application id
  *  @param [in] device  input device name
@@ -174,18 +102,14 @@ CicoSCWlInputMgrIF::delInputApp(const string &appid,
                                 const string &device,
                                 int          input)
 {
-    ICO_DBG("called: ico_input_mgr_control_del_input_app"
+    ICO_DBG("called: del_input_app"
             "(appid=%s device=%s input=%d)",
             appid.c_str(), device.c_str(), input);
-    ico_input_mgr_control_del_input_app(m_inputmgr, appid.c_str(),
-                                        device.c_str(), input);
-    // flush display
-    CicoSCWayland::getInstance()->flushDisplay();
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wrapper function ico_exinput_set_input_region
+ *  @brief  wrapper function set_input_region
  *
  *  @param [in] target    target window name(winname@appid)
  *  @param [in] x         region x positon
@@ -215,21 +139,16 @@ CicoSCWlInputMgrIF::setInputRegion(const string &target,
                                    int cursor_height,
                                    int attr)
 {
-    ICO_DBG("called: ico_exinput_set_input_region"
+    ICO_DBG("called: set_input_region"
             "(target=%s x/y=%d/%d w/h=%d/%d hot=%d/%d "
             "cursor=%d/%d-%d/%d attr=%d)",
             target.c_str(), x, y, width, height, hotspot_x, hotspot_y,
             cursor_x, cursor_y, cursor_width, cursor_height, attr);
-    ico_exinput_set_input_region(m_exinput, target.c_str(), x, y,
-                                 width, height, hotspot_x, hotspot_y, cursor_x,
-                                 cursor_y, cursor_width, cursor_height,attr);
-    // flush display
-    CicoSCWayland::getInstance()->flushDisplay();
 }
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  wrapper function ico_exinput_unset_input_region
+ *  @brief  wrapper function unset_input_region
  *
  *  @param [in] target    target window name(winname@appid)
  *  @param [in] x         region x positon
@@ -245,13 +164,9 @@ CicoSCWlInputMgrIF::unsetInputRegion(const string &target,
                                      int width,
                                      int height)
 {
-    ICO_DBG("called: ico_exinput_unset_input_region"
+    ICO_DBG("called: unset_input_region"
             "(target=%s x=%d y=%d width=%d height=%d",
             target.c_str(), x, y, width, height);
-    ico_exinput_unset_input_region(m_exinput, target.c_str(),
-                                   x, y, width, height);
-    // flush display
-    CicoSCWayland::getInstance()->flushDisplay();
 }
 
 //--------------------------------------------------------------------------
@@ -259,7 +174,6 @@ CicoSCWlInputMgrIF::unsetInputRegion(const string &target,
  *  @brief  callback to application for input switch information
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] device      input device name
  *  @param [in] type        input device type (as enum type)
  *  @param [in] swname      input switch name
@@ -270,7 +184,6 @@ CicoSCWlInputMgrIF::unsetInputRegion(const string &target,
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::capabilitiesCB(void               *data,
-                                   struct ico_exinput *ico_exinput,
                                    const char         *device,
                                    int32_t            type,
                                    const char         *swname,
@@ -286,7 +199,6 @@ CicoSCWlInputMgrIF::capabilitiesCB(void               *data,
  *  @brief  callback to application for input code information
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] device      input device name
  *  @param [in] input       input switch number
  *  @param [in] codename    input code name
@@ -295,7 +207,6 @@ CicoSCWlInputMgrIF::capabilitiesCB(void               *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::codeCB(void               *data,
-                           struct ico_exinput *ico_exinput,
                            const char         *device,
                            int32_t            input,
                            const char         *codename,
@@ -309,7 +220,6 @@ CicoSCWlInputMgrIF::codeCB(void               *data,
  *  @brief  callback to application for switch input
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] time        input time of millisecond
  *  @param [in] device      input device name
  *  @param [in] input       input switch number
@@ -319,7 +229,6 @@ CicoSCWlInputMgrIF::codeCB(void               *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::inputCB(void               *data,
-                            struct ico_exinput *ico_exinput,
                             uint32_t           time,
                             const char         *device,
                             int32_t            input,
@@ -334,13 +243,11 @@ CicoSCWlInputMgrIF::inputCB(void               *data,
  *  @brief  callback to application for change input region
  *
  *  @param [in] data                user data
- *  @param [in] ico_input_mgr_dev   wayland ico_exinput interface
  *  @param [in] region              input regions
  */
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::regionCB(void                        *data,
-                             struct ico_input_mgr_device *ico_input_mgr_dev,
                              struct wl_array             *region)
 {
     ICO_WRN("CicoSCWlInputMgrIF::regionCB called.");
@@ -355,7 +262,6 @@ CicoSCWlInputMgrIF::regionCB(void                        *data,
  *  @brief  callback to application for input switch information
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] device      input device name
  *  @param [in] type        input device type (as enum type)
  *  @param [in] swname      input switch name
@@ -366,7 +272,6 @@ CicoSCWlInputMgrIF::regionCB(void                        *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::wlCapabilitiesCB(void               *data,
-                                     struct ico_exinput *ico_exinput,
                                      const char         *device,
                                      int32_t            type,
                                      const char         *swname,
@@ -374,17 +279,13 @@ CicoSCWlInputMgrIF::wlCapabilitiesCB(void               *data,
                                      const char         *codename,
                                      int32_t            code)
 {
-//    ICO_TRA("CicoSCWlInputMgrIF::wlCapabilitiesCB Enter");
-
     if (NULL == data) {
         ICO_WRN("wlCapabilitiesCB: data is null");
         return;
     }
-    static_cast<CicoSCWlInputMgrIF*>(data)->capabilitiesCB(data, ico_exinput,
-                                                           device, type,
+    static_cast<CicoSCWlInputMgrIF*>(data)->capabilitiesCB(data, device, type,
                                                            swname, input,
                                                            codename, code);
-//    ICO_TRA("CicoSCWlInputMgrIF::wlCapabilitiesCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -392,7 +293,6 @@ CicoSCWlInputMgrIF::wlCapabilitiesCB(void               *data,
  *  @brief  callback to application for input code information
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] device      input device name
  *  @param [in] input       input switch number
  *  @param [in] codename    input code name
@@ -401,23 +301,17 @@ CicoSCWlInputMgrIF::wlCapabilitiesCB(void               *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::wlCodeCB(void               *data,
-                             struct ico_exinput *ico_exinput,
                              const char         *device,
                              int32_t            input,
                              const char         *codename,
                              int32_t            code)
 {
-//    ICO_TRA("CicoSCWlInputMgrIF::wlCodeCB Enter");
-
     if (NULL == data) {
         ICO_WRN("wlCodeCB: data is null");
         return;
     }
-    static_cast<CicoSCWlInputMgrIF*>(data)->codeCB(data, ico_exinput,
-                                                   device, input,
+    static_cast<CicoSCWlInputMgrIF*>(data)->codeCB(data, device, input,
                                                    codename, code);
-
-//    ICO_TRA("CicoSCWlInputMgrIF::wlCodeCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -425,7 +319,6 @@ CicoSCWlInputMgrIF::wlCodeCB(void               *data,
  *  @brief  callback to application for switch input
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] time        input time of millisecond
  *  @param [in] device      input device name
  *  @param [in] input       input switch number
@@ -435,24 +328,18 @@ CicoSCWlInputMgrIF::wlCodeCB(void               *data,
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::wlInputCB(void               *data,
-                              struct ico_exinput *ico_exinput,
                               uint32_t           time,
                               const char         *device,
                               int32_t            input,
                               int32_t            code,
                               int32_t            state)
 {
-//    ICO_TRA("CicoSCWlInputMgrIF::wlInputCB Enter");
-
     if (NULL == data) {
         ICO_WRN("wlInputCB: data is null");
         return;
     }
-    static_cast<CicoSCWlInputMgrIF*>(data)->inputCB(data, ico_exinput,
-                                                    time, device, input,
+    static_cast<CicoSCWlInputMgrIF*>(data)->inputCB(data, time, device, input,
                                                     code, state);
-
-//    ICO_TRA("CicoSCWlInputMgrIF::wlInputCB Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -460,24 +347,17 @@ CicoSCWlInputMgrIF::wlInputCB(void               *data,
  *  @brief  callback to application for change input region
  *
  *  @param [in] data                user data
- *  @param [in] ico_input_mgr_dev   wayland ico_exinput interface
  *  @param [in] region              input regions
  */
 //--------------------------------------------------------------------------
 void
 CicoSCWlInputMgrIF::wlRegionCB(void                        *data,
-                               struct ico_input_mgr_device *ico_input_mgr_dev,
                                struct wl_array             *region)
 {
-//    ICO_TRA("CicoSCWlInputMgrIF::wlRegionCB Enter");
-
     if (NULL == data) {
         ICO_WRN("wlRegionCB: data is null");
         return;
     }
-    static_cast<CicoSCWlInputMgrIF*>(data)->regionCB(data, ico_input_mgr_dev,
-                                                     region);
-
-//    ICO_TRA("CicoSCWlInputMgrIF::wlRegionCB Leave");
+    static_cast<CicoSCWlInputMgrIF*>(data)->regionCB(data, region);
 }
 // vim:set expandtab ts=4 sw=4:

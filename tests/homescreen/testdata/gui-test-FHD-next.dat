@@ -1,6 +1,0 @@
-XY=800,794
-sleep 0.1
-Button=Down
-sleep 0.1
-Button=Up
-sleep 2

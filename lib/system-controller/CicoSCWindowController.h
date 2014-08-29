@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include "ico_syc_private.h"
 
 using namespace std;
 
@@ -26,6 +27,57 @@ using namespace std;
 
 #define ICO_SC_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"
 #define ICO_SC_LAYERID_SCREENBASE   1000
+
+#define ICO_SC_WINCHK_TIMER_BASE        20      /* window check timer cycle(ms)     */
+#define ICO_SC_WINCHK_TIMER_BASE_L      50      /* window check timer slow cycle(ms)*/
+#define ICO_SC_WINCHK_ANIMATION_TIME    20      /* window check timer cycle(ms)     */
+#define ICO_SC_WINCHK_CONTENTS_TIME     1000    /* window contents check time(ms)   */
+
+#define ICO_SC_WINCHK_CONTENTS_CHECK        101
+#define ICO_SC_WINCHK_ANIMA_FADE            201
+#define ICO_SC_WINCHK_ANIMA_SLIDETOTOP      211
+#define ICO_SC_WINCHK_ANIMA_SLIDETOBUTTOM   212
+#define ICO_SC_WINCHK_ANIMA_SLIDETOLEFT     213
+#define ICO_SC_WINCHK_ANIMA_SLIDETORIGHT    214
+
+#define ICO_SC_WINANIMA_SHOW                1
+#define ICO_SC_WINANIMA_HIDE                2
+
+#define ICO_SC_WINCONT_CHECK                1
+#define ICO_SC_WINCONT_WAITFILE             2
+
+#define ICO_SC_WINCHK_MAP_SURFACE_EVENT_MAP         1
+#define ICO_SC_WINCHK_MAP_SURFACE_EVENT_UNMAP       2
+#define ICO_SC_WINCHK_MAP_SURFACE_EVENT_CONTENTS    3
+
+struct  ico_sc_win_check_t  {
+    struct ico_sc_win_check_t   *next;
+    uint32_t    surfaceid;
+    short       time;
+    short       cycle;
+    short       lapsed;
+    short       timeout;
+    short       function;
+    short       state;
+    short       par;
+    union   {
+        struct  {
+            short       x;
+            short       y;
+            short       width;
+            short       height;
+            short       screen_width;
+            short       screen_height;
+        }           anim;
+        struct  {
+            short       x;
+            short       y;
+            short       width;
+            short       height;
+            char        path[ICO_SYC_MAX_LEN];
+        }           cont;
+    }           u;
+};
 
 //==========================================================================
 //  Forward declaration
@@ -108,8 +160,6 @@ public:
 
     int lower(int surfaceid, const char *animation, int animationTime);
 
-    int setWindowAnimation(int surfaceid, int type, const char *animation, int time);
-
     int setWindowLayer(int surfaceid, int layerid);
 
     int showLayer(int displayid, int layerid);
@@ -135,13 +185,10 @@ public:
                                           t_ilm_notification_mask mask);
     //
     virtual void activeCB(void *data,
-                          struct ico_window_mgr *ico_window_mgr,
                           uint32_t surfaceid,
                           int32_t select);
 
-    virtual void mapSurfaceCB(void *data,
-                              struct ico_window_mgr *ico_window_mgr,
-                              int32_t event,
+    virtual void mapSurfaceCB(int32_t event,
                               uint32_t surfaceid,
                               uint32_t type,
                               int32_t width,
@@ -149,20 +196,14 @@ public:
                               int32_t stride,
                               uint32_t format);
 
-    virtual void updateSurfaceCB(void *data,
-                                 struct ico_window_mgr *ico_window_mgr,
-                                 uint32_t surfaceid,
-                                 int visible,
-                                 int srcwidth,
-                                 int srcheight,
-                                 int x,
-                                 int y,
-                                 int width,
-                                 int height);
+    static void wlGeniviSurfaceNotification(t_ilm_surface surfaceid,
+                                            struct ilmSurfaceProperties *surfprop,
+                                            t_ilm_notification_mask mask);
 
-    virtual void destroySurfaceCB(void *data,
-                                  struct ico_window_mgr *ico_window_mgr,
-                                  uint32_t surfaceid);
+    virtual void updateSurfaceCB(uint32_t surfaceid,
+                                 struct ilmSurfaceProperties *surfprop);
+
+    virtual void destroySurfaceCB(uint32_t surfaceid);
 
     virtual void updateWinnameCB(uint32_t surfaceid,
                                  const char *winname);
@@ -187,7 +228,8 @@ public:
 
     virtual void createSurfaceCB(void           *data,
                                  struct ivi_controller *ivi_controller,
-                                 uint32_t id_surface);
+                                 uint32_t id_surface,
+                                 int32_t pid, const char *title);
 
     const CicoSCWindow* findWindowObj(int32_t pid, uint32_t surfaceid) const;
 
@@ -217,6 +259,21 @@ private:
                               const char *animation,
                               int        animationTime);
 
+    // window checker
+    void windowCheckerRemove(uint32_t surfaceid);
+
+    void setWindowAnimation(CicoSCWindow *window, int show,
+                            const char *animation, int time);
+
+    void resetWindowAnimation(CicoSCWindow *window);
+
+    void setWindowMap(CicoSCWindow *window, int framerate, const char *filepath);
+
+    void resetWindowMap(uint32_t surfaceid);
+
+protected:
+    static Eina_Bool    ico_SCWindowChecker(void *data);
+
 private:
     /// my instance
     static CicoSCWindowController *ms_myInstance;
@@ -232,6 +289,11 @@ private:
 
     // total of physical display
     unsigned int m_physicalDisplayTotal;
+
+protected:
+    // window check timer
+    static struct ico_sc_win_check_t    *win_check_timer;
+    static struct ico_sc_win_check_t    *win_check_free;
 };
 #endif  // __CICO_SC_WINDOW_CONTROLLER_H__
 // vim:set expandtab ts=4 sw=4:

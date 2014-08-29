@@ -93,7 +93,7 @@ CicoAulItems::CicoAulItems(const CicoAulItems& s)
  */
 CicoAulItems::~CicoAulItems()
 {
-    ICO_TRA("CicoAulItems::~CicoAulItems");
+//  ICO_TRA("CicoAulItems::~CicoAulItems");
     m_CSCWptrs.clear();
 }
 

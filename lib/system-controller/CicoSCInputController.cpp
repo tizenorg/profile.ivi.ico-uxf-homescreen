@@ -40,11 +40,6 @@ using namespace std;
 //--------------------------------------------------------------------------
 CicoSCInputController::CicoSCInputController()
 {
-    CicoSCWayland* wayland = CicoSCWayland::getInstance();
-    wayland->addWaylandIF(ICO_WL_INPUT_MGR_CTRL_IF, this);
-    wayland->addWaylandIF(ICO_WL_EXINPUT_IF, this);
-    wayland->addWaylandIF(ICO_WL_INPUT_MGR_DEV_IF, this);
-
 }
 
 //--------------------------------------------------------------------------
@@ -279,7 +274,6 @@ CicoSCInputController::unsetInputRegion(const string &appid,
  *  @brief  callback to application for input switch information
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] device      input device name
  *  @param [in] type        input device type (as enum type)
  *  @param [in] swname      input switch name
@@ -290,7 +284,6 @@ CicoSCInputController::unsetInputRegion(const string &appid,
 //--------------------------------------------------------------------------
 void
 CicoSCInputController::capabilitiesCB(void               *data,
-                                      struct ico_exinput *ico_exinput,
                                       const char         *device,
                                       int32_t            type,
                                       const char         *swname,
@@ -340,7 +333,6 @@ CicoSCInputController::capabilitiesCB(void               *data,
  *  @brief  callback to application for input code information
  *  
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] device      input device name
  *  @param [in] input       input switch number
  *  @param [in] codename    input code name
@@ -349,7 +341,6 @@ CicoSCInputController::capabilitiesCB(void               *data,
 //--------------------------------------------------------------------------
 void
 CicoSCInputController::codeCB(void               *data,
-                              struct ico_exinput *ico_exinput,
                               const char         *device,
                               int32_t            input,
                               const char         *codename,
@@ -388,7 +379,6 @@ CicoSCInputController::codeCB(void               *data,
  *  @brief  callback to application for switch input 
  *
  *  @param [in] data        user data
- *  @param [in] ico_exinput wayland ico_exinput interface
  *  @param [in] time        input time of millisecond
  *  @param [in] device      input device name
  *  @param [in] input       input switch number
@@ -398,7 +388,6 @@ CicoSCInputController::codeCB(void               *data,
 //--------------------------------------------------------------------------
 void
 CicoSCInputController::inputCB(void               *data,
-                               struct ico_exinput *ico_exinput,
                                uint32_t           time,
                                const char         *device,
                                int32_t            input,
@@ -427,13 +416,11 @@ CicoSCInputController::inputCB(void               *data,
  *  @brief  callback to application for change input region
  *
  *  @param [in] data                user data
- *  @param [in] ico_input_mgr_dev   wayland ico_exinput interface
  *  @param [in] region              input regions
  */
 //--------------------------------------------------------------------------
 void
 CicoSCInputController::regionCB(void                        *data,
-                                struct ico_input_mgr_device *ico_input_mgr_dev,
                                 struct wl_array             *region)
 {
     ICO_TRA("CicoSCInputController::regionCB Enter");

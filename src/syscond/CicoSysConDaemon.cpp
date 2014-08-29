@@ -77,7 +77,7 @@ CicoSysConDaemon::onCreate(void *user_data)
 
     try {
         int ret = ICO_SYC_EOK;
-        CicoSystemConfig::getInstance()->load("/usr/apps/org.tizen.ico.system-controller/res/config/system.xml");
+        (void) CicoSystemConfig::getInstance();
 
         initAulListenXSignal();
 

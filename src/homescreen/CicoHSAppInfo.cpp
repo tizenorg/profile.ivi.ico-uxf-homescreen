@@ -19,6 +19,7 @@
 #include "CicoSystemConfig.h"
 #include "CicoConf.h"
 #include "CicoHSLifeCycleController.h"
+#include "CicoHSWindow.h"
 
 //==========================================================================
 //  public functions
@@ -57,13 +58,14 @@ CicoHSAppInfo::~CicoHSAppInfo(void)
 int
 CicoHSAppInfo::AddWindowInfo(ico_syc_win_info_t *wininfo)
 {
+    ico_syc_win_info_t  wk_wininfo;
 
     if (NULL == wininfo) {
         ICO_ERR("wininfo is null.");
         return ICO_ERROR;
     }
 
-    ICO_TRA("CicoHSAppInfo::AddWindowInfo Enter(appid=%s surface=%x",
+    ICO_TRA("CicoHSAppInfo::AddWindowInfo Enter(appid=%s surface=%x)",
             wininfo->appid, wininfo->surface);
 
     // if exist window information, update current window information
@@ -84,9 +86,16 @@ CicoHSAppInfo::AddWindowInfo(ico_syc_win_info_t *wininfo)
         ICO_ERR("CicoHSAppInfo::AddWindowInfo Leave(ERR)");
         return ICO_ERROR;
     }
-    SetWindowInfo(tmp_win_info, wininfo);
+    memcpy(&wk_wininfo, wininfo, sizeof(wk_wininfo));
+    if ((wk_wininfo.name == NULL) || (*wk_wininfo.name == 0))   {
+        wk_wininfo.name = (char *)CicoHSWindow::getWindowName(m_window_num);
+        ICO_TRA("CicoHSAppInfo::AddWindowInfo surface=%d idx=%d name=<%s>",
+                wk_wininfo.surface, m_window_num,
+                wk_wininfo.name ? wk_wininfo.name : "(null)");
+    }
+    SetWindowInfo(tmp_win_info, &wk_wininfo);
     this->m_window_info.push_back(tmp_win_info);
-    ++m_window_num;
+    ++ m_window_num;
 
     ICO_TRA("CicoHSAppInfo::AddWindowInfo Leave(OK)");
     return ICO_OK;
@@ -103,6 +112,8 @@ CicoHSAppInfo::AddWindowInfo(ico_syc_win_info_t *wininfo)
 int
 CicoHSAppInfo::AddWindowAttr(ico_syc_win_attr_t *winattr)
 {
+    ico_syc_win_attr_t  wk_winattr;
+
     if (NULL == winattr) {
         ICO_ERR("winattr is null.");
         return ICO_ERROR;
@@ -129,10 +140,17 @@ CicoHSAppInfo::AddWindowAttr(ico_syc_win_attr_t *winattr)
         ICO_TRA("CicoHSAppInfo::AddWindowAttr Leave(ERR)");
         return ICO_ERROR;
     }
+    memcpy(&wk_winattr, winattr, sizeof(wk_winattr));
+    if ((wk_winattr.name == NULL) || (*wk_winattr.name == 0))   {
+        wk_winattr.name = (char *)CicoHSWindow::getWindowName(m_window_num);
+        ICO_TRA("CicoHSAppInfo::AddWindowAttr surface=%d idx=%d name=<%s>",
+                wk_winattr.surface, m_window_num,
+                wk_winattr.name ? wk_winattr.name : "(null)");
+    }
 
-    SetWindowAttr(tmp_win_info, winattr);
+    SetWindowAttr(tmp_win_info, &wk_winattr);
     m_window_info.push_back(tmp_win_info);
-    ++m_window_num;
+    ++ m_window_num;
 
     ICO_TRA("CicoHSAppInfo::AddWindowAttr Leave(OK)");
     return ICO_OK;
@@ -420,7 +438,7 @@ CicoHSAppInfo::SetWindowInfo(ico_hs_window_info *hs_wininfo,
     }
 
     // set window name(window title)
-    if(wininfo->name != NULL){
+    if((wininfo->name != NULL) && (*wininfo->name != 0)) {
         strncpy(hs_wininfo->name, wininfo->name, ICO_HS_MAX_WINDOW_NAME);
     }
     // set surface id
@@ -445,9 +463,10 @@ CicoHSAppInfo::SetWindowAttr(ico_hs_window_info *hs_wininfo,
             "(winifo=%p "
             "appid=%s winname=%s zone=%s surface=%x nodeid=%d layer=%d "
             "x/y=%d/%d w/h=%d/%d raise=%d visible=%d active=%d)",
-            hs_wininfo,
-            winattr->appid, winattr->name, winattr->zone,
-            winattr->surface, winattr->nodeid, winattr->layer,
+            hs_wininfo, winattr->appid,
+            ((winattr->name != NULL) && (*winattr->name != 0)) ?
+                winattr->name : hs_wininfo->name,
+            winattr->zone, winattr->surface, winattr->nodeid, winattr->layer,
             winattr->pos_x, winattr->pos_y, winattr->width, winattr->height,
             winattr->raise, winattr->visible, winattr->active);
 
@@ -455,7 +474,7 @@ CicoHSAppInfo::SetWindowAttr(ico_hs_window_info *hs_wininfo,
         strncpy(hs_wininfo->appid, winattr->appid, ICO_HS_MAX_PROCESS_NAME);
     }
 
-    if (winattr->name != NULL) {
+    if ((winattr->name != NULL) && (*winattr->name != 0)) {
         strncpy(hs_wininfo->name, winattr->name, ICO_HS_MAX_WINDOW_NAME);
     }
 
@@ -492,9 +511,10 @@ CicoHSAppInfo::GetFreeWindowInfoBuffer(void)
     ico_hs_window_info *tmp_win_info;
     for (int ii = 0; ii < ICO_HS_APP_MAX_WINDOW_NUM; ii++) {
         if (m_window_info_i[ii].valid == false) {
-           tmp_win_info = &m_window_info_i[ii];
-           tmp_win_info->valid = true;
-           return tmp_win_info;
+            tmp_win_info = &m_window_info_i[ii];
+            memset(tmp_win_info, 0, sizeof(ico_hs_window_info));
+            tmp_win_info->valid = true;
+            return tmp_win_info;
         }
     }
     return NULL;

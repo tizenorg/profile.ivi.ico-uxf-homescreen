@@ -50,19 +50,13 @@ protected:
     CicoSCWaylandIF(const CicoSCWaylandIF &object);
 
 protected:
-    /// interface name of wayland multi window manager
-    static const char * ICO_WL_WIN_MGR_IF;
-    /// interface name of wayland input manager control
-    static const char * ICO_WL_INPUT_MGR_CTRL_IF;
-    /// interface name of wayland exinput
-    static const char * ICO_WL_EXINPUT_IF;
-    /// interface name of wayland input manager device
-    static const char * ICO_WL_INPUT_MGR_DEV_IF;
-    /// interface name of genivi ivi_application
-    static const char * ICO_WL_IVI_APPLICATION_IF;
-    /// interface name of genivi ivi_controller
+    // interface name of genivi ivi_controller
     static const char * ICO_WL_IVI_CONTROLLER_IF;
-    /// interface name of wayland output
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
+    // interface name of genivi ivi_application
+    static const char * ICO_WL_IVI_APPLICATION_IF;
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
+    // interface name of wayland output
     static const char * ICO_WL_OUTPUT_IF;
 
     // initialized flag
