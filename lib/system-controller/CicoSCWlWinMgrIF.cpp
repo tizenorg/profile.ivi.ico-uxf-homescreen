@@ -887,7 +887,8 @@ CicoSCWlWinMgrIF::wlOutputModeCB(void             *data,
 void
 CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
                                             struct ivi_application *ivi_application,
-                                            int32_t pid, const char *title)
+                                            int32_t pid, const char *title,
+                                            uint32_t id_surface)
 {
     struct creation_surface_wait    *tp;
     struct creation_surface_wait    *tp2;
@@ -1006,7 +1007,9 @@ CicoSCWlWinMgrIF::wlIviCtrlLayerCB(void *data,
 void
 CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void *data,
                                      struct ivi_controller *ivi_controller,
-                                     uint32_t id_surface)
+                                     uint32_t id_surface,
+                                     int32_t pid,
+                                     const char *title)
 {
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: Enter(%x)", id_surface);
 
