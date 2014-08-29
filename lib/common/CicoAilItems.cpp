@@ -90,8 +90,8 @@ CicoAilItems::CicoAilItems(const CicoAilItems &s)
  */
 CicoAilItems::~CicoAilItems()
 {
-    ICO_TRA("start");
-    ICO_TRA("end");
+//  ICO_TRA("start");
+//  ICO_TRA("end");
 }
 /**
  * @brief init member
@@ -604,8 +604,8 @@ bool CicoAilItems::categoryGetInput(const string& inputDev,
     }
 
     CicoSystemConfig* CSCSC = CicoSystemConfig::getInstance();
-    m_sound = CSCSC->getInputDevIdbyName(inputDev);
-    ICO_DBG("sound %s->%d", inputDev.c_str(), m_sound);
+    m_inputDev = CSCSC->getInputDevIdbyName(inputDev);
+    ICO_DBG("input %s->%d", inputDev.c_str(), m_inputDev);
     if (false == sw.empty()) {
         m_switch = CSCSC->getSwitchIdbyName(inputDev, sw);
         ICO_DBG("switch %s, %s->%d", inputDev.c_str(), sw.c_str(), m_switch);

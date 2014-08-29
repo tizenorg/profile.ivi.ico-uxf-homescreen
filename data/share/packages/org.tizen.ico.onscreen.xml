@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.onscreen" version="0.9.21" install-location="internal-only">
+<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.onscreen" version="0.9.31" install-location="internal-only">
 	<label>OnScreen</label>
   	<description>IVI OnScreen Application</description>
 	<ui-application appid="org.tizen.ico.onscreen" exec="/usr/apps/org.tizen.ico.onscreen/bin/OnScreen" nodisplay="true" multiple="false" type="capp" taskmanage="true">

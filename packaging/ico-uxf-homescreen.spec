@@ -1,14 +1,13 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
-Version:    0.9.22
-Release:    0
+Version:    0.9.31
+Release:    1.1
 Group:      Automotive / ICO Homescreen
 License:    Apache-2.0
 URL:        ""
 Source0:    %{name}-%{version}.tar.bz2
 
-BuildRequires: pkgconfig(wayland-client) >= 1.4
-BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.21
+BuildRequires: pkgconfig(wayland-client) >= 1.5
 BuildRequires: pkgconfig(egl)
 BuildRequires: pkgconfig(glib-2.0)
 BuildRequires: pkgconfig(ecore)
@@ -33,17 +32,16 @@ BuildRequires: pkgconfig(notification)
 BuildRequires: pkgconfig(appsvc)
 BuildRequires: boost-devel
 BuildRequires: mesa-devel
-BuildRequires: weston-ivi-shell
-BuildRequires: weston-ivi-shell-devel
-BuildRequires: genivi-shell
-BuildRequires: genivi-shell-devel
+BuildRequires: weston-ivi-shell-devel >= 0.1.7
+BuildRequires: genivi-shell-devel >= 0.2.3
 BuildRequires: ico-uxf-utilities-devel >= 0.9.07
-Requires: weston >= 1.4
-Requires: weston-ivi-shell
-Requires: genivi-shell
-Requires: ico-uxf-weston-plugin >= 0.9.21
+Requires: weston >= 1.5
+Requires: weston-ivi-shell >= 0.1.7
+Requires: genivi-shell >= 0.2.3
 Requires: ico-uxf-utilities >= 0.9.07
 Requires: system-controller
+Conflicts: weston-ivi-config
+Conflicts: weston-ivi-shell-config
 
 %description
 Sample homescreen application.
@@ -53,10 +51,9 @@ Sample homescreen application.
 Summary: System controller for ICO HomeScreen
 Group:   Automotive / ICO Homescreen
 Requires: %{name} = %{version}-%{release}
-Requires: weston >= 1.4
-Requires: weston-ivi-shell
-Requires: genivi-shell
-Requires: ico-uxf-weston-plugin >= 0.9.21
+Requires: weston >= 1.5
+Requires: weston-ivi-shell >= 0.1.7
+Requires: genivi-shell >= 0.2.3
 Requires: ico-uxf-utilities >= 0.9.07
 Provides: system-controller
 
@@ -109,12 +106,15 @@ rm -rf %{buildroot}
 
 %make_install
 
-cp tool/ico_clear_screen %{buildroot}%{_bindir}
 cp tool/ico_change_loginuser %{buildroot}%{_bindir}
-cp tool/notification/ico_del_notification %{buildroot}%{_bindir}
-cp tool/notification/ico_dump_notification %{buildroot}%{_bindir}
-cp tool/notification/ico_send_notification %{buildroot}%{_bindir}
-cp tool/notification/ico_send_notification2 %{buildroot}%{_bindir}
+
+# configurations
+%define weston_conf %{_sysconfdir}/xdg/weston
+%define ecore_setting %{_sysconfdir}/profile.d
+mkdir -p %{buildroot}%{weston_conf} > /dev/null 2>&1
+mkdir -p %{buildroot}%{ecore_setting} > /dev/null 2>&1
+install -m 0644 settings/weston.ini %{buildroot}%{weston_conf}
+install -m 0644 settings/ecore.sh %{buildroot}%{ecore_setting}
 
 %post
 /sbin/ldconfig
@@ -150,12 +150,9 @@ rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
 /usr/share/packages/org.tizen.ico.onscreen.xml
 %{_libdir}/libico-appfw.*
 %{_libdir}/libico-state-machine.*
-%{_bindir}/ico_clear_screen
 %{_bindir}/ico_change_loginuser
-%{_bindir}/ico_del_notification
-%{_bindir}/ico_dump_notification
-%{_bindir}/ico_send_notification
-%{_bindir}/ico_send_notification2
+%{weston_conf}/weston.ini
+%{ecore_setting}/ecore.sh
 
 %files system-controller
 %manifest %{name}.manifest

@@ -16,8 +16,6 @@
 #ifndef _ICO_SYC_INPUTCTL_H_
 #define _ICO_SYC_INPUTCTL_H_
 
-#include <ico-uxf-weston-plugin/ico_input_mgr-client-protocol.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -43,10 +41,10 @@ typedef enum _input_alloc {
  * @ICO_SYC_INPUT_TYPE_SWITCH: switch event
  */
 typedef enum _input_type {
-    ICO_SYC_INPUT_TYPE_POINTER  = ICO_INPUT_MGR_DEVICE_TYPE_POINTER,
-    ICO_SYC_INPUT_TYPE_KEYBOARD = ICO_INPUT_MGR_DEVICE_TYPE_KEYBOARD,
-    ICO_SYC_INPUT_TYPE_TOUCH    = ICO_INPUT_MGR_DEVICE_TYPE_TOUCH,
-    ICO_SYC_INPUT_TYPE_SWITCH   = ICO_INPUT_MGR_DEVICE_TYPE_SWITCH
+    ICO_SYC_INPUT_TYPE_POINTER  = 1,
+    ICO_SYC_INPUT_TYPE_KEYBOARD = 2,
+    ICO_SYC_INPUT_TYPE_TOUCH    = 4,
+    ICO_SYC_INPUT_TYPE_SWITCH   = 8
 } ico_syc_input_type_e;
 
 /*============================================================================*/

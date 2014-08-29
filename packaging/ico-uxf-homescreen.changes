@@ -1,3 +1,9 @@
+* Fri Aug 29 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> submit/tizen/20140827.131718@f8d5f54
+- 0.9.31 release
+-- Corresponding to TizenIVI3.0 M14.3,
+   GENIVI-LayerManagement was used instead of ico-uxf-weston-plugin,
+   and ico-uxf-weston-plugin was eliminated.
+
 * Tue Apr 08 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/panda/20140403.020026@294446b
 - 0.9.22 release
 -- bug fix: TIVI-3007 - Home button doesn't response after some operations.

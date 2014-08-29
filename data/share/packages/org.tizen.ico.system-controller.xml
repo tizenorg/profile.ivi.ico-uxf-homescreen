@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.system-controller" version="0.9.21" install-location="internal-only">
+<manifest xmlns="http://tizen.org/ns/packages" package="org.tizen.ico.system-controller" version="0.9.31" install-location="internal-only">
 	<label>system-controller</label>
 	<author email="" href=""> </author>
 	<description>ico system-controller</description>

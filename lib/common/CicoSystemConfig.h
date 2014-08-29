@@ -52,6 +52,11 @@ class CicoSCPositionOSConf;
 #endif
 
 //==========================================================================
+//  Default configuration file
+//==========================================================================
+#define ICO_SYSTEM_CONFIG_PATH  "/usr/apps/org.tizen.ico.system-controller/res/config/system.xml"
+
+//==========================================================================
 /**
  *  @brief  This class has function of access to system config information
  */

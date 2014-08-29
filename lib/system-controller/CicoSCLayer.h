@@ -55,7 +55,7 @@ private:
 
 public:
     int     layerid;      //!< layer id
-    int     type;         //!< enum ico_window_mgr_layer_attr
+    int     type;         //!< layer attribute
     int     width;        //!< The number of the lateral pixels
     int     height;       //!< The number of vertical pixels
     int     displayid;    //!< display ID

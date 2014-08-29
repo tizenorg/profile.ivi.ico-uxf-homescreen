@@ -44,9 +44,11 @@ CicoSCWindow::CicoSCWindow()
 //--------------------------------------------------------------------------
 CicoSCWindow::~CicoSCWindow()
 {
-    ICO_TRA("CicoSCWindow::~CicoSCWindow Enter");
+//  ICO_TRA("CicoSCWindow::~CicoSCWindow Enter");
+#ifdef GENIVI_WL_SHELL_INFO         /* GENIVI-LM is supporting the wl_shell_info    */
     CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(surfaceid);
-    ICO_TRA("CicoSCWindow::~CicoSCWindow Leave");
+#endif /*GENIVI_WL_SHELL_INFO*/     /* GENIVI-LM is supporting the wl_shell_info    */
+//  ICO_TRA("CicoSCWindow::~CicoSCWindow Leave");
 }
 
 //--------------------------------------------------------------------------
