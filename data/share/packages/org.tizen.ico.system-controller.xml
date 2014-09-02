@@ -5,6 +5,6 @@
 	<description>ico system-controller</description>
 	<ui-application appid="org.tizen.ico.system-controller" exec="/usr/apps/org.tizen.ico.system-controller/bin/IcoSysconDaemon" nodisplay="true" multiple="false" type="capp" taskmanage="false">
 		<label>system-controller</label>
-		<icon> </icon>
+		<icon></icon>
 	</ui-application>
 </manifest>
