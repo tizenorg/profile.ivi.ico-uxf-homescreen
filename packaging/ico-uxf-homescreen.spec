@@ -59,6 +59,7 @@ Requires: genivi-shell
 Requires: ico-uxf-weston-plugin >= 0.9.21
 Requires: ico-uxf-utilities >= 0.9.07
 Provides: system-controller
+Conflicts: murphy-system-controller
 
 %description system-controller
 A service to provide the low-level functionality that ICO HomeScreen
