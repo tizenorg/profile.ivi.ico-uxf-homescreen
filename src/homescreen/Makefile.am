@@ -96,30 +96,15 @@ install-exec-hook:
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/sound
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
 	mkdir -p $(INSTALL_ROOT)/usr/share/packages
+	mkdir -p $(INSTALL_ROOT)/usr/share/icons/default/small/
 	install -m 0755 HomeScreen $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/bin
 	install -m 0644 home_screen_bg.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
 	install -m 0644 home_screen_touch.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/bg.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/ctrl.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_off.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_off_2.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_on.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/applist_on_2.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/api_all_off.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/api_all_on.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_n.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pagePointer_p.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pageDownCursor.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/pageUpCursor.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_really.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_no.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/button_yes.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/termIcon.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
-	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/tizen_32.png $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/images/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/images
 	install -m 0644 $(top_srcdir)/data/share/packages/org.tizen.ico.homescreen.xml $(INSTALL_ROOT)/usr/share/packages
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/config
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/sound/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/sound
-	cp -r $(top_srcdir)/data/apps/org.tizen.ico.homescreen $(INSTALL_ROOT)/usr/apps/
+	install -m 0644 $(top_srcdir)/data/apps/org.tizen.ico.homescreen/res/icons/default/small/* $(INSTALL_ROOT)/usr/share/icons/default/small/
 
 uninstall:
 	rm -rf $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen

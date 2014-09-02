@@ -156,6 +156,9 @@ rm -f /usr/share/applications/org.tizen.ico.system-controller.desktop
 %{_bindir}/ico_dump_notification
 %{_bindir}/ico_send_notification
 %{_bindir}/ico_send_notification2
+%{_datadir}/icons/default/small/org.tizen.ico.homescreen.png
+%{_datadir}/icons/default/small/org.tizen.ico.statusbar.png
+%{_datadir}/icons/default/small/org.tizen.ico.onscreen.png
 
 %files system-controller
 %manifest %{name}.manifest

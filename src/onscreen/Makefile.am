@@ -65,10 +65,12 @@ install-exec-hook:
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/config
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/themes
 	mkdir -p $(INSTALL_ROOT)/usr/share/packages
+	mkdir -p $(INSTALL_ROOT)/usr/share/icons/default/small/
 	install -m 0755 OnScreen $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/bin
 	install -m 0644 $(top_srcdir)/data/share/packages/org.tizen.ico.onscreen.xml $(INSTALL_ROOT)/usr/share/packages
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.onscreen/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/config
 	install -m 0644 *.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen/res/themes
+	install -m 0644 $(top_srcdir)/data/apps/org.tizen.ico.onscreen/res/icons/default/small/* $(INSTALL_ROOT)/usr/share/icons/default/small/
 
 uninstall:
 	rm -rf $(INSTALL_ROOT)/usr/apps/org.tizen.ico.onscreen
