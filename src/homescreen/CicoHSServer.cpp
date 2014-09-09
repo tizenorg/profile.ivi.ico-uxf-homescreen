@@ -465,12 +465,12 @@ CicoHSServer::receiveEventCB(const struct ico_uws_context *context,
 
     switch (event) {
     case ICO_UWS_EVT_CLOSE:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_CLOSE(id=0x%08x)", (int)id);
+        ICO_DBG(">>>RECV ICO_UWS_EVT_CLOSE(id=%p)", id);
 //        ICO_TRA("CicoHSServer::receiveEventCB Leave");
         return;
     case ICO_UWS_EVT_ERROR:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_ERROR(id=0x%08x, err=%d)", 
-                (int)id, detail->_ico_uws_error.code);
+        ICO_DBG(">>>RECV ICO_UWS_EVT_ERROR(id=%p, err=%d)",
+                id, detail->_ico_uws_error.code);
 //        ICO_TRA("CicoHSServer::receiveEventCB Leave");
         return;
     default:
@@ -489,16 +489,16 @@ CicoHSServer::receiveEventCB(const struct ico_uws_context *context,
 
     switch (event) {
     case ICO_UWS_EVT_OPEN:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_OPEN(id=0x%08x)", (int)id); 
+        ICO_DBG(">>>RECV ICO_UWS_EVT_OPEN(id=%p)", id);
         break;
     case ICO_UWS_EVT_CLOSE:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_CLOSE(id=0x%08x)", (int)id);
+        ICO_DBG(">>>RECV ICO_UWS_EVT_CLOSE(id=%p)", id);
         delete handler;
         break;
     case ICO_UWS_EVT_RECEIVE:
     {
-        ICO_DBG(">>>RECV ICO_UWS_EVT_RECEIVE(id=0x%08x, msg=%s, len=%d)", 
-                (int)id, (char *)detail->_ico_uws_message.recv_data,
+        ICO_DBG(">>>RECV ICO_UWS_EVT_RECEIVE(id=%p, msg=%s, len=%d)",
+                id, (char *)detail->_ico_uws_message.recv_data,
                 detail->_ico_uws_message.recv_len);
 
         // convert message to command
@@ -511,14 +511,14 @@ CicoHSServer::receiveEventCB(const struct ico_uws_context *context,
         break;
     }
     case ICO_UWS_EVT_ADD_FD:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_ADD_FD(id=0x%08x, fd=%d)",
-                (int)id, detail->_ico_uws_fd.fd);
+        ICO_DBG(">>>RECV ICO_UWS_EVT_ADD_FD(id=%p, fd=%d)",
+                id, detail->_ico_uws_fd.fd);
         handler->fd = detail->_ico_uws_fd.fd;
         addPollFd(handler);
         break;
     case ICO_UWS_EVT_DEL_FD:
-        ICO_DBG(">>>RECV ICO_UWS_EVT_DEL_FD(id=0x%08x, fd=%d, appid=%s)",
-                (int)id, detail->_ico_uws_fd.fd, handler->appid.c_str());
+        ICO_DBG(">>>RECV ICO_UWS_EVT_DEL_FD(id=%p, fd=%d, appid=%s)",
+                id, detail->_ico_uws_fd.fd, handler->appid.c_str());
         clearRecvCmdQueue(handler->appid);
         clearSendMsgQueue(handler->appid);
         delPollFd(handler);

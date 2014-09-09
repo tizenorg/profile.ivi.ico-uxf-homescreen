@@ -106,8 +106,8 @@ CicoHSMenuTouch::TouchDownMenu(void *data, Evas *evas, Evas_Object *obj, void *e
     char *appid = reinterpret_cast<char*>(data);
 
     if (appid == NULL) {
-        ICO_DBG("CicoHSMenuTouch::TouchDownMenu: %08x (%d,%d) No App",
-            (int)data, touch_state_b_x, touch_state_b_y);
+        ICO_DBG("CicoHSMenuTouch::TouchDownMenu: %p (%d,%d) No App",
+            data, touch_state_b_x, touch_state_b_y);
         return;
     }
     ICO_PRF("TOUCH_EVENT Menu Down (%d,%d) app=%s",
