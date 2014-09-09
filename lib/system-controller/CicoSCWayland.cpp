@@ -147,7 +147,7 @@ CicoSCWayland::initialize(void)
             break;
         }
         ICO_DBG("called: wl_display_dispatch"
-                "(wlDisplay=0x%08x)", (int)m_wlDisplay);
+                "(wlDisplay=%p)", (void *)m_wlDisplay);
         wl_display_dispatch(m_wlDisplay);
         usleep(20*1000);
     }
@@ -162,10 +162,10 @@ CicoSCWayland::initialize(void)
     }
 
     // flush display 
-    ICO_DBG("called: wl_display_flush(wlDisplay=0x%08x)", (int)m_wlDisplay);
+    ICO_DBG("called: wl_display_flush(wlDisplay=%p)", (void *)m_wlDisplay);
     wl_display_flush(m_wlDisplay);
 
-    ICO_DBG("called: wl_display_get_fd(wlDisplay=0x%08x)", (int)m_wlDisplay);
+    ICO_DBG("called: wl_display_get_fd(wlDisplay=%p)", (void *)m_wlDisplay);
     m_wlFd = wl_display_get_fd(m_wlDisplay);
     ICO_DBG("CicoSCWayland::initialize: Wayland/Weston fd=%d", m_wlFd);
 

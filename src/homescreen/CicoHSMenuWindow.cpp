@@ -917,7 +917,7 @@ CicoHSMenuWindow::MoveToNextAnimation(void *data,double pos)
 {
     int current_page;
     double frame = ecore_animator_pos_map(pos, ECORE_POS_MAP_LINEAR, 0.5, 1);
-    current_page = reinterpret_cast<int>(data);
+    current_page = reinterpret_cast<intptr_t>(data);
 
     for (int ii = 0;ii < menu_window_instance->all_tile_num;ii++) {
         if (menu_window_instance->menu_tile[ii] == NULL) {
@@ -961,7 +961,7 @@ CicoHSMenuWindow::MoveToBackAnimation(void *data,double pos)
 {
     int current_page;
     double frame = ecore_animator_pos_map(pos, ECORE_POS_MAP_LINEAR, 0.5, 1);
-    current_page = reinterpret_cast<int>(data);
+    current_page = reinterpret_cast<intptr_t>(data);
 
     for (int ii = 0;ii < menu_window_instance->all_tile_num;ii++) {
         if (menu_window_instance->menu_tile[ii] == NULL) {
