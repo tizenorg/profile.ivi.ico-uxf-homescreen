@@ -180,7 +180,7 @@ CicoHSMenuTile::FreeObject(void)
 {
     char    sWork[PATH_MAX];
 
-    ICO_DBG("CicoHSMenuTile::FreeObject(appid=%08x<%s>)", (int)this->appid, appid);
+    ICO_DBG("CicoHSMenuTile::FreeObject(appid=%p<%s>)", (void *)this->appid, appid);
 
     if (thumb.surface)  {
         sprintf(sWork, "%s/%08x.bpm", ICO_HS_THUMB_ICODIR ICO_HS_THUMB_FILEDIR,
@@ -242,8 +242,8 @@ CicoHSMenuTile::MovePosition(int page, int position)
     pos_x = GetPositionX();
     pos_y = GetPositionY();
 
-    ICO_DBG("CicoHSMenuTile::MovePosition(appid=%08x<%s> tile=(%d,%d))",
-            (int)this->appid, appid, pos_x, pos_y);
+    ICO_DBG("CicoHSMenuTile::MovePosition(appid=%p<%s> tile=(%d,%d))",
+            (void *)this->appid, appid, pos_x, pos_y);
 
     evas_object_move(tile, pos_x, pos_y);
     if (thumb_tile) {
@@ -275,9 +275,9 @@ CicoHSMenuTile::OffsetMove(int offset_x, int offset_y)
     pos_x = GetPositionX() + offset_x;
     pos_y = GetPositionY() + offset_y;
 
-    ICO_DBG("CicoHSMenuTile::OffsetMove(appid=%08x<%s> offset=%d,%d tile=(%d,%d) obj=%08x %08x %08x)",
-            (int)this->appid, appid, offset_x, offset_y, pos_x, pos_y,
-            (int)this->icon, (int)this->tile, (int)this->thumb_tile);
+    ICO_DBG("CicoHSMenuTile::OffsetMove(appid=%p<%s> offset=%d,%d tile=(%d,%d) obj=%p %p %p)",
+            (void *)this->appid, appid, offset_x, offset_y, pos_x, pos_y,
+            (void *)this->icon, (void *)this->tile, (void *)this->thumb_tile);
 
     evas_object_move(tile, pos_x, pos_y);
     if (thumb_tile) {
@@ -521,8 +521,8 @@ CicoHSMenuTile::ValidThumbnail(int surface)
 {
     char    sWork[PATH_MAX];
 
-    ICO_DBG("CicoHSMenuTile::ValidThumbnail(appid=%08x<%s>) run=%d surf=%08x",
-            (int)this->appid, appid, app_running, surface);
+    ICO_DBG("CicoHSMenuTile::ValidThumbnail(appid=%p<%s>) run=%d surf=%08x",
+            (void *)this->appid, appid, app_running, surface);
 
     if ((! app_running) || (surface == 0))  {
         if (thumb.surface != 0) {
@@ -625,8 +625,8 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 #pragma pack(pop)
 #endif
 
-    ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%08x<%s>) info=%08x surf=%08x",
-            (int)this->appid, appid, (int)info, info ? info->surface : 0);
+    ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%p<%s>) info=%p surf=%08x",
+            (void *)this->appid, appid, (void *)info, info ? info->surface : 0);
 
     if ((info == NULL) || (info->surface == 0)) {
         unmap = 1;
@@ -842,8 +842,8 @@ void
 CicoHSMenuTile::SetOrgThumbnail(CicoHSMenuTile *orgTile)
 {
 
-    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Enter(appid=%08x<%s>) run=%d surf=%08x",
-            (int)this->appid, this->appid, app_running, orgTile->thumb.surface );
+    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Enter(appid=%p<%s>) run=%d surf=%08x",
+            (void *)this->appid, this->appid, app_running, orgTile->thumb.surface );
 
     /* check surface of orgTile */
     if ( orgTile == NULL || orgTile->thumb.surface == 0 ) {
@@ -865,8 +865,8 @@ CicoHSMenuTile::SetOrgThumbnail(CicoHSMenuTile *orgTile)
 
     SetThumbnail( &info );
 
-    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Leave(appid=%08x<%s>) run=%d surf=%08x",
-            (int)this->appid, this->appid, app_running, orgTile->thumb.surface );
+    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Leave(appid=%p<%s>) run=%d surf=%08x",
+            (void *)this->appid, this->appid, app_running, orgTile->thumb.surface );
 
 }
 // vim: set expandtab ts=4 sw=4:

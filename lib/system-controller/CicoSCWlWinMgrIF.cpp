@@ -1113,7 +1113,7 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
     uint32_t                        id_surface;
     int                             surface_count;
 
-    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Enter(surf=%08x)", (int)surface);
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Enter(surf=%p)", (void *)surface);
 
     if (NULL == data) {
         ICO_WRN("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Leave(data is null)");

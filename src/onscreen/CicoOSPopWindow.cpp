@@ -140,9 +140,9 @@ CicoOSPopWindow::showPopup()
 
     // Get icon path
     const char *icon = GetIconPath();
-    ICO_DBG("Received: %s : %i : %s : %s : %s : %x",
+    ICO_DBG("Received: %s : %i : %s : %s : %s : %p",
             pkgname, priv_id, title, content,
-            text, (int)service_handle);
+            text, (void *)service_handle);
 
     if (NULL != service_handle) {
         const char* pn = appsvc_get_pkgname(service_handle);

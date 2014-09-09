@@ -63,8 +63,8 @@ CicoHSSwipeTouch::Initialize(CicoHSControlBarWindow* ctl_bar, CicoHSAppHistoryEx
     app_history = apphist;
     full_width = width;
     full_height = height;
-    ICO_DBG("Initialize: ctlbar=%08x apphist=%08x width=%d height=%d",
-            (int)ctl_bar, (int)apphist, width, height);
+    ICO_DBG("Initialize: ctlbar=%p apphist=%p width=%d height=%d",
+            (void *)ctl_bar, (void *)apphist, width, height);
 }
 
 /*--------------------------------------------------------------------------*/
