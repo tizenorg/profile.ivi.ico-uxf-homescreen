@@ -917,7 +917,7 @@ CicoHSMenuWindow::MoveToNextAnimation(void *data,double pos)
 {
     int current_page;
     double frame = ecore_animator_pos_map(pos, ECORE_POS_MAP_LINEAR, 0.5, 1);
-    current_page = reinterpret_cast<int>(data);
+    current_page = ICO_PTR_TO_INT(data);
 
     for (int ii = 0;ii < menu_window_instance->all_tile_num;ii++) {
         if (menu_window_instance->menu_tile[ii] == NULL) {
@@ -961,7 +961,7 @@ CicoHSMenuWindow::MoveToBackAnimation(void *data,double pos)
 {
     int current_page;
     double frame = ecore_animator_pos_map(pos, ECORE_POS_MAP_LINEAR, 0.5, 1);
-    current_page = reinterpret_cast<int>(data);
+    current_page = ICO_PTR_TO_INT(data);
 
     for (int ii = 0;ii < menu_window_instance->all_tile_num;ii++) {
         if (menu_window_instance->menu_tile[ii] == NULL) {
@@ -1126,7 +1126,7 @@ CicoHSMenuWindow::GoNextMenu(void)
     /*tile*/
     ecore_animator_frametime_set(1.0f / 30);
     ecore_animator_timeline_add(0.4, MoveToNextAnimation,
-                                reinterpret_cast<void*>(current_page));
+                                ICO_INT_TO_PTR(current_page));
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1164,7 +1164,7 @@ CicoHSMenuWindow::GoBackMenu(void)
     /*tile*/
     ecore_animator_frametime_set(1.0f / 30);
     ecore_animator_timeline_add(0.4, MoveToBackAnimation,
-                                reinterpret_cast<void*>(current_page));
+                                ICO_INT_TO_PTR(current_page));
 
 }
 

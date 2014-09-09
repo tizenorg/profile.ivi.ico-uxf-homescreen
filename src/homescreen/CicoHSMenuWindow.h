@@ -66,6 +66,9 @@
 /* Layer */
 #define ICO_HS_MENU_TERMINATE_BUTTON_LAYER 5
 
+#define ICO_PTR_TO_INT(p) ((int) ((intptr_t) (p)))
+#define ICO_INT_TO_PTR(u) ((void *) ((intptr_t) (u)))
+
 typedef struct _CicoLayoutInfo{
    int appidx;
    int page;
