@@ -157,6 +157,7 @@ rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
 %{_datadir}/icons/default/small/org.tizen.ico.homescreen.png
 %{_datadir}/icons/default/small/org.tizen.ico.statusbar.png
 %{_datadir}/icons/default/small/org.tizen.ico.onscreen.png
+/usr/apps/org.tizen.ico.system-controller/res/config
 
 %files system-controller
 %manifest %{name}.manifest
@@ -165,7 +166,7 @@ rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
 /usr/lib/systemd/user/ico-uxf-wait-launchpad-ready.path
 /usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
 /usr/lib/systemd/user/ico-system-controller.service
-/usr/apps/org.tizen.ico.system-controller
+/usr/apps/org.tizen.ico.system-controller/bin
 %attr(644,app,app) /home/app/ico/defaultApps.info
 %attr(755,app,app) /home/app/ico
 
