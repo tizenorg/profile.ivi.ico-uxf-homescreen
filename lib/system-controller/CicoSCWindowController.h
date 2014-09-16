@@ -185,9 +185,11 @@ public:
                               int32_t height,
                               int32_t refresh);
 
-    virtual void createSurfaceCB(void           *data,
+    virtual void createSurfaceCB(void       *data,
                                  struct ivi_controller *ivi_controller,
-                                 uint32_t id_surface);
+                                 uint32_t   id_surface,
+                                 int32_t    pid,
+                                 const char *title);
 
     const CicoSCWindow* findWindowObj(int32_t pid, uint32_t surfaceid) const;
 

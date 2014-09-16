@@ -648,12 +648,16 @@ CicoSCWlWinMgrIF::outputModeCB(void             *data,
  *  @param [in] data            user data(unused)
  *  @param [in] ivi_controller  wayland ivi-controller plugin interface
  *  @param [in] id_surface      surface id
+ *  @param [in] pid             surface creator process id
+ *  @param [in] title           surface title
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::createSurfaceCB(void                  *data,
+CicoSCWlWinMgrIF::createSurfaceCB(void          *data,
                                   struct ivi_controller *ivi_controller,
-                                  uint32_t id_surface)
+                                  uint32_t      id_surface,
+                                  int32_t       pid,
+                                  const char    *title)
 {
     ICO_WRN("CicoSCWlWinMgrIF::createSurfaceCB called.");
 }
@@ -1002,13 +1006,15 @@ CicoSCWlWinMgrIF::wlIviCtrlLayerCB(void *data,
  *  @param [in] data            user data(unused)
  *  @param [in] ivi_controller  wayland ivi-controller interface
  *  @param [in] id_surface      surface id
+ *  @param [in] pid             surface creator process id
+ *  @param [in] title           surface title
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void *data,
+CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void       *data,
                                      struct ivi_controller *ivi_controller,
-                                     uint32_t id_surface,
-                                     int32_t pid,
+                                     uint32_t   id_surface,
+                                     int32_t    pid,
                                      const char *title)
 {
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: Enter(%x)", id_surface);
@@ -1018,7 +1024,8 @@ CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB(void *data,
         return;
     }
 
-    static_cast<CicoSCWlWinMgrIF*>(data)->createSurfaceCB(data, ivi_controller, id_surface);
+    static_cast<CicoSCWlWinMgrIF*>(data)->
+            createSurfaceCB(data, ivi_controller, id_surface, pid, title);
 
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlSurfaceCB: Leave");
 }
