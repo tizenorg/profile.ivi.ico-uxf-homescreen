@@ -1768,22 +1768,25 @@ CicoSCWindowController::outputModeCB(void             *data,
  *  @param [in] data        user data
  *  @param [in] ivi_controller  wayland ivi-controller plugin interface
  *  @param [in] id_surface      surface id
+ *  @param [in] pid             surface creator process id
+ *  @param [in] title           surface title
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWindowController::createSurfaceCB(void *data,
+CicoSCWindowController::createSurfaceCB(void        *data,
                                         struct ivi_controller *ivi_controller,
-                                        uint32_t id_surface)
+                                        uint32_t    id_surface,
+                                        int32_t     pid,
+                                        const char  *title)
 {
-    int     pid;
     struct ilmSurfaceProperties SurfaceProperties;
 
     ICO_TRA("CicoSCWindowController::createSurfaceCB Enter"
-            "(surfaceid=%08x)", id_surface);
+            "(surfaceid=%08x,pid=%d)", id_surface, pid);
 
     if (ilm_getPropertiesOfSurface(id_surface, &SurfaceProperties) != ILM_SUCCESS)  {
-        ICO_ERR("CicoSCWindowController::createSurfaceCB: ilm_getPropertiesOfSurface(%x) Error",
-                id_surface);
+        ICO_ERR("CicoSCWindowController::createSurfaceCB: ilm_getPropertiesOfSurface(%x) "
+                "Error", id_surface);
         return;
     }
     ICO_TRA("createSurfaceCB: surface=%08x w/h=%d/%d->%d/%d",
@@ -1792,8 +1795,16 @@ CicoSCWindowController::createSurfaceCB(void *data,
 
     CicoSCWindow* window = new CicoSCWindow();
     window->surfaceid = id_surface;
-    window->name = CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &pid);
-    window->pid       = pid;
+    int32_t     svpid;
+    const char *svtitle = CicoSCWlWinMgrIF::wlIviCtrlGetSurfaceWaiting(id_surface, &svpid);
+    if (svtitle)    {
+        window->name = svtitle;
+        window->pid  = svpid;
+    }
+    else        {
+        window->name = title;
+        window->pid  = pid;
+    }
     window->displayid = 0;              // currently fixed 0
     window->raise = 1;                  // created surface is top of layer
     window->srcwidth = SurfaceProperties.sourceWidth;
@@ -1842,7 +1853,9 @@ CicoSCWindowController::createSurfaceCB(void *data,
         window->appid = aulitem->m_appid;
         ICO_DBG("appid=%s", window->appid.c_str());
         ailItem = appctrl->findAIL(window->appid.c_str());
+    }
 
+    if (NULL != ailItem) {
         window->layerid = ailItem->m_layer;
         window->zoneid  = ailItem->m_displayZone;
         window->nodeid  = ailItem->m_nodeID;
