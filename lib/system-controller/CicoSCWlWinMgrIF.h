@@ -33,6 +33,8 @@
  *  @brief  This class is wayland interface of multi window manager
  */
 //--------------------------------------------------------------------------
+#define SCWINMGR_GENIVI_NATIVE_SURFACE_ID   0x40000000
+
 struct creation_surface_wait    {
     struct creation_surface_wait    *next;
     int32_t     pid;

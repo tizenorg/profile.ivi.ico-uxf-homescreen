@@ -897,8 +897,14 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
     struct creation_surface_wait    *tp;
     struct creation_surface_wait    *tp2;
 
-    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Enter(%d,<%s>)",
-            pid, title ? title : "(null)");
+    ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Enter(%d,<%s>,%08x)",
+            pid, title ? title : "(null)", id_surface);
+
+    if (id_surface != 0)    {
+        ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave(%08x is ivi-surface)",
+                id_surface);
+        return;
+    }
 
     if (NULL == data) {
         ICO_WRN("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave(data is null)");
@@ -1170,7 +1176,7 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
         // create ivi-surface and bind to wl_surface
         m_id_surface ++;
         if (m_id_surface >= 0x00ffffff)     m_id_surface = 1;
-        id_surface = m_id_surface | 0x40000000;
+        id_surface = m_id_surface | SCWINMGR_GENIVI_NATIVE_SURFACE_ID;
 
         ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: "
                 "call ivi_application_surface_create(%08x)", id_surface);
