@@ -17,6 +17,7 @@
 
 #include <exception>
 #include <string>
+#include <unistd.h>
 #include <Ecore.h>
 
 #include <ico_log.h>
@@ -87,8 +88,15 @@ CicoEFLApp::~CicoEFLApp()
 int
 CicoEFLApp::start(int argc, char **argv)
 {
+  int ret, i;
     ICO_DBG("CicoEFLApp::start Enter");
-    int ret = app_efl_main(&argc, &argv, &m_appEventCB, this);
+    for (i = 0, ret = -1;  i < 10 && ret < 0;  i++) {
+      ret = app_efl_main(&argc, &argv, &m_appEventCB, this);
+      if (ret < 0 && i < 9) {
+	ICO_DBG("CicoEFLApp::failed to start efl. Retrying after 300ms ...");
+	usleep(300000);
+      }
+    }
     ICO_DBG("CicoEFLApp::start Leave(ret=%d)", ret);
     return ret;
 }
