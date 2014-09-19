@@ -68,7 +68,7 @@ static int CSCLCCpkgmgr_handler(int req_id, const char *pkg_type,
  * @retval AIL_CB_RET_CANCEL return if you cancel iteration
  */
 static ail_cb_ret_e CSCLCCail_list_appinfo_cb(const ail_appinfo_h appinfo,
-                                              void *data)
+                                              void *data, uid_t uid)
 {
     CicoSCLifeCycleController* x = (CicoSCLifeCycleController*)data;
     return CSCLCCail_list_appinfo_cbX(appinfo, x);
