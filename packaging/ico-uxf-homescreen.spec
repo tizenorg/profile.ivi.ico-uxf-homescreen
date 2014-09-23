@@ -116,19 +116,9 @@ cp tool/notification/ico_send_notification2 %{buildroot}%{_bindir}
 
 %post
 /sbin/ldconfig
-
 # Update the app database.
-%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.homescreen.xml
-%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.statusbar.xml
-%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.system-controller.xml
-%{_bindir}/pkginfo --imd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.onscreen.xml
-
-%preun
-# Update the app database.
-%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.homescreen.xml
-%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.statusbar.xml
-%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.system-controller.xml
-%{_bindir}/pkginfo --rmd %{TZ_SYS_RW_PACKAGES}/org.tizen.ico.onscreen.xml
+%{_bindir}/pkg_initdb
+%{_bindir}/ail_initdb
 
 %postun
 /sbin/ldconfig
@@ -136,6 +126,8 @@ rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.homescreen.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.statusbar.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.onscreen.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
+%{_bindir}/pkg_initdb
+%{_bindir}/ail_initdb
 
 %files
 %manifest %{name}.manifest
