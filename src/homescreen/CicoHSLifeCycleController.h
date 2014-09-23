@@ -68,7 +68,7 @@ public:
 protected:
     void initAIL();
     friend ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
-                                                   CicoHSLifeCycleController* x);
+                                                   CicoHSLifeCycleController* x, uid_t uid);
     bool createAilItems();
 
     friend 
