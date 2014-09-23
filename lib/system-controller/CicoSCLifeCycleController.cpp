@@ -723,11 +723,12 @@ bool CicoSCLifeCycleController::createAilItems()
         g_string_free(gsfp, TRUE);
     }
     int r;
+    uid_t uid = getuid();
     ail_filter_h fil;
     ail_filter_new(&fil);
     r = ail_filter_add_str(fil, AIL_PROP_TYPE_STR, DAilTypeFilPrm_Menu);
-    r = ail_filter_list_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
-                                        (void*)this);
+    r = ail_filter_list_usr_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
+                                        (void*)this, uid);
     ail_filter_destroy(fil);
     if (r != AIL_ERROR_OK) {
         if (m_gconf) {
@@ -740,8 +741,8 @@ bool CicoSCLifeCycleController::createAilItems()
 
     ail_filter_new(&fil);
     r = ail_filter_add_str(fil, AIL_PROP_TYPE_STR, DAilTypeFilPrm_App);
-    r = ail_filter_list_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
-                                        (void*)this);
+    r = ail_filter_list_usr_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
+                                        (void*)this, uid);
     ail_filter_destroy(fil);
     if (r != AIL_ERROR_OK) {
         if (m_gconf) {
