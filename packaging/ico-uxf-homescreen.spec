@@ -121,6 +121,7 @@ cp tool/notification/ico_send_notification2 %{buildroot}%{_bindir}
 %{_bindir}/ail_initdb
 
 %postun
+if [ "$1" = "0" ]; then
 /sbin/ldconfig
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.homescreen.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.statusbar.desktop
@@ -128,6 +129,7 @@ rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.onscreen.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
 %{_bindir}/pkg_initdb
 %{_bindir}/ail_initdb
+fi
 
 %files
 %manifest %{name}.manifest
