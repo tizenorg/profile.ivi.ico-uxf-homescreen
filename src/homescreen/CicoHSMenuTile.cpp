@@ -58,6 +58,8 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
     thumb.surface = 0;
     thumb.fbcount = 0;
     thumb.pixel_data = NULL;
+    thumb.thumb_timer = NULL;
+    thumb.orgsurface = 0;
     this->page = page;
     this->subpage = subpage;
     this->position = position;
@@ -83,6 +85,10 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
 /*--------------------------------------------------------------------------*/
 CicoHSMenuTile::~CicoHSMenuTile(void)
 {
+    if (thumb.thumb_timer)  {
+        ecore_timer_del(thumb.thumb_timer);
+        thumb.thumb_timer = NULL;
+    }
 }
 
 /*--------------------------------------------------------------------------*/
@@ -108,6 +114,10 @@ CicoHSMenuTile::CreateObject(Evas *evas)
     small_icon = NULL;
     thumb_reduce_x = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
     thumb_reduce_y = ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX;
+    if (thumb.thumb_timer)  {
+        ecore_timer_del(thumb.thumb_timer);
+        thumb.thumb_timer = NULL;
+    }
 
     /*tile*/
     tile = evas_object_image_filled_add(evas);
@@ -188,6 +198,10 @@ CicoHSMenuTile::FreeObject(void)
         (void) unlink(sWork);
         ico_syc_unmap_thumb(thumb.surface);
         thumb.surface = 0;
+    }
+    if (thumb.thumb_timer)  {
+        ecore_timer_del(thumb.thumb_timer);
+        thumb.thumb_timer = NULL;
     }
     if (tile != NULL){
         evas_object_del(tile);
@@ -501,6 +515,10 @@ CicoHSMenuTile::ValidMenuIcon(void)
                 evas_object_show(tile);
             }
         }
+        if (thumb.thumb_timer)  {
+            ecore_timer_del(thumb.thumb_timer);
+            thumb.thumb_timer = NULL;
+        }
         if (small_icon) {
             evas_object_hide(small_icon);
         }
@@ -523,6 +541,8 @@ CicoHSMenuTile::ValidThumbnail(int surface)
 
     ICO_DBG("CicoHSMenuTile::ValidThumbnail(appid=%p<%s>) run=%d surf=%08x",
             this->appid, appid, app_running, surface);
+
+    thumb.orgsurface = surface;
 
     if ((! app_running) || (surface == 0))  {
         if (thumb.surface != 0) {
@@ -579,9 +599,35 @@ CicoHSMenuTile::ValidThumbnail(int surface)
             if (small_icon) {
                 evas_object_hide(small_icon);
             }
+            if (thumb.thumb_timer)  {
+                ecore_timer_del(thumb.thumb_timer);
+                thumb.thumb_timer = NULL;
+            }
             ICO_DBG("CicoHSMenuTile::ValidThumbnail: %s(%08x) hide small icon",
                     appid, surface);
         }
+    }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuTile::RetryThumbnail
+ *          check and retry thumbnail
+ *
+ * @param       none
+ * @return      none
+ */
+/*--------------------------------------------------------------------------*/
+void
+CicoHSMenuTile::RetryThumbnail(void)
+{
+    thumb.thumb_timer = NULL;
+
+    ICO_DBG("CicoHSMenuTile::RetryThumbnaili: surf=%08x app=%s", thumb.orgsurface, appid);
+
+    if ((icon == tile) && (thumb.orgsurface != 0))  {
+        app_running = false;
+        ValidThumbnail(thumb.orgsurface);
     }
 }
 
@@ -785,6 +831,11 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
         free(thumb.pixel_data);
         thumb.pixel_data = NULL;
         icon = tile;
+        if (thumb.thumb_timer)  {
+            ecore_timer_del(thumb.thumb_timer);
+        }
+        thumb.thumb_timer = ecore_timer_add(ICO_HS_MENUTILE_THUMBNAIL_RETRYTIME,
+                                            CicoHSMenuTile::TimerThumbnail, (void *)this);
     }
 
     if (icon != old_icon)   {
@@ -803,6 +854,25 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
             }
         }
     }
+}
+
+/*--------------------------------------------------------------------------*/
+/**
+ * @brief   CicoHSMenuTile::TimerThumbnail
+ *          recheck thumbnail
+ *
+ * @param[in]   data    CicoHSMenuTile object
+ * @return      fixed ECORE_CALLBACK_CANCEL
+ */
+/*--------------------------------------------------------------------------*/
+Eina_Bool
+CicoHSMenuTile::TimerThumbnail(void *data)
+{
+    CicoHSMenuTile  *tile = (CicoHSMenuTile *)data;
+
+    tile->RetryThumbnail();
+
+    return ECORE_CALLBACK_CANCEL;
 }
 
 /*--------------------------------------------------------------------------*/
