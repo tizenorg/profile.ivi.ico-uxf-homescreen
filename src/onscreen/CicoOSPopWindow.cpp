@@ -295,6 +295,7 @@ CicoOSPopWindow::InitializeWindow(void)
     }
     // icon setup
     m_icon = evas_object_image_filled_add(ecore_evas_get(m_window));
+    evas_object_pointer_mode_set(m_icon, EVAS_OBJECT_POINTER_MODE_NOGRAB);
     edje_object_part_swallow(m_theme, "icon", m_icon);
     /* getting size of screen */
     /* home screen size is full of display*/

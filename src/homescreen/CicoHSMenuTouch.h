@@ -32,13 +32,13 @@ class CicoHSMenuTouch
     static void Finalize(void);
     static void TouchDownMenu(void *data, Evas *evas, Evas_Object *obj, void *event_info); 
     static void TouchUpMenu(void *data, Evas *evas, Evas_Object *obj, void *event_info);
-
+    static void FocusOutEvas(void *data, Evas *evas, void *event_info);
     static void TouchDownTerm(void *data, Evas *evas, Evas_Object *obj, void *event_info); 
     static void TouchUpTerm(void *data, Evas *evas, Evas_Object *obj, void *event_info);
-
     static void TouchUpTerminateYes(void *data, Evas *evas, Evas_Object *obj, void *event_info);
     static void TouchUpTerminateNo(void *data, Evas *evas, Evas_Object *obj, void *event_info);
     static Eina_Bool LongPushed(void *data);
+    static void SetGrabbedObject(Evas_Object *object);
 
   private:
     static char terminate_appid[ICO_HS_MAX_PROCESS_NAME];
@@ -52,6 +52,8 @@ class CicoHSMenuTouch
     static Ecore_Timer *timer;
     static bool long_act;
     static bool touch_down;
+
+    static Evas_Object  *grabbed_object;
 
   protected:
     CicoHSMenuTouch operator=(const CicoHSMenuTouch&);
