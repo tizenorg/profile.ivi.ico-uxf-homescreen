@@ -92,6 +92,7 @@ CicoStatusBar::Initialize(void)
 
     ICO_DBG("Initialize start windowobj_.");
     windowobj_ = evas_object_rectangle_add(ecore_evas_get(window_));
+    evas_object_pointer_mode_set(windowobj_, EVAS_OBJECT_POINTER_MODE_NOGRAB);
 
     // statusbar RGBcolor setting
     evas_object_color_set(windowobj_, 0, 0, 0, 255);

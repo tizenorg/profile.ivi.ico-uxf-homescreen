@@ -110,6 +110,17 @@ CicoHomeScreen::~CicoHomeScreen(void)
     }
 }
 
+//--------------------------------------------------------------------------
+/**
+ *  @brief  get this class instance
+ */
+//--------------------------------------------------------------------------
+CicoHomeScreen*
+CicoHomeScreen::getInstance(void)
+{
+    return hs_instance;
+}
+
 /*--------------------------------------------------------------------------*/
 /**
  * @brief   CicoHomeScreen::ShowHomeScreenLayer

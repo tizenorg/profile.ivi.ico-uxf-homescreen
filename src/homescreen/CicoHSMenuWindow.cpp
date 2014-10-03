@@ -124,6 +124,8 @@ CicoHSMenuWindow::SetMenuBack(void)
                                    CicoHSMenuTouch::TouchDownMenu,NULL);
     evas_object_event_callback_add(canvas, EVAS_CALLBACK_MOUSE_UP,
                                    CicoHSMenuTouch::TouchUpMenu,NULL);
+    evas_event_callback_add(evas, EVAS_CALLBACK_CANVAS_FOCUS_OUT,
+                            CicoHSMenuTouch::FocusOutEvas, (void *)canvas);
     evas_object_move(canvas, 0, 0);
     evas_object_resize(canvas, width, height);
     evas_object_show(canvas);
