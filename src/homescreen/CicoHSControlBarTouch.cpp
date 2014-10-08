@@ -88,21 +88,25 @@ void
 CicoHSControlBarTouch::TouchUpControlBar(void *data, Evas *evas,
                                          Evas_Object *obj, void *event_info)
 {
+    Evas_Event_Mouse_Down *info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
+
     ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar Enter(down=%d)",
             (int)touch_down);
 
     if (touch_down == false)    {
-        // multi touch up, skiep
-        ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar not down, Skip");
+        ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar No Down");
+        // Menu manipulation is normally processed, even if there is no touchdown.
     }
     touch_down = false;
 
     if (data == NULL) {
-        ICO_PRF("TOUCH_EVENT Ctrl-Bar Down->Up app=(NIL)");
+        ICO_PRF("TOUCH_EVENT Ctrl-Bar Down->Up (%d,%d) app=(NIL)",
+                info->output.x, info->output.y);
         ctl_bar_window->TouchHome();
     }
     else {
-        ICO_PRF("TOUCH_EVENT Ctrl-Bar Down->Up app=%s", (const char *)data);
+        ICO_PRF("TOUCH_EVENT Ctrl-Bar Down->Up (%d,%d) app=%s",
+                info->output.x, info->output.y, (const char *)data);
         ctl_bar_window->TouchShortcut((const char *)data);
     }
     ICO_DBG("CicoHSControlBarTouch::TouchUpControlBar Leave");

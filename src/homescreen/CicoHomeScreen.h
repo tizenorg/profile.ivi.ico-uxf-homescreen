@@ -75,6 +75,7 @@ class CicoHomeScreen
   public:
     CicoHomeScreen(void);
     ~CicoHomeScreen(void);
+    static CicoHomeScreen* getInstance(void);
     int Initialize(int orientation,CicoGKeyFileConfig *config);
     void InitializeAppHistory(void);
     void Finalize(void);

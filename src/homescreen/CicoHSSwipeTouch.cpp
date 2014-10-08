@@ -15,6 +15,7 @@
 #include "CicoHSAppInfo.h"
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
+#include "CicoHSMenuTouch.h"
 #include "ico_syc_inputctl.h"
 #include <linux/input.h>
 
@@ -30,7 +31,7 @@ int CicoHSSwipeTouch::touch_state_b_y;
 int CicoHSSwipeTouch::touch_state_a_x;
 int CicoHSSwipeTouch::touch_state_a_y;
 
-int CicoHSSwipeTouch::touch_down;
+bool CicoHSSwipeTouch::touch_down;
 bool CicoHSSwipeTouch::set_xy_pos;
 
 int CicoHSSwipeTouch::num_windows;
@@ -56,7 +57,7 @@ CicoHSSwipeTouch::Initialize(CicoHSControlBarWindow* ctl_bar, CicoHSAppHistoryEx
                              int width, int height)
 {
     num_windows = 0;
-    touch_down = 0;
+    touch_down = false;
     set_xy_pos = false;
 
     ctl_bar_window = ctl_bar;
@@ -101,14 +102,14 @@ CicoHSSwipeTouch::TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void 
     CicoHSSwipeInputWindow  *window;
     int     x, y;
 
-    touch_down ++;
+    touch_down = true;
 
     info = reinterpret_cast<Evas_Event_Mouse_Down*>(event_info);
     window = (CicoHSSwipeInputWindow *)data;
     x = info->output.x + window->GetPosX();
     y = info->output.y + window->GetPosY();
-    ICO_PRF("TOUCH_EVENT Swipe Down (%d,%d)->(%d,%d) (%d)",
-            info->output.x, info->output.y, x, y, touch_down);
+    ICO_PRF("TOUCH_EVENT Swipe Down (%d,%d)->(%d,%d)",
+            info->output.x, info->output.y, x, y);
 
     if ((x >= 0) && (x < 4096) && (y >= 0) && (y < 4096))   {
         if (set_xy_pos == false)    {
@@ -119,6 +120,8 @@ CicoHSSwipeTouch::TouchDownSwipe(void *data, Evas *evas, Evas_Object *obj, void 
         touch_state_a_x = x;
         touch_state_a_y = y;
     }
+
+    CicoHSMenuTouch::SetGrabbedObject(obj);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -157,23 +160,19 @@ CicoHSSwipeTouch::TouchUpSwipe(void *data, Evas *evas, Evas_Object *obj, void *e
         touch_state_a_y = y;
     }
 
-    ICO_PRF("TOUCH_EVENT Swipe Up   (%d,%d)->(%d,%d) before(%d,%d) (%d)",
+    CicoHSMenuTouch::SetGrabbedObject(NULL);
+
+    ICO_PRF("TOUCH_EVENT Swipe Up   (%d,%d)->(%d,%d) before(%d,%d)",
             info->output.x, info->output.y, touch_state_a_x, touch_state_a_y,
-            touch_state_b_x, touch_state_b_y, touch_down - 1);
+            touch_state_b_x, touch_state_b_y);
 
-    if (touch_down > 1) {
-        touch_down --;
-        ICO_DBG("TouchUpSwipe: touch counter not 0(%d), Skip", touch_down);
-        return;
-    }
-
-    if (touch_down == 0)    {
+    if (touch_down == false)    {
         set_xy_pos = false;
-        ICO_DBG("TouchUpSwipe: no touch down, Skip");
+        ICO_DBG("TouchUpSwipe: No Down, Skip");
         return;
     }
 
-    touch_down --;
+    touch_down = false;
 
     if (set_xy_pos == false)    {
         ICO_DBG("TouchUpSwipe: unknown coordinate, Skip");
@@ -436,7 +435,7 @@ CicoHSSwipeTouch::TouchMoveSwipe(void *data, Evas *evas, Evas_Object *obj, void 
     touch_state_a_x = x;
     touch_state_a_y = y;
 
-    if ((set_xy_pos == false) || (touch_down == 0)) {
+    if ((set_xy_pos == false) || (touch_down == false)) {
         set_xy_pos = true;
         touch_state_b_x = touch_state_a_x;
         touch_state_b_y = touch_state_a_y;
