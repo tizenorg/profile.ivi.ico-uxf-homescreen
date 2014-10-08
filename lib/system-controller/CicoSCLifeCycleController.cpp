@@ -71,7 +71,7 @@ static ail_cb_ret_e CSCLCCail_list_appinfo_cb(const ail_appinfo_h appinfo,
                                               void *data, uid_t uid)
 {
     CicoSCLifeCycleController* x = (CicoSCLifeCycleController*)data;
-    return CSCLCCail_list_appinfo_cbX(appinfo, x);
+    return CSCLCCail_list_appinfo_cbX(appinfo, x, uid);
 }
 
 /**
@@ -623,7 +623,7 @@ void CicoSCLifeCycleController::renewAIL()
  *
  */
 ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
-                                        CicoSCLifeCycleController* x)
+                                        CicoSCLifeCycleController* x, uid_t uid)
 {
     ICO_TRA("start");
     if ((NULL == x) || (0 == x)) {
@@ -638,12 +638,12 @@ ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
     char   *exe;
     bool   bndsp = false;
     /* get package name for appid */
-    ail_appinfo_get_str(appinfo, AIL_PROP_PACKAGE_STR, &pkg);
+    ail_appinfo_get_usr_str(appinfo, AIL_PROP_PACKAGE_STR, uid, &pkg);
     if (strcmp(pkg, APP_CONF_AIL_NULL_STR) == 0) {
         pkg = NULL;
     }
     /* get icon path */
-    ail_appinfo_get_str(appinfo, AIL_PROP_ICON_STR, &icn);
+    ail_appinfo_get_usr_str(appinfo, AIL_PROP_ICON_STR, uid, &icn);
     if (strcmp(icn, APP_CONF_AIL_NULL_STR) == 0) {
         icn = NULL;
     }
@@ -664,22 +664,22 @@ ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
         }
     }
     /* get name */
-    ail_appinfo_get_str(appinfo, AIL_PROP_NAME_STR, &nm);
+    ail_appinfo_get_usr_str(appinfo, AIL_PROP_NAME_STR, uid, &nm);
     if (strcmp(nm, APP_CONF_AIL_NULL_STR) == 0) {
         nm = NULL;
     }
     /* get category */
-    ail_appinfo_get_str(appinfo, AIL_PROP_CATEGORIES_STR, &ctgry);
+    ail_appinfo_get_usr_str(appinfo, AIL_PROP_CATEGORIES_STR, uid, &ctgry);
     if (strcmp(ctgry, APP_CONF_AIL_NULL_STR) == 0) {
         ctgry = NULL;
     }
     /* get type */
-    ail_appinfo_get_str(appinfo, AIL_PROP_TYPE_STR, &typ);
+    ail_appinfo_get_usr_str(appinfo, AIL_PROP_TYPE_STR, uid, &typ);
     if (strcmp(typ, APP_CONF_AIL_NULL_STR) == 0) {
         typ = NULL;
     }
     /* get exec */
-    ail_appinfo_get_str(appinfo, AIL_PROP_EXEC_STR, &exe);
+    ail_appinfo_get_usr_str(appinfo, AIL_PROP_EXEC_STR, uid, &exe);
     if (strcmp(exe, APP_CONF_AIL_NULL_STR) == 0) {
         exe = NULL;
     }
@@ -723,11 +723,12 @@ bool CicoSCLifeCycleController::createAilItems()
         g_string_free(gsfp, TRUE);
     }
     int r;
+    uid_t uid = getuid();
     ail_filter_h fil;
     ail_filter_new(&fil);
     r = ail_filter_add_str(fil, AIL_PROP_TYPE_STR, DAilTypeFilPrm_Menu);
-    r = ail_filter_list_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
-                                        (void*)this);
+    r = ail_filter_list_usr_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
+                                        (void*)this, uid);
     ail_filter_destroy(fil);
     if (r != AIL_ERROR_OK) {
         if (m_gconf) {
@@ -740,8 +741,8 @@ bool CicoSCLifeCycleController::createAilItems()
 
     ail_filter_new(&fil);
     r = ail_filter_add_str(fil, AIL_PROP_TYPE_STR, DAilTypeFilPrm_App);
-    r = ail_filter_list_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
-                                        (void*)this);
+    r = ail_filter_list_usr_appinfo_foreach(fil, CSCLCCail_list_appinfo_cb,
+                                        (void*)this, uid);
     ail_filter_destroy(fil);
     if (r != AIL_ERROR_OK) {
         if (m_gconf) {
