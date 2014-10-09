@@ -22,10 +22,11 @@
 //==========================================================================
 //  define macro
 //==========================================================================
-#define ICO_SURFACEID_2_HOSTID(surfid)      (((unsigned int)surfid) >> 24)
-#define ICO_SURFACEID_2_DISPLAYNO(surfid)   (((unsigned int)surfid) >> 16)
-#define ICO_SURFACEID_2_NODEID(surfid)      (((unsigned int)surfid) >> 16)
-#define ICO_SURFACEID_BASE(nodeid)          (((unsigned int)nodeid) << 16)
+#define ICO_SURFACEID_2_HOSTID(surfid)      ((((unsigned int)surfid) >> 24) & 0x3f)
+#define ICO_SURFACEID_2_DISPLAYNO(surfid)   ((((unsigned int)surfid) >> 16) & 0xff)
+#define ICO_SURFACEID_2_NODEID(surfid)      ((((unsigned int)surfid) >> 16) & 0x3fff)
+#define ICO_SURFACEID_BASE(nodeid)          ((((unsigned int)nodeid) << 16) | \
+                                             SCWINMGR_GENIVI_NATIVE_SURFACE_ID)
 
 //--------------------------------------------------------------------------
 /**

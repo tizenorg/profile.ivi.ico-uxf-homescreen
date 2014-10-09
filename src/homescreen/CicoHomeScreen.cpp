@@ -2464,18 +2464,20 @@ CicoHomeScreen::MoveApp(const std::string& app, const std::string& zone)
 
     int surface = appinfo->GetLastSurface();
     ico_hs_window_info* wininfo = appinfo->GetWindowInfobySurface(surface);
-    int layer = HS_LAYER_APPLICATION;
-    const char *dispzone = (const char*)zone.c_str();
-    ico_syc_win_move_t move = {
-        .zone   = (char*)dispzone,
-        .layer  = layer,
-        .pos_x  = 0,
-        .pos_y  = 0,
-        .width  = 0,
-        .height = 0
-    };
+    if (wininfo)    {
+        int layer = HS_LAYER_APPLICATION;
+        const char *dispzone = (const char*)zone.c_str();
+        ico_syc_win_move_t move = {
+            .zone   = (char*)dispzone,
+            .layer  = layer,
+            .pos_x  = 0,
+            .pos_y  = 0,
+            .width  = 0,
+            .height = 0
+        };
 
-    ico_syc_move(wininfo->appid, wininfo->surface, &move,
-                 &hs_instance->moveZoneAnimation);
+        ico_syc_move(wininfo->appid, wininfo->surface, &move,
+                     &hs_instance->moveZoneAnimation);
+    }
 }
 // vim: set expandtab ts=4 sw=4:

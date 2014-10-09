@@ -66,6 +66,8 @@ protected: // member method
     bool categoryParseMenuoverlap(const std::string& s);
     bool categoryParseAuto(const std::string& s);
     bool categoryParseNoauto(const std::string& s);
+    bool categoryParseMultiSurface(const std::string& s);
+    bool categoryParseSingleSurface(const std::string& s);
 
 private: // member method
 
@@ -95,7 +97,7 @@ public: // member aria
     int  m_invisibleCPU;
     bool m_memnuOverlap;
     bool m_autoStart; // auto start flag
-
+    bool m_multiSurface;        // multi surface flag
 
     std::string m_group;
     std::string m_location;

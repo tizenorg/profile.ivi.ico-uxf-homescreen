@@ -79,6 +79,7 @@ CicoAilItems::CicoAilItems(const CicoAilItems &s)
     m_invisibleCPU = s.m_invisibleCPU;
     m_memnuOverlap = s.m_memnuOverlap;
     m_autoStart = s.m_autoStart; // auto start flag
+    m_multiSurface = s.m_multiSurface;
 
     m_group = s.m_group;
     m_location = s.m_location;
@@ -146,7 +147,8 @@ void CicoAilItems::init()
     m_animationTime = DINITm_animationTime;
     m_invisibleCPU = DINITm_invisibleCPU;
     m_memnuOverlap = false;
-    m_autoStart = false; // auto start flag
+    m_autoStart = false;        // auto start flag
+    m_multiSurface = false;     // multi surface flag
 
     m_group.clear();
     m_location.clear();
@@ -211,6 +213,8 @@ const string s_noconfigure("noconfigure");
 const string s_menuoverlap("menuoverlap");
 const string s_auto("auto");
 const string s_noauto("noauto");
+const string s_multisurface("multisurface");
+const string s_singlesurface("singlesurface");
 
 const string s_soundzone("soundzone");
 const string s_Animation_time("Animation_time");
@@ -385,6 +389,24 @@ void CicoAilItems::categoryParse(const std::string categorys)
         if (0 == strncasecmp(it->c_str(), s_noauto.c_str(),
                              s_noauto.size())) {
             if (true == categoryParseNoauto(*it)) {
+                ICO_DBG("Parse OK %s", it->c_str());
+                continue;
+            }
+        }
+
+        // multisurface
+        if (0 == strncasecmp(it->c_str(), s_multisurface.c_str(),
+                             s_multisurface.size())) {
+            if (true == categoryParseMultiSurface(*it)) {
+                ICO_DBG("Parse OK %s", it->c_str());
+                continue;
+            }
+        }
+
+        // singlesurface
+        if (0 == strncasecmp(it->c_str(), s_singlesurface.c_str(),
+                             s_singlesurface.size())) {
+            if (true == categoryParseSingleSurface(*it)) {
                 ICO_DBG("Parse OK %s", it->c_str());
                 continue;
             }
@@ -755,6 +777,34 @@ bool CicoAilItems::categoryParseNoauto(const string&)
 {
     ICO_TRA("start");
     m_autoStart = false;
+    ICO_TRA("end");
+    return true;
+}
+
+/**
+ * @brief category string parse
+ * @param category string
+ * @retval true parse success
+ * @retval false parse fail
+ */
+bool CicoAilItems::categoryParseMultiSurface(const string&)
+{
+    ICO_TRA("start");
+    m_multiSurface = true;
+    ICO_TRA("end");
+    return true;
+}
+
+/**
+ * @brief category string parse
+ * @param category string
+ * @retval true parse success
+ * @retval false parse fail
+ */
+bool CicoAilItems::categoryParseSingleSurface(const string&)
+{
+    ICO_TRA("start");
+    m_multiSurface = false;
     ICO_TRA("end");
     return true;
 }

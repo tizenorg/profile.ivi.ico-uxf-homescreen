@@ -136,6 +136,7 @@ private:
     static void evasMouseUpCB(void *data, Evas *e, Evas_Object *obj,
                               void *event_info);
     void    makeResWindowT(ico_syc_res_window_t& w);
+    static int   m_windowno;
 
 public:
     Ecore_Evas*  m_window;

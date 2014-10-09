@@ -26,6 +26,7 @@ using namespace std;
 //==========================================================================
 // static members
 //==========================================================================
+int CicoOSPopWindow::m_windowno = 0;
 
 //==========================================================================
 // functions
@@ -330,6 +331,8 @@ CicoOSPopWindow::InitializeWindow(void)
 bool
 CicoOSPopWindow::createMainWindow()
 {
+    char    winname[ICO_SYC_MAX_WINNAME_LEN];
+
     ICO_TRA("Enter");
     // Window setup
     m_window = ecore_evas_new(NULL, 0, 0, WIDTH, HEIGHT, "frame=0");
@@ -338,6 +341,11 @@ CicoOSPopWindow::createMainWindow()
         ICO_TRA("Leave(ERR)");
         return false;
     }
+
+    CicoOSPopWindow::m_windowno ++;
+    if (CicoOSPopWindow::m_windowno > 9999) CicoOSPopWindow::m_windowno = 1;
+    sprintf(winname, "OnScreen_%04d", CicoOSPopWindow::m_windowno);
+    ecore_evas_title_set(m_window, winname);
     ecore_evas_alpha_set(m_window, EINA_TRUE);
     ecore_evas_show(m_window);
     ICO_TRA("Leave");
