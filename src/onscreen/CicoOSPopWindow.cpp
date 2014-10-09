@@ -14,6 +14,7 @@
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
 #include <appsvc/appsvc.h>
+#include <pthread.h>
 #include "CicoOnScreen.h"
 #include "CicoNotification.h"
 #include "CicoOSPopWindow.h"
@@ -26,6 +27,10 @@ using namespace std;
 //==========================================================================
 // static members
 //==========================================================================
+int CicoOSPopWindow::m_windowno = 0;
+
+/* pthread mutex initialize */
+static pthread_mutex_t window_number_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 //==========================================================================
 // functions
@@ -203,7 +208,7 @@ CicoOSPopWindow::showPopup()
     return true;
 }
 
-bool 
+bool
 CicoOSPopWindow::acquireRes()
 {
     ICO_TRA("Enter");
@@ -244,7 +249,7 @@ CicoOSPopWindow::hidePopup(bool buttonTouch)
     ICO_TRA("Leave");
 }
 
-bool    
+bool
 CicoOSPopWindow::releaseRes()
 {
     ICO_TRA("Enter");
@@ -264,7 +269,7 @@ CicoOSPopWindow::releaseRes()
 
 //--------------------------------------------------------------------------
 /**
- * @brief   CicoOnScreen::InitializePopup
+ * @brief   CicoOnScreen::InitializeWindow
  *          Initialize popup window
  *
  * @param[in]   none
@@ -330,6 +335,8 @@ CicoOSPopWindow::InitializeWindow(void)
 bool
 CicoOSPopWindow::createMainWindow()
 {
+    char    winname[ICO_SYC_MAX_WINNAME_LEN];
+
     ICO_TRA("Enter");
     // Window setup
     m_window = ecore_evas_new(NULL, 0, 0, WIDTH, HEIGHT, "frame=0");
@@ -338,6 +345,23 @@ CicoOSPopWindow::createMainWindow()
         ICO_TRA("Leave(ERR)");
         return false;
     }
+
+    // This method is called from both reception of the event from SystemController,
+    // and reception of the event from Notification.
+    // Whether these events are received simultaneously carries out the exclusion of
+    // the renewal of a window number, in order to be dependent on mounting of
+    // SystemController API or NotificationAPI.
+    pthread_mutex_lock(&window_number_mutex);
+
+    CicoOSPopWindow::m_windowno ++;
+    if (CicoOSPopWindow::m_windowno > POPUP_MAX_WINDOW_NUMBER)  {
+        CicoOSPopWindow::m_windowno = 1;
+    }
+
+    pthread_mutex_unlock(&window_number_mutex);
+
+    snprintf(winname, sizeof(winname), "OnScreen_%04d", CicoOSPopWindow::m_windowno);
+    ecore_evas_title_set(m_window, winname);
     ecore_evas_alpha_set(m_window, EINA_TRUE);
     ecore_evas_show(m_window);
     ICO_TRA("Leave");

@@ -28,6 +28,7 @@
 #include "CicoSystemConfig.h"
 #include "CicoConf.h"
 #include "CicoSCWindowController.h"
+#include "CicoSCLifeCycleController.h"
 
 //==========================================================================
 //  static variables
@@ -242,7 +243,6 @@ CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t ol
  *  @brief   wrapper function of ilm_surfaceSetDestinationRectangle
  *
  *  @param [in] surfaceid       wayland surface id
- *  @param [in] layer           number of layer
  *  @param [in] x
  *  @param [in] y
  *  @param [in] width
@@ -250,13 +250,12 @@ CicoSCWlWinMgrIF::setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t ol
  */
 //--------------------------------------------------------------------------
 void
-CicoSCWlWinMgrIF::setPositionsize(uint32_t surfaceid, uint32_t node,
+CicoSCWlWinMgrIF::setPositionsize(uint32_t surfaceid,
                                   int32_t x, int32_t y, int32_t width, int32_t height)
 {
     // set position size request to Multi Window Manager
     ICO_DBG("called: ilm_surfaceSetDestinationRectangle"
-            "(surfaceid=%08x node=%d x=%d y=%d w=%d h=%d)",
-            surfaceid, node, x, y, width, height);
+            "(surfaceid=%08x x=%d y=%d w=%d h=%d)", surfaceid, x, y, width, height);
 
     if (ilm_surfaceSetDestinationRectangle(surfaceid, x, y, width, height)
             != ILM_SUCCESS) {
@@ -465,6 +464,8 @@ CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(uint32_t id_surface)
             }
             tp->next = m_free_surface_creation;
             m_free_surface_creation = tp;
+
+            ivi_surface_destroy(tp->ivi_surface);
 
             ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlRemoveSurface(%x) removed", id_surface);
             return;
@@ -900,7 +901,7 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
     ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Enter(%d,<%s>,%08x)",
             pid, title ? title : "(null)", id_surface);
 
-    if (id_surface != 0)    {
+    if ((id_surface != 0) && ((id_surface & SCWINMGR_GENIVI_NATIVE_SURFACE_ID) == 0))   {
         ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave(%08x is ivi-surface)",
                 id_surface);
         return;
@@ -912,6 +913,17 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
     }
     if (title == NULL)  {
         ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave(no title)");
+        return;
+    }
+    const CicoAulItems* aulitem = CicoSCLifeCycleController::getInstance()->findAUL(pid);
+    const CicoAilItems* ailitem = NULL;
+    if (aulitem)    {
+        ailitem = CicoSCLifeCycleController::getInstance()->
+                                                findAIL(aulitem->m_appid.c_str());
+    }
+    if ((title[0] != 0) && (ailitem == NULL))   {
+        ICO_TRA("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: Leave(%s is ivi-surface)",
+                title);
         return;
     }
 
@@ -942,6 +954,13 @@ CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB(void *data,
     tp->pid = pid;
     strncpy(tp->title, title, ICO_SYC_MAX_WINNAME_LEN-1);
     tp->busy = SCWINMGR_GENIVI_BUSY_WAIT;
+
+    if ((ailitem != NULL) && (ailitem->m_multiSurface)) {
+        tp->multisurface = 1;
+        ICO_DBG("CicoSCWlWinMgrIF::wlIviAppNativeShellInfoCB: <%s> is MultiSurface",
+                aulitem->m_appid.c_str());
+    }
+
     tp2 = m_wait_surface_creation;
     while (tp2)  {
         if (tp2->busy != SCWINMGR_GENIVI_BUSY_NONE) break;
@@ -1124,6 +1143,7 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
     struct creation_surface_wait    *tp3;
     struct creation_surface_wait    *bp;
     uint32_t                        id_surface;
+    struct ivi_surface              *ivi_surface;
     int                             surface_count;
 
     ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: Enter(surf=%p)", (void *)surface);
@@ -1155,7 +1175,8 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
         }
         tp3 = tp3->next;
     }
-    if (surface_count == 1) {
+
+    if ((surface_count == 1) && (tp2->id_surface != 0) && (tp->multisurface == 0))  {
         // title change, delete old table
         id_surface = tp2->id_surface;
         ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: winname change"
@@ -1180,7 +1201,9 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
 
         ICO_TRA("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: "
                 "call ivi_application_surface_create(%08x)", id_surface);
-        if (ivi_application_surface_create(m_ivi_app, id_surface, surface) == NULL) {
+
+        ivi_surface = ivi_application_surface_create(m_ivi_app, id_surface, surface);
+        if (ivi_surface == NULL)    {
             ICO_ERR("CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB: "
                     "ivi_application_surface_create(%08x) Error", id_surface);
             if (bp) {
@@ -1195,6 +1218,7 @@ CicoSCWlWinMgrIF::wlIviCtrlNativeHandleCB(void *data,
         else    {
             tp->surface = surface;
             tp->id_surface = id_surface;
+            tp->ivi_surface = ivi_surface;
             tp->busy = SCWINMGR_GENIVI_BUSY_REQBIND;
         }
     }

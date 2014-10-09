@@ -48,11 +48,7 @@
 #define STATUS_BAR_HEIGHT    64
 #define CTRL_BAR_HEIGHT      128
 #define WIDTH                1080
-#if 1
 #define HEIGHT               1920
-#else
-#define HEIGHT               (1920 - STATUS_BAR_HEIGHT - CTRL_BAR_HEIGHT)
-#endif
 
 /* Popup Size */
 #define POPUP_WIDTH         640
@@ -63,53 +59,12 @@
 #define POPUP_FRAME_WIDTH   (POPUP_WIDTH+POPUP_FRAME_THICK)
 #define POPUP_FRAME_HEIGHT  (POPUP_HEIGHT+POPUP_FRAME_THICK)
 
-#if 0
-#define POPUP_ST_X          ((WIDTH-POPUP_WIDTH)/2)
-#define POPUP_ST_Y          ((HEIGHT-POPUP_HEIGHT)/2)
-
-/* Popup Frame Size */
-#define POPUP_FRAME_THICK   10
-#define POPUP_FRAME_WIDTH   (POPUP_WIDTH+POPUP_FRAME_THICK)
-#define POPUP_FRAME_HEIGHT  (POPUP_HEIGHT+POPUP_FRAME_THICK)
-#define POPUP_FRAME_ST_X    (POPUP_ST_X-POPUP_FRAME_THICK/2)
-#define POPUP_FRAME_ST_Y    (POPUP_ST_Y-POPUP_FRAME_THICK/2)
-
-/* Popup Icon Size */
-#define POPUP_ICON_WIDTH    50
-#define POPUP_ICON_HEIGHT   50
-#define POPUP_ICON_ST_X     POPUP_ST_X
-#define POPUP_ICON_ST_Y     POPUP_ST_Y
-
-/* Popup Title Size */
-#define POPUP_TITLE_WIDTH   (POPUP_WIDTH-POPUP_ICON_WIDTH)
-#define POPUP_TITLE_HEIGHT  POPUP_ICON_HEIGHT
-#define POPUP_TITLE_ST_X    (POPUP_ST_X+POPUP_ICON_WIDTH)
-#define POPUP_TITLE_ST_Y    POPUP_ST_Y
-
-/* Popup Content BG Size */
-#define POPUP_CONTENT_BG_WIDTH  POPUP_WIDTH
-#define POPUP_CONTENT_BG_HEIGHT (POPUP_HEIGHT-POPUP_TITLE_HEIGHT)
-#define POPUP_CONTENT_BG_ST_X   POPUP_ST_X
-#define POPUP_CONTENT_BG_ST_Y   (POPUP_ST_Y+POPUP_TITLE_HEIGHT)
-
-/* Popup Content Size */
-#define POPUP_CONTENT_WIDTH  POPUP_WIDTH
-#define POPUP_CONTENT_HEIGHT POPUP_TITLE_HEIGHT
-#define POPUP_CONTENT_ST_X   POPUP_ST_X
-#define POPUP_CONTENT_ST_Y   (POPUP_ST_Y+POPUP_TITLE_HEIGHT+(POPUP_HEIGHT-POPUP_CONTENT_HEIGHT)/2)
-
-#define ICO_ORIENTATION_VERTICAL (1) 
-#define ICO_ORIENTATION_HORIZONTAL (2)
-
-#define LEMOLO_PKGNAME       "org.tizen.dialer"
-#endif
+/* Maximum window number */
+#define POPUP_MAX_WINDOW_NUMBER 9999
 
 #define FALSE                0
 #define TRUE                 1
 
-#if 0
-#define ICON_PATH      (char *)"/usr/share/icons/default/small/org.tizen.dialer.png"
-#endif
 #define ICO_OS_THEMES_EDJ_FILEPATH "/usr/apps/org.tizen.ico.onscreen/res/themes/onscreen.edj"
 /*============================================================================*/
 /* Define data types                                                          */
@@ -136,6 +91,7 @@ private:
     static void evasMouseUpCB(void *data, Evas *e, Evas_Object *obj,
                               void *event_info);
     void    makeResWindowT(ico_syc_res_window_t& w);
+    static int   m_windowno;
 
 public:
     Ecore_Evas*  m_window;
