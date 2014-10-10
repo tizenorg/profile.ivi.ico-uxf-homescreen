@@ -37,7 +37,8 @@ BuildRequires: weston-ivi-shell-devel
 BuildRequires: genivi-shell
 BuildRequires: genivi-shell-devel
 BuildRequires: ico-uxf-utilities-devel >= 0.9.07
-BuildRequires: libtzplatform-config-devel
+BuildRequires: pkgconfig(libtzplatform-config)
+BuildRequires: fdupes
 Requires: weston >= 1.4
 Requires: weston-ivi-shell
 Requires: genivi-shell
@@ -46,12 +47,12 @@ Requires: ico-uxf-utilities >= 0.9.07
 Requires: system-controller
 
 %description
-Sample homescreen application.
+This package provides the sample homescreen application.
 
 
 %package system-controller
 Summary: System controller for ICO HomeScreen
-Group:   Automotive / ICO Homescreen
+Group:   Automotive/ICO Homescreen
 Requires: %{name} = %{version}-%{release}
 Requires: weston >= 1.4
 Requires: weston-ivi-shell
@@ -68,7 +69,7 @@ requires.
 
 %package system-controller-devel
 Summary:  Development files for %{name}
-Group:    Automotive / ICO Homescreen
+Group:    Automotive/ICO Homescreen
 Requires: %{name} = %{version}-%{release}
 Requires: capi-base-common-devel
 Requires: pkgconfig(eina)
@@ -114,11 +115,13 @@ cp tool/notification/ico_dump_notification %{buildroot}%{_bindir}
 cp tool/notification/ico_send_notification %{buildroot}%{_bindir}
 cp tool/notification/ico_send_notification2 %{buildroot}%{_bindir}
 
+%fdupes %{buildroot}
+
 %post
 /sbin/ldconfig
 # Update the app database.
-%{_bindir}/pkg_initdb
-%{_bindir}/ail_initdb
+pkg_initdb
+ail_initdb
 
 %postun
 /sbin/ldconfig
@@ -126,8 +129,8 @@ rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.homescreen.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.statusbar.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.onscreen.desktop
 rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
-%{_bindir}/pkg_initdb
-%{_bindir}/ail_initdb
+pkg_initdb
+ail_initdb
 
 %files
 %manifest %{name}.manifest
@@ -149,16 +152,16 @@ rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
 %{_datadir}/icons/default/small/org.tizen.ico.homescreen.png
 %{_datadir}/icons/default/small/org.tizen.ico.statusbar.png
 %{_datadir}/icons/default/small/org.tizen.ico.onscreen.png
-/usr/apps/org.tizen.ico.system-controller/res/config
+%TZ_SYS_RW_APP/org.tizen.ico.system-controller/res/config
 
 %files system-controller
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
-/usr/share/packages/org.tizen.ico.system-controller.xml
-/usr/lib/systemd/user/ico-uxf-wait-launchpad-ready.path
-/usr/lib/systemd/user/weston.target.wants/ico-uxf-wait-launchpad-ready.path
-/usr/lib/systemd/user/ico-system-controller.service
-/usr/apps/org.tizen.ico.system-controller/bin
+%{_datadir}/packages/org.tizen.ico.system-controller.xml
+%{_unitdir_user}/ico-uxf-wait-launchpad-ready.path
+%{_unitdir_user}/weston.target.wants/ico-uxf-wait-launchpad-ready.path
+%{_unitdir_user}/ico-system-controller.service
+%TZ_SYS_RW_APP/org.tizen.ico.system-controller/bin
 %attr(644,app,app) /home/app/ico/defaultApps.info
 %attr(755,app,app) /home/app/ico
 
@@ -185,4 +188,3 @@ rm -f %{TZ_SYS_RW_DESKTOP_APP}/org.tizen.ico.system-controller.desktop
 %{_includedir}/ico-state-machine/CicoStateCore.h
 %{_includedir}/ico-state-machine/CicoStateMachine.h
 %{_includedir}/ico-state-machine/CicoStateMachineCreator.h
-
