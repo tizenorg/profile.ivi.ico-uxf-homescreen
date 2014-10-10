@@ -5,6 +5,7 @@ Release:    0
 Group:      Automotive/ICO Homescreen
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.bz2
+Source1001: %{name}.manifest
 
 BuildRequires: pkgconfig(wayland-client) >= 1.4
 BuildRequires: ico-uxf-weston-plugin-devel >= 0.9.21
@@ -85,6 +86,7 @@ Development files for application that communicate homescreen.
 
 %prep
 %setup -q -n %{name}-%{version}
+cp %{SOURCE1001} .
 
 mkdir -p weston
 cp -av %{TZ_SYS_SHARE}/genivi-shell/protocol/*.xml weston/
@@ -133,8 +135,8 @@ pkg_initdb
 ail_initdb
 
 %files
-%manifest %{name}.manifest
 %defattr(-,root,root,-)
+%manifest %{name}.manifest
 %{TZ_SYS_RW_APP}/org.tizen.ico.homescreen
 %{TZ_SYS_RW_APP}/org.tizen.ico.statusbar
 %{TZ_SYS_RW_APP}/org.tizen.ico.onscreen
@@ -155,8 +157,8 @@ ail_initdb
 %TZ_SYS_RW_APP/org.tizen.ico.system-controller/res/config
 
 %files system-controller
-%manifest %{name}.manifest
 %defattr(-,root,root,-)
+%manifest %{name}.manifest
 %{_datadir}/packages/org.tizen.ico.system-controller.xml
 %{_unitdir_user}/ico-uxf-wait-launchpad-ready.path
 %{_unitdir_user}/weston.target.wants/ico-uxf-wait-launchpad-ready.path
@@ -166,8 +168,8 @@ ail_initdb
 %attr(755,app,app) /home/app/ico
 
 %files system-controller-devel
-%manifest %{name}.manifest
 %defattr(-,root,root,-)
+%manifest %{name}.manifest
 %{_includedir}/ico-appfw/ico_syc_application.h
 %{_includedir}/ico-appfw/ico_syc_appresctl.h
 %{_includedir}/ico-appfw/ico_syc_common.h
