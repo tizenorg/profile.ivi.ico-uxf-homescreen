@@ -175,7 +175,7 @@ typedef enum _window_aspect {
     ICO_SYC_WIN_ASPECT_ALIGN_LEFT  = 1,
     ICO_SYC_WIN_ASPECT_ALIGN_RIGHT  = 2,
     ICO_SYC_WIN_ASPECT_ALIGN_TOP  = 4,
-    ICO_SYC_WIN_ASPECT_ALIGN_BOTTOM  = 8,
+    ICO_SYC_WIN_ASPECT_ALIGN_BOTTOM  = 8
 } ico_syc_win_aspect_e;
 
 /**
@@ -201,40 +201,40 @@ typedef enum _state_onoff {
  * window move information (zone/position/size)
  */
 typedef struct _win_move {
-    char *zone;     /* area of showing application window */
-    int  layer;     /* layer of showing application window */
-    int  pos_x;     /* window's display position (x) */
-    int  pos_y;     /* window's display position (y) */
-    int  width;     /* window width */
-    int  height;    /* window height */
+    const char *zone;   /* area of showing application window */
+    int  layer;         /* layer of showing application window */
+    int  pos_x;         /* window's display position (x) */
+    int  pos_y;         /* window's display position (y) */
+    int  width;         /* window width */
+    int  height;        /* window height */
 } ico_syc_win_move_t;
 
 /*
  * window information
  */
 typedef struct _win_info {
-    char *appid;    /* application id */
-    char *name;     /* window's surface name */
-    int  surface;   /* window's surface id */
+    const char *appid;  /* application id */
+    const char *name;   /* window's surface name */
+    int  surface;       /* window's surface id */
 } ico_syc_win_info_t;
 
 /*
  * window attributes
  */
 typedef struct _win_attr {
-    char *appid;    /* application id */
-    char *name;     /* window's surface name */
-    char *zone;     /* window's current zone name */
-    int  surface;   /* window's surface id */
-    int  nodeid;    /* ecu number and display number in the ecu */
-    int  layer;     /* id of layer that the application's window is on */
-    int  pos_x;     /* window's display position (x) */
-    int  pos_y;     /* window's display position (y) */
-    int  width;     /* window width */
-    int  height;    /* window height */
-    int  raise;     /* changed order showing surface in the layer */
-    int  visible;   /* visible status */
-    int  active;    /* window active status */
+    const char *appid;  /* application id */
+    const char *name;   /* window's surface name */
+    const char *zone;   /* window's current zone name */
+    int  surface;       /* window's surface id */
+    int  nodeid;        /* ecu number and display number in the ecu */
+    int  layer;         /* id of layer that the application's window is on */
+    int  pos_x;         /* window's display position (x) */
+    int  pos_y;         /* window's display position (y) */
+    int  width;         /* window width */
+    int  height;        /* window height */
+    int  raise;         /* changed order showing surface in the layer */
+    int  visible;       /* visible status */
+    int  active;        /* window active status */
 } ico_syc_win_attr_t;
 
 /*
@@ -242,13 +242,13 @@ typedef struct _win_attr {
  * (notify from callback function)
  */
 typedef struct _thumb_info {
-    char *appid;    /* application id */
-    int  surface;   /* window's surface id */
-    int  type;      /* buffer type(ICO_WINDOW_MGR_MAP_TYPE_EGL/SHM/PIXEL)*/
-    int  width;     /* window width */
-    int  height;    /* window height */
-    int  stride;    /* byte par line of frame buffer */
-    int  format;    /* format of buffer */
+    const char *appid;  /* application id */
+    int  surface;       /* window's surface id */
+    int  type;          /* buffer type(ICO_WINDOW_MGR_MAP_TYPE_EGL/SHM/PIXEL)*/
+    int  width;         /* window width */
+    int  height;        /* window height */
+    int  stride;        /* byte par line of frame buffer */
+    int  format;        /* format of buffer */
 } ico_syc_thumb_info_t;
 
 /*
@@ -263,41 +263,41 @@ typedef struct _layer_attr {
  * user list
  */
 typedef struct _user_list {
-    int  user_num;      /* number of user */
-    char **userlist;    /* address of user list */
-    char *user_login;   /* name of login user */
+    int  user_num;          /* number of user */
+    char **userlist;        /* address of user list */
+    const char *user_login; /* name of login user */
 } ico_syc_userlist_t;
 
 /*
  * window resource information
  */
 typedef struct _res_win {
-    char *ECU;          /* name to identify ECU */
-    char *display;      /* name to identify Display in ECU */
-    char *layer;        /* name to identify Layer in Display */
-    char *layout;       /* name to identify Layout in Layer */
-    char *area;         /* name to Output position in Layout */
-    char *dispatchApp;  /* dispatch of application */
-    char *role;         /* role of notice */
-    uint32_t resourceId;/* ID number of resource(surface id) */
+    const char *ECU;        /* name to identify ECU */
+    const char *display;    /* name to identify Display in ECU */
+    const char *layer;      /* name to identify Layer in Display */
+    const char *layout;     /* name to identify Layout in Layer */
+    const char *area;       /* name to Output position in Layout */
+    const char *dispatchApp;/* dispatch of application */
+    const char *role;       /* role of notice */
+    uint32_t resourceId;    /* ID number of resource(surface id) */
 } ico_syc_res_window_t;
 
 /*
  * sound resource information
  */
 typedef struct _res_sound {
-    char *zone;         /* area of playing sound */
-    char *name;         /* sound stream name */
-    char *id;           /* sound id */
-    int  adjust;        /* adjust action */
+    const char *zone;       /* area of playing sound */
+    const char *name;       /* sound stream name */
+    const char *id;         /* sound id */
+    int  adjust;            /* adjust action */
 } ico_syc_res_sound_t;
 
 /*
  * input resource information
  */
 typedef struct _res_input {
-    char *name;         /* input device name */
-    int  event;         /* input event id */
+    const char *name;       /* input device name */
+    int  event;             /* input event id */
 } ico_syc_res_input_t;
 
 /*
@@ -324,9 +324,9 @@ typedef struct _input_region {
  * resource(window/sound/input) information
  */
 typedef struct _res_info {
-    ico_syc_res_window_t *window;  /* window resource information */
-    ico_syc_res_sound_t  *sound;   /* sound resource information */
-    ico_syc_res_input_t  *input;   /* input resource information */
+    ico_syc_res_window_t *window;   /* window resource information */
+    ico_syc_res_sound_t  *sound;    /* sound resource information */
+    ico_syc_res_input_t  *input;    /* input resource information */
 } ico_syc_res_info_t;
 
 /*
