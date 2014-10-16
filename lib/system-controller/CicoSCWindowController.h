@@ -27,6 +27,8 @@ using namespace std;
 #define ICO_SC_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"
 #define ICO_SC_LAYERID_SCREENBASE   1000
 
+#define ICO_SC_HIDEWAIT_DELAY       200
+
 //==========================================================================
 //  Forward declaration
 //==========================================================================

@@ -39,7 +39,8 @@ struct creation_surface_wait    {
     struct creation_surface_wait    *next;
     int32_t     pid;
     uint32_t    id_surface;
-    struct wl_surface *surface;
+    struct wl_surface   *surface;
+    struct ivi_surface  *ivi_surface;
     int32_t     busy;
     char        title[ICO_SYC_MAX_WINNAME_LEN];
 };
@@ -50,6 +51,8 @@ struct creation_surface_wait    {
 
 class CicoSCWlWinMgrIF : public CicoSCWaylandIF {
 public:
+    static CicoSCWlWinMgrIF* getInstance(void);
+
     virtual void initInterface(void               *data,
                                struct wl_registry *registry,
                                uint32_t           name,
@@ -115,25 +118,13 @@ public:
 
     static void wlIviCtrlRemoveSurface(uint32_t id_surface);
 
-protected:
-    // default constructor
-    CicoSCWlWinMgrIF();
-
-    // destructor
-    virtual ~CicoSCWlWinMgrIF();
-
-    // assignment operator
-    CicoSCWlWinMgrIF& operator=(const CicoSCWlWinMgrIF &object);
-
-    // copy constructor
-    CicoSCWlWinMgrIF(const CicoSCWlWinMgrIF &object);
-
     // wrapper function ico_window_mgr_set_window_layer
     void setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t oldlayer);
 
     // wrapper function ico_window_mgr_set_positionsize
-    void setPositionsize(uint32_t surfaceid, uint32_t node,
-                         int32_t x, int32_t y, int32_t width, int32_t height);
+    void setPositionsize(uint32_t surfaceid,
+                         int32_t x, int32_t y, int32_t width, int32_t height,
+                         int32_t srcwidth, int32_t srcheight);
 
     // wrapper function ico_window_mgr_set_visible
     void setVisible(uint32_t surfaceid, int32_t visible);
@@ -156,6 +147,19 @@ protected:
 
     // wrapper function of ico_window_mgr_unmap_surface
     void unmapSurface(uint32_t surfaceid);
+
+protected:
+    // default constructor
+    CicoSCWlWinMgrIF();
+
+    // destructor
+    virtual ~CicoSCWlWinMgrIF();
+
+    // assignment operator
+    CicoSCWlWinMgrIF& operator=(const CicoSCWlWinMgrIF &object);
+
+    // copy constructor
+    CicoSCWlWinMgrIF(const CicoSCWlWinMgrIF &object);
 
     static const char *wlIviCtrlGetSurfaceWaiting(uint32_t id_surface, int *pid);
 
@@ -274,6 +278,9 @@ protected:
     // creation surface title name
     static struct creation_surface_wait *m_wait_surface_creation;
     static struct creation_surface_wait *m_free_surface_creation;
+
+private:
+    static CicoSCWlWinMgrIF* ms_myInstance;
 };
 #endif  // __CICO_SC_WL_WINMGR_IF_H__
 // vim:set expandtab ts=4 sw=4:
