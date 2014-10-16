@@ -345,7 +345,7 @@ ico_syc_cb_userlist(ico_syc_callback_t callback, void *user_data,
         }
         free(list);
     }
-    free(userlist->user_login);
+    free((void *)userlist->user_login);
     free(userlist);
 
     return;

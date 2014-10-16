@@ -46,8 +46,8 @@ typedef enum _window_show {
 #define ICO_SYC_WIN_SURF_ONESHOT    0x10000000
 #define ICO_SYC_WIN_SURF_FLAGS      0xff000000
 typedef struct _animation_info {
-    char *name;     /* name of animation (ex. fade,slide,zoom etc..) */
-    int  time;      /* millisecond time to show the transition's animation */
+    const char *name;   /* name of animation (ex. fade,slide,zoom etc..) */
+    int  time;          /* millisecond time to show the transition's animation */
 } ico_syc_animation_t;
 
 /*============================================================================*/
