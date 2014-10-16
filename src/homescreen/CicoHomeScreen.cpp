@@ -346,14 +346,13 @@ CicoHomeScreen::requestChangeZone(CicoHSAppInfo* appinfo)
     }
 
     ICO_DBG("change zone: \"%s\"->\"%s\"", wininfo->zone, dispzone);
-    ico_syc_win_move_t move = {
-        .zone   = (char*)dispzone,
-        .layer  = layer,
-        .pos_x  = 0,
-        .pos_y  = 0,
-        .width  = 0,
-        .height = 0
-    };
+    ico_syc_win_move_t move;
+    move.zone   = dispzone;
+    move.layer  = layer;
+    move.pos_x  = 0;
+    move.pos_y  = 0;
+    move.width  = 0;
+    move.height = 0;
 
     ico_syc_move(wininfo->appid, wininfo->surface, &move,
                  &hs_instance->moveZoneAnimation);
@@ -738,7 +737,7 @@ CicoHomeScreen::ShowApplicationWindow(ico_syc_win_info_t *win_info)
 
     ico_syc_win_move_t move;
 
-    move.zone  = (char*)dispZoneConf->fullname.c_str();
+    move.zone  = dispZoneConf->fullname.c_str();
     move.layer = HS_LAYER_APPLICATION;
     if (ailItem->m_display != 0) {
         move.layer = HS_LAYER_2NDDISP_APP;
@@ -751,7 +750,7 @@ CicoHomeScreen::ShowApplicationWindow(ico_syc_win_info_t *win_info)
 
     ico_syc_move(win_info->appid,win_info->surface,&move,NULL);
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
+    animation.name = ICO_HS_MENU_HIDE_ANIMATION_FADE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
     const string& lastStartupApp = m_appHis->getLastStartupAppid();
     if (true == lastStartupApp.empty()) {
@@ -882,7 +881,7 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
             move.width  = oPOSC->m_w;
             move.height = oPOSC->m_h;
             ico_syc_animation_t animation;
-            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
+            animation.name = ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
             animation.time = ICO_HS_MENU_ANIMATION_DURATION;
             ico_syc_move(win_info->appid, win_info->surface, &move, &animation);
 
@@ -1185,14 +1184,14 @@ CicoHomeScreen::StartRelations(void)
 {
     int ret;
     strncpy(sb_package_name,
-            (char *)config->ConfigGetString(ICO_HS_CONFIG_HOMESCREEN,
-                                             ICO_HS_CONFIG_SB,
-                                             ICO_HS_APPID_DEFAULT_SB),
+            config->ConfigGetString(ICO_HS_CONFIG_HOMESCREEN,
+                                    ICO_HS_CONFIG_SB,
+                                    ICO_HS_APPID_DEFAULT_SB),
             ICO_HS_MAX_PROCESS_NAME);
     strncpy(os_package_name,
-             (char *)config->ConfigGetString(ICO_HS_CONFIG_HOMESCREEN,
-                                             ICO_HS_CONFIG_ONS,
-                                             ICO_HS_APPID_DEFAULT_ONS),
+            config->ConfigGetString(ICO_HS_CONFIG_HOMESCREEN,
+                                    ICO_HS_CONFIG_ONS,
+                                    ICO_HS_APPID_DEFAULT_ONS),
             ICO_HS_MAX_PROCESS_NAME);
 // TODO
 #if 1   /* ToDo     */
@@ -1290,9 +1289,9 @@ CicoHomeScreen::Initialize(int orientation, CicoGKeyFileConfig *config)
     // load switch display zone config
     moveZoneName = config->ConfigGetString("switchzone", "movezone", NULL);
 
-    moveZoneAnimation.name = (char*)config->ConfigGetString("switchzone",
-                                                            "animation",
-                                                            ICO_HS_ANIMATION_FADE);
+    moveZoneAnimation.name = config->ConfigGetString("switchzone",
+                                                     "animation",
+                                                     ICO_HS_ANIMATION_FADE);
 
     moveZoneAnimation.time = config->ConfigGetInteger("switchzone",
                                                       "animatime", 400);
@@ -1698,7 +1697,7 @@ CicoHomeScreen::StartHomeScreen(int orientation)
     /* create server instance */
     CicoHSServer *server = CicoHSServer::getInstance();
     server->setAppCtrl(m_appctrl);
-    server->startup(10001, (const char*)"ico_hs_protocol");
+    server->startup(10001, "ico_hs_protocol");
 
     /* Initialize WindowController */
     CicoHSWindowController::Initialize();
@@ -1744,9 +1743,9 @@ CicoHomeScreen::StartHomeScreen(int orientation)
     // load switch display zone config
     moveZoneName = config->ConfigGetString("switchzone", "movezone", NULL);
 
-    moveZoneAnimation.name = (char*)config->ConfigGetString("switchzone",
-                                                            "animation",
-                                                            ICO_HS_ANIMATION_FADE);
+    moveZoneAnimation.name = config->ConfigGetString("switchzone",
+                                                     "animation",
+                                                     ICO_HS_ANIMATION_FADE);
     moveZoneAnimation.time = config->ConfigGetInteger("switchzone",
                                                       "animatime", 400);
     // debug log
@@ -1840,10 +1839,10 @@ CicoHomeScreen::ChangeMode(int pattern)
         ico_syc_animation_t animation;
         ICO_DBG("CicoHomeScreen::ChangeMode: MENU->APP");
         if (pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE)  {
-            animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
+            animation.name = ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
         }
         else    {
-            animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
+            animation.name = ICO_HS_MENU_HIDE_ANIMATION_FADE;
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Hide(&animation);
@@ -1860,10 +1859,10 @@ CicoHomeScreen::ChangeMode(int pattern)
         ico_syc_animation_t animation;
         ICO_DBG("CicoHomeScreen::ChangeMode: APP->MENU");
         if (pattern == ICO_HS_SHOW_HIDE_PATTERN_SLIDE)  {
-            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
+            animation.name = ICO_HS_MENU_SHOW_ANIMATION_SLIDE;
         }
         else    {
-            animation.name = (char*)ICO_HS_MENU_SHOW_ANIMATION_FADE;
+            animation.name = ICO_HS_MENU_SHOW_ANIMATION_FADE;
         }
         animation.time = ICO_HS_MENU_ANIMATION_DURATION;
         hs_instance->menu_window->Show(&animation);
@@ -1959,7 +1958,7 @@ CicoHomeScreen::SetRegulation(void* data)
     // regulation action
     hs_instance->ctl_bar_window->SetRegulation();
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
+    animation.name = ICO_HS_MENU_HIDE_ANIMATION_SLIDE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
     hs_instance->menu_window->Hide(&animation);
 
@@ -2389,7 +2388,7 @@ CicoHomeScreen::ShowApp_i(const std::string& app)
     }
 
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
+    animation.name = ICO_HS_MENU_HIDE_ANIMATION_FADE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
 
     ico_syc_show(appinfo->GetAppId(), appinfo->GetLastSurface(), &animation);
@@ -2436,7 +2435,7 @@ CicoHomeScreen::HideApp(const std::string& app)
     }
 
     ico_syc_animation_t animation;
-    animation.name = (char*)ICO_HS_MENU_HIDE_ANIMATION_FADE;
+    animation.name = ICO_HS_MENU_HIDE_ANIMATION_FADE;
     animation.time = ICO_HS_MENU_ANIMATION_DURATION;
 
     int surface = ai->GetLastSurface();
@@ -2456,7 +2455,7 @@ CicoHomeScreen::HideApp(const std::string& app)
 void
 CicoHomeScreen::MoveApp(const std::string& app, const std::string& zone)
 {
-    CicoHSAppInfo *appinfo = GetAppInfo((const char*)app.c_str());
+    CicoHSAppInfo *appinfo = GetAppInfo(app.c_str());
     if ((CicoHSAppInfo*)0 == appinfo) {
         ICO_DBG("GetAppInfo(%s) is NULL" , app.c_str());
         return;
@@ -2464,18 +2463,19 @@ CicoHomeScreen::MoveApp(const std::string& app, const std::string& zone)
 
     int surface = appinfo->GetLastSurface();
     ico_hs_window_info* wininfo = appinfo->GetWindowInfobySurface(surface);
-    int layer = HS_LAYER_APPLICATION;
-    const char *dispzone = (const char*)zone.c_str();
-    ico_syc_win_move_t move = {
-        .zone   = (char*)dispzone,
-        .layer  = layer,
-        .pos_x  = 0,
-        .pos_y  = 0,
-        .width  = 0,
-        .height = 0
-    };
+    if (wininfo)    {
+        int layer = HS_LAYER_APPLICATION;
+        const char *dispzone = zone.c_str();
+        ico_syc_win_move_t move;
+        move.zone   = dispzone;
+        move.layer  = layer;
+        move.pos_x  = 0;
+        move.pos_y  = 0;
+        move.width  = 0;
+        move.height = 0;
 
-    ico_syc_move(wininfo->appid, wininfo->surface, &move,
-                 &hs_instance->moveZoneAnimation);
+        ico_syc_move(wininfo->appid, wininfo->surface, &move,
+                     &hs_instance->moveZoneAnimation);
+    }
 }
 // vim: set expandtab ts=4 sw=4:

@@ -23,6 +23,7 @@ using namespace std;
 // static members
 //==========================================================================
 CicoOnScreen * CicoOnScreen::os_instance=NULL;
+uint32_t    CicoOnScreen::surfaceid = 0;
 
 //==========================================================================
 // functions
@@ -57,23 +58,26 @@ CicoOnScreen::CicoOnScreen(void)
 //--------------------------------------------------------------------------
 CicoOnScreen::~CicoOnScreen(void)
 {
-//    ICO_TRA("CicoOnScreen::~CicoOnScreen Enter");
+//  ICO_TRA("CicoOnScreen::~CicoOnScreen Enter");
     list<CicoOSPopWindow*>::iterator p = m_mngWin.begin();
     while (p != m_mngWin.end()) {
         CicoOSPopWindow* pt = *p;
+        pt->removeMainWindow();
         delete pt;
     }
     m_mngWin.clear();
     p = m_waitMngWin.begin();
     while (p != m_waitMngWin.end()) {
         CicoOSPopWindow* pt = *p;
+        pt->removeMainWindow();
         delete pt;
     }
     m_waitMngWin.clear();
 
     delete m_request;
     m_request = NULL;
-//    ICO_TRA("CicoOnScreen::~CicoOnScreen Leave");
+    m_del = false;
+//  ICO_TRA("CicoOnScreen::~CicoOnScreen Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -101,6 +105,7 @@ CicoOnScreen::StartOnScreen(void)
     CicoOSClient* cosc = CicoOSClient::getInstance();
     cosc->connect();
 
+    // create surface
     if (NULL == m_reserve) {
         m_reserve = new CicoOSPopWindow(NOTIFICATION_TYPE_NONE);
         m_reserve->createMainWindow();
@@ -122,7 +127,7 @@ bool CicoOnScreen::insertNoti(notification_h noti_h)
         ICO_TRA("Leave (false)");
         return false;
     }
-    if (!w->Empty()) {
+    if (! w->Empty()) {
         if (NOTIFICATION_TYPE_NOTI == w->GetType()) {
             m_waitMngWin.push_back(w);
             w = NULL;
@@ -136,6 +141,7 @@ bool CicoOnScreen::insertNoti(notification_h noti_h)
     ICO_TRA("Leave (true)");
     return true;
 }
+
 bool CicoOnScreen::deleteNoti(int priv_id)
 {
     ICO_TRA("Enter");
@@ -233,6 +239,21 @@ CicoOnScreen::NotificationCallback(void *data, notification_type_e type,
     ICO_TRA("Leave");
 }
 
+//--------------------------------------------------------------------------
+/**
+ * @brief   CicoOnScreen::GetResourdeId
+ *          Get resource id (sourface id)
+ *
+ * @param      nothing
+ * @return     resource id
+ */
+//--------------------------------------------------------------------------
+uint32_t
+CicoOnScreen::GetResourdeId(void)
+{
+    return CicoOnScreen::surfaceid;
+}
+
 bool CicoOnScreen::requestShowSC()
 {
     ICO_TRA("Enter");
@@ -245,26 +266,35 @@ bool CicoOnScreen::requestShowSC()
         return false;
     }
 
-    list<CicoOSPopWindow*>::iterator p = m_waitMngWin.begin();
-    m_del = false;
-    m_request = *p;
-    m_waitMngWin.remove(m_request);
-    bool r = m_request->showPopup();
-    while (false == r) { // fail showPop request
-        ICO_ERR("_____ Fail SHOW POP REQUEST(%d)",
-                m_request->GetPrivId());
-        delete m_request;
-        m_request = NULL;
-        if (m_waitMngWin.empty()) {
-            break;
-        }
-        p = m_waitMngWin.begin();
+    list<CicoOSPopWindow*>::iterator p;
+    bool r;
+    while (1) {
         m_del = false;
+        p = m_waitMngWin.begin();
         m_request = *p;
         m_waitMngWin.remove(m_request);
         r = m_request->showPopup();
+        if (true == r) {
+            r = m_request->acquireRes();
+            if (true == r)  {
+                if (true == m_del)  {
+                    m_request->hidePopup();
+                    m_del = false;
+                }
+            }
+            else    {
+                ICO_ERR("_____ Fail Acquire Resource(%d)", m_request->GetPrivId());
+            }
+        }
+        else    {
+            ICO_ERR("_____ Fail SHOW POP REQUEST(%d)", m_request->GetPrivId());
+        }
+        if (true == r)      break;
+        delete m_request;
+        m_request = NULL;
+        if (m_waitMngWin.empty())   break;
     }
-    ICO_TRA("Leave %s", r? "true": "false");
+    ICO_TRA("Leave %s", r ? "true": "false");
     return r;
 }
 
@@ -282,6 +312,7 @@ CicoOnScreen::EventCallBack(const ico_syc_ev_e event,
                             const void *detail, void *user_data)
 {
     ICO_TRA("Enter(event %d, %x, %x)", (int)event, detail, user_data);
+
     ico_syc_res_info_t *ri = (ico_syc_res_info_t*) detail;
     if (NULL == ri) {
         ICO_ERR("____ CALLBACK NG PARAM");
@@ -317,21 +348,22 @@ CicoOnScreen::EventCallBack(const ico_syc_ev_e event,
             ICO_TRA("_____ no WINDOW");
             break;  // break of switch event
         }
-        os_instance->entryWindowId(ri->window->resourceId);
+        CicoOnScreen::surfaceid = ri->window->resourceId;
+        ICO_TRA("_____ surfaceid=%08x", CicoOnScreen::surfaceid);
         break;  // break of switch event
     }
     default:
         ICO_TRA("_____ UNKNOWN event(%d)", (int)event);
         break;  // break of switch event
     }
-
     ICO_TRA("Leave");
 }
 
 bool
 CicoOnScreen::releaseWindow(uint32_t resourceId)
 {
-    ICO_TRA("Enter(%d)", resourceId);
+    ICO_TRA("Enter(%08x)", resourceId);
+
     bool bR = false;
     list<CicoOSPopWindow*> tmp;
 
@@ -345,36 +377,21 @@ CicoOnScreen::releaseWindow(uint32_t resourceId)
     p = tmp.begin();
     for (; p != tmp.end(); ++p) {
         CicoOSPopWindow* w = *p;
+        if (w == m_request) {
+            m_request = NULL;
+        }
         m_mngWin.remove(w);
         delete w;
         bR = true;
     }
     tmp.clear();
 
-    ICO_TRA("Leave %s", bR? "true": "false");
-    return bR;
-}
-
-bool
-CicoOnScreen::entryWindowId(uint32_t resourceId)
-{
-    ICO_TRA("Enter(%d)", resourceId);
-    bool bR = false;
-    if (NULL != m_request) {
-        m_request->m_resourceId = resourceId;
-        if (true == m_request->acquireRes()) {
-            m_mngWin.push_back(m_request);
-            if (true == m_del) {
-                ICO_TRA("____ HIDE REQUEST");
-                m_request->hidePopup();
-            }
-        }
-        else {
-            delete m_request;
-        }
-        m_del = false;
+    if (m_request)  {
+        delete m_request;
         m_request = NULL;
-        bR = requestShowSC();
+        m_del = false;
+
+        (void) requestShowSC();
     }
     ICO_TRA("Leave %s", bR? "true": "false");
     return bR;

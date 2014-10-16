@@ -26,6 +26,7 @@ using namespace std;
 //==========================================================================
 // static members
 //==========================================================================
+Ecore_Evas*  CicoOSPopWindow::m_window = NULL;
 
 //==========================================================================
 // functions
@@ -43,10 +44,9 @@ using namespace std;
 CicoOSPopWindow::CicoOSPopWindow(notification_type_e type) : CicoNotification(type)
 {
     ICO_TRA("Enter type(%d)", (int)type);
-    m_window      = NULL;
     m_icon        = NULL;
     m_theme       = NULL;
-    m_resourceId  = 0;
+    m_resourceId  = CicoOnScreen::GetResourdeId();
     m_context     = NULL;
     m_buttonTouch = false;
     ICO_TRA("Leave");
@@ -55,14 +55,14 @@ CicoOSPopWindow::CicoOSPopWindow(notification_type_e type) : CicoNotification(ty
 CicoOSPopWindow::CicoOSPopWindow(notification_h noti) : CicoNotification(noti)
 {
     ICO_TRA("Enter");
-    m_window      = NULL;
     m_icon        = NULL;
     m_theme       = NULL;
-    m_resourceId  = 0;
+    m_resourceId  = CicoOnScreen::GetResourdeId();
     m_context     = NULL;
     m_buttonTouch = false;
     ICO_TRA("Leave");
 }
+
 //--------------------------------------------------------------------------
 /**
  * @brief   CicoOnScreen::~CicoOnScreen
@@ -74,20 +74,12 @@ CicoOSPopWindow::CicoOSPopWindow(notification_h noti) : CicoNotification(noti)
 //--------------------------------------------------------------------------
 CicoOSPopWindow::~CicoOSPopWindow(void)
 {
-    ICO_TRA("Enter sur:%d, priv_id:%d", m_resourceId, GetPrivId());
-    if (NULL != m_window) {
-        ecore_evas_free(m_window);
-        m_window = NULL;
-    }
-    // if (NULL != m_icon) /* import m_window */
-    m_icon = NULL;
-    // if (NULL != m_theme) /* import m_window */
-    m_theme = NULL;
+    ICO_TRA("Enter sur:%08x, priv_id:%d", m_resourceId, GetPrivId());
+
     if (NULL != m_context) {
         int r = ico_syc_release_res(m_context);
         ICO_DBG("_____ %d = ico_syc_release_res", r);
     }
-
     ICO_DBG("_____ %d, %d", (int)m_buttonTouch, (int)m_appsvc_pkgname.empty());
 
     if ((true == m_buttonTouch) && (false == m_appsvc_pkgname.empty())) {
@@ -98,6 +90,17 @@ CicoOSPopWindow::~CicoOSPopWindow(void)
         }
     }
 
+    if (m_theme)    {
+        usleep(POPUP_DELETE_WAIT*1000);
+        evas_object_hide(m_theme);
+        evas_object_del(m_theme);
+        m_theme = NULL;
+    }
+    if (m_icon) {
+        evas_object_hide(m_icon);
+        evas_object_del(m_icon);
+        m_icon = NULL;
+    }
     ICO_TRA("Leave");
 }
 
@@ -114,7 +117,8 @@ bool
 CicoOSPopWindow::showPopup()
 {
     ICO_TRA("Enter");
-    if (NULL == m_window) {
+
+    if (NULL == m_theme) {
         if (false == InitializeWindow()) {
             ICO_TRA("Leave false");
             return false;
@@ -141,8 +145,7 @@ CicoOSPopWindow::showPopup()
     // Get icon path
     const char *icon = GetIconPath();
     ICO_DBG("Received: %s : %i : %s : %s : %s : %p",
-            pkgname, priv_id, title, content,
-            text, (void *)service_handle);
+            pkgname, priv_id, title, content, text, (void *)service_handle);
 
     if (NULL != service_handle) {
         const char* pn = appsvc_get_pkgname(service_handle);
@@ -203,7 +206,7 @@ CicoOSPopWindow::showPopup()
     return true;
 }
 
-bool 
+bool
 CicoOSPopWindow::acquireRes()
 {
     ICO_TRA("Enter");
@@ -213,7 +216,7 @@ CicoOSPopWindow::acquireRes()
     }
     ico_syc_res_window_t w;
     makeResWindowT(w);
-    m_context = ico_syc_acquire_res( &w, NULL, NULL, ICO_SYC_RES_ONSCREEN);
+    m_context = ico_syc_acquire_res(&w, NULL, NULL, ICO_SYC_RES_ONSCREEN);
     if (NULL == m_context) {
         ICO_TRA("Leave false");
         return false;
@@ -244,7 +247,7 @@ CicoOSPopWindow::hidePopup(bool buttonTouch)
     ICO_TRA("Leave");
 }
 
-bool    
+bool
 CicoOSPopWindow::releaseRes()
 {
     ICO_TRA("Enter");
@@ -261,10 +264,9 @@ CicoOSPopWindow::releaseRes()
     return false;
 }
 
-
 //--------------------------------------------------------------------------
 /**
- * @brief   CicoOnScreen::InitializePopup
+ * @brief   CicoOnScreen::InitializeWindow
  *          Initialize popup window
  *
  * @param[in]   none
@@ -275,9 +277,12 @@ bool
 CicoOSPopWindow::InitializeWindow(void)
 {
     ICO_TRA("Enter");
-    if (false == createMainWindow()) {
-        ICO_TRA("Leave(ERR)");
-        return false;
+
+    if (NULL == m_window) {
+        if (false == createMainWindow()) {
+            ICO_TRA("Leave(ERR)");
+            return false;
+        }
     }
     m_theme = edje_object_add(ecore_evas_get(m_window));
     if (NULL == m_theme) {
@@ -285,7 +290,7 @@ CicoOSPopWindow::InitializeWindow(void)
         ICO_TRA("Leave(ERR)");
         return false;
     }
-    if (!edje_object_file_set(m_theme, ICO_OS_THEMES_EDJ_FILEPATH, "main")) {
+    if (! edje_object_file_set(m_theme, ICO_OS_THEMES_EDJ_FILEPATH, "main")) {
         Edje_Load_Error err = edje_object_load_error_get(m_theme);
         const char *errmsg = edje_load_error_str(err);
         ICO_ERR("could not load 'main' from onscreen.edj: %s", errmsg);
@@ -297,8 +302,9 @@ CicoOSPopWindow::InitializeWindow(void)
     m_icon = evas_object_image_filled_add(ecore_evas_get(m_window));
     evas_object_pointer_mode_set(m_icon, EVAS_OBJECT_POINTER_MODE_NOGRAB);
     edje_object_part_swallow(m_theme, "icon", m_icon);
+
     /* getting size of screen */
-    /* home screen size is full of display*/
+    /* home screen size is full of display */
     int display_width  = 0;
     int display_height = 0;
     ecore_wl_screen_size_get(&display_width, &display_height);
@@ -331,6 +337,7 @@ bool
 CicoOSPopWindow::createMainWindow()
 {
     ICO_TRA("Enter");
+
     // Window setup
     m_window = ecore_evas_new(NULL, 0, 0, WIDTH, HEIGHT, "frame=0");
     if (NULL == m_window) {
@@ -338,10 +345,25 @@ CicoOSPopWindow::createMainWindow()
         ICO_TRA("Leave(ERR)");
         return false;
     }
+
+    ecore_evas_title_set(m_window, POPUP_WINDOW_TITLE);
     ecore_evas_alpha_set(m_window, EINA_TRUE);
     ecore_evas_show(m_window);
+
     ICO_TRA("Leave");
     return true;
+}
+
+void
+CicoOSPopWindow::removeMainWindow()
+{
+    ICO_TRA("Enter");
+
+    if (NULL != m_window) {
+        ecore_evas_free(m_window);
+        m_window = NULL;
+    }
+    ICO_TRA("Leave");
 }
 
 //--------------------------------------------------------------------------
@@ -369,32 +391,16 @@ CicoOSPopWindow::evasMouseUpCB(void *data, Evas *e, Evas_Object *obj,
 }
 
 
-static char id0_ECU[]         = "Center";
+static const char id0_ECU[]        = "Center";
 
-static char id00_display[]   = "Center";
-// static char id01_display[]   = "Mid";
+static const char id00_display[]   = "Center";
+static const char id006_layer[]    = "OnScreen";
+static const char id00611_layout[] = "Whole";
+static const char id006111_area[]  = "Full";
 
-// static char id001_layer[]    = "Application";
-// static char id002_layer[]    = "SoftKeyboard";
-// static char id003_layer[]    = "HomeScreen";
-// static char id004_layer[]    = "ControlBar";
-// static char id005_layer[]    = "InterruptApp";
-static char id006_layer[]    = "OnScreen";
-// static char id007_layer[]    = "Touch";
-// static char id008_layer[]    = "Cursor";
-// static char id011_layer[]    = "MainApp";
-// static char id012_layer[]    = "SubDispMainApp";
-// static char id013_layer[]    = "SubDispSubApp";
+static const char role_incoming[]  = "incoming";
+static const char role_message[]   = "message";
 
-static char id00611_layout[] = "Whole";
-// static char id00612_layout[] = "Half";
-
-static char id006111_area[]  = "Full";
-// static char id006121_area[]  = "Upper";
-// static char id006122_area[]  = "Lower";
-
-static char role_incoming[] = "incoming";
-static char role_message[]  = "message";
 void
 CicoOSPopWindow::makeResWindowT(ico_syc_res_window_t& w)
 {
