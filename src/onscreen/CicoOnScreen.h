@@ -64,18 +64,21 @@ public:
                                      notification_type_e type,
                                      notification_op *op_list,
                                      int num_op);
+
+    static uint32_t GetResourceId(void);
+
 protected:
     bool requestShowSC();
 
     static void EventCallBack(const ico_syc_ev_e event,
                               const void *detail,
                               void *user_data);
-    bool entryWindowId(uint32_t resourceId);
     bool releaseWindow(uint32_t resourceId);
     bool insertNoti(notification_h noti_h);
     bool deleteNoti(int priv_id);
 
     static CicoOnScreen *os_instance;
+    static uint32_t     surfaceid;
 
 protected:
     CicoNotificationService notiservice_;
