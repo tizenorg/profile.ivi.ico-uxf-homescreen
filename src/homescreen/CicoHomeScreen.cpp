@@ -346,14 +346,13 @@ CicoHomeScreen::requestChangeZone(CicoHSAppInfo* appinfo)
     }
 
     ICO_DBG("change zone: \"%s\"->\"%s\"", wininfo->zone, dispzone);
-    ico_syc_win_move_t move = {
-        .zone   = (char*)dispzone,
-        .layer  = layer,
-        .pos_x  = 0,
-        .pos_y  = 0,
-        .width  = 0,
-        .height = 0
-    };
+    ico_syc_win_move_t move;
+    move.zone   = (char*)dispzone;
+    move.layer  = layer;
+    move.pos_x  = 0;
+    move.pos_y  = 0;
+    move.width  = 0;
+    move.height = 0;
 
     ico_syc_move(wininfo->appid, wininfo->surface, &move,
                  &hs_instance->moveZoneAnimation);
@@ -1698,7 +1697,7 @@ CicoHomeScreen::StartHomeScreen(int orientation)
     /* create server instance */
     CicoHSServer *server = CicoHSServer::getInstance();
     server->setAppCtrl(m_appctrl);
-    server->startup(10001, (const char*)"ico_hs_protocol");
+    server->startup(10001, "ico_hs_protocol");
 
     /* Initialize WindowController */
     CicoHSWindowController::Initialize();
@@ -2456,7 +2455,7 @@ CicoHomeScreen::HideApp(const std::string& app)
 void
 CicoHomeScreen::MoveApp(const std::string& app, const std::string& zone)
 {
-    CicoHSAppInfo *appinfo = GetAppInfo((const char*)app.c_str());
+    CicoHSAppInfo *appinfo = GetAppInfo(app.c_str());
     if ((CicoHSAppInfo*)0 == appinfo) {
         ICO_DBG("GetAppInfo(%s) is NULL" , app.c_str());
         return;
@@ -2464,18 +2463,19 @@ CicoHomeScreen::MoveApp(const std::string& app, const std::string& zone)
 
     int surface = appinfo->GetLastSurface();
     ico_hs_window_info* wininfo = appinfo->GetWindowInfobySurface(surface);
-    int layer = HS_LAYER_APPLICATION;
-    const char *dispzone = (const char*)zone.c_str();
-    ico_syc_win_move_t move = {
-        .zone   = (char*)dispzone,
-        .layer  = layer,
-        .pos_x  = 0,
-        .pos_y  = 0,
-        .width  = 0,
-        .height = 0
-    };
+    if (wininfo)    {
+        int layer = HS_LAYER_APPLICATION;
+        const char *dispzone = zone.c_str();
+        ico_syc_win_move_t move;
+        move.zone   = (char*)dispzone;
+        move.layer  = layer;
+        move.pos_x  = 0;
+        move.pos_y  = 0;
+        move.width  = 0;
+        move.height = 0;
 
-    ico_syc_move(wininfo->appid, wininfo->surface, &move,
-                 &hs_instance->moveZoneAnimation);
+        ico_syc_move(wininfo->appid, wininfo->surface, &move,
+                     &hs_instance->moveZoneAnimation);
+    }
 }
 // vim: set expandtab ts=4 sw=4:
