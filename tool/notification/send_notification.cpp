@@ -80,8 +80,8 @@ insert_notification(notification_type_e type,
                errorToString(noti_err));
         return -1;
     }
-     
-    //set Title 
+
+    //set Title
     if (NULL == title) {
         return -1;
     }
@@ -94,7 +94,7 @@ insert_notification(notification_type_e type,
         cout << "Failed to set notification title <error code>:"<< noti_err<<endl;
         return -1;
     }
-    
+
     //set Content
     if (NULL == content) {
         return -1;
@@ -108,8 +108,8 @@ insert_notification(notification_type_e type,
         cout << "Failed to set notification content <error code>:"<< noti_err<<endl;
         return -1;
     }
-    
-    //set Icon_path 
+
+    //set Icon_path
     if (NULL == icon) {
         return -1;
     }
@@ -127,24 +127,24 @@ insert_notification(notification_type_e type,
         printf("notification_insert failed(%s).\n",
                errorToString(noti_err));
         return -1;
-    } 
+    }
 
     //free to notification
     noti_err = notification_free(noti);
     if (noti_err != NOTIFICATION_ERROR_NONE) {
         cout <<"Failed to free notification <error code>:"<< noti_err <<endl;
         return -1;
-    } 
- 
+    }
+
     return 0;
-} 
+}
 
 int
 main(int argc, char **argv)
 {
     const char* msgTyp = "TYPE_NOTI";
     notification_type_e nType = NOTIFICATION_TYPE_NOTI;
-    
+
     if (argc == 2) {
         string sargv1(argv[1]);
         if (0 == sargv1.compare("--ongoing")) {
@@ -154,46 +154,46 @@ main(int argc, char **argv)
     }
 
     cout << "Notification TestProgram Start("<<msgTyp<<")=========" <<endl;
-    
+
     insert_notification(nType,
                         NOTIFICATION_GROUP_ID_DEFAULT,
                         NOTIFICATION_PRIV_ID_NONE,
                         "org.tizen.dialer",
-                        "test_title",
+                        "test_title1",
                         "0123456789012345678901234",
                         "/usr/share/icons/default/small/org.tizen.dialer.png");
 
     insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
-                        "GV3ySIINq7.GhostCluster",
-                        "test_title",
-                        "test_content",
-                        "/opt/share/icons/default/small/GV3ySIINq7.GhostCluster.png");
+                        "terminal",
+                        "test_title2",
+                        "test_content2",
+                        "/usr/share/icons/default/small/terminal.png");
 
     insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
-                        "ODBQpKvkS1.Settings",
-                        "test_title",
-                        "test_content",
-                        "/opt/share/icons/default/small/ODBQpKvkS1.Settings.png");
+                        "navigator",
+                        "test_title3",
+                        "test_content3",
+                        "/usr/share/icons/default/small/navigator.png");
 
     insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
-                        "lYjFlj49Q4.saythis",
-                        "test_title",
-                        "test_content",
-                        "/opt/share/icons/default/small/lYjFlj49Q4.saythis.png");
+                        "smartdevicelink",
+                        "test_title4",
+                        "test_content4",
+                        "/usr/share/icons/default/small/devices.png");
 
     insert_notification(nType,
                         NOTIFICATION_GROUP_ID_NONE,
                         NOTIFICATION_PRIV_ID_NONE,
-                        "t8j6HTRpuz.MediaPlayer",
-                        "test_title",
-                        "test_content",
-                        "/opt/share/icons/default/small/t8j6HTRpuz.MediaPlayer.png");
+                        "org.tizen.ico.app-soundsample",
+                        "test_title5",
+                        "test_content5",
+                        "/usr/share/icons/default/small/org.tizen.ico.app-soundsample.png");
 
     cout << "Notification_TestProgram End!=========" <<endl;
     return 0;

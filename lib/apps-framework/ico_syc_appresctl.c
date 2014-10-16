@@ -34,9 +34,9 @@ static ico_syc_res_window_t *_create_res_window(const char *ECU,
                                                 const char *dispatchApp,
                                                 const char *role,
                                                 uint32_t resourceId);
-static ico_syc_res_sound_t *_create_res_sound(char *zone, char *name, char *id,
-                                              int adjust);
-static ico_syc_res_input_t *_create_res_input(char *name, int event);
+static ico_syc_res_sound_t *_create_res_sound(const char *zone, const char *name,
+                                              const char *id, int adjust);
+static ico_syc_res_input_t *_create_res_input(const char *name, int event);
 static void _free_res_window(ico_syc_res_window_t *window);
 static void _free_res_sound(ico_syc_res_sound_t *sound);
 static void _free_res_input(ico_syc_res_input_t *input);
@@ -124,7 +124,7 @@ static ico_syc_res_window_t *
  */
 /*--------------------------------------------------------------------------*/
 static ico_syc_res_sound_t *
-_create_res_sound(char *zone, char *name, char *id, int adjust)
+_create_res_sound(const char *zone, const char *name, const char *id, int adjust)
 {
     ico_syc_res_sound_t *info   = NULL;
 
@@ -164,7 +164,7 @@ _create_res_sound(char *zone, char *name, char *id, int adjust)
  */
 /*--------------------------------------------------------------------------*/
 static ico_syc_res_input_t *
-_create_res_input(char *name, int event)
+_create_res_input(const char *name, int event)
 {
     ico_syc_res_input_t *info   = NULL;
 
@@ -204,13 +204,13 @@ _free_res_window(ico_syc_res_window_t *w)
     }
 
     /* free element */
-    free(w->ECU);
-    free(w->display);
-    free(w->layer);
-    free(w->layout);
-    free(w->area);
-    free(w->dispatchApp);
-    free(w->role);
+    free((void *)w->ECU);
+    free((void *)w->display);
+    free((void *)w->layer);
+    free((void *)w->layout);
+    free((void *)w->area);
+    free((void *)w->dispatchApp);
+    free((void *)w->role);
     /* free */
     free(w);
 
@@ -234,9 +234,9 @@ _free_res_sound(ico_syc_res_sound_t *sound)
     }
 
     /* free element */
-    free(sound->zone);
-    free(sound->name);
-    free(sound->id);
+    free((void *)sound->zone);
+    free((void *)sound->name);
+    free((void *)sound->id);
     /* free */
     free(sound);
 
@@ -260,7 +260,7 @@ _free_res_input(ico_syc_res_input_t *input)
     }
 
     /* free element */
-    free(input->name);
+    free((void *)input->name);
     /* free */
     free(input);
 

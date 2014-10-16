@@ -627,9 +627,9 @@ ico_syc_cb_win(ico_syc_callback_t callback, void *user_data,
 
     /* free memory */
     g_object_unref(parser);
-    free(win_info->appid);
-    free(win_info->name);
-    free(win_info);
+    free((void *)win_info->appid);
+    free((void *)win_info->name);
+    free((void *)win_info);
 
     return;
 }
@@ -719,9 +719,9 @@ ico_syc_cb_win_attr(ico_syc_callback_t callback, void *user_data,
 
     /* free memory */
     g_object_unref(parser);
-    free(win_attr->appid);
-    free(win_attr->name);
-    free(win_attr->zone);
+    free((void *)win_attr->appid);
+    free((void *)win_attr->name);
+    free((void *)win_attr->zone);
     free(win_attr);
 
     return;
@@ -810,7 +810,7 @@ ico_syc_cb_thumb(ico_syc_callback_t callback, void *user_data,
 
     /* free memory */
     g_object_unref(parser);
-    free(thumb_info->appid);
+    free((void *)thumb_info->appid);
     free(thumb_info);
 
     return;
