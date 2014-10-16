@@ -39,7 +39,8 @@ struct creation_surface_wait    {
     struct creation_surface_wait    *next;
     int32_t     pid;
     uint32_t    id_surface;
-    struct wl_surface *surface;
+    struct wl_surface   *surface;
+    struct ivi_surface  *ivi_surface;
     int32_t     busy;
     char        title[ICO_SYC_MAX_WINNAME_LEN];
 };
@@ -132,8 +133,9 @@ protected:
     void setWindowLayer(uint32_t surfaceid, uint32_t layer, uint32_t oldlayer);
 
     // wrapper function ico_window_mgr_set_positionsize
-    void setPositionsize(uint32_t surfaceid, uint32_t node,
-                         int32_t x, int32_t y, int32_t width, int32_t height);
+    void setPositionsize(uint32_t surfaceid,
+                         int32_t x, int32_t y, int32_t width, int32_t height,
+                         int32_t srcwidth, int32_t srcheight);
 
     // wrapper function ico_window_mgr_set_visible
     void setVisible(uint32_t surfaceid, int32_t visible);

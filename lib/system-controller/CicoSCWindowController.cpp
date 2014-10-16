@@ -209,9 +209,6 @@ CicoSCWindowController::show(int        surfaceid,
         return ICO_SYC_ENOENT;
     }
 
-    // update visible attr
-    window->visible = true;
-
     // update current displayed window at display zone
     CicoSCDisplayZone* zone = (CicoSCDisplayZone*)findDisplayZone(window->zoneid);
     if (NULL != zone) {
@@ -236,6 +233,10 @@ CicoSCWindowController::show(int        surfaceid,
              (false == window->raise))   {
         raiseFlag = ICO_SYC_WIN_RAISE_RAISE;
     }
+
+    // update visible attr
+    window->visible = true;
+
     if ((NULL != animation) && (animation[0] != '\0')) {
         // set animation request to Multi Window Manager
         CicoSCWlWinMgrIF::setAnimation(window->surfaceid,
@@ -438,9 +439,9 @@ CicoSCWindowController::resize(int        surfaceid,
     // set visible request to Multi Window Manager
     window->width = w;
     window->height = h;
-    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, window->nodeid,
-                                      window->x, window->y, w, h);
-
+    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                      window->x, window->y, w, h,
+                                      window->srcwidth, window->srcheight);
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
@@ -489,10 +490,10 @@ CicoSCWindowController::move(int        surfaceid,
         return ICO_SYC_ENOENT;
     }
     // check nodeid
-    if (nodeid >= (int)m_physicalDisplayTotal)  {
+    if ((nodeid >= 0) &&
+        (ICO_SYC_DISPLAYID(nodeid) >= (int)m_physicalDisplayTotal)) {
         ICO_WRN("CicoSCWindowController::move not found node(%d)", nodeid);
-        ICO_TRA("CicoSCWindowController::move Leave(ENOENT)");
-        return ICO_SYC_ENOENT;
+        nodeid = ICO_SYC_NODEID(ICO_SYC_ECUID(nodeid), 0);
     }
 
     // set animation request to Multi Window Manager
@@ -505,18 +506,21 @@ CicoSCWindowController::move(int        surfaceid,
                                        animation, animationTime);
     }
 
-    int moveNodeId = ICO_SYC_WIN_NOCHANGE;
-    if (nodeid >= 0) {
-        moveNodeId = nodeid;
+    // move layer if node change
+    if ((nodeid >= 0) && (nodeid != window->nodeid))    {
+        uint32_t    oldlayer = window->layerid;
+        window->nodeid = nodeid;
+        window->layerid = (window->layerid % ICO_SC_LAYERID_SCREENBASE) +
+                          (ICO_SYC_DISPLAYID(window->nodeid) * ICO_SC_LAYERID_SCREENBASE);
+        CicoSCWlWinMgrIF::setWindowLayer(window->surfaceid, window->layerid, oldlayer);
     }
 
     // set visible request to Multi Window Manager
     window->x = x;
     window->y = y;
     CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
-                                      moveNodeId, x, y,
-                                      window->width, window->height);
-
+                                      x, y, window->width, window->height,
+                                      window->srcwidth, window->srcheight);
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
@@ -631,10 +635,9 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         return ICO_SYC_ENOENT;
     }
     // check nodeid
-    if (nodeid >= (int)m_physicalDisplayTotal)  {
+    if (ICO_SYC_DISPLAYID(nodeid) >= (int)m_physicalDisplayTotal)   {
         ICO_WRN("CicoSCWindowController::setGeometry not found node(%d)", nodeid);
-        ICO_TRA("CicoSCWindowController::setGeometry Leave(ENOENT)");
-        return ICO_SYC_ENOENT;
+        nodeid = ICO_SYC_NODEID(ICO_SYC_ECUID(nodeid), 0);
     }
 
     // set animation request to Multi Window Manager
@@ -653,19 +656,22 @@ CicoSCWindowController::setGeometry(int        surfaceid,
                                    ICO_WINDOW_MGR_ANIMATION_TYPE_MOVE,
                                    animation, moveAnimationTime);
 
-    int moveNodeId = ICO_SYC_WIN_NOCHANGE;
-    if (nodeid >= 0) {
-        moveNodeId = nodeid;
-    }
-    else {
-        moveNodeId = window->nodeid;
-    }
-
-    if (m_physicalDisplayTotal <= (unsigned int)moveNodeId) {
-        ICO_WRN("nodeid(%d) is over physical display total(%d)",
-                m_physicalDisplayTotal, nodeid);
-        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
-        return ICO_SYC_EINVAL;
+    // move layer if node change
+    if (((nodeid >= 0) && (nodeid != window->nodeid)) ||
+        ((layerid > 0) && (layerid != window->layerid)))    {
+        uint32_t    oldlayer = window->layerid;
+        if (nodeid >= 0)    window->nodeid = nodeid;
+        if (layerid > 0)    {
+            window->layerid = (layerid % ICO_SC_LAYERID_SCREENBASE) +
+                              (ICO_SYC_DISPLAYID(window->nodeid) *
+                               ICO_SC_LAYERID_SCREENBASE);
+        }
+        else    {
+            window->layerid = (window->layerid % ICO_SC_LAYERID_SCREENBASE) +
+                              (ICO_SYC_DISPLAYID(window->nodeid) *
+                               ICO_SC_LAYERID_SCREENBASE);
+        }
+        CicoSCWlWinMgrIF::setWindowLayer(window->surfaceid, window->layerid, oldlayer);
     }
 
     int moveX = window->x;
@@ -692,18 +698,9 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         window->height = h;
     }
 
-    // set window layer to Multi Window Manager
-    if (0 <= layerid) {
-        setWindowLayer(window->surfaceid, layerid);
-    }
-
-    // update window attr
-    window->nodeid = moveNodeId;
-
-    // set visible request to Multi Window Manager
-    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid, moveNodeId,
-                                      moveX, moveY, moveW, moveH);
-
+    CicoSCWlWinMgrIF::setPositionsize(window->surfaceid,
+                                      moveX, moveY, moveW, moveH,
+                                      window->srcwidth, window->srcheight);
     // flush display
     CicoSCWayland::getInstance()->flushDisplay();
 
@@ -766,11 +763,11 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     vector<CicoSCDisplay*>::iterator itr;
     itr = m_displayList.begin();
     CicoSCDisplayZone* dispzone = NULL;
-    int displayno = 0;
+    int displayid = 0;
     for (; itr != m_displayList.end(); ++itr) {
         dispzone = (*itr)->findDisplayZonebyFullName(zone);
         if (NULL != dispzone) {
-            displayno = (*itr)->displayno;
+            displayid = (*itr)->displayid;
             break;
         }
     }
@@ -779,11 +776,10 @@ CicoSCWindowController::setGeometry(int        surfaceid,
         ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
         return ICO_SYC_EINVAL;
     }
-    if (m_physicalDisplayTotal <= (unsigned int)displayno) {
+    if (m_physicalDisplayTotal <= (unsigned int)displayid) {
         ICO_WRN("nodeid(%d) is over physical display total(%d)",
-                m_physicalDisplayTotal, displayno);
-        ICO_TRA("CicoSCWindowController::setGeometry Leave(EINVAL)");
-        return ICO_SYC_EINVAL;
+                displayid, m_physicalDisplayTotal);
+        displayid = 0;
     }
 
     if (window->zoneid != dispzone->zoneid) {
@@ -802,7 +798,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
             }
         }
 
-        CicoSCLayer *layer = findLayer(displayno, window->layerid);
+        CicoSCLayer *layer = findLayer(displayid, window->layerid);
         if ((NULL != layer) && (layer->type == ICO_LAYER_TYPE_APPLICATION)) {
             ICO_DBG("Entry display zone[%d] current displayed window"
                     "(%08x:\"%s\")",
@@ -816,7 +812,7 @@ CicoSCWindowController::setGeometry(int        surfaceid,
     window->zone = dispzone->fullname;
     setAttributes(window->surfaceid);
 
-    int ret = setGeometry(surfaceid, displayno, layerid,
+    int ret = setGeometry(surfaceid, displayid, layerid,
                           dispzone->x, dispzone->y,
                           dispzone->width, dispzone->height,
                           resizeAnimation, resizeAnimationTime,
@@ -1404,7 +1400,7 @@ CicoSCWindowController::mapSurfaceCB(void                  *data,
                                      int32_t               width,
                                      int32_t               height,
                                      int32_t               stride,
-                                     uint32_t               format)
+                                     uint32_t              format)
 {
     int command;
 
@@ -1488,11 +1484,12 @@ CicoSCWindowController::updateSurfaceCB(void                  *data,
     }
 
     // update attr
-    window->visible = visible;
+    if (window->visible)    {
+        window->x = x;
+        window->y = y;
+    }
     window->srcwidth = srcwidth;
     window->srcheight = srcheight;
-    window->x = x;
-    window->y = y;
     window->width = width;
     window->height = height;
     window->nodeid = window->layerid / ICO_SC_LAYERID_SCREENBASE;
@@ -1860,7 +1857,6 @@ CicoSCWindowController::createSurfaceCB(void        *data,
         window->zoneid  = ailItem->m_displayZone;
         window->nodeid  = ailItem->m_nodeID;
         if ((window->displayid >= 0) && (window->zoneid >= 0)) {
-
             const CicoSCDisplayZone* zone = findDisplayZone(window->zoneid);
             if (NULL != zone) {
                 window->zone   = zone->fullname;
@@ -1878,13 +1874,17 @@ CicoSCWindowController::createSurfaceCB(void        *data,
         return;
     }
 
+    if ((window->srcwidth <= 0) || (window->srcheight <= 0))    {
+        window->srcwidth = window->width;
+        window->srcheight = window->height;
+    }
     if (ilm_surfaceSetDestinationRectangle(window->surfaceid, window->x, window->y,
                  window->width, window->height) != ILM_SUCCESS) {
         ICO_ERR("CicoSCWindowController::createSurfaceCB "
                 "ilm_surfaceSetDestinationRectangle(%08x) Error", window->surfaceid);
     }
     else if (ilm_surfaceSetSourceRectangle(window->surfaceid, 0, 0,
-                 window->width, window->height) != ILM_SUCCESS) {
+                 window->srcwidth, window->srcheight) != ILM_SUCCESS)   {
         ICO_ERR("CicoSCWindowController::createSurfaceCB "
                 "ilm_surfaceSetSourceRectangle(%08x) Error", window->surfaceid);
     }
