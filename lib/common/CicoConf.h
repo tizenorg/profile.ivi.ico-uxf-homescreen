@@ -85,6 +85,7 @@ typedef enum _privilege {
     ICO_PRIVILEGE_NONE           = 6,   ///< no privilege
 } ico_privilege_e;
 
+#define ICO_SYC_CONFIG_TOPDIR   "ico"
 #define ICO_SYC_CONFIG_APPATTR  "app_attr.conf" //TODO
 
 #define ICO_SYC_ROLE_CONF_DEF -1
@@ -584,7 +585,7 @@ class CicoSCUserConf
 {
 public:
     /// default constructor
-    CicoSCUserConf() :m_parent_dir("/home/app/ico") {}
+    CicoSCUserConf() :m_parent_dir("") {}
     /// destructor
     ~CicoSCUserConf() {}
 

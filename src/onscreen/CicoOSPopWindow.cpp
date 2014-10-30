@@ -14,10 +14,12 @@
 #include <Ecore.h>
 #include <Ecore_Wayland.h>
 #include <appsvc/appsvc.h>
+#include <tzplatform_config.h>
 #include "CicoOnScreen.h"
 #include "CicoNotification.h"
 #include "CicoOSPopWindow.h"
 #include "ico_syc_type.h"
+#include "ico_syc_private.h"
 #include "ico_syc_appresctl.h"
 #include "CicoOSClient.h"
 
@@ -290,7 +292,10 @@ CicoOSPopWindow::InitializeWindow(void)
         ICO_TRA("Leave(ERR)");
         return false;
     }
-    if (! edje_object_file_set(m_theme, ICO_OS_THEMES_EDJ_FILEPATH, "main")) {
+    if (! edje_object_file_set(m_theme,
+                               tzplatform_mkpath(TZ_SYS_RO_APP,
+                                                 ICO_OS_THEMES_EDJ_FILEPATH),
+                               "main")) {
         Edje_Load_Error err = edje_object_load_error_get(m_theme);
         const char *errmsg = edje_load_error_str(err);
         ICO_ERR("could not load 'main' from onscreen.edj: %s", errmsg);
@@ -410,7 +415,7 @@ CicoOSPopWindow::makeResWindowT(ico_syc_res_window_t& w)
     w.layout      = id00611_layout;
     w.area        = id006111_area;
     w.dispatchApp = (char*)GetPkgname();
-    if (0 == strcmp(w.dispatchApp,"org.tizen.dialer")) {
+    if (0 == strcmp(w.dispatchApp, ICO_SYC_PACKAGE_DIALER)) {
         w.role    = role_incoming;
     }
     else {

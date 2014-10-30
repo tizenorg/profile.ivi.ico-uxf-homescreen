@@ -18,6 +18,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <tzplatform_config.h>
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -50,7 +51,9 @@ CicoHSMenuTile::CicoHSMenuTile(const char *appid,
         strncpy(this->icon_image_path,icon_image_path,ICO_HS_MAX_PATH_BUFF_LEN);
     }
     else {
-        strncpy(this->icon_image_path,ICO_HS_MENUTILE_DEFAULT_ICON_PATH,
+        strncpy(this->icon_image_path,
+                tzplatform_mkpath(TZ_SYS_RO_APP,
+                                  ICO_HS_MENUTILE_DEFAULT_ICON_PATH),
                 ICO_HS_MAX_PATH_BUFF_LEN);
     }
     ICO_DBG("CicoHSMenuTile::CicoHSMenuTile:image_path %s:%s",
@@ -133,7 +136,9 @@ CicoHSMenuTile::CreateObject(Evas *evas)
 
     /*term Icon*/
     term_icon = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(term_icon, ICO_HS_MENUTILE_TERM_ICON_PATH, NULL);
+    evas_object_image_file_set(term_icon,
+                               tzplatform_mkpath(TZ_SYS_RO_APP,
+                                                 ICO_HS_MENUTILE_TERM_ICON_PATH), NULL);
     evas_object_move(term_icon, pos_x + width - ICO_HS_MENUTILE_TERM_ICON_WIDTH, pos_y);
     evas_object_resize(term_icon, ICO_HS_MENUTILE_TERM_ICON_WIDTH,
                        ICO_HS_MENUTILE_TERM_ICON_HEIGHT);
@@ -794,7 +799,7 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                     }
                 }
                 else    {
-                    ICO_ERR("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
+                    ICO_DBG("CicoHSMenuTile::SetThumbnail: can not open pixel file(%s)",
                             sWork);
                 }
                 if (fd >= 0)    {

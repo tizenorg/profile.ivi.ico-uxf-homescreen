@@ -30,7 +30,7 @@
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  
+ *  @brief
  */
 //--------------------------------------------------------------------------
 class CicoGKeyFileConfig
@@ -43,10 +43,10 @@ public:
     ~CicoGKeyFileConfig();
 
     // intialize
-    bool Initialize(const char *conf);
+    bool Initialize(const char *conf, const char *dir = NULL);
 
     // get integer value
-    int ConfigGetInteger(const char *group_name, 
+    int ConfigGetInteger(const char *group_name,
                          const char *key,
                          int        default_value);
 
@@ -54,6 +54,11 @@ public:
     const char* ConfigGetString(const char *group_name,
                                 const char *key,
                                 const char *default_value);
+    int ConfigGetString(const char *group_name, const char *key, const char *default_value,
+                        char *buf, int len);
+
+    // change Tizen environment variable
+    static int ConfigTizenPlatform(const char *str, char *buf, int len);
 
 private:
     // assignment operator

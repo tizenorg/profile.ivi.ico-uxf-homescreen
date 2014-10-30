@@ -37,6 +37,16 @@ extern "C" {
 
 #define ICO_SYC_MAX_LEN         128
 
+/*
+ * package name
+ */
+#define ICO_SYC_PACKAGE_SYSTEMCONTROLLER    "org.tizen.ico.system-controller"
+#define ICO_SYC_PACKAGE_HOMESCREEN          "org.tizen.ico.homescreen"
+#define ICO_SYC_PACKAGE_STATUSBAR           "org.tizen.ico.statusbar"
+#define ICO_SYC_PACKAGE_ONSCREEN            "org.tizen.ico.onscreen"
+#define ICO_SYC_PACKAGE_LOGIN               "org.tizen.ico.login"
+#define ICO_SYC_PACKAGE_DIALER              "org.tizen.dialer"
+
 /*============================================================================*/
 /* variable & table                                                           */
 /*============================================================================*/
@@ -263,6 +273,15 @@ void ico_syc_cb_res(ico_syc_callback_t callback, void *user_data,
 void ico_syc_cb_region(ico_syc_callback_t callback, void *user_data,
                        int event, const void *data, size_t len);
 
+
+/*============================================================================*/
+/* NodeId <-> DisplayId macro                                                 */
+/*============================================================================*/
+#define ICO_SYC_ECUBASE 100
+#define ICO_SYC_DISPLAYID(nodeid)           (nodeid % ICO_SYC_ECUBASE)
+#define ICO_SYC_ECUID(nodeid)               (nodeid / ICO_SYC_ECUBASE)
+#define ICO_SYC_NODEID(ecuid, displayid)    (ecuid * ICO_SYC_ECUBASE + \
+                                             (displayid % ICO_SYC_ECUBASE))
 
 /*============================================================================*/
 /* log macro                                                                  */

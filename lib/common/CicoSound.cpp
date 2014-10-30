@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <tzplatform_config.h>
 
 #include <ico_log.h>
 #include "CicoResourceConfig.h"
@@ -37,11 +38,11 @@ CicoSound *CicoSound::m_myInstance = NULL;
 /*--------------------------------------------------------------------------*/
 CicoSound::CicoSound()
     : m_initialized(false),
-      m_command(ICO_SOUND_DEFAULT_COMMAND),
-      m_operationSFile(ICO_SOUND_DEFAULT_OPERATION),
-      m_successSFile(ICO_SOUND_DEFAULT_SUCCESS),
-      m_failureSFile(ICO_SOUND_DEFAULT_FAILURE)
+      m_command(ICO_SOUND_DEFAULT_COMMAND)
 {
+    m_operationSFile = tzplatform_mkpath(TZ_SYS_RO_APP, ICO_SOUND_DEFAULT_OPERATION);
+    m_successSFile = tzplatform_mkpath(TZ_SYS_RO_APP, ICO_SOUND_DEFAULT_SUCCESS);
+    m_failureSFile = tzplatform_mkpath(TZ_SYS_RO_APP, ICO_SOUND_DEFAULT_FAILURE);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -84,6 +85,7 @@ CicoSound::GetInstance(void)
 bool
 CicoSound::Initialize(CicoGKeyFileConfig *hsConfig)
 {
+    char    wkbuf[256];
     if (true == m_initialized) {
         return true;
     }
@@ -92,17 +94,18 @@ CicoSound::Initialize(CicoGKeyFileConfig *hsConfig)
                                           ICO_CONFIG_COMMAND,
                                           ICO_SOUND_DEFAULT_COMMAND);
 
-    m_operationSFile = hsConfig->ConfigGetString(ICO_CONFIG_SOUND,
-                                                 ICO_CONFIG_OPERATION,
-                                                 ICO_SOUND_DEFAULT_OPERATION);
-
-    m_successSFile = hsConfig->ConfigGetString(ICO_CONFIG_SOUND,
-                                               ICO_CONFIG_SUCCESS,
-                                               ICO_SOUND_DEFAULT_SUCCESS);
-
-    m_failureSFile = hsConfig->ConfigGetString(ICO_CONFIG_SOUND,
-                                               ICO_CONFIG_FAILURE,
-                                               ICO_SOUND_DEFAULT_FAILURE);
+    if (hsConfig->ConfigGetString(ICO_CONFIG_SOUND, ICO_CONFIG_OPERATION, NULL,
+                                  wkbuf, sizeof(wkbuf)) == 0)   {
+        m_operationSFile = wkbuf;
+    }
+    if (hsConfig->ConfigGetString(ICO_CONFIG_SOUND, ICO_CONFIG_SUCCESS, NULL,
+                                  wkbuf, sizeof(wkbuf)) == 0)   {
+        m_successSFile = wkbuf;
+    }
+    if (hsConfig->ConfigGetString(ICO_CONFIG_SOUND, ICO_CONFIG_FAILURE, NULL,
+                                  wkbuf, sizeof(wkbuf)) == 0)   {
+        m_failureSFile = wkbuf;
+    }
 
     ICO_DBG("CicoSound(command=%s operation=%s success=%s failure=%s",
             m_command.c_str(), m_operationSFile.c_str(),
@@ -174,7 +177,7 @@ CicoSound::PlaySound(std::string & soundFile)
 {
     int pid;
     char command[256];
- 
+
     if (false == m_initialized) {
         return false;
     }

@@ -68,7 +68,8 @@
 #define FALSE                0
 #define TRUE                 1
 
-#define ICO_OS_THEMES_EDJ_FILEPATH "/usr/apps/org.tizen.ico.onscreen/res/themes/onscreen.edj"
+#define ICO_OS_THEMES_EDJ_FILEPATH  ICO_SYC_PACKAGE_ONSCREEN "/res/themes/onscreen.edj"
+
 /*============================================================================*/
 /* Define data types                                                          */
 /*============================================================================*/

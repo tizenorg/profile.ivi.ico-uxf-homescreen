@@ -11,6 +11,7 @@
  *
  * @date    Aug-08-2013
  */
+#include <tzplatform_config.h>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -655,19 +656,19 @@ CicoHomeScreen::ShowHomeScreenWindow(ico_syc_win_info_t *win_info)
     }
 
     ico_syc_change_layer(win_info->appid,win_info->surface,layer);
-    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) surface(%d) "
-            "pos(%d,%d) size(%d,%d)", win_info->appid,
-            win_info->name, win_info->surface, move. pos_x, move.pos_y,
-            move.width, move.height);
+    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) surface(%08x) "
+            "pos(%d,%d) size(%d,%d)", win_info->appid, win_info->name, win_info->surface,
+            move. pos_x, move.pos_y, move.width, move.height);
     ico_syc_move(win_info->appid, win_info->surface, &move, NULL);
 
     /*first time menu is unvisible*/
     if ((strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
                  ICO_MAX_TITLE_NAME_LEN) == 0) &&
         (GetMode() == ICO_HS_MODE_APPLICATION)) {
+        ico_syc_hide(win_info->appid, win_info->surface, NULL);
         return;
     }
-    ico_syc_show(win_info->appid, win_info->surface,NULL);
+    ico_syc_show(win_info->appid, win_info->surface, NULL);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1231,7 +1232,9 @@ CicoHomeScreen::Initialize(int orientation, CicoGKeyFileConfig *config)
 
     /*config copy*/
     this->config = new CicoGKeyFileConfig();
-    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE);
+    const char *conf_path = tzplatform_mkpath3(TZ_USER_HOME, ICO_HS_CONFIG_TOP,
+                                               ICO_HS_CONFIG_HOMESCREEN);
+    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE, conf_path);
 
     /*Get application info*/
     CreateAppInfoList();
@@ -1669,7 +1672,9 @@ CicoHomeScreen::StartHomeScreen(int orientation)
 
     /*config copy*/
     this->config = new CicoGKeyFileConfig();
-    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE);
+    const char *conf_path = tzplatform_mkpath3(TZ_USER_HOME, ICO_HS_CONFIG_TOP,
+                                               ICO_HS_CONFIG_HOMESCREEN);
+    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE, conf_path);
 
     /* init home screen soud */
     CicoSound::GetInstance()->Initialize(this->config);

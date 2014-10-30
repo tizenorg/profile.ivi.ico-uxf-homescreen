@@ -11,6 +11,7 @@
  *
  * @date    Aug-08-2013
  */
+#include <tzplatform_config.h>
 #include "CicoHSBackWindow.h"
 #include "CicoResourceConfig.h"
 
@@ -60,18 +61,17 @@ CicoHSBackWindow::~CicoHSBackWindow(void)
  * @return      OK or ERRROR
  */
 /*--------------------------------------------------------------------------*/
-int 
+int
 CicoHSBackWindow::CreateBackWindow(int pos_x,int pos_y,int width,int height)
 {
     int ret;
-    char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
 
     /*create window*/
-    ret = CreateWindow(ICO_HS_BACK_WINDOW_TITLE,pos_x,pos_y,width,height,EINA_TRUE);
+    ret = CreateWindow(ICO_HS_BACK_WINDOW_TITLE, pos_x, pos_y, width, height, EINA_TRUE);
     if(ret != ICO_OK){
        return ret;
     }
-   
+
     /* evas get */
     evas = ecore_evas_get(window);
     if (!evas) {
@@ -81,11 +81,18 @@ CicoHSBackWindow::CreateBackWindow(int pos_x,int pos_y,int width,int height)
 
     /* set back */
     /* image file name*/
-    snprintf(img_path,sizeof(img_path),ICO_HS_BACK_WINDOW_IMAGE_FILE_PATH);
-  
+    const char *conf_path = tzplatform_mkpath3(TZ_USER_HOME, ICO_HS_CONFIG_TOP,
+                                               ICO_HS_CONFIG_HOMESCREEN);
+    CicoGKeyFileConfig config;
+    config.Initialize(ICO_HOMESCREEN_CONFIG_FILE, conf_path);
+    const char *back_image = config.ConfigGetString(
+                                        "homescreen", "background",
+                                        ICO_HS_DEFAULT_BACK_WINDOW_IMAGE_FILE_PATH);
+    ICO_DBG("CicoHSBackWindow::CreateBackWindow: background(%s)", back_image);
+
     /* set object*/
     canvas = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(canvas, img_path, NULL);
+    evas_object_image_file_set(canvas, back_image, NULL);
     int err = evas_object_image_load_error_get(canvas);
     if (err != EVAS_LOAD_ERROR_NONE) {
         ICO_ERR("CicoHSBackWindow::CreateBackWindow: backgound image is not exist");
@@ -112,7 +119,7 @@ CicoHSBackWindow::CreateBackWindow(int pos_x,int pos_y,int width,int height)
 void
 CicoHSBackWindow::FreeBackWindow(void)
 {
-    evas_object_del(canvas);    
+    evas_object_del(canvas);
     FreeWindow();
 }
 // vim: set expandtab ts=4 sw=4:
