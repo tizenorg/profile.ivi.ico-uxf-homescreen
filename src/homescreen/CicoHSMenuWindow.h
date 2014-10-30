@@ -159,10 +159,13 @@ class CicoHSMenuWindow :public CicoHSWindow
     int all_page_num;
     /* image directory path */
     char img_dir_path[ICO_HS_MAX_PATH_BUFF_LEN];
+    /* menu background picture path */
+    char menu_img_path[ICO_HS_MAX_PATH_BUFF_LEN];
     /* evas object */
     Evas *evas;
     /* menu back */
     Evas_Object *canvas;
+    bool transparent_background;
     Evas_Object *rectangle;
     /* tiles */
     CicoHSMenuTile *menu_tile[ICO_HS_MENU_MAX_TILE_NUM];

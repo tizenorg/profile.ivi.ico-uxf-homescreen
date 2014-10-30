@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
      OpenPF System Configurations
-    /opt/apps/org.tizen.ico.homescreen/res/config/system.conf
+    /usr/apps/org.tizen.ico.homescreen/res/config/system.conf
 -->
 
 <systemconfig>
@@ -397,7 +397,7 @@
 <transition>none</transition>
 
 <login_user>
-    <parent_dir>/home/app/ico</parent_dir>
+    <parent_dir>ico</parent_dir>
 </login_user>
 
 <vehicle_info>

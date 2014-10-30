@@ -17,6 +17,8 @@
 #include "CicoHomeScreen.h"
 #include "CicoHSSystemState.h"
 #include <stdio.h>
+#include <unistd.h>
+#include <tzplatform_config.h>
 
 /*============================================================================*/
 /* static members                                                             */
@@ -41,6 +43,22 @@ CicoHSMenuWindow::CicoHSMenuWindow(void)
 {
     /*initialzie values*/
     terminate_mode = false;
+
+    /*get menu background image*/
+    CicoGKeyFileConfig config;
+    config.Initialize(ICO_HOMESCREEN_CONFIG_FILE, ICO_SYC_PACKAGE_HOMESCREEN);
+
+    transparent_background = true;
+    const char *menu_back = config.ConfigGetFilePath("homescreen", "menu",
+                                                     ICO_SYC_CONFIGPATH_HOME_IMAGE,
+                                                     ICO_SYC_PACKAGE_HOMESCREEN
+                                                       "/" ICO_SYC_CONFIGPATH_PACKAGE_IMAGE,
+                                                     NULL);
+    if (menu_back)  {
+        strncpy(menu_img_path, menu_back, sizeof(menu_img_path)-1);
+        menu_img_path[sizeof(menu_img_path)-1] = 0;
+        transparent_background = false;
+    }
 
     InitAppTiles();
 
@@ -92,30 +110,32 @@ CicoHSMenuWindow::~CicoHSMenuWindow(void)
 int
 CicoHSMenuWindow::SetMenuBack(void)
 {
-    char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
     /* set menu back */
-    /* image file name*/
-    snprintf(img_path, sizeof(img_path), "%s%s",
-             img_dir_path, ICO_HS_IMAGE_FILE_MENU_BACK_GROUND);
-
     /* set object*/
-    rectangle = evas_object_rectangle_add(evas);
-    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
-        evas_object_color_set(rectangle,0,0,0,178);
+    if (transparent_background) {
+        /* image file name*/
+        snprintf(menu_img_path, sizeof(menu_img_path), "%s%s",
+                 img_dir_path, ICO_HS_IMAGE_FILE_MENU_BACK_GROUND);
+
+        rectangle = evas_object_rectangle_add(evas);
+        if (true == CicoHSSystemState::getInstance()->getNightMode()) {
+            evas_object_color_set(rectangle,0,0,0,178);
+        }
+        else {
+            evas_object_color_set(rectangle,120,120,120,178);
+        }
+        evas_object_move(rectangle, 0, 0);
+        evas_object_resize(rectangle, width, height);
+        evas_object_show(rectangle);
     }
-    else {
-        evas_object_color_set(rectangle,120,120,120,178);
-    }
-    evas_object_move(rectangle, 0, 0);
-    evas_object_resize(rectangle, width, height);
-    evas_object_show(rectangle);
 
     /* set object*/
     canvas = evas_object_image_filled_add(evas);
-    evas_object_image_file_set(canvas, img_path, NULL);
+    evas_object_image_file_set(canvas, menu_img_path, NULL);
     int err = evas_object_image_load_error_get(canvas);
     if (err != EVAS_LOAD_ERROR_NONE) {
-        ICO_ERR("CicoHSMenuWindow::SetMenuBack: backgound image is not exist");
+        ICO_ERR("CicoHSMenuWindow::SetMenuBack: backgound image(%s) is not exist",
+                menu_img_path);
         ICO_TRA("CicoHSMenuWindow::SetMenuBack Leave(ERR)");
         evas_object_del(canvas);
         return ICO_ERROR;
@@ -147,7 +167,8 @@ void
 CicoHSMenuWindow::FreeMenuBack(void)
 {
     evas_object_del(canvas);
-    evas_object_del(rectangle);
+    if (transparent_background)
+        evas_object_del(rectangle);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -300,7 +321,15 @@ CicoHSMenuWindow::SetAppTiles(void)
         life_cycle_controller->getAilList();
 
     /* get category infomation */
-    GetCategory(ICO_HS_MENU_CATEGORY_FILE_PATH, category, &category_num);
+    const char *category_path = tzplatform_mkpath3(TZ_USER_HOME,
+                                                   ICO_SYC_CONFIGPATH_HOME_CONFIG,
+                                                   ICO_HS_MENU_CATEGORY_FILE_NAME);
+    ICO_DBG("CicoHSMenuWindow::SetAppTiles category_path(%s)", category_path);
+    if (access(category_path, R_OK) != 0)   {
+        category_path = tzplatform_mkpath(TZ_SYS_RO_APP,
+                                          ICO_HS_DEFAULT_MENU_CATEGORY_FILE_PATH);
+    }
+    GetCategory(category_path, category, &category_num);
     ICO_DBG("CicoHSMenuWindow::SetAppTiles :category_num %d", category_num);
 
     for (int ii = 0; ii < category_num ; ii++) {
@@ -1592,11 +1621,13 @@ void
 CicoHSMenuWindow::SetNightMode(void)
 {
     ICO_TRA("CicoHSMenuWindow::SetNightMode Enter");
-    if (true == CicoHSSystemState::getInstance()->getNightMode()) {
-        evas_object_color_set(rectangle,0,0,0,178);
-    }
-    else {
-        evas_object_color_set(rectangle,120,120,120,178);
+    if (transparent_background) {
+        if (true == CicoHSSystemState::getInstance()->getNightMode()) {
+            evas_object_color_set(rectangle,0,0,0,178);
+        }
+        else {
+            evas_object_color_set(rectangle,120,120,120,178);
+        }
     }
     ICO_TRA("CicoHSMenuWindow::SetNightMode Leave");
 }
