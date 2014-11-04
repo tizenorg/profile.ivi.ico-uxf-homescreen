@@ -97,6 +97,7 @@ install-exec-hook:
 	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
 	mkdir -p $(INSTALL_ROOT)/usr/share/packages
 	mkdir -p $(INSTALL_ROOT)/usr/share/icons/default/small/
+	mkdir -p $(INSTALL_ROOT)/usr/apps/org.tizen.ico.system-controller/res/config
 	install -m 0755 HomeScreen $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/bin
 	install -m 0644 home_screen_bg.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
 	install -m 0644 home_screen_touch.edj $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/edj
@@ -105,6 +106,7 @@ install-exec-hook:
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/config
 	install -m 0644 $(top_srcdir)/res/org.tizen.ico.homescreen/res/sound/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen/res/sound
 	install -m 0644 $(top_srcdir)/data/apps/org.tizen.ico.homescreen/res/icons/default/small/* $(INSTALL_ROOT)/usr/share/icons/default/small/
+	install -m 0644 $(top_srcdir)/res/org.tizen.ico.system-controller/res/config/* $(INSTALL_ROOT)/usr/apps/org.tizen.ico.system-controller/res/config
 
 uninstall:
 	rm -rf $(INSTALL_ROOT)/usr/apps/org.tizen.ico.homescreen
