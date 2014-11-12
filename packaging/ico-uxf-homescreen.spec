@@ -47,6 +47,9 @@ Requires: ico-uxf-weston-plugin >= 0.9.21
 Requires: ico-uxf-utilities >= 0.9.07
 Requires: system-controller
 
+Requires(post): pkgmgr
+Requires(post): ail
+
 %description
 This package provides the sample homescreen application.
 
