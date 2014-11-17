@@ -130,17 +130,12 @@ AC_CONFIG_FILES([Makefile
                  lib/notification/Makefile
                  lib/apps-framework/Makefile
                  lib/misc/Makefile
-                 lib/misc/state-machine/Makefile
-                 lib/system-controller/Makefile
                  src/Makefile
-                 src/syscond/Makefile
                  src/homescreen/Makefile
                  src/statusbar/Makefile
                  src/onscreen/Makefile
                  tool/Makefile
                  tool/notification/Makefile
-                 tests/Makefile
-                 tests/system-controller/Makefile
-                 tests/system-controller/apps-framework/Makefile])
+                 tests/Makefile])
 AC_PROG_RANLIB([ranlib])
 AC_OUTPUT
