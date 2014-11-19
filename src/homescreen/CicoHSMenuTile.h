@@ -26,6 +26,7 @@
 
 #include "ico_syc_common.h"
 #include "ico_syc_winctl.h"
+#include "ico_syc_private.h"
 
 #include "CicoHomeScreenCommon.h"
 
@@ -70,8 +71,8 @@
 #define ICO_HS_MENUTILE_START_POS_X 80
 #define ICO_HS_MENUTILE_START_POS_Y 210
 
-#define ICO_HS_MENUTILE_TERM_ICON_PATH "/usr/apps/org.tizen.ico.homescreen/res/images/termIcon.png"
-#define ICO_HS_MENUTILE_DEFAULT_ICON_PATH "/usr/apps/org.tizen.ico.homescreen/res/images/tizen_32.png"
+#define ICO_HS_MENUTILE_TERM_ICON_PATH  ICO_SYC_PACKAGE_HOMESCREEN "/res/images/termIcon.png"
+#define ICO_HS_MENUTILE_DEFAULT_ICON_PATH ICO_SYC_PACKAGE_HOMESCREEN "/res/images/tizen_32.png"
 #define ICO_HS_MENUTILE_TERM_ICON_WIDTH 64
 #define ICO_HS_MENUTILE_TERM_ICON_HEIGHT 64
 

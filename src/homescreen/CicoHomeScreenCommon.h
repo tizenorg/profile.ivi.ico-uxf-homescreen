@@ -17,6 +17,7 @@
 #include <ico_log.h>
 #include <ico-uxf-weston-plugin/ico_window_mgr-client-protocol.h>
 #include "ico_syc_sysdef.h"
+#include "ico_syc_private.h"
 
 #define ICO_OK 0
 #define ICO_ERROR -1
@@ -36,11 +37,11 @@
 #define ICO_HS_MAX_PROCESS_NAME 64
 
 /* HomeScreen default process name   */
-#define ICO_HS_PROC_DEFAULT_HOMESCREEN "org.tizen.ico.homescreen"
+#define ICO_HS_PROC_DEFAULT_HOMESCREEN  ICO_SYC_PACKAGE_HOMESCREEN
 
 /*app name*/
-#define ICO_HS_APPID_DEFAULT_SB     "org.tizen.ico.statusbar"
-#define ICO_HS_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"
+#define ICO_HS_APPID_DEFAULT_SB     ICO_SYC_PACKAGE_STATUSBAR
+#define ICO_HS_APPID_DEFAULT_ONS    ICO_SYC_PACKAGE_ONSCREEN
 
 /* path name max length */
 #define ICO_HS_MAX_PATH_BUFF_LEN 256
@@ -57,21 +58,19 @@
 #define ICO_HS_CONTROL_BAR_WINDOW_TITLE "ico_hs_controlbarwindow"
 #define ICO_HS_SWIPE_INPUT_WINDOW_TITLE "ico_hs_swipeinputwindow"
 
-/*path of layaout file*/
-#define ICO_HS_MENU_LAYOUT_FILE_PATH "/home/app/layout.txt"
-
 /* max number of category in menu*/
 #define ICO_HS_MENU_MAX_MENU_CATEGORY_NUM 64
 
 /*path of category file*/
-#define ICO_HS_MENU_CATEGORY_FILE_PATH "/usr/apps/org.tizen.ico.homescreen/res/config/menu_categoryid.conf"
+#define ICO_HS_MENU_CATEGORY_FILE_NAME "menu_categoryid.conf"
+#define ICO_HS_DEFAULT_MENU_CATEGORY_FILE_PATH  ICO_SYC_PACKAGE_HOMESCREEN "/" ICO_SYC_CONFIGPATH_PACKAGE_CONFIG "/" ICO_HS_MENU_CATEGORY_FILE_NAME
 
-/*path of back window*/
-#define ICO_HS_BACK_WINDOW_IMAGE_FILE_PATH "/opt/usr/media/Images/Home_default.jpg"
+/*path of default back window*/
+#define ICO_HS_DEFAULT_BACK_WINDOW_IMAGE_FILE_DIR   "data-media/Images"
+#define ICO_HS_DEFAULT_BACK_WINDOW_IMAGE_FILE_FILE  "Home_default.jpg"
 
 /*name of image file (in config image directry)*/
-#define ICO_HS_IMAGE_FILE_MENU_BACK_GROUND_BLANK "bg.png"
-#define ICO_HS_IMAGE_FILE_MENU_BACK_GROUND_PICTURE "bg_bk.png"
+#define ICO_HS_IMAGE_FILE_MENU_BACK_GROUND "bg.png"
 #define ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_P "pagePointer_p.png"
 #define ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_N "pagePointer_n.png"
 
@@ -88,7 +87,7 @@
 #define ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT  "applist_on.png"
 #define ICO_HS_IMAGE_FILE_CONTROL_BAR_BUTTON_NIHGT2 "applist_on_2.png"
 
-#define ICO_HS_LIFECYCLE_CONTROLLER_SETTING_PATH  "/usr/apps/org.tizen.ico.system-controller/res/config/system.xml"
+#define ICO_HS_LIFECYCLE_CONTROLLER_SETTING_PATH    ICO_SYC_PACKAGE_SYSTEMCONTROLLER "/res/config/system.xml"
 
 /*config name*/
 #define ICO_HS_CONFIG_HOMESCREEN    "homescreen"
@@ -116,9 +115,9 @@
 #define ICO_HS_CONFIG_HSTRY_KEY1      "timer"
 #define ICO_HS_CONFIG_HSTRY_DEF1      "1"
 #define ICO_HS_CONFIG_HSTRY_KEY2      "manage_off_app"
-#define ICO_HS_CONFIG_HSTRY_DEF2      "org.tizen.ico.homescreen;org.tizen.ico.statusbar"
+#define ICO_HS_CONFIG_HSTRY_DEF2      ICO_SYC_PACKAGE_HOMESCREEN ":" ICO_SYC_PACKAGE_STATUSBAR
 #define ICO_HS_CONFIG_HSTRY_KEY3      "write_off_app"
-#define ICO_HS_CONFIG_HSTRY_DEF3      "org.tizen.ico.login"
+#define ICO_HS_CONFIG_HSTRY_DEF3      ICO_SYC_PACKAGE_LOGIN
 #define ICO_HS_CONFIG_HSTRY_SPL       ';'
 
 #define ICO_HS_ANIMATION_SLIDE      "Slide"

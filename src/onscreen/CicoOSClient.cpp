@@ -22,8 +22,8 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
-#include <sys/types.h> 
-#include <unistd.h> 
+#include <sys/types.h>
+#include <unistd.h>
 
 using namespace boost::property_tree;
 using namespace std;
@@ -34,9 +34,9 @@ using namespace std;
 #include "ico_syc_error.h"
 #include "ico_syc_msg_cmd_def.h"
 
-//==========================================================================    
+//==========================================================================
 //  private static variable
-//==========================================================================    
+//==========================================================================
 CicoOSClient* CicoOSClient::ms_myInstance = NULL;
 
 //--------------------------------------------------------------------------
@@ -165,11 +165,7 @@ CicoOSClient::sendLaunchMessage(const string& op_app)
 
     ptree pt;
     pt.put("command", MSG_CMD_WIN_CHANGE);
-#if 0
-    pt.put("source.appid",  "org.tizen.onscreen");
-#else
     pt.put("source.pid",    (int)getpid());
-#endif
     pt.put("source.seq_no", getSeqNum());
     updateSeqNum();
     pt.put("arg.appid",   op_app);

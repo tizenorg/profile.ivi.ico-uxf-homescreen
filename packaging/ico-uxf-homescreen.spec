@@ -1,7 +1,7 @@
 Name:       ico-uxf-homescreen
 Summary:    Sample homescreen and system controller
 Version:    0.9.22
-Release:    0
+Release:    20.1
 Group:      Automotive/ICO Homescreen
 License:    Apache-2.0
 Source0:    %{name}-%{version}.tar.bz2
@@ -138,8 +138,8 @@ ail_initdb
 %{_datadir}/icons/default/small/org.tizen.ico.homescreen.png
 %{_datadir}/icons/default/small/org.tizen.ico.statusbar.png
 %{_datadir}/icons/default/small/org.tizen.ico.onscreen.png
-# retain the system control configuration inside homescreen at least for now 
-/usr/apps/org.tizen.ico.system-controller/res/config
+# retain the system control configuration inside homescreen at least for now
+%{TZ_SYS_RW_APP}/org.tizen.ico.system-controller/res/config
 
 %files system-controller-devel
 %defattr(-,root,root,-)

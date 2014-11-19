@@ -21,6 +21,7 @@
 
 #include "ico_syc_common.h"
 #include "ico_syc_winctl.h"
+#include "ico_syc_private.h"
 
 #include <unistd.h>
 
@@ -61,8 +62,8 @@
 #define ICO_HS_CONFIG_SOUND         "sound"
 #define ICO_HS_CONFIG_SB            "statusbar"
 #define ICO_HS_CONFIG_ONS           "onscreen"
-#define ICO_HS_APPID_DEFAULT_SB     "org.tizen.ico.statusbar"   /* default statusbar appid */
-#define ICO_HS_APPID_DEFAULT_ONS    "org.tizen.ico.onscreen"    /* default on screen appid */
+#define ICO_HS_APPID_DEFAULT_SB     ICO_SYC_PACKAGE_STATUSBAR   /* default statusbar appid */
+#define ICO_HS_APPID_DEFAULT_ONS    ICO_SYC_PACKAGE_ONSCREEN    /* default on screen appid */
 
 #define ICO_HS_GROUP_SPECIAL        "menu"
 
