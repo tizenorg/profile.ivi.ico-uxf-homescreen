@@ -655,19 +655,19 @@ CicoHomeScreen::ShowHomeScreenWindow(ico_syc_win_info_t *win_info)
     }
 
     ico_syc_change_layer(win_info->appid,win_info->surface,layer);
-    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) surface(%d) "
-            "pos(%d,%d) size(%d,%d)", win_info->appid,
-            win_info->name, win_info->surface, move. pos_x, move.pos_y,
-            move.width, move.height);
+    ICO_DBG("CicoHomeScreen::ShowHomeScreenWindow: id(%s) name(%s) surface(%08x) "
+            "pos(%d,%d) size(%d,%d)", win_info->appid, win_info->name, win_info->surface,
+            move. pos_x, move.pos_y, move.width, move.height);
     ico_syc_move(win_info->appid, win_info->surface, &move, NULL);
 
     /*first time menu is unvisible*/
     if ((strncmp(win_info->name,ICO_HS_MENU_WINDOW_TITLE,
                  ICO_MAX_TITLE_NAME_LEN) == 0) &&
         (GetMode() == ICO_HS_MODE_APPLICATION)) {
+        ico_syc_hide(win_info->appid, win_info->surface, NULL);
         return;
     }
-    ico_syc_show(win_info->appid, win_info->surface,NULL);
+    ico_syc_show(win_info->appid, win_info->surface, NULL);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1183,6 +1183,7 @@ int
 CicoHomeScreen::StartRelations(void)
 {
     int ret;
+
     strncpy(sb_package_name,
             config->ConfigGetString(ICO_HS_CONFIG_HOMESCREEN,
                                     ICO_HS_CONFIG_SB,
@@ -1193,15 +1194,13 @@ CicoHomeScreen::StartRelations(void)
                                     ICO_HS_CONFIG_ONS,
                                     ICO_HS_APPID_DEFAULT_ONS),
             ICO_HS_MAX_PROCESS_NAME);
-// TODO
-#if 1   /* ToDo     */
+
     /* start onscreen & statusbar apps */
     os_app_info = GetAppInfo(os_package_name);
     ret = os_app_info->Execute();
     if (ret < 0) {
         ICO_WRN("execute failed(%s) err=%d", os_package_name, ret);
     }
-#endif
 
     sb_app_info = GetAppInfo(sb_package_name);
     ret = sb_app_info->Execute();
@@ -1231,7 +1230,7 @@ CicoHomeScreen::Initialize(int orientation, CicoGKeyFileConfig *config)
 
     /*config copy*/
     this->config = new CicoGKeyFileConfig();
-    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE);
+    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE, ICO_SYC_PACKAGE_HOMESCREEN);
 
     /*Get application info*/
     CreateAppInfoList();
@@ -1669,7 +1668,7 @@ CicoHomeScreen::StartHomeScreen(int orientation)
 
     /*config copy*/
     this->config = new CicoGKeyFileConfig();
-    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE);
+    this->config->Initialize(ICO_HOMESCREEN_CONFIG_FILE, ICO_SYC_PACKAGE_HOMESCREEN);
 
     /* init home screen soud */
     CicoSound::GetInstance()->Initialize(this->config);

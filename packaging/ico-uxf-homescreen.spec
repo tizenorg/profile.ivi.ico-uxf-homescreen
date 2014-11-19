@@ -138,8 +138,8 @@ ail_initdb
 %{_datadir}/icons/default/small/org.tizen.ico.homescreen.png
 %{_datadir}/icons/default/small/org.tizen.ico.statusbar.png
 %{_datadir}/icons/default/small/org.tizen.ico.onscreen.png
-# retain the system control configuration inside homescreen at least for now 
-/usr/apps/org.tizen.ico.system-controller/res/config
+# retain the system control configuration inside homescreen at least for now
+%{TZ_SYS_RW_APP}/org.tizen.ico.system-controller/res/config
 
 %files system-controller-devel
 %defattr(-,root,root,-)

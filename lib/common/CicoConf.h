@@ -584,7 +584,7 @@ class CicoSCUserConf
 {
 public:
     /// default constructor
-    CicoSCUserConf() :m_parent_dir("/home/app/ico") {}
+    CicoSCUserConf() :m_parent_dir("") {}
     /// destructor
     ~CicoSCUserConf() {}
 

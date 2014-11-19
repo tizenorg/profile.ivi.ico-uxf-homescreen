@@ -18,6 +18,7 @@
 #define __CICO_SOUND_H__
 
 #include <string>
+#include "ico_syc_private.h"
 
 #define ICO_CONFIG_SOUND            "sound"
 #define ICO_CONFIG_COMMAND          "command"
@@ -26,9 +27,9 @@
 #define ICO_CONFIG_FAILURE          "failure"
 
 #define ICO_SOUND_DEFAULT_COMMAND   "paplay --stream-name=HOMESCREEN_BEEP"
-#define ICO_SOUND_DEFAULT_OPERATION "/usr/apps/org.tizen.ico.homescreen/res/sound/operation.wav"
-#define ICO_SOUND_DEFAULT_SUCCESS   "/usr/apps/org.tizen.ico.homescreen/res/sound/success.wav"
-#define ICO_SOUND_DEFAULT_FAILURE   "/usr/apps/org.tizen.ico.homescreen/res/sound/failure.wav"
+#define ICO_SOUND_DEFAULT_OPERATION ICO_SYC_PACKAGE_HOMESCREEN "/res/sound/operation.wav"
+#define ICO_SOUND_DEFAULT_SUCCESS   ICO_SYC_PACKAGE_HOMESCREEN "/res/sound/success.wav"
+#define ICO_SOUND_DEFAULT_FAILURE   ICO_SYC_PACKAGE_HOMESCREEN "/res/sound/failure.wav"
 
 //--------------------------------------------------------------------------
 /**

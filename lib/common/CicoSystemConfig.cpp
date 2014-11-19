@@ -20,9 +20,12 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
+#include <tzplatform_config.h>
 
+#include "ico_syc_private.h"
 #include "CicoSystemConfig.h"
 #include "CicoConf.h"
+#include "CicoGKeyFileConfig.h"
 
 using namespace boost::property_tree;
 //==========================================================================
@@ -1003,28 +1006,24 @@ CicoSystemConfig::createDefaultConf(const ptree & root)
     m_defaultConf->inputsw     = getSwitchIdbyName(inputdev.get(),
                                                  inputsw.get());
 
-//TODO
-#define ICO_SYC_TOP_EVN     (char*)"SYSCON_TOPDIR"
-#define ICO_SYC_TOP_DIR     (char*)"/usr/apps/org.tizen.ico.system-controller"
+#define ICO_SYC_TOP_EVN         "SYSCON_TOPDIR"
     /* decide top directory in all configurations       */
-    char *topdir = getenv(ICO_SYC_TOP_EVN);
+    const char *topdir = getenv(ICO_SYC_TOP_EVN);
     if (NULL ==  topdir) {
-        topdir = ICO_SYC_TOP_DIR;
+        topdir = tzplatform_mkpath(TZ_SYS_RO_APP, ICO_SYC_PACKAGE_SYSTEMCONTROLLER);
     }
     m_defaultConf->topdir = topdir;
 
-//TODO
-#define ICO_SYC_CONFIG_ENV  (char*)"SYSCON_CONFDIR"
-#define ICO_SYC_CONFIG_DIR  (char*)"res/config"
+#define ICO_SYC_CONFIG_ENV  "SYSCON_CONFDIR"
     /* decide top directory in configuration file's     */
-    char *confdir = getenv(ICO_SYC_CONFIG_ENV);
+    const char *confdir = getenv(ICO_SYC_CONFIG_ENV);
     if (NULL != confdir) {
         m_defaultConf->confdir = confdir;
     }
     else {
         m_defaultConf->confdir = m_defaultConf->topdir;
         m_defaultConf->confdir.append("/");
-        m_defaultConf->confdir.append(ICO_SYC_CONFIG_DIR);
+        m_defaultConf->confdir.append(ICO_SYC_CONFIGPATH_PACKAGE_CONFIG);
     }
 
     m_defaultConf->dumpConf();
@@ -1276,9 +1275,12 @@ CicoSystemConfig::createUserConf(const ptree & root)
     optional<string> opts = rc.get_optional<string>("parent_dir");
     if (true == opts.is_initialized()) {
         string v = opts.get();
-        if (v.empty()) {
-            m_userConf->m_parent_dir = v;
+        if (! v.empty()) {
+            m_userConf->m_parent_dir = tzplatform_mkpath(TZ_USER_HOME, v.c_str());
         }
+    }
+    if (m_userConf->m_parent_dir.empty())   {
+        m_userConf->m_parent_dir = tzplatform_mkpath(TZ_USER_HOME, ICO_SYC_CONFIGPATH_HOME);
     }
     m_userConf->dumpConf();
 }

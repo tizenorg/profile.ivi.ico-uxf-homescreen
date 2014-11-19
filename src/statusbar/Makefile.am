@@ -35,8 +35,7 @@ StatusBar_CXXFLAGS = \
 	-I/usr/include/ico-util \
 	-I../../include			\
 	-I../../lib/common	\
-	-I../../lib/notification \
-	-std=c++11
+	-I../../lib/notification
 
 StatusBar_LDADD = \
 	../../lib/common/.libs/libico-common.a \

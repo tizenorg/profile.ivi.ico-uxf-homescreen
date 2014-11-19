@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <tzplatform_config.h>
 
 #include <ico_log.h>
 #include "CicoResourceConfig.h"
@@ -40,7 +41,7 @@ CicoResourceConfig::GetImagePath(char *buff, int len)
     memset(buff, 0, len);
     pkg = getenv("PKG_NAME");
     if (pkg) {
-        snprintf(buff, len, ICO_IMAGE_PATH, pkg);
+        snprintf(buff, len, ICO_IMAGE_PATH, tzplatform_getenv(TZ_SYS_RO_APP), pkg);
     }
     else {
         pkg = getenv(ICO_HS_CONFIG_TOP_ENV);
@@ -68,7 +69,7 @@ CicoResourceConfig::GetSoundPath(char *buff, int len)
     memset(buff, 0, len);
     pkg = getenv("PKG_NAME");
     if (pkg) {
-        snprintf(buff, len, ICO_SOUND_PATH, pkg);
+        snprintf(buff, len, ICO_SOUND_PATH, tzplatform_getenv(TZ_SYS_RO_APP), pkg);
     }
     else {
         pkg = getenv(ICO_HS_CONFIG_TOP_ENV);
@@ -95,7 +96,7 @@ CicoResourceConfig::GetEdjPath(char *buff, int len)
     memset(buff, 0, len);
     pkg = getenv("PKG_NAME");
     if (pkg) {
-        snprintf(buff, len, ICO_EDJ_PATH, pkg);
+        snprintf(buff, len, ICO_EDJ_PATH, tzplatform_getenv(TZ_SYS_RO_APP), pkg);
     }
     else {
         pkg = getenv(ICO_HS_CONFIG_TOP_ENV);
@@ -122,7 +123,8 @@ CicoResourceConfig::GetConfPath(char *buff, int len)
     memset(buff, 0, len);
     pkg = getenv("PKG_NAME");
     if (pkg) {
-        snprintf(buff, len, ICO_MANIFEST_PATH, pkg);
+        snprintf(buff, len, ICO_MANIFEST_PATH,
+                 tzplatform_getenv(TZ_SYS_RO_APP), pkg);
     }
     else {
         pkg = getenv(ICO_HS_CONFIG_TOP_ENV);

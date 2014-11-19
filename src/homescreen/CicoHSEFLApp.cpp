@@ -18,6 +18,7 @@
 #include <exception>
 #include <iostream>
 #include <string>
+#include <tzplatform_config.h>
 
 #include "CicoHSEFLApp.h"
 #include "CicoHomeScreen.h"
@@ -64,8 +65,8 @@ CicoHSEFLApp::onCreate(void *user_data)
     try {
         // load system config
         CicoSystemConfig::getInstance()->load(
-                ICO_HS_LIFECYCLE_CONTROLLER_SETTING_PATH);
-
+                    tzplatform_mkpath(TZ_SYS_RO_APP,
+                                      ICO_HS_LIFECYCLE_CONTROLLER_SETTING_PATH));
         // start homescreen
         m_homescreen = new CicoHomeScreen();
         int ret = m_homescreen->StartHomeScreen(ICO_ORIENTATION_VERTICAL);

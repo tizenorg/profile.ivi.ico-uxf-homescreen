@@ -20,33 +20,35 @@
 #include <ctime>
 #include <cassert>
 #include <memory>
+#include <tzplatform_config.h>
 
 #include <ico_log.h>
+#include "ico_syc_private.h"
 #include "CicoComponentImplementation.h"
 
 /*  define of path   */
-#define IMG_DIR "/usr/apps/org.tizen.ico.statusbar/res/images/"
-#define THEME_PATH "/usr/apps/org.tizen.ico.statusbar/res/themes/statusbar.edj"
+#define IMG_DIR     ICO_SYC_PACKAGE_STATUSBAR "/res/images"
+#define THEME_PATH  ICO_SYC_PACKAGE_STATUSBAR "/res/themes/statusbar.edj"
 
 /*  Theme group name  */
-#define THEME_CLOCK_NAME "ClockImage"
+#define THEME_CLOCK_NAME        "ClockImage"
 #define THEME_NOTIFICATION_NAME "Notification"
 
 // set image file path of clock
 static const char *clock_image_path[] = {
-    IMG_DIR"time_0.png",
-    IMG_DIR"time_1.png",
-    IMG_DIR"time_2.png",
-    IMG_DIR"time_3.png",
-    IMG_DIR"time_4.png",
-    IMG_DIR"time_5.png",
-    IMG_DIR"time_6.png",
-    IMG_DIR"time_7.png",
-    IMG_DIR"time_8.png",
-    IMG_DIR"time_9.png",
-    IMG_DIR"time_am.png",
-    IMG_DIR"time_pm.png",
-    IMG_DIR"time_ten.png",
+    "time_0.png",
+    "time_1.png",
+    "time_2.png",
+    "time_3.png",
+    "time_4.png",
+    "time_5.png",
+    "time_6.png",
+    "time_7.png",
+    "time_8.png",
+    "time_9.png",
+    "time_am.png",
+    "time_pm.png",
+    "time_ten.png",
     NULL
 };
 
@@ -113,7 +115,10 @@ CicoStatusBarClockComponent::Initialize(Evas_Object *windowobj, Evas *evas)
 
     /*  make TimeImage object  */
     evasobj_=edje_object_add(evas);
-    if (!edje_object_file_set(evasobj_, THEME_PATH, THEME_CLOCK_NAME )) {
+    char    wrk_path[256];
+    snprintf(wrk_path, sizeof(wrk_path), "%s/" THEME_PATH,
+             tzplatform_getenv(TZ_SYS_RO_APP));
+    if (!edje_object_file_set(evasobj_, wrk_path, THEME_CLOCK_NAME )) {
         Edje_Load_Error err = edje_object_load_error_get(evasobj_);
         const char *errmsg = edje_load_error_str(err);
         ICO_ERR("could not load 'main' from statusbar.edj: %s",
@@ -200,10 +205,13 @@ CicoStatusBarClockComponent::Update()
                          evasobj_,clock_image_object[i] );
             if ( obj != NULL ) {
                 ICO_DBG("CicoStatusBarClockComponent image set[%s][%s]",
-                        clock_image_object[i],clock_image_path[now_clock_image[i]]);
-                evas_object_image_file_set(obj, 
-                        clock_image_path[now_clock_image[i]], NULL);
-                // add update view area 
+                        clock_image_object[i], clock_image_path[now_clock_image[i]]);
+                char    wrk_path[256];
+                snprintf(wrk_path, sizeof(wrk_path), "%s/" IMG_DIR "/%s",
+                         tzplatform_getenv(TZ_SYS_RO_APP),
+                         clock_image_path[now_clock_image[i]]);
+                evas_object_image_file_set(obj, wrk_path, NULL);
+                // add update view area
                 //    (Omitted update area is set so that evas_object_image_file_set())
                 //Evas_Coord x,y,w,h;
                 //evas_object_geometry_get( obj, &x, &y, &w, &h );
@@ -307,7 +315,10 @@ CicoNotificationPanelComponent::Initialize(Evas_Object *window, Evas *evas)
     /*  create Notification object  */
     ICO_DBG("Create Text Module end");
     evasobj_=edje_object_add(evas);
-    if (!edje_object_file_set(evasobj_, THEME_PATH, THEME_NOTIFICATION_NAME)) {
+    char    wrk_path[256];
+    snprintf(wrk_path, sizeof(wrk_path), "%s/" THEME_PATH,
+             tzplatform_getenv(TZ_SYS_RO_APP));
+    if (!edje_object_file_set(evasobj_, wrk_path, THEME_NOTIFICATION_NAME)) {
         Edje_Load_Error err = edje_object_load_error_get(evasobj_);
         const char *errmsg = edje_load_error_str(err);
         ICO_ERR("could not load 'main' from statusbar.edj: %s",
