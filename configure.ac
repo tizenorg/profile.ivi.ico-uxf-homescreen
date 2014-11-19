@@ -32,6 +32,7 @@ PKG_CHECK_MODULES([EGL], [egl])
 PKG_CHECK_MODULES([EINA], [eina])
 PKG_CHECK_MODULES([EVAS], [evas])
 PKG_CHECK_MODULES([ECORE], [ecore])
+PKG_CHECK_MODULES([ECOREEVAS], [ecore-evas])
 PKG_CHECK_MODULES([GLIB], [glib-2.0])
 PKG_CHECK_MODULES([JSONGLIB], [json-glib-1.0])
 PKG_CHECK_MODULES([AIL], [ail])
@@ -41,21 +42,14 @@ PKG_CHECK_MODULES([PKGMGR], [pkgmgr])
 PKG_CHECK_MODULES([WAYLANDCLIENT], [wayland-client])
 PKG_CHECK_MODULES([NOTIFICATION], [notification])
 PKG_CHECK_MODULES([APPSVC], [appsvc])
+PKG_CHECK_MODULES([DLOG], [dlog])
+PKG_CHECK_MODULES([CAPIAPPFWAPPLICATION], [capi-appfw-application])
+PKG_CHECK_MODULES([LIBWEBSOCKETS], [libwebsockets]);
 
 # libraries for homescreen.
 PKG_CHECK_MODULES([EDJE], [edje])
 PKG_CHECK_MODULES([ECOREWAYLAND], [ecore-wayland])
 PKG_CHECK_MODULES([WAYLANDCURSOR], [wayland-cursor])
-
-# libraries for system-controller.
-PKG_CHECK_MODULES([DLOG], [dlog])
-PKG_CHECK_MODULES([CAPIAPPFWAPPLICATION], [capi-appfw-application])
-PKG_CHECK_MODULES([MURPHYCOMMON], [murphy-common]);
-PKG_CHECK_MODULES([MURPHYDOMAINCONTROLLER], [murphy-domain-controller]);
-PKG_CHECK_MODULES([MURPHYECORE], [murphy-ecore]);
-PKG_CHECK_MODULES([MURPHYRESOURCE], [murphy-resource]);
-PKG_CHECK_MODULES([LIBWEBSOCKETS], [libwebsockets]);
-PKG_CHECK_MODULES([ECOREEVAS], [ecore-evas])
 
 # Set flags
 EFL_CFLAGS="$EINA_CFLAGS $EVAS_CFLAGS $ECORE_CFLAGS $EDJE_CFLAGS $ECOREWAYLAND_CFLAGS"
@@ -129,13 +123,13 @@ AC_CONFIG_FILES([Makefile
                  lib/common/Makefile
                  lib/notification/Makefile
                  lib/apps-framework/Makefile
-                 lib/misc/Makefile
                  src/Makefile
                  src/homescreen/Makefile
                  src/statusbar/Makefile
                  src/onscreen/Makefile
                  tool/Makefile
                  tool/notification/Makefile
-                 tests/Makefile])
+                 tests/Makefile
+                 tests/apps-framework/Makefile])
 AC_PROG_RANLIB([ranlib])
 AC_OUTPUT

@@ -1,3 +1,2 @@
-#SUBDIRS=\
-#   system-controller    \
-#   homescreen
+SUBDIRS=\
+	apps-framework
