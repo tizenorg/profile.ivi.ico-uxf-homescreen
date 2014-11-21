@@ -149,8 +149,12 @@ ail_initdb
 %{_includedir}/ico-appfw/ico_syc_common.h
 %{_includedir}/ico-appfw/ico_syc_error.h
 %{_includedir}/ico-appfw/ico_syc_inputctl.h
+%{_includedir}/ico-appfw/ico_syc_msg.h
+%{_includedir}/ico-appfw/ico_syc_msg_cmd_def.h
 %{_includedir}/ico-appfw/ico_syc_private.h
 %{_includedir}/ico-appfw/ico_syc_privilege.h
+%{_includedir}/ico-appfw/ico_syc_public.h
+%{_includedir}/ico-appfw/ico_syc_sysdef.h
 %{_includedir}/ico-appfw/ico_syc_type.h
 %{_includedir}/ico-appfw/ico_syc_userctl.h
 %{_includedir}/ico-appfw/ico_syc_winctl.h
