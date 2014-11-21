@@ -113,7 +113,6 @@ class CicoHSMenuTile
     void CreateObject(Evas *evas);
     void FreeObject(void);
     void Resize(int width,int height);
-    void MovePosition(int page,int poisition);
     void OffsetMove(int offset_x,int offset_y);
     const char* GetImagePath(void);
     int GetWidth(void);

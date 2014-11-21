@@ -245,41 +245,6 @@ CicoHSMenuTile::Resize(int width, int height)
 
 /*--------------------------------------------------------------------------*/
 /**
- * @brief   CicoHSMenuTile::MovePosition
- *          move tile base position
- *
- * @param[in]   page        page
- * @param[in]   position    position of tile
- * @return      none
- */
-/*--------------------------------------------------------------------------*/
-void
-CicoHSMenuTile::MovePosition(int page, int position)
-{
-    this->page = page;
-    this->position= position;
-    pos_x = GetPositionX();
-    pos_y = GetPositionY();
-
-    ICO_DBG("CicoHSMenuTile::MovePosition(appid=%p<%s> tile=(%d,%d))",
-            this->appid, appid, pos_x, pos_y);
-
-    evas_object_move(tile, pos_x, pos_y);
-    if (thumb_tile) {
-        evas_object_move(thumb_tile, pos_x + thumb_reduce_x, pos_y + thumb_reduce_y);
-    }
-    if (small_icon) {
-        evas_object_move(small_icon,
-                         pos_x + thumb_reduce_x - ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2,
-                         pos_y + height - thumb_reduce_y - height
-                             / ICO_HS_MENUTILE_THUMBNAIL_REDUCTION
-                             + ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2);
-    }
-    evas_object_move(term_icon, pos_x + width - ICO_HS_MENUTILE_TERM_ICON_WIDTH, pos_y);
-}
-
-/*--------------------------------------------------------------------------*/
-/**
  * @brief   CicoHSMenuTile::OffsetMove
  *          move from base position
  *
@@ -916,32 +881,63 @@ CicoHSMenuTile::ShowMenu(bool show)
 void
 CicoHSMenuTile::SetOrgThumbnail(CicoHSMenuTile *orgTile)
 {
-
-    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Enter(appid=%p<%s>) run=%d surf=%08x",
-            this->appid, this->appid, app_running, orgTile->thumb.surface );
+    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail appid=%s run=%d surf=%08x",
+            this->appid, app_running, orgTile->thumb.surface);
 
     /* check surface of orgTile */
-    if ( orgTile == NULL || orgTile->thumb.surface == 0 ) {
+    if (orgTile == NULL) {
         return;
     }
 
-    /* set surface */
-    this->ValidThumbnail( orgTile->thumb.surface );
+    thumb_reduce_x = orgTile->thumb_reduce_x;
+    thumb_reduce_y = orgTile->thumb_reduce_y;
+    app_running = orgTile->app_running;
+    menu_show = orgTile->menu_show;
+    if (orgTile->thumb_tile)    {
+        if (thumb_tile) {
+            evas_object_del(thumb_tile);
+        }
+        thumb_tile = orgTile->thumb_tile;
+        orgTile->thumb_tile = NULL;
+        evas_object_event_callback_del(thumb_tile, EVAS_CALLBACK_MOUSE_DOWN,
+                                       CicoHSMenuTouch::TouchDownMenu);
+        evas_object_event_callback_del(thumb_tile, EVAS_CALLBACK_MOUSE_UP,
+                                       CicoHSMenuTouch::TouchUpMenu);
+        evas_object_event_callback_add(thumb_tile, EVAS_CALLBACK_MOUSE_DOWN,
+                                       CicoHSMenuTouch::TouchDownMenu, appid);
+        evas_object_event_callback_add(thumb_tile, EVAS_CALLBACK_MOUSE_UP,
+                                       CicoHSMenuTouch::TouchUpMenu, appid);
+        if ((orgTile->icon == thumb_tile) && (icon != thumb_tile))  {
+            evas_object_hide(icon);
+            icon = thumb_tile;
+            evas_object_show(icon);
+        }
+    }
+    if ((small_icon == NULL) && (orgTile->small_icon != NULL))  {
+        small_icon = orgTile->small_icon;
+        orgTile->small_icon = NULL;
+        evas_object_event_callback_del(small_icon, EVAS_CALLBACK_MOUSE_DOWN,
+                                       CicoHSMenuTouch::TouchDownMenu);
+        evas_object_event_callback_del(small_icon, EVAS_CALLBACK_MOUSE_UP,
+                                       CicoHSMenuTouch::TouchUpMenu);
+        evas_object_event_callback_add(small_icon, EVAS_CALLBACK_MOUSE_DOWN,
+                                       CicoHSMenuTouch::TouchDownMenu, appid);
+        evas_object_event_callback_add(small_icon, EVAS_CALLBACK_MOUSE_UP,
+                                       CicoHSMenuTouch::TouchUpMenu, appid);
+    }
+    if (orgTile->thumb.thumb_timer) {
+        ecore_timer_del(orgTile->thumb.thumb_timer);
+    }
+    thumb = orgTile->thumb;
+    orgTile->thumb.surface = 0;
+    orgTile->thumb.fbcount = 0;
+    orgTile->thumb.pixel_data = NULL;
+    orgTile->thumb.orgsurface = 0;
 
-    /* set new thumbnail */
-    ico_syc_thumb_info_t info;
-
-    info.surface = orgTile->thumb.surface;
-    info.type = orgTile->thumb.type;
-    info.width = orgTile->thumb.width;
-    info.height = orgTile->thumb.height;
-    info.stride = orgTile->thumb.stride;
-    info.format = orgTile->thumb.format;
-
-    SetThumbnail( &info );
-
-    ICO_DBG("CicoHSMenuTile::SetOrgThumbnail Leave(appid=%p<%s>) run=%d surf=%08x",
-            this->appid, this->appid, app_running, orgTile->thumb.surface );
-
+    if (thumb.thumb_timer)  {
+        thumb.thumb_timer = ecore_timer_add(ICO_HS_MENUTILE_THUMBNAIL_RETRYTIME,
+                                            CicoHSMenuTile::TimerThumbnail, (void *)this);
+        orgTile->thumb.thumb_timer = NULL;
+    }
 }
 // vim: set expandtab ts=4 sw=4:

@@ -133,7 +133,7 @@ class CicoHSMenuWindow :public CicoHSWindow
     int SetMenuBack(void);
     void FreeMenuBack(void);
     void InitAppTiles(void);
-    int SetAppTiles(void);
+    void SetAppTiles(void);
     void FreeAppTiles(void);
     void RenewAppTiles(void);
     int SetPagePointer(void);

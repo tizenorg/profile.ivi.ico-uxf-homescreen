@@ -301,10 +301,10 @@ CicoHSMenuWindow::InitAppTiles(void)
  *          create object and show (tiles)
  *
  * @param[in]   none
- * @return      ERROR or OK
+ * @return      none
  */
 /*--------------------------------------------------------------------------*/
-int
+void
 CicoHSMenuWindow::SetAppTiles(void)
 {
     int tile_num = 0;
@@ -429,7 +429,6 @@ CicoHSMenuWindow::SetAppTiles(void)
             menu_tile[ii]->OffsetMove(height,0);
         }
     }
-    return ICO_OK;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -468,23 +467,23 @@ CicoHSMenuWindow::RenewAppTiles(void)
     ICO_TRA("CicoHSMenuWindow::RenewAppTiles Enter");
 
     int cnt, cnt2;
-    int ret;
+
+    /* save current page */
+    int current_page_org = current_page;
+    int subcurrent_page_org = subcurrent_page;
 
     /* backup old data */
     int all_tile_num_org = all_tile_num;
     CicoHSMenuTile *menu_tile_org[ICO_HS_MENU_MAX_TILE_NUM];
-    for (cnt=0; cnt < all_tile_num_org; cnt++) {
-        menu_tile_org[cnt]=menu_tile[cnt];
+    for (cnt = 0; cnt < all_tile_num_org; cnt++) {
+        menu_tile_org[cnt] = menu_tile[cnt];
     }
 
     /* initialization */
     InitAppTiles();
 
     /* set app tiles */
-    ret = SetAppTiles();
-    if(ret != ICO_OK){
-        ICO_ERR("CicoHSMenuWindow::RenewAppTiles: could not make tiles.");
-    }
+    SetAppTiles();
 
     /* update app info list */
     CicoHomeScreen::RenewAppInfoList();
@@ -494,20 +493,21 @@ CicoHSMenuWindow::RenewAppTiles(void)
         if (menu_tile[cnt] == NULL) {
             continue;
         }
-        for (cnt2=0; cnt2 < all_tile_num_org; cnt2++) {
+        for (cnt2 = 0; cnt2 < all_tile_num_org; cnt2++) {
             if (menu_tile_org[cnt2] == NULL) {
                 continue;
             }
             if (strncmp(menu_tile[cnt]->GetAppId(),
                         menu_tile_org[cnt2]->GetAppId(), ICO_HS_MAX_PROCESS_NAME) == 0) {
-                menu_tile[cnt]->SetOrgThumbnail( menu_tile_org[cnt2] );
+                // if same appid, a tile object is changed to an original thing
+                menu_tile[cnt]->SetOrgThumbnail(menu_tile_org[cnt2]);
                 break;
             }
         }
     }
 
-    /* free org app tiles */
-    for (cnt2=0; cnt2 < all_tile_num_org; cnt2++) {
+    /* free original app tiles */
+    for (cnt2 = 0; cnt2 < all_tile_num_org; cnt2++) {
         if (menu_tile_org[cnt2] == NULL) {
             continue;
         }
@@ -515,6 +515,63 @@ CicoHSMenuWindow::RenewAppTiles(void)
         delete menu_tile_org[cnt2];
     }
 
+    // restore current page
+    if (current_page_org < all_page_num)    {
+        for (cnt = 0; cnt < all_category_num; cnt++) {
+            if (current_page_org == category_info[cnt].page) {
+                break;
+            }
+        }
+        if (cnt < all_category_num) {
+            if (subcurrent_page_org >= category_info[cnt].subpage_max) {
+                subcurrent_page_org = 0;
+            }
+        }
+        else    {
+            current_page_org = 0;
+            subcurrent_page_org = 0;
+        }
+    }
+    else    {
+        current_page_org = 0;
+        subcurrent_page_org = 0;
+    }
+    ICO_TRA("CicoHSMenuWindow::RenewAppTiles page change %d/%d->%d/%d",
+            current_page, subcurrent_page, current_page_org, subcurrent_page_org);
+
+    // update the menu currently displayed
+    /* page pointer */
+    char img_path[ICO_HS_MAX_PATH_BUFF_LEN];
+    snprintf(img_path, sizeof(img_path), "%s%s",
+             img_dir_path, ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_N);
+    evas_object_image_file_set(page_pointer[current_page], img_path, NULL);
+
+    current_page = current_page_org;
+    subcurrent_page = subcurrent_page_org;
+    snprintf(img_path, sizeof(img_path), "%s%s",
+             img_dir_path, ICO_HS_IMAGE_FILE_MENU_PAGEPOINTER_P);
+    evas_object_image_file_set(page_pointer[current_page_org], img_path, NULL);
+
+    current_page = current_page_org;
+    subcurrent_page = subcurrent_page_org;
+
+    /* display cursor */
+    DspCtrlPageCursor();
+
+    /*tile*/
+    for (cnt = 0;cnt < menu_window_instance->all_tile_num; cnt++) {
+        if (menu_window_instance->menu_tile[cnt] == NULL) {
+            continue;
+        }
+        if ((menu_window_instance->menu_tile[cnt]->GetPage() != current_page) ||
+            (menu_window_instance->menu_tile[cnt]->GetSubPage() != subcurrent_page)) {
+            menu_window_instance->menu_tile[cnt]->
+                                        OffsetMove(-menu_window_instance->width, 0);
+        }
+        else    {
+            menu_window_instance->menu_tile[cnt]->OffsetMove(0, 0);
+        }
+    }
     ICO_TRA("CicoHSMenuWindow::RenewAppTiles Leave");
 }
 
@@ -866,13 +923,7 @@ CicoHSMenuWindow::CreateMenuWindow(int pos_x, int pos_y, int width, int height)
         return ICO_ERROR;
     }
     /* App tiles*/
-    ret = SetAppTiles();
-    if(ret != ICO_OK){
-        ICO_ERR("CicoHSMenuWindow::CreateMenuWindow: could not make tiles.");
-        FreeMenuBack();
-        FreeWindow();
-        return ICO_ERROR;
-    }
+    SetAppTiles();
 
     /* Page Pointer */
     ret = SetPagePointer();
