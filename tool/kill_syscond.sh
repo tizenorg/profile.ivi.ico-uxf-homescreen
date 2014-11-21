@@ -4,7 +4,6 @@ killall ico-vic-carsim 2> /dev/null
 killall weekeyboard 2> /dev/null
 killall weston 2> /dev/null
 killall pulseaudio 2> /dev/null
-killall IcoSysconDaemon 2> /dev/null
 killall MeterApp 2> /dev/null
 
 killall GV3ySIINq7.GhostCluster 2> /dev/null
@@ -29,7 +28,6 @@ killall  2> /dev/null
 sleep 1
 
 killall -9 HomeScreen 2> /dev/null
-killall -9 IcoSysconDaemon 2> /dev/null
 killall -9 MeterApp 2> /dev/null
 killall -9 weekeyboard 2> /dev/null
 killall -9 weston 2> /dev/null

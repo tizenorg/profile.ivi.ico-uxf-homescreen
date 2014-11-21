@@ -3,9 +3,6 @@ AM_CPPFLAGS = $(GCC_CXXFLAGS)
 noinst_LTLIBRARIES =\
 	libico-common.la
 
-#lib_LTLIBRARIES =\
-#	libico-system-controller.la
-
 libico_common_la_LDFLAGS = -version-info 0:9:0 
 libico_common_la_SOURCES =	\
 	CicoEFLApp.cpp			\

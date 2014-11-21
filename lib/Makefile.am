@@ -1,5 +1,4 @@
 SUBDIRS=\
 	common \
 	notification \
-	apps-framework  \
-	misc
+	apps-framework

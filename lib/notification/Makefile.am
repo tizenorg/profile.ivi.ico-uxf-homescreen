@@ -3,9 +3,6 @@ AM_CPPFLAGS = $(GCC_CXXFLAGS)
 noinst_LTLIBRARIES =\
 	libico-notification.la
 
-#lib_LTLIBRARIES =\
-#	libico-system-controller.la
-
 libico_notification_la_LDFLAGS = -version-info 0:9:0 
 libico_notification_la_SOURCES =	\
 	CicoNotification.cpp			\
