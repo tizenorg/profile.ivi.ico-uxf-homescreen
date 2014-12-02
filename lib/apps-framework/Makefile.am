@@ -10,7 +10,7 @@ libico_appfw_la_CFLAGS = -I../../include $(OPT_CFLAGS) $(UWS_CFLAGS) \
                           -I/usr/include/ico-util
 
 libico_appfw_la_LIBADD =  $(OPT_LIBS) $(WL_LIBS) $(AUL_LIBS) $(UWS_LIBS) $(COMMON_LIBS) @ECORE_LIBS@
-libico_appfw_la_LDFLAGS = -version-info 0:9:0 
+libico_appfw_la_LDFLAGS = -version-info 0:9:0
 libico_appfw_la_SOURCES =          \
     ico_syc_appresctl.c \
 	ico_syc_common.c    \
@@ -33,8 +33,12 @@ install-exec-hook:
 	install -m 644 ../../include/ico_syc_common.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
 	install -m 644 ../../include/ico_syc_error.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
 	install -m 644 ../../include/ico_syc_inputctl.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
+	install -m 644 ../../include/ico_syc_msg.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
+	install -m 644 ../../include/ico_syc_msg_cmd_def.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
 	install -m 644 ../../include/ico_syc_private.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
 	install -m 644 ../../include/ico_syc_privilege.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
+	install -m 644 ../../include/ico_syc_public.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
+	install -m 644 ../../include/ico_syc_sysdef.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
 	install -m 644 ../../include/ico_syc_type.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
 	install -m 644 ../../include/ico_syc_userctl.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
 	install -m 644 ../../include/ico_syc_winctl.h $(INSTALL_ROOT)/$(includedir)/ico-appfw
