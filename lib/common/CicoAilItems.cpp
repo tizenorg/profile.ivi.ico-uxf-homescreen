@@ -46,10 +46,10 @@ CicoAilItems::CicoAilItems(const char* pkg, const char* icon,
                                const char* typ, const char* exe,
                                const std::string categorys, bool ndisp)
 {
-    ICO_TRA("start");
+//  ICO_TRA("start");
     init();
     setup(pkg, icon, nam, ctgry, typ, exe, categorys, ndisp);
-    ICO_TRA("end");
+//  ICO_TRA("end");
 }
 
 CicoAilItems::CicoAilItems(const CicoAilItems &s)
@@ -90,9 +90,10 @@ CicoAilItems::CicoAilItems(const CicoAilItems &s)
  */
 CicoAilItems::~CicoAilItems()
 {
-    ICO_TRA("start");
-    ICO_TRA("end");
+//  ICO_TRA("start");
+//  ICO_TRA("end");
 }
+
 /**
  * @brief init member
  */
@@ -167,7 +168,7 @@ void CicoAilItems::setup(const char* pkg, const char* icon,
                            const char* typ, const char* exe,
                            std::string categorys, bool ndisp)
 {
-    ICO_TRA("start");
+//  ICO_TRA("start");
     m_appid.assign(pkg);
     ICO_DBG("package name=%s", pkg? pkg: "(NULL)");
 
@@ -193,7 +194,7 @@ void CicoAilItems::setup(const char* pkg, const char* icon,
     }
 
     categoryParse(categorys);
-    ICO_TRA("end");
+//  ICO_TRA("end");
 }
 
 const string s_run("run");
@@ -605,7 +606,7 @@ bool CicoAilItems::categoryGetInput(const string& inputDev,
 
     CicoSystemConfig* CSCSC = CicoSystemConfig::getInstance();
     m_inputDev = CSCSC->getInputDevIdbyName(inputDev);
-    ICO_DBG("sound %s->%d", inputDev.c_str(), m_sound);
+    ICO_DBG("inputdev %s->%d", inputDev.c_str(), m_inputDev);
     if (false == sw.empty()) {
         m_switch = CSCSC->getSwitchIdbyName(inputDev, sw);
         ICO_DBG("switch %s, %s->%d", inputDev.c_str(), sw.c_str(), m_switch);

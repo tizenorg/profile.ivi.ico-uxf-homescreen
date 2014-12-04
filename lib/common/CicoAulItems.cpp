@@ -55,7 +55,7 @@ CicoAulItems::CicoAulItems(const char* appid, int pid, int ctgry,
     m_memcgroup = -1;
     if (DINITm_categoryID != m_category) {
         CicoSystemConfig* conf = CicoSystemConfig::getInstance();
-        const CicoSCCategoryConf* objX = 
+        const CicoSCCategoryConf* objX =
             conf->getCategoryObjbyCaategoryID(m_category);
         if (NULL != objX) {
             m_cpucgroup = objX->rctrl;
@@ -93,7 +93,7 @@ CicoAulItems::CicoAulItems(const CicoAulItems& s)
  */
 CicoAulItems::~CicoAulItems()
 {
-    ICO_TRA("CicoAulItems::~CicoAulItems");
+//  ICO_TRA("CicoAulItems::~CicoAulItems");
     m_CSCWptrs.clear();
 }
 
