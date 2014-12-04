@@ -51,10 +51,20 @@ void
 CicoHSWindowController::Initialize(void)
 {
     int ret;
+
+    ICO_DBG("CicoHSWindowController::Initialize: Enter");
+
     /* Reset a ecore_evas */
     ret = ecore_evas_init();
-    ICO_DBG("CicoHSWindowController::Initialize: ecore_evas_init retrun %d",
-            ret);
+    ICO_DBG("CicoHSWindowController::Initialize: ecore_evas_init retrun %d", ret);
+    ms_ecoreEvas = ecore_evas_new(NULL, 0, 0, 1, 1, "frame=0");
+    ICO_DBG("CicoHSWindowController::Initialize: Leave");
+}
+
+Ecore_Evas *
+CicoHSWindowController::GetBaseEvas(void)
+{
+    return CicoHSWindowController::ms_ecoreEvas;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -93,8 +103,6 @@ CicoHSWindowController::GetFullScreenSize(int orientation,
     int display_width  = 0;
     int display_height = 0;
 
-    ms_ecoreEvas = ecore_evas_new(NULL, 0, 0, 1, 1, "frame=0");
-
     /* getting size of screen */
     /* home screen size is full of display*/
     ecore_wl_screen_size_get(&display_width, &display_height);
@@ -102,23 +110,9 @@ CicoHSWindowController::GetFullScreenSize(int orientation,
     ICO_DBG("ecore_wl_screen_size_get => w/h=%d/%d",
             display_width, display_height);
 
-#if 1           /* TizenIVI 3.0 ecore return correct display size   */
     *width = display_width;
     *height = display_height;
-#else           /* TizenIVI 3.0 ecore return correct display size   */
-    if (orientation == ICO_ORIENTATION_VERTICAL) {
-        *width = display_width > display_height ?
-                                 display_height : display_width;
-        *height = (display_width > display_height ?
-                                 display_width : display_height);
-    }
-    else {
-        *width = display_width < display_height ?
-                                 display_height : display_width;
-        *height = (display_width < display_height ?
-                                   display_width : display_height);
-    }
-#endif          /* TizenIVI 3.0 ecore return correct display size   */
+
     ICO_TRA("CicoHSWindowController::GetFullScreenSize Leave(w/h=%d/%d)", *width, *height);
 }
 // vim:set expandtab ts=4 sw=4:

@@ -56,12 +56,13 @@ CicoEFLApp::CicoEFLApp()
         free(value);
     }
 
+#if 0   /* no need version number   */
     ret = app_get_version(&value);
     if (APP_ERROR_NONE == ret) {
         m_version = value;
         free(value);
     }
-
+#endif
 //    ICO_DBG("CicoEFLApp::CicoEFLApp Leave");
 }
 
@@ -80,8 +81,8 @@ CicoEFLApp::~CicoEFLApp()
 /**
  *  @brief  start EFL main loop
  *
- *  @param [in] argc    count of argument 
- *  @param [in] argv    variables of argument 
+ *  @param [in] argc    count of argument
+ *  @param [in] argv    variables of argument
  */
 //--------------------------------------------------------------------------
 int
@@ -285,7 +286,7 @@ CicoEFLApp::onLowBattery(void *user_data)
 
 //--------------------------------------------------------------------------
 /**
- *  @brief  callback function on device orientation 
+ *  @brief  callback function on device orientation
  *
  *  @param [in] orientation The orientation of device
  *  @param [in] user_data   The user data passed from the callback
@@ -349,8 +350,8 @@ CicoEFLApp::appfwCreateCB(void *user_data)
         ICO_DBG("CicoEFLApp::appfwCreateCB Leave");
         return false;
     }
-    
-    bool ret = static_cast<CicoEFLApp*>(user_data)->onCreate(user_data); 
+
+    bool ret = static_cast<CicoEFLApp*>(user_data)->onCreate(user_data);
 
     ICO_DBG("CicoEFLApp::appfwCreateCB Leave(%sd)", ret ? "true" : "false");
 
@@ -374,8 +375,8 @@ CicoEFLApp::appfwTerminateCB(void *user_data)
         ICO_DBG("CicoEFLApp::appfwTerminateCB Leave");
         return;
     }
-    
-    static_cast<CicoEFLApp*>(user_data)->onTerminate(user_data); 
+
+    static_cast<CicoEFLApp*>(user_data)->onTerminate(user_data);
 
     ICO_DBG("CicoEFLApp::appfwTerminateCB Leave");
 }
@@ -398,8 +399,8 @@ CicoEFLApp::appfwPauseCB(void *user_data)
         ICO_DBG("CicoEFLApp::appfwPauseCB Leave");
         return;
     }
-    
-    static_cast<CicoEFLApp*>(user_data)->onPause(user_data); 
+
+    static_cast<CicoEFLApp*>(user_data)->onPause(user_data);
 
     ICO_DBG("CicoEFLApp::appfwPauseCB Leave");
 }
@@ -421,8 +422,8 @@ CicoEFLApp::appfwResumeCB(void *user_data)
         ICO_DBG("CicoEFLApp::appfwResumeCB Leave");
         return;
     }
-    
-    static_cast<CicoEFLApp*>(user_data)->onResume(user_data); 
+
+    static_cast<CicoEFLApp*>(user_data)->onResume(user_data);
 
     ICO_DBG("CicoEFLApp::appfwResumeCB Leave");
 }
@@ -445,8 +446,8 @@ CicoEFLApp::appfwServiceCB(service_h service, void *user_data)
         ICO_DBG("CicoEFLApp::appfwServiceCB Leave");
         return;
     }
-    
-    static_cast<CicoEFLApp*>(user_data)->onService(service, user_data); 
+
+    static_cast<CicoEFLApp*>(user_data)->onService(service, user_data);
 
     ICO_DBG("CicoEFLApp::appfwServiceCB Leave");
 }
@@ -469,8 +470,8 @@ CicoEFLApp::appfwLowMemoryCB(void *user_data)
         return;
     }
 
-    static_cast<CicoEFLApp*>(user_data)->onLowMemory(user_data); 
- 
+    static_cast<CicoEFLApp*>(user_data)->onLowMemory(user_data);
+
     ICO_DBG("CicoEFLApp::appfwLowMemoryCB Leave");
 }
 
@@ -491,8 +492,8 @@ CicoEFLApp::appfwLowBatteryCB(void *user_data)
         ICO_DBG("CicoEFLApp::appfwLowBatteryCB Leave");
         return;
     }
- 
-    static_cast<CicoEFLApp*>(user_data)->onLowBattery(user_data); 
+
+    static_cast<CicoEFLApp*>(user_data)->onLowBattery(user_data);
 
     ICO_DBG("CicoEFLApp::appfwLowBatteryCB Leave");
 }
@@ -516,7 +517,7 @@ CicoEFLApp::appfwDeviceOrientationCB(app_device_orientation_e orientation,
         ICO_DBG("CicoEFLApp::appfwDeviceOrientationCB Leave");
         return;
     }
- 
+
     static_cast<CicoEFLApp*>(user_data)->onDeviceOrientation(orientation,
                                                              user_data);
 
@@ -540,7 +541,7 @@ CicoEFLApp::appfwLanguageChangedCB(void *user_data)
         ICO_DBG("CicoEFLApp::appfwDeviceOrientationCB Leave");
         return;
     }
- 
+
     static_cast<CicoEFLApp*>(user_data)->onLanguageChanged(user_data);
 
     ICO_DBG("CicoEFLApp::appfwLanguageChangedCB Leave");
@@ -563,7 +564,7 @@ CicoEFLApp::appfwRegionFormatChangedCB(void *user_data)
         ICO_DBG("CicoEFLApp::appfwDeviceOrientationCB Leave");
         return;
     }
- 
+
     static_cast<CicoEFLApp*>(user_data)->onRegionFormatChanged(user_data);
 
     ICO_DBG("CicoEFLApp::appfwRegionFormatChangedCB Leave");

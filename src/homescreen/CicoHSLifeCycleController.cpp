@@ -22,6 +22,7 @@
 #include "CicoAilItems.h"
 #include "CicoHSLifeCycleController.h"
 #include "CicoConf.h"
+#include "CicoHomeScreenCommon.h"
 #include "CicoSystemConfig.h"
 #include "Cico_aul_listen_app.h"
 
@@ -367,29 +368,16 @@ int CicoHSLifeCycleController::suspend(int pid)
 bool CicoHSLifeCycleController::isRunning(const char* appid)
 {
     bool r = false;
-#if 0 // TODO mk_k
-    vector<CicoAulItems>::iterator it = m_aul.begin();
-    while (it != m_aul.end()) {
-        it->update_appid();
-        ICO_DBG("%s == %s", it->m_appid.c_str(), appid);
-        if (it->m_appid == appid) {
-            r = true;
-            break;  // break of while it
-        }
-        ++it;
-    }
-#else
     int sz = m_aul.size();
     for (int i = 0; i < sz; i++) {
         m_aul[i].update_appid();
-//      ICO_DBG("%s == %s", m_aul[i].m_appid.c_str(), appid);
         if (m_aul[i].m_appid == appid) {
             r = true;
             break;
         }
     }
-#endif
-    ICO_TRA("CicoHSLifeCycleController::isRunning %s=%s", appid, r ? "true" : "false");
+    if (r == false)
+        ICO_TRA("CicoHSLifeCycleController::isRunning %s=false", appid);
     return r;
 }
 
@@ -537,7 +525,7 @@ int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name
                          CicoHSLifeCycleController* x)
 {
 // TODO mk_k
-    ICO_TRA("pkgmgr t:%s, n:%s, k:%s, v:%s, m:%s",pkg_type, pkg_name, key,
+    ICO_TRA("pkgmgr Enter t:%s, n:%s, k:%s, v:%s, m:%s",pkg_type, pkg_name, key,
             val, pmsg);
     if ((NULL == x) || (0 == x)) {
         ICO_TRA("end user data none");
@@ -549,6 +537,7 @@ int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name
             x->renewAIL();
         }
     }
+    ICO_TRA("pkgmgr Leave");
     return 0;
 // TODO mk_k
 }
@@ -558,6 +547,7 @@ int CSCLCCpkgmgr_handlerX(int req_id, const char *pkg_type, const char *pkg_name
  */
 void CicoHSLifeCycleController::renewAIL()
 {
+    ICO_DBG("void CicoHSLifeCycleController::renewAIL Enter");
     vector<CicoAilItems> old = m_ail;
     m_ail.clear();
     int cnt =0;
@@ -612,6 +602,8 @@ void CicoHSLifeCycleController::renewAIL()
 #endif
     old.clear();
     ailRenewFlagOn();
+
+    ICO_DBG("void CicoHSLifeCycleController::renewAIL Leave");
     return;
 }
 
@@ -643,25 +635,39 @@ ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
     if (strcmp(pkg, APP_CONF_AIL_NULL_STR) == 0) {
         pkg = NULL;
     }
-    /* get icon path */
-    ail_appinfo_get_usr_str(appinfo, AIL_PROP_ICON_STR, uid, &icn);
-    if (strcmp(icn, APP_CONF_AIL_NULL_STR) == 0) {
-        icn = NULL;
+    /* get exec */
+    ail_appinfo_get_usr_str(appinfo, AIL_PROP_EXEC_STR, uid, &exe);
+    if (strcmp(exe, APP_CONF_AIL_NULL_STR) == 0) {
+        exe = NULL;
     }
-    else if (icn != NULL) {
-        struct stat buff;
-        /* file check */
-        memset(&buff, 0, sizeof(buff));
-        if (stat(icn, &buff) == 0) {
-            if (S_ISDIR(buff.st_mode)) {
-                /* is directory */
-                ICO_DBG("%s is directory", icn);
+    /* if not display on menu, no need icon ... */
+    ail_appinfo_get_bool(appinfo, AIL_PROP_NODISPLAY_BOOL, &bndsp);
+    if (bndsp == true)  {
+        /* not display */
+        icn = NULL;
+        exe = NULL;
+    }
+    else    {
+        /* get icon path */
+        ail_appinfo_get_usr_str(appinfo, AIL_PROP_ICON_STR, uid, &icn);
+        if (strcmp(icn, APP_CONF_AIL_NULL_STR) == 0) {
+            icn = NULL;
+        }
+        else if (icn != NULL) {
+            struct stat buff;
+            /* file check */
+            memset(&buff, 0, sizeof(buff));
+            if (stat(icn, &buff) == 0) {
+                if (S_ISDIR(buff.st_mode)) {
+                    /* is directory */
+                    ICO_DBG("%s is directory", icn);
+                    icn = NULL;
+                }
+            }
+            else {
+                /* is not exist */
                 icn = NULL;
             }
-        }
-        else {
-            /* is not exist */
-            icn = NULL;
         }
     }
     /* get name */
@@ -674,17 +680,8 @@ ail_cb_ret_e CSCLCCail_list_appinfo_cbX(const ail_appinfo_h appinfo,
     if (strcmp(ctgry, APP_CONF_AIL_NULL_STR) == 0) {
         ctgry = NULL;
     }
-    /* get type */
-    ail_appinfo_get_usr_str(appinfo, AIL_PROP_TYPE_STR, uid, &typ);
-    if (strcmp(typ, APP_CONF_AIL_NULL_STR) == 0) {
-        typ = NULL;
-    }
-    /* get exec */
-    ail_appinfo_get_usr_str(appinfo, AIL_PROP_EXEC_STR, uid, &exe);
-    if (strcmp(exe, APP_CONF_AIL_NULL_STR) == 0) {
-        exe = NULL;
-    }
-    ail_appinfo_get_bool(appinfo, AIL_PROP_NODISPLAY_BOOL, &bndsp);
+    /* type is fixed application    */
+    typ = NULL;
     ICO_DBG("pkg:%s icn:%s nm:%s ctg:%s ty:%s exe:%s ds:%s", pkg? pkg:DNil,
             icn? icn:DNil, nm? nm:DNil, ctgry? ctgry:DNil, typ? typ:DNil,
             exe? exe:DNil, bndsp? "true":"false");
@@ -726,6 +723,7 @@ bool CicoHSLifeCycleController::createAilItems()
 
     int r;
     uid_t uid = getuid();
+
     ail_filter_h fil;
     ail_filter_new(&fil);
     r = ail_filter_add_str(fil, AIL_PROP_TYPE_STR, DAilTypeFilPrm_Menu);
@@ -938,7 +936,7 @@ int CSCLCCapp_launch_handlerX(int pid, CicoHSLifeCycleController* x)
         ICO_TRA("end fail(user data is NULL)");
         return -1;
     }
-    char appid[255];
+    char appid[ICO_HS_MAX_PROCESS_NAME];
     memset(appid, 0, sizeof(appid));
     int iR = Xaul_app_get_appid_bypid(pid, appid, sizeof(appid));
     ICO_PRF("CHG_APP_STA   notice  app=%s, pid=%d, rval=%d", appid, pid, iR);

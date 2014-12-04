@@ -18,10 +18,12 @@
 #include <list>
 #include <vector>
 #include <utility>
+#include "CicoHomeScreenCommon.h"
 
 #define DEF_SUBDISPLAY_TAG ":SUBDISPLAY"
 
 typedef std::pair<std::string, bool> pairAppidSubd;
+typedef void (*history_callback_startup_t) (void *arg, const char *appid, bool down);
 
 class CicoHomeScreen;
 
@@ -60,6 +62,10 @@ public:
     bool readAppHistory(std::vector<pairAppidSubd>& apps);
     bool writeAppHistory();
     void setHomeScreen(CicoHomeScreen* p);
+    const char *getStartupApp(void);
+    void setStartupApp(const char *appid);
+    void setCallbackStartup(history_callback_startup_t callback, void *arg);
+
 protected:
     bool filterChk(std::vector<std::string>& filter, const char* tgt) const;
     const char* getAppidSubDispBySystem() const;
@@ -75,6 +81,9 @@ protected:
     std::list<std::string>::iterator m_swipeCurr;
     std::string         m_swipeStr;
     CicoHomeScreen*     m_hs;
+    char                m_startupApp[ICO_HS_MAX_PROCESS_NAME];
+    history_callback_startup_t  m_callback_startup;
+    void                *m_callback_arg;
 };
 
 /**
@@ -106,7 +115,7 @@ inline const std::string& CicoHSAppHistory::getPathDef() const
 
 /**
  * @brief get history appid list
- * @ret list<string> 
+ * @ret list<string>
  */
 inline const std::list<std::string>& CicoHSAppHistory::getAppHistory() const
 {
@@ -131,9 +140,22 @@ inline void CicoHSAppHistory::setFilterWrite(std::vector<std::string>& filter)
     m_filterW = filter;   // history write filter string
 }
 
+/**
+ * @brief set homescreen instance
+ * @param homescreen instance
+ */
 inline void CicoHSAppHistory::setHomeScreen(CicoHomeScreen* hs)
 {
     m_hs = hs;
+}
+
+/**
+ * @brief get StartupMode
+ * @ret last application appid or null if not startup mode
+ */
+inline const char *CicoHSAppHistory::getStartupApp(void)
+{
+    return (m_startupApp[0] ? m_startupApp : NULL);
 }
 
 #endif // CICOHSAPPHISTORY_H

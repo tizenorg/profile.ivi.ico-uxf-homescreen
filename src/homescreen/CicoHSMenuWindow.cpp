@@ -41,6 +41,8 @@ int  CicoHSMenuWindow::menu_tile_height = 290;
 /*--------------------------------------------------------------------------*/
 CicoHSMenuWindow::CicoHSMenuWindow(void)
 {
+    ICO_DBG("CicoHSMenuWindow::CicoHSMenuWindow Enter");
+
     /*initialzie values*/
     terminate_mode = false;
 
@@ -82,6 +84,8 @@ CicoHSMenuWindow::CicoHSMenuWindow(void)
     CicoResourceConfig::GetImagePath(img_dir_path, ICO_HS_MAX_PATH_BUFF_LEN);
 
     m_showState = false;
+
+    ICO_DBG("CicoHSMenuWindow::CicoHSMenuWindow Leave");
 }
 
 /*--------------------------------------------------------------------------*/
@@ -111,6 +115,8 @@ int
 CicoHSMenuWindow::SetMenuBack(void)
 {
     /* set menu back */
+    ICO_TRA("CicoHSMenuWindow::SetMenuBack Enter");
+
     /* set object*/
     if (transparent_background) {
         /* image file name*/
@@ -330,10 +336,10 @@ CicoHSMenuWindow::SetAppTiles(void)
                                           ICO_HS_DEFAULT_MENU_CATEGORY_FILE_PATH);
     }
     GetCategory(category_path, category, &category_num);
-    ICO_DBG("CicoHSMenuWindow::SetAppTiles :category_num %d", category_num);
+    ICO_DBG("CicoHSMenuWindow::SetAppTiles category_num %d", category_num);
 
     for (int ii = 0; ii < category_num ; ii++) {
-       ICO_DBG("CicoHSMenuWindow::SetAppTiles :category[%d] %d", ii, category[ii]);
+       ICO_DBG("CicoHSMenuWindow::SetAppTiles category[%d] %d", ii, category[ii]);
     }
 
     /* other category add */
@@ -357,16 +363,15 @@ CicoHSMenuWindow::SetAppTiles(void)
     for (unsigned int ii = 0; ii < aillist.size(); ii++) {
 
         /*all application num*/
-        if((aillist[ii].m_noIcon) ||
-                (strcmp(aillist[ii].m_group.c_str(),
-                ICO_HS_GROUP_SPECIAL) == 0)) {
-            ICO_DBG("CicoHSMenuWindow::SetAppTiles :ignore app appid = [%s] noIcon = [%d]",
+        if ((aillist[ii].m_noIcon) ||
+            (strcmp(aillist[ii].m_group.c_str(), ICO_HS_GROUP_SPECIAL) == 0)) {
+            ICO_DBG("CicoHSMenuWindow::SetAppTiles ignore app appid = [%s] noIcon = [%d]",
                     aillist[ii].m_appid.c_str(),aillist[ii].m_noIcon);
             continue;
         }
-        ICO_DBG("CicoHSMenuWindow::SetAppTiles :SetApp appid = [%s] noIcon =[%d]",
+        ICO_DBG("CicoHSMenuWindow::SetAppTiles SetApp appid = [%s] noIcon =[%d]",
                 aillist[ii].m_appid.c_str(),aillist[ii].m_noIcon);
-        ICO_DBG("CicoHSMenuWindow::SetAppTile :aillist[%d].m_categoryID = [%d]",
+        ICO_DBG("CicoHSMenuWindow::SetAppTiles aillist[%d].m_categoryID = [%d]",
                 ii, aillist[ii].m_categoryID);
 
         /* Categories */
@@ -1443,6 +1448,10 @@ CicoHSMenuWindow::Show(ico_syc_animation_t *animation)
     if (true == CicoHSSystemState::getInstance()->getRegulation()) {
         return;
     }
+    // it ignores, if the menu has not been completed yet.
+    if (surface == 0)   {
+        return;
+    }
     m_showState = true;
 
     if (true == life_cycle_controller->isAilRenew()) {
@@ -1457,7 +1466,7 @@ CicoHSMenuWindow::Show(ico_syc_animation_t *animation)
             menu_tile[ii]->ShowMenu(true);
         }
     }
-
+    ICO_DBG("show %08x %s(show menu)", surface, appid);
     ico_syc_show(appid, surface, animation);
 
     ICO_TRA("CicoHSMenuWindow::Show Leave");
@@ -1477,11 +1486,16 @@ CicoHSMenuWindow::Hide(ico_syc_animation_t *animation)
 {
     ICO_TRA("CicoHSMenuWindow::Hide Enter");
 
+    // it ignores, if the menu has not been completed yet.
+    if (surface == 0)   {
+        return;
+    }
     if(terminate_mode == true){
         ChangeNormalMode();
     }
     m_showState = false;
     if (surface)    {
+    ICO_DBG("hide %08x %s(hide menu)", surface, appid);
         ico_syc_hide(appid, surface, animation);
     }
 
