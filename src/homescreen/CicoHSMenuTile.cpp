@@ -641,9 +641,10 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
 #pragma pack(pop)
 #endif
 
+#if 0       /* too many log */
     ICO_DBG("CicoHSMenuTile::SetThumbnail(appid=%p<%s>) info=%p surf=%08x",
             this->appid, appid, info, info ? info->surface : 0);
-
+#endif
     if ((info == NULL) || (info->surface == 0)) {
         unmap = 1;
     }
@@ -681,8 +682,10 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
                 thumb.width, thumb.height, thumb.stride, width, height);
 #endif
         if ((info->width <= 1) || (info->height <= 1))  {
+#if 0       /* too many log */
             ICO_DBG("CicoHSMenuTile::SetThumbnail: small surface(%d,%d) skip",
                     info->width, info->height);
+#endif
         }
         else    {
             // create thumbnail image
