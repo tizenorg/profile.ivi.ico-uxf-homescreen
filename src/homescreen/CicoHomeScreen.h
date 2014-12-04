@@ -71,17 +71,22 @@
 
 #define ICO_HS_CHANGE_ZONE_MAX  10
 
+/*startup wait time(ms)*/
+#define ICO_HS_WAIT_START_LASTAPP   2000    /* last app start timedout time(1st to 2nd) */
+#define ICO_HS_WAIT_START_LASTAPP2   500    /* last app start timedout time(after 2nd)  */
+#define ICO_HS_WAIT_START_MAKEMENU  4000    /* max waiting time until making the menu   */
+#define ICO_HS_WAIT_START_MAKENOAPP 1000    /* making the menu waiting time if no app   */
+
 class CicoHomeScreen
 {
   public:
     CicoHomeScreen(void);
     ~CicoHomeScreen(void);
     static CicoHomeScreen* getInstance(void);
-    int Initialize(int orientation,CicoGKeyFileConfig *config);
     void InitializeAppHistory(void);
     void Finalize(void);
-    int StartRelations();
-    void CreateMenuWindow(void);
+    void StartRelations(int seq);
+    void CreateMenuWindow(int seq);
     void DeleteMenuWindow(void);
     void UpDateMenuWindow(void);
     void CreateBackWindow(void);
@@ -137,6 +142,9 @@ class CicoHomeScreen
     static void ShowApp(const std::string& app);
     static void HideApp(const std::string& app);
     static void MoveApp(const std::string& app, const std::string& zone);
+    int launchLastApps(void);
+    void launchNextApps(const char *appid);
+
   private:
     int GetProcessWindow(const char *appid);
     static void EventCallBack(ico_syc_ev_e event,const void* detail,void* user_data);
@@ -195,7 +203,6 @@ class CicoHomeScreen
 
     // move zone animation information
     ico_syc_animation_t moveZoneAnimation;
-
 
   protected:
     CicoHomeScreen operator=(const CicoHomeScreen&);

@@ -14,6 +14,7 @@
 #include <tzplatform_config.h>
 #include "CicoHSBackWindow.h"
 #include "CicoResourceConfig.h"
+#include "CicoHSWindowController.h"
 
 /*============================================================================*/
 /* functions                                                                  */
@@ -67,9 +68,18 @@ CicoHSBackWindow::CreateBackWindow(int pos_x,int pos_y,int width,int height)
     int ret;
 
     /*create window*/
-    ret = CreateWindow(ICO_HS_BACK_WINDOW_TITLE, pos_x, pos_y, width, height, EINA_TRUE);
-    if(ret != ICO_OK){
-       return ret;
+    window = CicoHSWindowController::GetBaseEvas();
+    if (window) {
+        ecore_evas_move_resize(window, pos_x, pos_y, width, height);
+        strncpy(this->title, ICO_HS_BACK_WINDOW_TITLE, ICO_MAX_TITLE_NAME_LEN);
+        ecore_evas_title_set(window, this->title);
+        ecore_evas_alpha_set(window, EINA_TRUE);
+    }
+    else    {
+        ret = CreateWindow(ICO_HS_BACK_WINDOW_TITLE, pos_x, pos_y, width, height, EINA_TRUE);
+        if(ret != ICO_OK){
+            return ret;
+        }
     }
 
     /* evas get */
@@ -136,6 +146,8 @@ void
 CicoHSBackWindow::FreeBackWindow(void)
 {
     evas_object_del(canvas);
-    FreeWindow();
+    if (window != CicoHSWindowController::GetBaseEvas())    {
+        FreeWindow();
+    }
 }
 // vim: set expandtab ts=4 sw=4:

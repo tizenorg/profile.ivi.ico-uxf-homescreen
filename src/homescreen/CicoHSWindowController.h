@@ -35,6 +35,7 @@ class CicoHSWindowController
     static void Initialize(void);
     static void Finalize(void);
     static void GetFullScreenSize(int orientation,int *width,int *height);
+    static Ecore_Evas *GetBaseEvas(void);
 
   protected:
     CicoHSWindowController operator=(const CicoHSWindowController&);

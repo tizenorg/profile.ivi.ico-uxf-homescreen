@@ -40,6 +40,8 @@ CicoHSAppHistory::CicoHSAppHistory()
     m_pathD.clear();
     m_flagPath.clear();
     m_hs = NULL;
+    m_startupApp[0] = 0;
+    m_callback_startup = NULL;
     homeSwipe();
 }
 
@@ -55,6 +57,8 @@ CicoHSAppHistory::CicoHSAppHistory(const char* user, const char* path,
 {
     ICO_DBG("constructor %s, %s", user, path, pathD, flagpath);
     m_hs = NULL;
+    m_startupApp[0] = 0;
+    m_callback_startup = NULL;
     homeSwipe();
 }
 
@@ -70,6 +74,8 @@ CicoHSAppHistory::CicoHSAppHistory(const string& user, const string& path,
 {
     ICO_DBG("constructor %s, %s", user.c_str(), flagpath.c_str());
     m_hs = NULL;
+    m_startupApp[0] = 0;
+    m_callback_startup = NULL;
     homeSwipe();
 }
 
@@ -87,6 +93,18 @@ CicoHSAppHistory::~CicoHSAppHistory()
 }
 
 /**
+ * @brief set startup callback function
+ * @param callback      callback function
+ * @param arg           argument of callback function
+ * @ret none
+ */
+void CicoHSAppHistory::setCallbackStartup(history_callback_startup_t callback, void *arg)
+{
+    m_callback_arg = arg;
+    m_callback_startup = callback;
+}
+
+/**
  * @brief added application id to list
  * @param app target application id
  * @ret bool
@@ -96,13 +114,21 @@ CicoHSAppHistory::~CicoHSAppHistory()
 bool CicoHSAppHistory::addAppHistory(const string& app)
 {
     const char* tgt = app.c_str();
-    ICO_TRA("start(%s, %d)", tgt, (int)m_appHistoryList.size());
+    ICO_TRA("start(%s, %d) %s", tgt, (int)m_appHistoryList.size(), m_startupApp);
     if (true == filterChk(m_filterM, tgt)) {
        ICO_TRA("end false");
        return false;
     }
     m_appHistoryList.remove(app);
-    m_appHistoryList.push_front(app);
+    if (m_startupApp[0] != 0)   {
+        m_appHistoryList.push_back(app);
+    }
+    else    {
+        m_appHistoryList.push_front(app);
+    }
+    if (m_callback_startup) {
+        (*m_callback_startup)(m_callback_arg, tgt, false);
+    }
     homeSwipe();
     ICO_TRA("end (true, %d)", (int)m_appHistoryList.size());
     return true;
@@ -128,6 +154,9 @@ bool CicoHSAppHistory::delAppHistory(const string& app)
             r = true;
             homeSwipe();
         }
+    }
+    if (m_callback_startup) {
+        (*m_callback_startup)(m_callback_arg, app.c_str(), true);
     }
     ICO_TRA("end(%s, %d)", r? "true": "false", sz);
     return r;
@@ -281,6 +310,18 @@ bool CicoHSAppHistory::writeAppHistory()
     ofs.close();
     ICO_DBG("end write size(%d)", (int)vs.size());
     return false;
+}
+
+/**
+ * @brief set startup last appid
+ */
+void CicoHSAppHistory::setStartupApp(const char *appid)
+{
+    memset(m_startupApp, 0, sizeof(m_startupApp));
+    if (appid != NULL)  {
+        strncpy(m_startupApp, appid, sizeof(m_startupApp)-1);
+    }
+    ICO_DBG("setStartupApp<%s>", m_startupApp);
 }
 
 /**

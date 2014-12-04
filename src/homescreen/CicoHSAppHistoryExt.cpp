@@ -50,7 +50,7 @@ static int ico_CHSAHapp_launch_handler(int pid, void *data)
         return -1;
     }
     CicoHSAppHistoryExt *o = (CicoHSAppHistoryExt*) data;
-    char appid[255];
+    char appid[ICO_HS_MAX_PROCESS_NAME];
     memset(appid, 0, sizeof(appid));
     int iR = Xaul_app_get_appid_bypid(pid, appid, sizeof(appid));
     ICO_PRF("CHG_APP_STA 1.notice  app=%s, pid=%d, rval=%d", appid, pid, iR);
@@ -483,7 +483,7 @@ void CicoHSAppHistoryExt::update_appid(int pid, string& appid, int& aulstt)
         return;
     }
     ICO_TRA("update start %d", aulstt);
-    char buf[255];
+    char buf[ICO_HS_MAX_PROCESS_NAME];
     buf[0] = '\0'; // STOP CODE
     aulstt = aul_app_get_appid_bypid(pid, buf, sizeof(buf));
     if (AUL_R_OK == aulstt) {
@@ -718,16 +718,19 @@ void CicoHSAppHistoryExt::update_appid()
  * @param appid
  * @param display posi
  */
-void CicoHSAppHistoryExt::startupCheckAdd(int pid, const std::string& appid,
-                                          bool d)
+void CicoHSAppHistoryExt::startupCheckAdd(int pid, const std::string& appid, bool d)
 {
     ICO_DBG("add pid=%d, appid=%s", pid, appid.c_str());
     m_vpbpa.push_back(pairBoolPidAppid(false, pairPidAppid(pid, appid)));
-    if (true == d) {
-        m_subDispApp = appid;
-    }
-    else {
-        m_lastStartupApp = appid;
+    const char *lastapp = getStartupApp();
+    if ((lastapp == NULL) ||
+        (strncmp(lastapp, appid.c_str(), ICO_HS_MAX_PROCESS_NAME) == 0))    {
+        if (true == d) {
+            m_subDispApp = appid;
+        }
+        else {
+            m_lastStartupApp = appid;
+        }
     }
 }
 
