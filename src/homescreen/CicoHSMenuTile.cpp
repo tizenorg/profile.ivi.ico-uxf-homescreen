@@ -806,9 +806,13 @@ CicoHSMenuTile::SetThumbnail(ico_syc_thumb_info_t *info)
         icon = tile;
         if (thumb.thumb_timer)  {
             ecore_timer_del(thumb.thumb_timer);
+            thumb.thumb_timer = NULL;
         }
-        thumb.thumb_timer = ecore_timer_add(ICO_HS_MENUTILE_THUMBNAIL_RETRYTIME,
-                                            CicoHSMenuTile::TimerThumbnail, (void *)this);
+        if ((info == NULL) || (info->type != ICO_HS_MAP_ERROR_SHBUF))   {
+            thumb.thumb_timer = ecore_timer_add(ICO_HS_MENUTILE_THUMBNAIL_RETRYTIME,
+                                                CicoHSMenuTile::TimerThumbnail,
+                                                (void *)this);
+        }
     }
 
     if (icon != old_icon)   {

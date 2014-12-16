@@ -1129,9 +1129,12 @@ CicoHomeScreen::EventCallBack(const ico_syc_ev_e event,
                     "no appinfo", thumb_info->appid, thumb_info->surface);
             return;
         }
-        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s(%02x)",
-                thumb_info->appid, thumb_info->surface);
-        hs_instance->menu_window->SetThumbnail(thumb_info->appid, NULL);
+        ICO_DBG("CicoHomeScreen::EventCallBack : ICO_SYC_EV_THUMB_UNMAP %s(%02x) %x",
+                thumb_info->appid, thumb_info->surface, thumb_info->type);
+        ico_syc_thumb_info_t    wrk_info;
+        wrk_info.surface = 0;
+        wrk_info.type = thumb_info->type;
+        hs_instance->menu_window->SetThumbnail(thumb_info->appid, &wrk_info);
     }
     else if (event == ICO_SYC_EV_THUMB_ERROR)  {
         ico_syc_thumb_info_t *thumb_info =

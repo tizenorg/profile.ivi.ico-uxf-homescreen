@@ -76,7 +76,7 @@
 #define ICO_HS_MENUTILE_TERM_ICON_WIDTH 64
 #define ICO_HS_MENUTILE_TERM_ICON_HEIGHT 64
 
-#define ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW      15          /* 15 frames/sec        */
+#define ICO_HS_MENUTILE_THUMBNAIL_FPS_SHOW      4           /* 4 frames/sec         */
 #define ICO_HS_MENUTILE_THUMBNAIL_FPS_HIDE      -1          /* meanse 'not update'  */
 #define ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX    4
 #define ICO_HS_MENUTILE_THUMBNAIL_REDUCE_PIX2   6
@@ -103,6 +103,8 @@ struct _CicoHSMenuTile_thumb {
     Ecore_Timer *thumb_timer;           // retry timer
     int         orgsurface;             // original surface id
 };
+
+#define ICO_HS_MAP_ERROR_SHBUF  4       /* error core of map shared buffer  */
 
 class CicoHSMenuTile
 {
