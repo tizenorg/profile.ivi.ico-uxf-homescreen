@@ -1,3 +1,37 @@
+* Thu Dec 18 2014 Mitsuharu Ito <mitsuharu_ito_ab@mail.toyota.co.jp> accepted/tizen/ivi/20141205.050907-3-g27d8f4f
+- 0.9.23 release
+-- Removed system controller
+-- packaging: Move system-controller config files to homescreen package
+-- packaging: Make system-controller and murphy-system-controller conflict
+-- The error of thumbnail of a share memory buffer is not retried
+-- bug fix: TC-1975 - ICO home screen and last app start-up take too long
+-- Logging turn off and delete some logs for HomeScreen, StatusBar and OnScreen
+-- bug fix: TC-1987 - The live thumbnail becomes transparent after install/uninstall web app by pkgcmd
+-- Add the global include files of ico-appfw and Delete junk files
+-- bug fix: TC-1152 - compliant with multi-user architecture
+-- bug fix: CicoAilItems.cpp: fix a type error
+-- bug fix: TC-127 - No notification pop up while incoming call comes on
+-- bug fix: TC-67 - Some launched Apps' thumbnail show blank content(same cause TC-1333)
+-- bug fix: TC-115 - Click app has no response after switching app for many times. (same cause TC-89)
+-- The client which is creating Surface by weston-ivi-shell of GENIVI-LayerManagement is completed in an error
+-- improvement: Surface created by weston-ivi-shell of GENIVI-LayerManagement is supported
+-- HomeScreen: Adding a config to adjust background of menu window
+-- Clean spec file and move manifest file for smack security
+-- Clean spec file for Yocto compatibility
+-- Adapt the AIL filter used to new ones
+-- Fix build Error: Align Callback prototype with new AIL callback ones
+-- Fix desktop icons' install path
+-- bug fix: Error occurs in client using GENIVI-Layermanagement
+-- Replace pkg_info call by pkg_initdb call
+-- Fix FTBFS for x86_64
+-- Fix compilation with new Murphy resource set interface
+-- bug fix: Delete arrays with delete[]
+-- service should run in login shell to use profile (efl) env
+-- packaging: regenerate weston stubs from protocol
+-- Fix EGL build issue when no X11 headers are available
+-- Remove ecore-x dependency
+-- Removed unnecessary build dependencies
+
 * Tue Apr 08 2014 Shibata Makoto <shibata@mac.tec.toyota.co.jp> accepted/tizen/ivi/panda/20140403.020026@294446b
 - 0.9.22 release
 -- bug fix: TIVI-3007 - Home button doesn't response after some operations.
