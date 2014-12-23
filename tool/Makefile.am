@@ -10,7 +10,8 @@ AM_LDFLAGS = -module -avoid-version -rpath $(libdir) $(GLIB_LIBS)
 
 bin_PROGRAMS =		\
 	ico_change_loginuser \
-	ico_clear_screen
+	ico_clear_screen	\
+	hs-launcher
 
 check_LTLIBRARIES = $(TESTS)
 check_PROGRAMS = ico_clear_screen ico_login_user
@@ -22,4 +23,9 @@ ico_clear_screen_LDADD = $(SIMPLE_CLIENT_LIBS) -lico-util $(wayland_ivi_client_l
 ico_change_loginuser = \
 	ico_change_loginuser.c
 ico_change_loginuser_LDADD = $(SIMPLE_CLIENT_LIBS) $(appfw_client_lib) -lico-util
+
+hs_launcher_SOURCES =	\
+	hs-launcher.c
+hs_launcher_LDADD  = $(AUL_LIBS)
+hs_launcher_CFLAGS = $(AUL_CFLAGS)
 
