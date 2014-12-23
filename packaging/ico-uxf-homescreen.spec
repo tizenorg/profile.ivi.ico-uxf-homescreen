@@ -70,6 +70,13 @@ Requires: pkgconfig(appsvc)
 %description system-controller-devel
 Development files for application that communicate homescreen.
 
+%package launcher
+Summary: ICO Homescreen launcher
+Group:   Automotive/ICO Homescreen
+
+%description launcher
+This package contains the ICO Homescreen launcher.
+
 %prep
 %setup -q -n %{name}-%{version}
 cp %{SOURCE1001} .
@@ -159,3 +166,7 @@ ail_initdb
 %{_includedir}/ico-appfw/ico_syc_userctl.h
 %{_includedir}/ico-appfw/ico_syc_winctl.h
 
+%files launcher
+%defattr(-,root,root,-)
+%manifest %{name}.manifest
+%{_bindir}/hs-launcher
